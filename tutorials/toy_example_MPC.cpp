@@ -42,7 +42,7 @@ public:
 		mAcceleration = 0.05;
 		mSpeed = 0.2; 
 
-		mAcceleration_random = 0.05;
+		mAcceleration_random = 2;
 
 		//mCube->getJoint(0)->setActuatorType(Joint::VELOCITY);
 
@@ -101,6 +101,7 @@ public:
 
 	void setCubeAcceleration(double desire_Acceleration)
 	{
+		mCube->getDof(1)->setCommand(mCube->getMass() * desire_Acceleration);
 	}
 
 	void randomizeAcceleration()
@@ -144,14 +145,26 @@ public:
 
 	double MyMPC()
 	{
-		/*
-		int num_samples = 5;
-		int plan_horizon = 1;
+		int num_samples = 100;
+		int plan_horizon = 10;
 		double desire_Acceleration = 0;
-		std::vector<WorldPtr> world_array(num_samples);
-		std::vector<std::unique_ptr<Controller>> controller_array(num_samples);
+		
+		double position_record_dof_0 = mWorld->getSkeleton("cube")->getDof(0)->getPosition();
+		double position_record_dof_1 = mWorld->getSkeleton("cube")->getDof(1)->getPosition();
+		double position_record_dof_2 = mWorld->getSkeleton("cube")->getDof(2)->getPosition();
+		double velocity_record_dof_0 = mWorld->getSkeleton("cube")->getDof(0)->getVelocity();
+		double velocity_record_dof_1 = mWorld->getSkeleton("cube")->getDof(1)->getVelocity();
+		double velocity_record_dof_2 = mWorld->getSkeleton("cube")->getDof(2)->getVelocity();
+
+		//std::vector<WorldPtr> world_array(num_samples);
+		//std::vector<std::unique_ptr<Controller>> controller_array(num_samples);
 		std::vector<double> acceleration_array(num_samples);
 		std::vector<int> cost_array(num_samples);
+	
+		for (int i = 0; i<num_samples;i++)
+		{
+			cost_array[i] = plan_horizon * mWorld->getTimeStep();
+		}
 		
 		// save the world
 		// have best_acceleration vector and cost vector
@@ -159,28 +172,54 @@ public:
 		for (int i = 0; i<num_samples; i++)
 		{
 			// states of the skeleton will not be cloned?
-			world_array[i] = mWorld->clone();
-			controller_array[i] = std::unique_ptr<Controller>(new Controller(world_array[i]->getSkeleton("cube"), 
-																			 world_array[i]->getConstraintSolver()->getCollisionDetector(),
-																			 default_Num_contact,
-																			 world_array[i]->getTimeStep()));
-			controller_array[i]->setCubeVelocity();
-			acceleration_array[i] = controller_array[i]->setCubeAcceleration();
+			//world_array[i] = mWorld->clone();
+			
+			double time_start = mWorld->getTime();
+			
+			mWorld->getSkeleton("cube")->getDof(0)->setPosition(position_record_dof_0);
+			mWorld->getSkeleton("cube")->getDof(1)->setPosition(position_record_dof_1);
+			mWorld->getSkeleton("cube")->getDof(2)->setPosition(position_record_dof_2);	
+			mWorld->getSkeleton("cube")->getDof(0)->setVelocity(velocity_record_dof_0);	
+			mWorld->getSkeleton("cube")->getDof(1)->setVelocity(velocity_record_dof_1);	
+			mWorld->getSkeleton("cube")->getDof(2)->setVelocity(velocity_record_dof_2);	
+
+			mController->setCubeVelocity(mController->mSpeed);
+			acceleration_array[i] = mController->setCubeAcceleration();
 			for (int j = 0; j<plan_horizon; j++)
 			{
-				world_array[i]->step();
-				controller_array[i]->setCubeVelocity();
-				controller_array[i]->setCubeAcceleration();
+				mWorld->step();
+				mController->setCubeVelocity(mController->mSpeed);
+				mController->setCubeAcceleration();
+				if (mController->collision_with_obstacles())
+				{
+					std::cout<<"collision with obstacles detected!"<<std::endl;
+					mController->setCubeVelocity(0);
+					mWorld->getSkeleton("cube")->getDof(0)->setPosition(position_record_dof_0);
+					mWorld->getSkeleton("cube")->getDof(1)->setPosition(position_record_dof_1);
+					mWorld->getSkeleton("cube")->getDof(2)->setPosition(position_record_dof_2);	
+					cost_array[i] = mWorld->getTime() - time_start;
+					//std::cin.get();
+					break;
+				}
 			}
-			cost_array[i] = world_array[i]->getConstraintSolver()->getCollisionDetector()->getNumContacts();
 		}
+
+	//	for (int i = 0; i<num_samples;i++)
+	//	{
+	//		std::cout<<cost_array[i]<<" "<<std::endl;
+	//	}
 		
-		desire_Acceleration = acceleration_array[std::distance(cost_array.begin(), std::min_element(cost_array.begin(), cost_array.end()))];
+		desire_Acceleration = acceleration_array[std::distance(cost_array.begin(), std::max_element(cost_array.begin(), cost_array.end()))];
 		
 		// compute forward
 		// find the best acceleration
-		*/
-		return 0;
+		mWorld->getSkeleton("cube")->getDof(0)->setPosition(position_record_dof_0);
+		mWorld->getSkeleton("cube")->getDof(1)->setPosition(position_record_dof_1);
+		mWorld->getSkeleton("cube")->getDof(2)->setPosition(position_record_dof_2);	
+		mWorld->getSkeleton("cube")->getDof(0)->setVelocity(velocity_record_dof_0);	
+		mWorld->getSkeleton("cube")->getDof(1)->setVelocity(velocity_record_dof_1);	
+		mWorld->getSkeleton("cube")->getDof(2)->setVelocity(velocity_record_dof_2);	
+		return desire_Acceleration;
 	}
 
 	void timeStepping() override
@@ -194,7 +233,7 @@ public:
 			mController->setCubeVelocity(0);
 		}
 
-		mController->setCubeAcceleration();
+		mController->setCubeAcceleration(MyMPC());
 
 		SimWindow::timeStepping();
 	}
