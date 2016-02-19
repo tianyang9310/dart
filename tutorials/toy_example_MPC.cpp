@@ -39,10 +39,10 @@ public:
 	Controller(const SkeletonPtr& cube, dart::collision::CollisionDetector* detector, size_t default_Num_contact, double time_step)
 		:mCube(cube),mDetector(detector),mdefault_Num_contact(default_Num_contact), mTime_step_in_Acc_fun(time_step)
 	{
-		mAcceleration = 0.5;
-		mSpeed = 0.01; 
+		mAcceleration = 0.05;
+		mSpeed = 0.2; 
 
-		mAcceleration_random = 10;
+		mAcceleration_random = 0.05;
 
 		//mCube->getJoint(0)->setActuatorType(Joint::VELOCITY);
 
@@ -59,18 +59,23 @@ public:
 		for (size_t i = 0; i< collision_count; ++i)
 		{
 			const dart::collision::Contact& contact = mDetector->getContact(i);
+
+			/*
 			if ((contact.bodyNode1.lock()->getName() == "obstacle1" && 
-						contact.bodyNode2.lock()->getName() == "cube")|| 
+						contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
 				(contact.bodyNode2.lock()->getName() == "obstacle1" && 
-						contact.bodyNode1.lock()->getName() == "cube")|| 
+						contact.bodyNode1.lock()->getSkeleton()->getName() == "cube")|| 
 				(contact.bodyNode1.lock()->getName() == "obstacle2" && 
-						contact.bodyNode2.lock()->getName() == "cube")|| 
+						contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
 				(contact.bodyNode2.lock()->getName() == "obstacle2" && 
-						contact.bodyNode1.lock()->getName() == "cube")|| 
+						contact.bodyNode1.lock()->getSkeleton()->getName() == "cube")|| 
 				(contact.bodyNode1.lock()->getName() == "obstacle3" && 
-						contact.bodyNode2.lock()->getName() == "cube")|| 
+						contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
 				(contact.bodyNode2.lock()->getName() == "obstacle3" && 
-						contact.bodyNode1.lock()->getName() == "cube"))
+						contact.bodyNode1.lock()->getSkeleton()->getName() == "cube"))
+			*/
+			if (contact.bodyNode1.lock()->getSkeleton()->getName() == "cube" ||
+					contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")
 			{
 				collision = true;
 				break;
@@ -88,7 +93,9 @@ public:
 
 	double setCubeAcceleration()
 	{
-		return 0;
+		randomizeAcceleration();
+		mCube->getDof(1)->setCommand(mCube->getMass() * mAcceleration);
+		return mAcceleration;	
 	}
 
 
@@ -133,8 +140,6 @@ public:
 		std::cout<<"Default number of contacts is "<<default_Num_contact<<std::endl;
 
 		mController = std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("cube"),detector, default_Num_contact, mWorld->getTimeStep()));
-
-		mController->setCubeVelocity(mController->mSpeed);
 	}
 
 	double MyMPC()
@@ -180,11 +185,16 @@ public:
 
 	void timeStepping() override
 	{
+		// guarantee the ball always has horizontal velocity
+		mController->setCubeVelocity(mController->mSpeed);
+
 		if (mController->collision_with_obstacles())
 		{
 			std::cout<<"collision with obstacles detected!"<<std::endl;
-			mController->setCubeVelocity(-0.2);
+			mController->setCubeVelocity(0);
 		}
+
+		mController->setCubeAcceleration();
 
 		SimWindow::timeStepping();
 	}
