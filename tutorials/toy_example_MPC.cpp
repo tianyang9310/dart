@@ -27,11 +27,11 @@ const double wall_length = floor_length;
 const double obstacle_radius = 0.05;
 const double obstacle_height = wall_height / 4.0;
 
-const double cube_length = 0.005;
+const double cube_length = 0.01;
 
 const double obstacle_2_wall = 2*wall_thickness;
 
-const double default_density = 1000;
+const double default_density = 2e3;
 
 class Controller
 {
@@ -44,101 +44,51 @@ public:
 
 		mAcceleration_random = 10;
 
-		mCube->getJoint(0)->setActuatorType(Joint::VELOCITY);
+		//mCube->getJoint(0)->setActuatorType(Joint::VELOCITY);
 
 		mVelocity_old_in_set_Acc_fun = 0;
 		mVelocity_new_in_set_Acc_fun = 0;
 
 		std::srand((unsigned int)time(NULL));
 	}
+
+	bool collision_with_obstacles()
+	{
+		bool collision = false;
+		size_t collision_count = mDetector->getNumContacts();
+		for (size_t i = 0; i< collision_count; ++i)
+		{
+			const dart::collision::Contact& contact = mDetector->getContact(i);
+			if (contact.bodyNode1.lock()->getName() == "obstacle1" || 
+				contact.bodyNode2.lock()->getName() == "obstacle1" || 
+				contact.bodyNode1.lock()->getName() == "obstacle2" || 
+				contact.bodyNode2.lock()->getName() == "obstacle2" ||
+				contact.bodyNode1.lock()->getName() == "obstacle3" || 
+				contact.bodyNode2.lock()->getName() == "obstacle3")
+			{
+				collision = true;
+				break;
+			}
+		}
+		std::cout<<collision<<std::endl;
+		return collision;
+	}
 	void setCubeVelocity()
 	{
-		// set horizontal velocity;
-		
-		mCube->getJoint(0)->setActuatorType(Joint::VELOCITY);
-
-		if (mDetector->getNumContacts() <= mdefault_Num_contact)
+		if (!collision_with_obstacles())
 		{
-			//mCube->getDof(0)->setVelocity(mSpeed);
-			
-			mCube->getDof(0)->setCommand(mSpeed);
-		
-		}
-		else
-		{
-			//mCube->getDof(0)->setVelocity(0);
-
-			mCube->getDof(0)->setCommand(0);
-
+			mCube->getDof(0)->setVelocity(mSpeed);
 		}
 	}
 
 	double setCubeAcceleration()
 	{
-		// set vertical acceleration
-
-		// using servo actuator type (input velocity) integrate on velocity
-		
-		mCube->getJoint(0)->setActuatorType(Joint::VELOCITY);
-
-		if (mDetector->getNumContacts() <= mdefault_Num_contact)
-		{
-			randomizeAcceleration();
-			mVelocity_new_in_set_Acc_fun = mVelocity_old_in_set_Acc_fun + mAcceleration * mTime_step_in_Acc_fun;
-
-			//mCube->getDof(1)->setVelocity(mVelocity_new_in_set_Acc_fun);
-
-			mCube->getDof(1)->setCommand(mVelocity_new_in_set_Acc_fun);
-
-			mVelocity_old_in_set_Acc_fun = mVelocity_new_in_set_Acc_fun;
-		}
-		else
-		{
-			//mCube->getDof(1)->setVelocity(0);
-
-			mCube->getDof(1)->setCommand(0);
-
-		}
-
-		// set Acceleration directly
-		/*
-		if (mDetector->getNumContacts() <= mdefault_Num_contact)
-		{
-			randomizeAcceleration();
-			mCube->getJoint(0)->setActuatorType(Joint::ACCELERATION);
-			mCube->getDof(1)->setAcceleration(mAcceleration);
-		}
-		*/
-
-		return mAcceleration;
+		return 0;
 	}
 
 
 	void setCubeAcceleration(double desire_Acceleration)
 	{
-		// set vertical acceleration based on desired acceleration passed into
-
-		// using servo actuator type (input velocity) integrate on velocity
-		
-		mCube->getJoint(0)->setActuatorType(Joint::VELOCITY);
-
-		if (mDetector->getNumContacts() <= mdefault_Num_contact)
-		{
-			mVelocity_new_in_set_Acc_fun = mVelocity_old_in_set_Acc_fun + desire_Acceleration * mTime_step_in_Acc_fun;
-
-			//mCube->getDof(1)->setVelocity(mVelocity_new_in_set_Acc_fun);
-
-			mCube->getDof(1)->setCommand(mVelocity_new_in_set_Acc_fun);
-
-			mVelocity_old_in_set_Acc_fun = mVelocity_new_in_set_Acc_fun;
-		}
-		else
-		{
-			//mCube->getDof(1)->setVelocity(0);
-
-			mCube->getDof(1)->setCommand(0);
-
-		}
 	}
 
 	void randomizeAcceleration()
@@ -176,6 +126,7 @@ public:
 		std::cout<<"Default number of contacts is "<<default_Num_contact<<std::endl;
 
 		mController = std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("cube"),detector, default_Num_contact, mWorld->getTimeStep()));
+		mController->setCubeVelocity();
 	}
 
 	double MyMPC()
@@ -219,13 +170,6 @@ public:
 
 	void timeStepping() override
 	{
-		mController->setCubeVelocity();
-		mController->setCubeAcceleration(MyMPC());
-
-		if (detector->getNumContacts() != default_Num_contact)
-		{
-			std::cout<<detector->getNumContacts();	
-		}
 
 		SimWindow::timeStepping();
 	}
@@ -248,42 +192,45 @@ protected:
 
 SkeletonPtr createFloor()
 {
-	SkeletonPtr floor = Skeleton::create("floor");
+	SkeletonPtr environment = Skeleton::create("environment");
 
 	// create a bodynode 
-	BodyNodePtr body = floor->createJointAndBodyNodePair<WeldJoint>().second;
+	BodyNodePtr floor = environment->createJointAndBodyNodePair<WeldJoint>().second;
+
+	floor->setName("floor");
 
 	// attach a shape
 	std::shared_ptr<BoxShape> box = std::make_shared<BoxShape>(
 			Eigen::Vector3d(floor_length, floor_length/2.0, floor_height));
 	box->setColor(dart::Color::Gray(0.3));
-	body->addVisualizationShape(box);
-	body->addCollisionShape(box);
+	floor->addVisualizationShape(box);
+	floor->addCollisionShape(box);
 
 	// set inertia
 	dart::dynamics::Inertia inertia;
 	inertia.setMass(default_density * box->getVolume());
 	inertia.setMoment(box->computeInertia(inertia.getMass()));
-	body->setInertia(inertia);
+	floor->setInertia(inertia);
 
 	// put the body into the right position
 	Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
 	tf.translation() = Eigen::Vector3d(0.0, 0.0, -floor_height / 2.0);
-	body->getParentJoint()->setTransformFromParentBodyNode(tf);
+	floor->getParentJoint()->setTransformFromParentBodyNode(tf);
 
-	return floor;
+	return environment;
 }
 
-SkeletonPtr createWall(int wall_index)
+BodyNodePtr addWall(const SkeletonPtr& environment, BodyNodePtr parent, int wall_index)
 {
+	WeldJoint::Properties properties;
+	properties.mName = "wall_weld_joint" + std::to_string(wall_index);
+
 	int flag1, flag2;
 	flag1 = 2* ((wall_index - 1) / 2) -1;
 	flag2 = 2* ((wall_index - 1 ) % 2) -1;
 
-	SkeletonPtr wall = Skeleton::create("wall"+std::to_string(wall_index));
-
 	// create a bodynode
-	BodyNodePtr body = wall->createJointAndBodyNodePair<WeldJoint>().second;
+	BodyNodePtr wall = environment->createJointAndBodyNodePair<WeldJoint>(parent, properties, BodyNode::Properties("wall"+std::to_string(wall_index))).second;
 
 	// attach a shape
 	if( flag1 == -1)
@@ -291,28 +238,28 @@ SkeletonPtr createWall(int wall_index)
 		std::shared_ptr<BoxShape> box = std::make_shared<BoxShape>(
 			Eigen::Vector3d(wall_thickness, wall_length/2.0, wall_height));
 		box->setColor(dart::Color::Gray(transparency));
-		body->addVisualizationShape(box);
-		body->addCollisionShape(box);
+		wall->addVisualizationShape(box);
+		wall->addCollisionShape(box);
 		
 		// set inertia
 		dart::dynamics::Inertia inertia;
 		inertia.setMass(default_density * box->getVolume());
 		inertia.setMoment(box->computeInertia(inertia.getMass()));
-		body->setInertia(inertia);
+		wall->setInertia(inertia);
 	}
 	else
 	{
 		std::shared_ptr<BoxShape> box = std::make_shared<BoxShape>(
 			Eigen::Vector3d(wall_length - 2*wall_thickness, wall_thickness, wall_height));
 		box->setColor(dart::Color::Fuschia(transparency));
-		body->addVisualizationShape(box);
-		body->addCollisionShape(box);
+		wall->addVisualizationShape(box);
+		wall->addCollisionShape(box);
 
 		// set inertia
 		dart::dynamics::Inertia inertia;
 		inertia.setMass(default_density * box->getVolume());
 		inertia.setMoment(box->computeInertia(inertia.getMass()));
-		body->setInertia(inertia);
+		wall->setInertia(inertia);
 	}
 
 	// put the body node into the right position
@@ -325,18 +272,18 @@ SkeletonPtr createWall(int wall_index)
 	{
 		tf.translation() = Eigen::Vector3d(0.0, flag2 * (floor_length / 4.0 -wall_thickness /2.0), wall_height / 2.0);
 	}
-	body->getParentJoint()->setTransformFromParentBodyNode(tf);
+	wall->getParentJoint()->setTransformFromParentBodyNode(tf);
 
 	return wall;
 }
 
-SkeletonPtr createObstacle(int obstacle_index)
+BodyNodePtr addObstacle(const SkeletonPtr& environment, BodyNodePtr parent, int obstacle_index)
 {
-	// create a skeleton
-	SkeletonPtr obstacle = Skeleton::create("obstacle"+std::to_string(obstacle_index));
+	WeldJoint::Properties properties;
+	properties.mName = "obstacle_weld_joint" + std::to_string(obstacle_index);
 
 	// create a bodynode
-	BodyNodePtr body = obstacle->createJointAndBodyNodePair<WeldJoint>().second;
+	BodyNodePtr obstacle = environment->createJointAndBodyNodePair<WeldJoint>(parent, properties, BodyNode::Properties("obstacle"+std::to_string(obstacle_index))).second;
 
 	// create the shape
 	if (obstacle_index <2)
@@ -344,26 +291,26 @@ SkeletonPtr createObstacle(int obstacle_index)
 		std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(
 				obstacle_radius, obstacle_height);
 		cylinder->setColor(dart::Color::Red(transparency));
-		body->addVisualizationShape(cylinder);
-		body->addCollisionShape(cylinder);
+		obstacle->addVisualizationShape(cylinder);
+		obstacle->addCollisionShape(cylinder);
 		// set inertia
 		dart::dynamics::Inertia inertia;
 		inertia.setMass(2 * default_density * cylinder->getVolume());
 		inertia.setMoment(cylinder->computeInertia(inertia.getMass()));
-		body->setInertia(inertia);
+		obstacle->setInertia(inertia);
 	}
 	else
 	{
 		std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(
 				obstacle_radius/2.0, obstacle_height);
 		cylinder->setColor(dart::Color::Red(transparency));
-		body->addVisualizationShape(cylinder);
-		body->addCollisionShape(cylinder);
+		obstacle->addVisualizationShape(cylinder);
+		obstacle->addCollisionShape(cylinder);
 		// set inertia
 		dart::dynamics::Inertia inertia;
 		inertia.setMass(2 * default_density * cylinder->getVolume());
 		inertia.setMoment(cylinder->computeInertia(inertia.getMass()));
-		body->setInertia(inertia);
+		obstacle->setInertia(inertia);
 	}
 
 	// put it in the position
@@ -377,7 +324,7 @@ SkeletonPtr createObstacle(int obstacle_index)
 		tf.translation() = Eigen::Vector3d(((obstacle_index - 2.5)*2)*floor_length/4.0, floor_length/4 - obstacle_radius/2.0 - obstacle_2_wall , obstacle_height/2.0);
 	}
 
-	body->getParentJoint()->setTransformFromParentBodyNode(tf);
+	obstacle->getParentJoint()->setTransformFromParentBodyNode(tf);
 
 	return obstacle;
 }
@@ -391,18 +338,19 @@ SkeletonPtr createCube()
 	BodyNodePtr body = cube->createJointAndBodyNodePair<PlanarJoint>().second;
 
 	// create a shape
-	std::shared_ptr<BoxShape> box = std::make_shared<BoxShape>(
+	std::shared_ptr<EllipsoidShape> ball = std::make_shared<EllipsoidShape>(
 				Eigen::Vector3d(cube_length, cube_length, cube_length));
-	box->setColor(dart::Color::Black(2*transparency));
-	body->addVisualizationShape(box);
-	body->addCollisionShape(box);
+	ball->setColor(dart::Color::Black(2*transparency));
+	body->addVisualizationShape(ball);
+	body->addCollisionShape(ball);
 	
 
 	// set inertia
 	dart::dynamics::Inertia inertia;
-	inertia.setMass(0.5 * default_density * box->getVolume());
-	inertia.setMoment(box->computeInertia(inertia.getMass()));
+	inertia.setMass(2 * default_density * ball->getVolume());
+	inertia.setMoment(ball->computeInertia(inertia.getMass()));
 	body->setInertia(inertia);
+	std::cout<<"The mass of the ball is "<<cube->getMass()<<std::endl;
 
 	// put it in the right position
 	Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
@@ -419,25 +367,19 @@ SkeletonPtr createCube()
 int main(int argc, char* argv[])
 {
 	std::cout<<"This is a toy example for Model Predictive Control"<<std::endl;
-	SkeletonPtr floor = createFloor();
-	SkeletonPtr wall_1 = createWall(1);
-	SkeletonPtr wall_2 = createWall(2);
-	SkeletonPtr wall_3 = createWall(3);
-	SkeletonPtr wall_4 = createWall(4);
-	SkeletonPtr obstacle_1 = createObstacle(1);
-	SkeletonPtr obstacle_2 = createObstacle(2);
-	SkeletonPtr obstacle_3 = createObstacle(3);
+	SkeletonPtr environment = createFloor();
+	addWall(environment, environment->getBodyNode("floor"),1);
+	addWall(environment, environment->getBodyNode("floor"),2);
+	addWall(environment, environment->getBodyNode("floor"),3);
+	addWall(environment, environment->getBodyNode("floor"),4);
+	addObstacle(environment, environment->getBodyNode("floor"),1);
+	addObstacle(environment, environment->getBodyNode("floor"),2);
+	addObstacle(environment, environment->getBodyNode("floor"),3);
+	
 	SkeletonPtr cube = createCube();
 
 	WorldPtr world = std::make_shared<World>();
-	world->addSkeleton(floor);
-	world->addSkeleton(wall_1);
-	world->addSkeleton(wall_2);
-	world->addSkeleton(wall_3);
-	world->addSkeleton(wall_4);
-	world->addSkeleton(obstacle_1);
-	world->addSkeleton(obstacle_2);
-	world->addSkeleton(obstacle_3);
+	world->addSkeleton(environment);
 	world->addSkeleton(cube);
 
 	MyWindow window(world);
