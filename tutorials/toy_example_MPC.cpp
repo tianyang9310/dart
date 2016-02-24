@@ -19,7 +19,7 @@ using namespace dart::gui;
 
 const double transparency = 0.3;
 
-const double floor_length = 0.4;
+const double floor_length = 0.8;
 const double floor_height = 0.01;
 const double wall_height = floor_length / 8.0;
 const double wall_thickness = floor_height;
@@ -39,10 +39,10 @@ public:
 	Controller(const SkeletonPtr& cube, dart::collision::CollisionDetector* detector, size_t default_Num_contact, double time_step)
 		:mCube(cube),mDetector(detector),mdefault_Num_contact(default_Num_contact), mTime_step_in_Acc_fun(time_step)
 	{
-		mAcceleration = 0.05;
+		mAcceleration = 10;
 		mSpeed = 0.2; 
 
-		mAcceleration_random = 5;
+		mAcceleration_random = 10;
 
 		//mCube->getJoint(0)->setActuatorType(Joint::VELOCITY);
 
@@ -142,12 +142,13 @@ public:
 		std::cout<<"Default number of contacts is "<<default_Num_contact<<std::endl;
 
 		mController = std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("cube"),detector, default_Num_contact, mWorld->getTimeStep()));
+		mController->setCubeVelocity(mController->mSpeed);
 	}
 
 	double MyMPC()
 	{
-		int num_samples = 10;
-		int plan_horizon = 10;
+		int num_samples = 50;
+		int plan_horizon = 200;
 		double desire_Acceleration = 0;
 		
 		double position_record_dof_0 = mWorld->getSkeleton("cube")->getDof(0)->getPosition();
@@ -169,7 +170,7 @@ public:
 
 		// save the world
 		// have best_acceleration vector and cost vector
-		// cost vector is based on the number of contacts.
+		// cost vector is based on the time get collision
 		for (int i = 0; i<num_samples; i++)
 		{
 			// states of the skeleton will not be cloned?
@@ -233,10 +234,10 @@ public:
 		if (mController->collision_with_obstacles())
 		{
 			std::cout<<"collision with obstacles detected!"<<std::endl;
-			mController->setCubeVelocity(0);
+			//mController->setCubeVelocity(0);
 		}
 
-		mController->setCubeAcceleration(MyMPC());
+		mController->setCubeAcceleration();
 
 		SimWindow::timeStepping();
 	}
@@ -355,8 +356,8 @@ BodyNodePtr addObstacle(const SkeletonPtr& environment, BodyNodePtr parent, int 
 	// create the shape
 	if (obstacle_index <2)
 	{
-		std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(
-				obstacle_radius, obstacle_height);
+		//std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(obstacle_radius, obstacle_height);
+		std::shared_ptr<BoxShape> cylinder = std::make_shared<BoxShape>(Eigen::Vector3d(0.5*obstacle_radius, 2.0*obstacle_radius, obstacle_height));
 		cylinder->setColor(dart::Color::Red(transparency));
 		obstacle->addVisualizationShape(cylinder);
 		obstacle->addCollisionShape(cylinder);
@@ -368,8 +369,8 @@ BodyNodePtr addObstacle(const SkeletonPtr& environment, BodyNodePtr parent, int 
 	}
 	else
 	{
-		std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(
-				obstacle_radius/2.0, obstacle_height);
+		//std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(obstacle_radius/2.0, obstacle_height);
+		std::shared_ptr<BoxShape> cylinder = std::make_shared<BoxShape>(Eigen::Vector3d(0.5*obstacle_radius, 2*obstacle_radius, obstacle_height));
 		cylinder->setColor(dart::Color::Red(transparency));
 		obstacle->addVisualizationShape(cylinder);
 		obstacle->addCollisionShape(cylinder);
@@ -405,8 +406,8 @@ SkeletonPtr createCube()
 	BodyNodePtr body = cube->createJointAndBodyNodePair<PlanarJoint>().second;
 
 	// create a shape
-	std::shared_ptr<EllipsoidShape> ball = std::make_shared<EllipsoidShape>(
-				Eigen::Vector3d(cube_length, cube_length, cube_length));
+	//std::shared_ptr<BoxShape> ball = std::make_shared<BoxShape>(Eigen::Vector3d(cube_length, cube_length, cube_length));
+	std::shared_ptr<EllipsoidShape> ball = std::make_shared<EllipsoidShape>(Eigen::Vector3d(cube_length, cube_length, cube_length));
 	ball->setColor(dart::Color::Black(2*transparency));
 	body->addVisualizationShape(ball);
 	body->addCollisionShape(ball);
@@ -450,6 +451,7 @@ int main(int argc, char* argv[])
 	world->addSkeleton(cube);
 
 	MyWindow window(world);
+	std::cout<<"The world gravity is "<<std::endl<<world->getGravity()<<std::endl;
 
 	glutInit(&argc, argv);
 	window.initWindow(640, 480, "A toy example for Model Predictive Control");
