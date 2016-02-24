@@ -19,7 +19,7 @@ using namespace dart::gui;
 
 const double transparency = 0.3;
 
-const double floor_length = 0.8;
+const double floor_length = 0.4;
 const double floor_height = 0.01;
 const double wall_height = floor_length / 8.0;
 const double wall_thickness = floor_height;
@@ -39,10 +39,9 @@ public:
 	Controller(const SkeletonPtr& cube, dart::collision::CollisionDetector* detector, size_t default_Num_contact, double time_step)
 		:mCube(cube),mDetector(detector),mdefault_Num_contact(default_Num_contact), mTime_step_in_Acc_fun(time_step)
 	{
-		mAcceleration = 10;
 		mSpeed = 0.2; 
 
-		mAcceleration_random = 10;
+		mAcceleration_random = 0.2;
 
 		//mCube->getJoint(0)->setActuatorType(Joint::VELOCITY);
 
@@ -60,7 +59,6 @@ public:
 		{
 			const dart::collision::Contact& contact = mDetector->getContact(i);
 
-			/*
 			if ((contact.bodyNode1.lock()->getName() == "obstacle1" && 
 						contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
 				(contact.bodyNode2.lock()->getName() == "obstacle1" && 
@@ -73,9 +71,8 @@ public:
 						contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
 				(contact.bodyNode2.lock()->getName() == "obstacle3" && 
 						contact.bodyNode1.lock()->getSkeleton()->getName() == "cube"))
-			*/
-			if (contact.bodyNode1.lock()->getSkeleton()->getName() == "cube" ||
-					contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")
+			/*if (contact.bodyNode1.lock()->getSkeleton()->getName() == "cube" ||
+					contact.bodyNode2.lock()->getSkeleton()->getName() == "cube") */
 			{
 				collision = true;
 				break;
@@ -133,7 +130,7 @@ public:
 	MyWindow(const WorldPtr& world)
 	{
 		setWorld(world);
-
+		mWorld->getConstraintSolver()->setCollisionDetector(new dart::collision::BulletCollisionDetector());
 		detector = mWorld->getConstraintSolver()->getCollisionDetector();
 		detector->detectCollision(true, true);
 
@@ -194,7 +191,7 @@ public:
 				mController->setCubeAcceleration();
 				if (mController->collision_with_obstacles())
 				{
-					std::cout<<"collision with obstacles detected!"<<std::endl;
+					std::cout<<"collision with OBSTACLES detected!"<<std::endl;
 					mController->setCubeVelocity(0);
 					mWorld->getSkeleton("cube")->getDof(0)->setPosition(position_record_dof_0);
 					mWorld->getSkeleton("cube")->getDof(1)->setPosition(position_record_dof_1);
@@ -356,8 +353,8 @@ BodyNodePtr addObstacle(const SkeletonPtr& environment, BodyNodePtr parent, int 
 	// create the shape
 	if (obstacle_index <2)
 	{
-		//std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(obstacle_radius, obstacle_height);
-		std::shared_ptr<BoxShape> cylinder = std::make_shared<BoxShape>(Eigen::Vector3d(0.5*obstacle_radius, 2.0*obstacle_radius, obstacle_height));
+		std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(obstacle_radius, obstacle_height);
+		//std::shared_ptr<BoxShape> cylinder = std::make_shared<BoxShape>(Eigen::Vector3d(0.5*obstacle_radius, 2.0*obstacle_radius, obstacle_height));
 		cylinder->setColor(dart::Color::Red(transparency));
 		obstacle->addVisualizationShape(cylinder);
 		obstacle->addCollisionShape(cylinder);
@@ -369,8 +366,8 @@ BodyNodePtr addObstacle(const SkeletonPtr& environment, BodyNodePtr parent, int 
 	}
 	else
 	{
-		//std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(obstacle_radius/2.0, obstacle_height);
-		std::shared_ptr<BoxShape> cylinder = std::make_shared<BoxShape>(Eigen::Vector3d(0.5*obstacle_radius, 2*obstacle_radius, obstacle_height));
+		std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(obstacle_radius/2.0, obstacle_height);
+		//std::shared_ptr<BoxShape> cylinder = std::make_shared<BoxShape>(Eigen::Vector3d(0.5*obstacle_radius, 2*obstacle_radius, obstacle_height));
 		cylinder->setColor(dart::Color::Red(transparency));
 		obstacle->addVisualizationShape(cylinder);
 		obstacle->addCollisionShape(cylinder);
@@ -406,8 +403,8 @@ SkeletonPtr createCube()
 	BodyNodePtr body = cube->createJointAndBodyNodePair<PlanarJoint>().second;
 
 	// create a shape
-	//std::shared_ptr<BoxShape> ball = std::make_shared<BoxShape>(Eigen::Vector3d(cube_length, cube_length, cube_length));
-	std::shared_ptr<EllipsoidShape> ball = std::make_shared<EllipsoidShape>(Eigen::Vector3d(cube_length, cube_length, cube_length));
+	std::shared_ptr<BoxShape> ball = std::make_shared<BoxShape>(Eigen::Vector3d(cube_length, cube_length, cube_length));
+	//std::shared_ptr<EllipsoidShape> ball = std::make_shared<EllipsoidShape>(Eigen::Vector3d(cube_length, cube_length, cube_length));
 	ball->setColor(dart::Color::Black(2*transparency));
 	body->addVisualizationShape(ball);
 	body->addCollisionShape(ball);
