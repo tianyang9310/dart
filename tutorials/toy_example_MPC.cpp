@@ -191,13 +191,13 @@ public:
 				mController->setCubeAcceleration();
 				if (mController->collision_with_obstacles())
 				{
-					std::cout<<"collision with OBSTACLES detected!"<<std::endl;
+					//std::cout<<"collision with OBSTACLES detected!"<<std::endl;
 					mController->setCubeVelocity(0);
 					mWorld->getSkeleton("cube")->getDof(0)->setPosition(position_record_dof_0);
 					mWorld->getSkeleton("cube")->getDof(1)->setPosition(position_record_dof_1);
 					mWorld->getSkeleton("cube")->getDof(2)->setPosition(position_record_dof_2);	
 					cost_array[i] = mWorld->getTime() - time_start;
-					std::cout<<cost_array[i]<<std::endl;
+					//std::cout<<cost_array[i]<<std::endl;
 					//std::cin.get();
 					break;
 				}

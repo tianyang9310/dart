@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <OutDir>$(ProjectDir)\..\Bin\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IntDir>$(Platform)$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\ThirdParty\Eigen;$(ProjectDir)..\ThirdParty\dxsdkaug2009\Include;$(ProjectDir)..\Framework\Include;$(ProjectDir);$(ProjectDir)..\ThirdParty\opencv-2.4.9\modules\core\include;$(ProjectDir)..\ThirdParty\opencv-2.4.9\modules\imgproc\include;$(ProjectDir)..\ThirdParty\opencv-2.4.9\modules\highgui\include;$(ProjectDir)\..\ThirdParty\vmmlib\include;$(ProjectDir)\..\ThirdParty\freetype_nehe;$(ProjectDir)\..\ThirdParty\ode-0.12\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <PreprocessorDefinitions>WIN32;_DEBUG;NOMINMAX;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(TargetPath)</OutputFile>
+    </Link>
+    <Link>
+      <AdditionalLibraryDirectories>$(ProjectDir)\Libs;$(ProjectDir)\..\ThirdParty\opencv-2.4.9\vs2012\lib\debug;$(ProjectDir)\..\ThirdParty\freetype_nehe\freetype\lib;$(ProjectDir)\..\ThirdParty\ode-0.12\lib\debugsinglelib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ode_singled.lib;opencv_core249d.lib;opencv_imgproc249d.lib;opencv_highgui249d.lib;libfreetype.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ProgramDatabaseFile>$(TargetDir)\$(TargetName).pdb</ProgramDatabaseFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
