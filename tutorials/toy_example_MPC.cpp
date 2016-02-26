@@ -198,7 +198,7 @@ public:
 		//initialize the optimizer
 		AaltoGames::ControlPBP pbp;
 		const int nSamples = 20;	//N in the paper
-		int nTimeSteps     = 300;		//K in the paper, resulting in a 0.5s planning horizon
+		int nTimeSteps     = 100;		//K in the paper, resulting in a 0.5s planning horizon
 		//const float PI=3.1416f;	
 		const int nStateDimensions=6;
 		const int nControlDimensions=1;
