@@ -9,6 +9,8 @@
 #include <time.h>
 #include <vector>
 #include <algorithm>
+#include "ControlPBP/ControlPBP.h"
+#include "ControlPBP/Eigen/Eigen"
 
 using namespace dart::common;
 using namespace dart::utils;
