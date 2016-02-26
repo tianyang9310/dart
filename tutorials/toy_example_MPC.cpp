@@ -41,6 +41,8 @@ public:
 	Controller(const SkeletonPtr& cube, dart::collision::CollisionDetector* detector, size_t default_Num_contact, double time_step)
 		:mCube(cube),mDetector(detector),mdefault_Num_contact(default_Num_contact), mTime_step_in_Acc_fun(time_step)
 	{
+		gain = 4;
+
 		mSpeed = 0.2; 
 
 		mAcceleration_random = 2;
@@ -133,6 +135,8 @@ protected:
 	
 	dart::collision::CollisionDetector* mDetector;
 	size_t mdefault_Num_contact;
+
+	double gain;
 };
 
 class MyWindow : public dart::gui::SimWindow
@@ -151,6 +155,143 @@ public:
 
 		mController = std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("cube"),detector, default_Num_contact, mWorld->getTimeStep()));
 		mController->setCubeVelocity(mController->mSpeed);
+	}
+
+	int simulateCube(float *state, float controlAcceleration, float *nextState)
+	{
+		int collision = 0;
+		mWorld->getSkeleton("cube")->getDof(0)->setPosition(state[0]);
+		mWorld->getSkeleton("cube")->getDof(1)->setPosition(state[1]);
+		mWorld->getSkeleton("cube")->getDof(2)->setPosition(state[2]);	
+		mWorld->getSkeleton("cube")->getDof(0)->setVelocity(state[3]);	
+		mWorld->getSkeleton("cube")->getDof(1)->setVelocity(state[4]);	
+		mWorld->getSkeleton("cube")->getDof(2)->setVelocity(state[5]);	
+		mController->setCubeVelocity( mController->gain * mController->mSpeed);
+		mController->setCubeAcceleration(controlAcceleration);
+		mWorld->step();
+		double position_record_dof_0 = mWorld->getSkeleton("cube")->getDof(0)->getPosition();
+		double position_record_dof_1 = mWorld->getSkeleton("cube")->getDof(1)->getPosition();
+		double position_record_dof_2 = mWorld->getSkeleton("cube")->getDof(2)->getPosition();
+		double velocity_record_dof_0 = mWorld->getSkeleton("cube")->getDof(0)->getVelocity();
+		double velocity_record_dof_1 = mWorld->getSkeleton("cube")->getDof(1)->getVelocity();
+		double velocity_record_dof_2 = mWorld->getSkeleton("cube")->getDof(2)->getVelocity();
+		nextState[0] = position_record_dof_0; 
+		nextState[1] = position_record_dof_1; 
+		nextState[2] = position_record_dof_2; 
+		nextState[3] = velocity_record_dof_0; 
+		nextState[4] = velocity_record_dof_1; 
+		nextState[5] = velocity_record_dof_2; 
+		if (mController->collision_with_obstacles())
+		{
+			collision = 1;
+		}
+		return collision;
+	}
+
+	double MyControlPBP()
+	{
+		//srand ((unsigned int)time(NULL));
+
+		//global parameters
+		float timeStep=mWorld->getTimeStep();
+
+		//initialize the optimizer
+		AaltoGames::ControlPBP pbp;
+		const int nSamples = 20;	//N in the paper
+		int nTimeSteps     = 100;		//K in the paper, resulting in a 0.5s planning horizon
+		//const float PI=3.1416f;	
+		const int nStateDimensions=6;
+		const int nControlDimensions=1;
+		float minControl=-mController->mAcceleration_random;	//lower sampling bound
+		float maxControl=mController->mAcceleration_random;		//upper sampling bound
+		float controlMean=0;	//we're using torque as the control, makes sense to have zero mean
+		//Square root of the diagonal elements of C_u in the paper, i.e., stdev of a Gaussian prior for control.
+		//Note that the optimizer interface does not have the C_u as a parameter, and instead uses meand and stdev arrays as parameters. 
+		//The 3D character tests compute the C_u on the Unity side to reduce the number of effective parameters, and then compute the arrays based on it as described to correspond to the products \sigma_0 C_u etc.
+		float C=10;	
+		float controlStd=1.0f*C;	//sqrt(\sigma_{0}^2 C_u) of the paper (we're not explicitly specifying C_u as u is a scalar here). In effect, a "tolerance" for torque minimization in this test
+		float controlDiffStd=1.0f*C;	//sqrt(\sigma_{1}^2 C_u) in the paper. In effect, a "tolerance" for angular jerk minimization in this test
+		float controlDiffDiffStd=100.0f*C; //sqrt(\sigma_{2}^2 C_u) in the paper. A large value to have no effect in this test.
+		float stateStd[6]={0, 0.05f*PI, 0, 0, 0.1f*PI, 0};	//square roots of the diagonal elements of Q in the paper
+		//float* stateStd = NULL;
+		float mutationScale=0.25f;		//\sigma_m in the paper
+		pbp.init(nSamples,nTimeSteps,nStateDimensions,nControlDimensions,&minControl,&maxControl,&controlMean,&controlStd,&controlDiffStd,&controlDiffDiffStd,mutationScale,stateStd);
+
+		//set further params: portion of "no prior" samples, resampling threshold, whether to use the backwards smoothing pass, and the regularization of the smoothing pass
+		pbp.setParams(0.1f,0.5f,true,0.001f);  
+
+		//allocate simulation states
+		float state[nSamples][nStateDimensions];
+		float nextState[nSamples][nStateDimensions];
+
+		double position_record_dof_0 = mWorld->getSkeleton("cube")->getDof(0)->getPosition();
+		double position_record_dof_1 = mWorld->getSkeleton("cube")->getDof(1)->getPosition();
+		double position_record_dof_2 = mWorld->getSkeleton("cube")->getDof(2)->getPosition();
+		double velocity_record_dof_0 = mWorld->getSkeleton("cube")->getDof(0)->getVelocity();
+		double velocity_record_dof_1 = mWorld->getSkeleton("cube")->getDof(1)->getVelocity();
+		double velocity_record_dof_2 = mWorld->getSkeleton("cube")->getDof(2)->getVelocity();
+
+		float masterState[6];
+		masterState[0] = position_record_dof_0; 
+		masterState[1] = position_record_dof_1; 
+		masterState[2] = position_record_dof_2; 
+		masterState[3] = velocity_record_dof_0; 
+		masterState[4] = velocity_record_dof_1; 
+		masterState[5] = velocity_record_dof_2; 
+
+		//signal the start of new C-PBP iteration
+		pbp.startIteration(true,masterState);
+		//init all random walker states to the master state
+		for (int i=0; i<nSamples; i++)
+		{
+			std::memcpy(&state[i],masterState,sizeof(float)*nStateDimensions);
+		}
+
+		//simulate forward 
+		for (int k=0; k<nTimeSteps; k++)
+		{
+			//signal the start of a planning step
+			pbp.startPlanningStep(k);
+			//NOTE: for multithreaded operation, one would typically run each iteration of the following loop in a separate thread. 
+			//The getControl(), getPreviousSampleIdx(), and updateResults() methods of the optimizer are thread-safe. Regarding the physics simulation,
+			//one would typically have a separate instance of the whole physics world for each thread, with full physics state stored/loaded similar to the state and nextState arrays here.
+			for (int i=0; i<nSamples; i++)
+			{
+				//get control from C-PBP
+				float control;
+				pbp.getControl(i,&control);
+
+				//get the mapping from this to previous state (affected by resampling operations)
+				int previousStateIdx=pbp.getPreviousSampleIdx(i);
+
+				//simulate to get next state.
+				int collision_checkout = simulateCube(state[previousStateIdx],control,nextState[i]);
+
+				//evaluate state cost
+				float cost=AaltoGames::squared(nextState[i][1] /* *10.0f */) + AaltoGames::squared(control /* *10.0f */) + collision_checkout * 100;
+
+				//store the state and cost to C-PBP. Note that in general, the stored state does not need to contain full simulation state as in this simple case.
+				//instead, one may use arbitrary state features
+				pbp.updateResults(i,&control,nextState[i],cost);
+			}
+			//update all states, will be used at the next step
+			std::memcpy(state,nextState,sizeof(state));
+
+			//signal the end of the planning step. this normalizes the state costs etc. for the next step
+			pbp.endPlanningStep(k);
+
+		}
+		//signal the end of an iteration. this also executes the backwards smoothing pass
+		pbp.endIteration();
+
+//		Eigen::MatrixXf tmpSC = pbp.stateAndControlToMatrix();
+//		printStatsToFile(fileForStatesAndControls,tmpSC);
+
+		//deploy the best control found
+		float control;
+		pbp.getBestControl(0,&control);
+
+		return control;
 	}
 
 	double MyMPC()
@@ -185,13 +326,13 @@ public:
 			mWorld->getSkeleton("cube")->getDof(1)->setVelocity(velocity_record_dof_1);	
 			mWorld->getSkeleton("cube")->getDof(2)->setVelocity(velocity_record_dof_2);	
 
-			mController->setCubeVelocity(4 * mController->mSpeed);
+			mController->setCubeVelocity(mController->gain * mController->mSpeed);
 			acceleration_array[i] = mController->setCubeAcceleration();
 			for (int j = 0; j<plan_horizon; j++)
 			{
 				mWorld->step();
 				// whether need to maginify the horizontal velocity
-				mController->setCubeVelocity( 4 * mController->mSpeed);
+				mController->setCubeVelocity( mController->gain * mController->mSpeed);
 				mController->setCubeAcceleration();
 				
 				if (mController->collision_with_obstacles())
@@ -227,7 +368,7 @@ public:
 			//mController->setCubeVelocity(0);
 		}
 
-		mController->setCubeAcceleration(MyMPC());
+		mController->setCubeAcceleration(MyControlPBP());
 
 		// the direction of each dof of planar joint
 		//std::cout<<mWorld->getSkeleton("cube")->getJoint(0)->getTranslationalAxis1()<<std::endl;
