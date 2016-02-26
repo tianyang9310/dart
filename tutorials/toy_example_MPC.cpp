@@ -27,11 +27,11 @@ const double wall_height = floor_length / 8.0;
 const double wall_thickness = floor_height;
 const double wall_length = floor_length;
 const double obstacle_radius = 0.05;
-const double obstacle_height = wall_height / 4.0;
+const double obstacle_height = wall_height / 2.0;
 
-const double cube_length = 0.01;
+const double cube_length = 0.005;
 
-const double obstacle_2_wall = 2*wall_thickness;
+const double obstacle_2_wall = 2.5*wall_thickness;
 
 const double default_density = 2e3;
 
@@ -43,7 +43,7 @@ public:
 	{
 		mSpeed = 0.2; 
 
-		mAcceleration_random = 0.2;
+		mAcceleration_random = 2;
 
 		//mCube->getJoint(0)->setActuatorType(Joint::VELOCITY);
 
@@ -72,11 +72,20 @@ public:
 				(contact.bodyNode1.lock()->getName() == "obstacle3" && 
 						contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
 				(contact.bodyNode2.lock()->getName() == "obstacle3" && 
+						contact.bodyNode1.lock()->getSkeleton()->getName() == "cube")||
+				(contact.bodyNode1.lock()->getName() == "wall_weld_joint3" && 
+						contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
+				(contact.bodyNode2.lock()->getName() == "wall_weld_joint3" && 
+						contact.bodyNode1.lock()->getSkeleton()->getName() == "cube")||
+				(contact.bodyNode1.lock()->getName() == "wall_weld_joint4" && 
+						contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
+				(contact.bodyNode2.lock()->getName() == "wall_weld_joint4" && 
 						contact.bodyNode1.lock()->getSkeleton()->getName() == "cube"))
 			/*if (contact.bodyNode1.lock()->getSkeleton()->getName() == "cube" ||
 					contact.bodyNode2.lock()->getSkeleton()->getName() == "cube") */
 			{
 				collision = true;
+				//std::cout<<"collision with OBSTACLES detected!"<<std::endl;
 				break;
 			}
 		}
@@ -84,10 +93,10 @@ public:
 	}
 	void setCubeVelocity(double speed)
 	{
-		if (!collision_with_obstacles())
-		{
+		//if (!collision_with_obstacles())
+		//{
 			mCube->getDof(0)->setVelocity(speed);
-		}
+		//}
 	}
 
 	double setCubeAcceleration()
@@ -146,8 +155,8 @@ public:
 
 	double MyMPC()
 	{
-		int num_samples = 50;
-		int plan_horizon = 200;
+		int num_samples = 20;
+		int plan_horizon = 500;
 		double desire_Acceleration = 0;
 		
 		double position_record_dof_0 = mWorld->getSkeleton("cube")->getDof(0)->getPosition();
@@ -157,8 +166,6 @@ public:
 		double velocity_record_dof_1 = mWorld->getSkeleton("cube")->getDof(1)->getVelocity();
 		double velocity_record_dof_2 = mWorld->getSkeleton("cube")->getDof(2)->getVelocity();
 
-		//std::vector<WorldPtr> world_array(num_samples);
-		//std::vector<std::unique_ptr<Controller>> controller_array(num_samples);
 		std::vector<double> acceleration_array(num_samples);
 		std::vector<double> cost_array(num_samples);
 	
@@ -167,14 +174,8 @@ public:
 			cost_array[i] = plan_horizon * mWorld->getTimeStep();
 		}
 
-		// save the world
-		// have best_acceleration vector and cost vector
-		// cost vector is based on the time get collision
 		for (int i = 0; i<num_samples; i++)
 		{
-			// states of the skeleton will not be cloned?
-			//world_array[i] = mWorld->clone();
-			
 			double time_start = mWorld->getTime();
 
 			mWorld->getSkeleton("cube")->getDof(0)->setPosition(position_record_dof_0);
@@ -189,28 +190,18 @@ public:
 			for (int j = 0; j<plan_horizon; j++)
 			{
 				mWorld->step();
-				mController->setCubeVelocity(4 * mController->mSpeed);
+				// whether need to maginify the horizontal velocity
+				mController->setCubeVelocity( 4 * mController->mSpeed);
 				mController->setCubeAcceleration();
+				
 				if (mController->collision_with_obstacles())
 				{
 					//std::cout<<"collision with OBSTACLES detected!"<<std::endl;
-					mController->setCubeVelocity(0);
-					mWorld->getSkeleton("cube")->getDof(0)->setPosition(position_record_dof_0);
-					mWorld->getSkeleton("cube")->getDof(1)->setPosition(position_record_dof_1);
-					mWorld->getSkeleton("cube")->getDof(2)->setPosition(position_record_dof_2);	
 					cost_array[i] = mWorld->getTime() - time_start;
-					//std::cout<<cost_array[i]<<std::endl;
-					//std::cin.get();
 					break;
 				}
 			}
 		}
-
-		
-	//	for (int i = 0; i<num_samples;i++)
-	//	{
-	//		std::cout<<cost_array[i]<<" ";
-	//	}
 
 		desire_Acceleration = acceleration_array[std::distance(cost_array.begin(), std::max_element(cost_array.begin(), cost_array.end()))];
 		
@@ -236,7 +227,11 @@ public:
 			//mController->setCubeVelocity(0);
 		}
 
-		mController->setCubeAcceleration();
+		mController->setCubeAcceleration(MyMPC());
+
+		// the direction of each dof of planar joint
+		//std::cout<<mWorld->getSkeleton("cube")->getJoint(0)->getTranslationalAxis1()<<std::endl;
+		//std::cout<<mWorld->getSkeleton("cube")->getJoint(0)->getTranslationalAxis2()<<std::endl;
 
 		SimWindow::timeStepping();
 	}
