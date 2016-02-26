@@ -198,7 +198,7 @@ public:
 		//initialize the optimizer
 		AaltoGames::ControlPBP pbp;
 		const int nSamples = 20;	//N in the paper
-		int nTimeSteps     = 100;		//K in the paper, resulting in a 0.5s planning horizon
+		int nTimeSteps     = 300;		//K in the paper, resulting in a 0.5s planning horizon
 		//const float PI=3.1416f;	
 		const int nStateDimensions=6;
 		const int nControlDimensions=1;
@@ -290,6 +290,13 @@ public:
 		//deploy the best control found
 		float control;
 		pbp.getBestControl(0,&control);
+
+		mWorld->getSkeleton("cube")->getDof(0)->setPosition(position_record_dof_0);
+		mWorld->getSkeleton("cube")->getDof(1)->setPosition(position_record_dof_1);
+		mWorld->getSkeleton("cube")->getDof(2)->setPosition(position_record_dof_2);	
+		mWorld->getSkeleton("cube")->getDof(0)->setVelocity(velocity_record_dof_0);	
+		mWorld->getSkeleton("cube")->getDof(1)->setVelocity(velocity_record_dof_1);	
+		mWorld->getSkeleton("cube")->getDof(2)->setVelocity(velocity_record_dof_2);	
 
 		return control;
 	}
