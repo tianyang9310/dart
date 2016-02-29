@@ -236,7 +236,7 @@ SkeletonPtr loadBiped()
   // Lesson 1
   
   // Create the world with a skeleton
-  WorldPtr world = SkelParser::readWorld(DART_DATA_PATH"skel/biped.skel");
+  WorldPtr world = SkelParser::readWorld(DART_DATA_PATH"skel/Nonlinear_Biped.skel");
   assert(world != nullptr);
 
   SkeletonPtr biped = world->getSkeleton("biped");
