@@ -38,8 +38,8 @@ const double default_density = 2e3;
 class Controller
 {
 public:
-	Controller(const SkeletonPtr& cube, dart::collision::CollisionDetector* detector, size_t default_Num_contact, double time_step)
-		:mCube(cube),mDetector(detector),mdefault_Num_contact(default_Num_contact), mTime_step_in_Acc_fun(time_step)
+	Controller(const SkeletonPtr& cube, dart::collision::CollisionDetector* detector)
+		:mCube(cube),mDetector(detector)
 	{
 		gain = 4;
 
@@ -47,10 +47,7 @@ public:
 
 		mAcceleration_random = 2;
 
-		//mCube->getJoint(0)->setActuatorType(Joint::VELOCITY);
-
-		mVelocity_old_in_set_Acc_fun = 0;
-		mVelocity_new_in_set_Acc_fun = 0;
+		mCube->getJoint(0)->setActuatorType(Joint::FORCE);
 
 		std::srand((unsigned int)time(NULL));
 	}
@@ -75,13 +72,13 @@ public:
 						contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
 				(contact.bodyNode2.lock()->getName() == "obstacle3" && 
 						contact.bodyNode1.lock()->getSkeleton()->getName() == "cube")||
-				(contact.bodyNode1.lock()->getName() == "wall_weld_joint3" && 
+				(contact.bodyNode1.lock()->getName() == "wall3" && 
 						contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
-				(contact.bodyNode2.lock()->getName() == "wall_weld_joint3" && 
+				(contact.bodyNode2.lock()->getName() == "wall3" && 
 						contact.bodyNode1.lock()->getSkeleton()->getName() == "cube")||
-				(contact.bodyNode1.lock()->getName() == "wall_weld_joint4" && 
+				(contact.bodyNode1.lock()->getName() == "wall4" && 
 						contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
-				(contact.bodyNode2.lock()->getName() == "wall_weld_joint4" && 
+				(contact.bodyNode2.lock()->getName() == "wall4" && 
 						contact.bodyNode1.lock()->getSkeleton()->getName() == "cube"))
 			/*if (contact.bodyNode1.lock()->getSkeleton()->getName() == "cube" ||
 					contact.bodyNode2.lock()->getSkeleton()->getName() == "cube") */
@@ -117,7 +114,6 @@ public:
 	void randomizeAcceleration()
 	{
 		mAcceleration = mAcceleration_random * (std::rand() / double(RAND_MAX) - 0.5)*2;
-		//std::cout<<(std::rand() / double(RAND_MAX) - 0.5)*2<<std::endl;
 	}
 
 	friend class MyWindow;
@@ -127,14 +123,9 @@ protected:
 	double mAcceleration;
 	double mSpeed;
 
-	double mVelocity_old_in_set_Acc_fun;
-	double mVelocity_new_in_set_Acc_fun;
-	double mTime_step_in_Acc_fun;
-
 	double mAcceleration_random;
 	
 	dart::collision::CollisionDetector* mDetector;
-	size_t mdefault_Num_contact;
 
 	double gain;
 };
@@ -153,7 +144,7 @@ public:
 
 		std::cout<<"Default number of contacts is "<<default_Num_contact<<std::endl;
 
-		mController = std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("cube"),detector, default_Num_contact, mWorld->getTimeStep()));
+		mController = std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("cube"),detector));
 		mController->setCubeVelocity(mController->mSpeed);
 	}
 
