@@ -9,6 +9,7 @@
 #include <time.h>
 #include <vector>
 #include <algorithm>
+#include <thread>
 #include "ControlPBP/ControlPBP.h"
 #include "ControlPBP/Eigen/Eigen"
 
@@ -45,7 +46,7 @@ public:
 
 		mSpeed = 0.2; 
 
-		mAcceleration_random = 2;
+		mAcceleration_random = 1;
 
 		mCube->getJoint(0)->setActuatorType(Joint::FORCE);
 
@@ -100,6 +101,17 @@ public:
 
 	double setCubeAcceleration()
 	{
+		// increase the magnitude of acc randomization
+		if (collision_with_obstacles())
+		{
+			std::cout<<"increase magnitude of acc randomization"<<std::endl;
+			mAcceleration_random = mAcceleration_random * 1.01;
+		}
+		else
+		{
+			std::cout<<"restore magnitude of acc randomization"<<std::endl;
+			mAcceleration_random = 1;
+		}
 		randomizeAcceleration();
 		mCube->getDof(1)->setCommand(mCube->getMass() * mAcceleration);
 		return mAcceleration;	
@@ -136,16 +148,12 @@ public:
 	MyWindow(const WorldPtr& world)
 	{
 		setWorld(world);
+
 		mWorld->getConstraintSolver()->setCollisionDetector(new dart::collision::BulletCollisionDetector());
 		detector = mWorld->getConstraintSolver()->getCollisionDetector();
 		detector->detectCollision(true, true);
 
-		default_Num_contact = detector->getNumContacts();
-
-		std::cout<<"Default number of contacts is "<<default_Num_contact<<std::endl;
-
 		mController = std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("cube"),detector));
-		mController->setCubeVelocity(mController->mSpeed);
 	}
 
 	int simulateCube(float *state, float controlAcceleration, float *nextState)
@@ -183,13 +191,10 @@ public:
 	{
 		//srand ((unsigned int)time(NULL));
 
-		//global parameters
-		float timeStep=mWorld->getTimeStep();
-
 		//initialize the optimizer
 		AaltoGames::ControlPBP pbp;
-		const int nSamples = 20;	//N in the paper
-		int nTimeSteps     = 100;		//K in the paper, resulting in a 0.5s planning horizon
+		const int nSamples = 32;	//N in the paper
+		int nTimeSteps     = 200;		//K in the paper, resulting in a 0.5s planning horizon
 		//const float PI=3.1416f;	
 		const int nStateDimensions=6;
 		const int nControlDimensions=1;
@@ -203,7 +208,7 @@ public:
 		float controlStd=1.0f*C;	//sqrt(\sigma_{0}^2 C_u) of the paper (we're not explicitly specifying C_u as u is a scalar here). In effect, a "tolerance" for torque minimization in this test
 		float controlDiffStd=1.0f*C;	//sqrt(\sigma_{1}^2 C_u) in the paper. In effect, a "tolerance" for angular jerk minimization in this test
 		float controlDiffDiffStd=100.0f*C; //sqrt(\sigma_{2}^2 C_u) in the paper. A large value to have no effect in this test.
-		float stateStd[6]={0, 0.05f*PI, 0, 0, 0.1f*PI, 0};	//square roots of the diagonal elements of Q in the paper
+		float stateStd[6]={1e-6, 1e-3, 1e-9, 1e-6, 1e-3, 1e-9};	//square roots of the diagonal elements of Q in the paper
 		//float* stateStd = NULL;
 		float mutationScale=0.25f;		//\sigma_m in the paper
 		pbp.init(nSamples,nTimeSteps,nStateDimensions,nControlDimensions,&minControl,&maxControl,&controlMean,&controlStd,&controlDiffStd,&controlDiffDiffStd,mutationScale,stateStd);
@@ -367,10 +372,6 @@ public:
 		}
 
 		mController->setCubeAcceleration(MyControlPBP());
-
-		// the direction of each dof of planar joint
-		//std::cout<<mWorld->getSkeleton("cube")->getJoint(0)->getTranslationalAxis1()<<std::endl;
-		//std::cout<<mWorld->getSkeleton("cube")->getJoint(0)->getTranslationalAxis2()<<std::endl;
 
 		SimWindow::timeStepping();
 	}
@@ -537,7 +538,7 @@ SkeletonPtr createCube()
 
 	// create a BodyNode
 	BodyNodePtr body = cube->createJointAndBodyNodePair<PlanarJoint>().second;
-
+	
 	// create a shape
 	std::shared_ptr<BoxShape> ball = std::make_shared<BoxShape>(Eigen::Vector3d(cube_length, cube_length, cube_length));
 	//std::shared_ptr<EllipsoidShape> ball = std::make_shared<EllipsoidShape>(Eigen::Vector3d(cube_length, cube_length, cube_length));
