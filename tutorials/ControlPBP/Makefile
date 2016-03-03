@@ -1,4 +1,4 @@
-CXX    = clang++
+CXX    = g++
 CFLAGS = -O2
 INCLUDES = -I ./
 

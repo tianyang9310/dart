@@ -6,7 +6,7 @@ Part of Aalto University Game Tools. See LICENSE.txt for licensing info.
 #include "ClippedGaussianSampling.h"
 #include <math.h>
 #include <vector>
-#include "Mathutils.h"
+#include "MathUtils.h"
 #include "Debug.h"
 
 #ifndef M_PI

@@ -10,6 +10,8 @@ Part of Aalto University Game Tools. See LICENSE.txt for licensing info.
 #include <vector>
 #include "MathUtils.h"
 
+#define __fastcall
+
 namespace AaltoGames
 {
 

@@ -4,7 +4,7 @@ Minimal test/example of using C-PBP to balance an inverted pendulum.
 
 */
 
-#include <Math.h>
+#include <cmath>
 #include "MathUtils.h"
 #include "ControlPBP.h"
 #include <iostream>

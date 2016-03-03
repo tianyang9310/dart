@@ -16,6 +16,7 @@ Part of Aalto University Game Tools. See LICENSE.txt for licensing info.
 #define __stdcall  //SWIG doesn't understand __stdcall, but fortunately c# assumes it for virtual calls
 #endif
 
+#define __stdcall
 
 namespace AaltoGames
 {

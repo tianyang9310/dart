@@ -280,7 +280,7 @@ namespace AaltoGames
 
 	void ControlPBP::getConditionalControlGMM( int timeStep, const Eigen::VectorXf &state, DiagonalGMM &dst )
 	{
-		__declspec(thread) static DiagonalGMM *tmp=NULL;
+		__thread static DiagonalGMM *tmp=NULL;
 		if (tmp==NULL)
 			tmp=new DiagonalGMM();
 		prior[timeStep].makeConditional(state,*tmp);
@@ -690,10 +690,10 @@ namespace AaltoGames
 		else
 		{
 			//compute the conditional density for new controls, multiplied with other priors
-			__declspec(thread) static DiagonalGMM *controlGivenState=NULL;
-			__declspec(thread) static DiagonalGMM *proposal=NULL;
-			__declspec(thread) static DiagonalGMM *diffPrior=NULL;
-			__declspec(thread) static DiagonalGMM *singleGaussianPrior=NULL;
+			__thread static DiagonalGMM *controlGivenState=NULL;
+			__thread static DiagonalGMM *proposal=NULL;
+			__thread static DiagonalGMM *diffPrior=NULL;
+			__thread static DiagonalGMM *singleGaussianPrior=NULL;
 			if (controlGivenState==NULL)
 			{
 				proposal=new DiagonalGMM();
@@ -793,8 +793,8 @@ namespace AaltoGames
 		{
 			//When no kernels used, we sample from the product of the static control prior, the difference priors given the previous sampled controls,
 			//and the "mutation prior" of the sample from previous frame
-			__declspec(thread) static DiagonalGMM *proposal=NULL;
-			__declspec(thread) static DiagonalGMM *prior=NULL;
+			__thread static DiagonalGMM *proposal=NULL;
+			__thread static DiagonalGMM *prior=NULL;
 			if (prior==NULL)
 			{
 				prior=new DiagonalGMM();
