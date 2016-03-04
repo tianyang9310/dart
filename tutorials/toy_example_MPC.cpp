@@ -38,7 +38,7 @@ const double default_density = 2e3;
 
 #define Horizontal_V 1
 
-#define Vertical_A 10
+#define Vertical_A 5000
 
 class Controller
 {
@@ -208,7 +208,7 @@ public:
 		//Square root of the diagonal elements of C_u in the paper, i.e., stdev of a Gaussian prior for control.
 		//Note that the optimizer interface does not have the C_u as a parameter, and instead uses meand and stdev arrays as parameters. 
 		//The 3D character tests compute the C_u on the Unity side to reduce the number of effective parameters, and then compute the arrays based on it as described to correspond to the products \sigma_0 C_u etc.
-		float C=10;	
+		float C=mController->mAcceleration_random;	
 		float controlStd=1.0f*C;	//sqrt(\sigma_{0}^2 C_u) of the paper (we're not explicitly specifying C_u as u is a scalar here). In effect, a "tolerance" for torque minimization in this test
 		float controlDiffStd=1.0f*C;	//sqrt(\sigma_{1}^2 C_u) in the paper. In effect, a "tolerance" for angular jerk minimization in this test
 		float controlDiffDiffStd=100.0f*C; //sqrt(\sigma_{2}^2 C_u) in the paper. A large value to have no effect in this test.
@@ -265,7 +265,7 @@ public:
 				int collision_checkout = simulateCube(state[previousStateIdx],control,nextState[i]);
 
 				//evaluate state cost
-				float cost=AaltoGames::squared(nextState[i][1]  *100.0f ) + AaltoGames::squared(control  *10.0f ) + collision_checkout * 100.0f;
+				float cost=AaltoGames::squared(nextState[i][1]  *10.0f ) + AaltoGames::squared(control  *10.0f ) + collision_checkout * 100.0f;
 
 				//store the state and cost to C-PBP. Note that in general, the stored state does not need to contain full simulation state as in this simple case.
 				//instead, one may use arbitrary state features
