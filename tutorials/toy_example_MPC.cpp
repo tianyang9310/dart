@@ -9,7 +9,7 @@
 #include <time.h>
 #include <vector>
 #include <algorithm>
-#include <thread>
+#include <cstdlib>
 #include "ControlPBP/ControlPBP.h"
 #include "ControlPBP/Eigen/Eigen"
 
@@ -36,17 +36,21 @@ const double obstacle_2_wall = 2.5*wall_thickness;
 
 const double default_density = 2e3;
 
+#define Horizontal_V 1
+
+#define Vertical_A 10
+
 class Controller
 {
 public:
 	Controller(const SkeletonPtr& cube, dart::collision::CollisionDetector* detector)
 		:mCube(cube),mDetector(detector)
 	{
-		gain = 4;
+		gain = 1;
 
-		mSpeed = 0.2; 
+		mSpeed = Horizontal_V; 
 
-		mAcceleration_random = 1;
+		mAcceleration_random = Vertical_A;
 
 		mCube->getJoint(0)->setActuatorType(Joint::FORCE);
 
@@ -110,7 +114,7 @@ public:
 		else
 		{
 			std::cout<<"restore magnitude of acc randomization"<<std::endl;
-			mAcceleration_random = 1;
+			mAcceleration_random = Vertical_A;
 		}
 		randomizeAcceleration();
 		mCube->getDof(1)->setCommand(mCube->getMass() * mAcceleration);
@@ -161,25 +165,25 @@ public:
 		int collision = 0;
 		mWorld->getSkeleton("cube")->getDof(0)->setPosition(state[0]);
 		mWorld->getSkeleton("cube")->getDof(1)->setPosition(state[1]);
-		mWorld->getSkeleton("cube")->getDof(2)->setPosition(state[2]);	
-		mWorld->getSkeleton("cube")->getDof(0)->setVelocity(state[3]);	
-		mWorld->getSkeleton("cube")->getDof(1)->setVelocity(state[4]);	
-		mWorld->getSkeleton("cube")->getDof(2)->setVelocity(state[5]);	
+		mWorld->getSkeleton("cube")->getDof(2)->setPosition(0);	
+		// don't need to set velocity of dof 0
+		mWorld->getSkeleton("cube")->getDof(1)->setVelocity(state[2]);	
+		mWorld->getSkeleton("cube")->getDof(2)->setVelocity(0);	
+		if (mController->collision_with_obstacles())
+		{
+			collision = 1;
+			nextState[0] =state[0] ; 
+			nextState[1] =state[1] ; 
+			nextState[2] =state[2] ; 
+			return collision;
+		}
 		mController->setCubeVelocity( mController->gain * mController->mSpeed);
 		mController->setCubeAcceleration(controlAcceleration);
 		mWorld->step();
-		double position_record_dof_0 = mWorld->getSkeleton("cube")->getDof(0)->getPosition();
-		double position_record_dof_1 = mWorld->getSkeleton("cube")->getDof(1)->getPosition();
-		double position_record_dof_2 = mWorld->getSkeleton("cube")->getDof(2)->getPosition();
-		double velocity_record_dof_0 = mWorld->getSkeleton("cube")->getDof(0)->getVelocity();
-		double velocity_record_dof_1 = mWorld->getSkeleton("cube")->getDof(1)->getVelocity();
-		double velocity_record_dof_2 = mWorld->getSkeleton("cube")->getDof(2)->getVelocity();
-		nextState[0] = position_record_dof_0; 
-		nextState[1] = position_record_dof_1; 
-		nextState[2] = position_record_dof_2; 
-		nextState[3] = velocity_record_dof_0; 
-		nextState[4] = velocity_record_dof_1; 
-		nextState[5] = velocity_record_dof_2; 
+
+		nextState[0] = mWorld->getSkeleton("cube")->getDof(0)->getPosition(); 
+		nextState[1] = mWorld->getSkeleton("cube")->getDof(1)->getPosition(); 
+		nextState[2] = mWorld->getSkeleton("cube")->getDof(1)->getVelocity(); 
 		if (mController->collision_with_obstacles())
 		{
 			collision = 1;
@@ -193,10 +197,10 @@ public:
 
 		//initialize the optimizer
 		AaltoGames::ControlPBP pbp;
-		const int nSamples = 32;	//N in the paper
-		int nTimeSteps     = 200;		//K in the paper, resulting in a 0.5s planning horizon
+		const int nSamples = 128;	//N in the paper
+		int nTimeSteps     = 400;		//K in the paper, resulting in a 0.5s planning horizon
 		//const float PI=3.1416f;	
-		const int nStateDimensions=6;
+		const int nStateDimensions=3;
 		const int nControlDimensions=1;
 		float minControl=-mController->mAcceleration_random;	//lower sampling bound
 		float maxControl=mController->mAcceleration_random;		//upper sampling bound
@@ -208,7 +212,7 @@ public:
 		float controlStd=1.0f*C;	//sqrt(\sigma_{0}^2 C_u) of the paper (we're not explicitly specifying C_u as u is a scalar here). In effect, a "tolerance" for torque minimization in this test
 		float controlDiffStd=1.0f*C;	//sqrt(\sigma_{1}^2 C_u) in the paper. In effect, a "tolerance" for angular jerk minimization in this test
 		float controlDiffDiffStd=100.0f*C; //sqrt(\sigma_{2}^2 C_u) in the paper. A large value to have no effect in this test.
-		float stateStd[6]={1e-6, 1e-3, 1e-9, 1e-6, 1e-3, 1e-9};	//square roots of the diagonal elements of Q in the paper
+		float stateStd[3]={1e-18, 1e-18, 1e-18};	//square roots of the diagonal elements of Q in the paper
 		//float* stateStd = NULL;
 		float mutationScale=0.25f;		//\sigma_m in the paper
 		pbp.init(nSamples,nTimeSteps,nStateDimensions,nControlDimensions,&minControl,&maxControl,&controlMean,&controlStd,&controlDiffStd,&controlDiffDiffStd,mutationScale,stateStd);
@@ -227,13 +231,10 @@ public:
 		double velocity_record_dof_1 = mWorld->getSkeleton("cube")->getDof(1)->getVelocity();
 		double velocity_record_dof_2 = mWorld->getSkeleton("cube")->getDof(2)->getVelocity();
 
-		float masterState[6];
+		float masterState[3];
 		masterState[0] = position_record_dof_0; 
 		masterState[1] = position_record_dof_1; 
-		masterState[2] = position_record_dof_2; 
-		masterState[3] = velocity_record_dof_0; 
-		masterState[4] = velocity_record_dof_1; 
-		masterState[5] = velocity_record_dof_2; 
+		masterState[2] = velocity_record_dof_1; 
 
 		//signal the start of new C-PBP iteration
 		pbp.startIteration(true,masterState);
@@ -264,7 +265,7 @@ public:
 				int collision_checkout = simulateCube(state[previousStateIdx],control,nextState[i]);
 
 				//evaluate state cost
-				float cost=AaltoGames::squared(nextState[i][1] /* *10.0f */) + AaltoGames::squared(control /* *10.0f */) + collision_checkout * 100;
+				float cost=AaltoGames::squared(nextState[i][1]  *100.0f ) + AaltoGames::squared(control  *10.0f ) + collision_checkout * 100.0f;
 
 				//store the state and cost to C-PBP. Note that in general, the stored state does not need to contain full simulation state as in this simple case.
 				//instead, one may use arbitrary state features
@@ -287,12 +288,21 @@ public:
 		float control;
 		pbp.getBestControl(0,&control);
 
+
+		//output the whole best control on the trajectory
+		for (int k=0; k<nTimeSteps; k++)
+		{
+			float tmp_control;
+			pbp.getBestControl(k,&tmp_control);
+			std::cout<<tmp_control<<std::endl;
+		}
+
 		mWorld->getSkeleton("cube")->getDof(0)->setPosition(position_record_dof_0);
 		mWorld->getSkeleton("cube")->getDof(1)->setPosition(position_record_dof_1);
-		mWorld->getSkeleton("cube")->getDof(2)->setPosition(position_record_dof_2);	
-		mWorld->getSkeleton("cube")->getDof(0)->setVelocity(velocity_record_dof_0);	
+		mWorld->getSkeleton("cube")->getDof(2)->setPosition(0);	
+		mWorld->getSkeleton("cube")->getDof(0)->setVelocity(mController->mSpeed);	
 		mWorld->getSkeleton("cube")->getDof(1)->setVelocity(velocity_record_dof_1);	
-		mWorld->getSkeleton("cube")->getDof(2)->setVelocity(velocity_record_dof_2);	
+		mWorld->getSkeleton("cube")->getDof(2)->setVelocity(0);	
 
 		return control;
 	}
@@ -300,7 +310,7 @@ public:
 	double MyMPC()
 	{
 		int num_samples = 20;
-		int plan_horizon = 500;
+		int plan_horizon = 100;
 		double desire_Acceleration = 0;
 		
 		double position_record_dof_0 = mWorld->getSkeleton("cube")->getDof(0)->getPosition();
@@ -362,18 +372,45 @@ public:
 
 	void timeStepping() override
 	{
-		// guarantee the ball always has horizontal velocity
-		mController->setCubeVelocity(mController->mSpeed);
-
 		if (mController->collision_with_obstacles())
 		{
 			std::cout<<"collision with obstacles detected!"<<std::endl;
-			//mController->setCubeVelocity(0);
 		}
 
-		mController->setCubeAcceleration(MyControlPBP());
+		double best_control_from_controlPBP = MyControlPBP();
+		mController->setCubeAcceleration(best_control_from_controlPBP);
+		// guarantee the ball always has horizontal velocity
+		mController->setCubeVelocity(mController->mSpeed);
+
+		
+		std::cout<<"time is "<<mWorld->getTime()<<std::endl;
+		std::cout<<"p_x ="<<mWorld->getSkeleton("cube")->getDof(0)->getPosition()<<std::endl;
+		std::cout<<"p_y ="<<mWorld->getSkeleton("cube")->getDof(1)->getPosition()<<std::endl;
+		std::cout<<"p_z ="<<mWorld->getSkeleton("cube")->getDof(2)->getPosition()<<std::endl;
+		std::cout<<"v_x ="<<mWorld->getSkeleton("cube")->getDof(0)->getVelocity()<<std::endl;
+		std::cout<<"v_y ="<<mWorld->getSkeleton("cube")->getDof(1)->getVelocity()<<std::endl;
+		std::cout<<"v_z ="<<mWorld->getSkeleton("cube")->getDof(2)->getVelocity()<<std::endl;
+		std::cout<<"best control is "<<best_control_from_controlPBP<<std::endl;
+
 
 		SimWindow::timeStepping();
+		mWorld->getSkeleton("cube")->getDof(2)->setPosition(0);
+		mWorld->getSkeleton("cube")->getDof(2)->setVelocity(0);
+	}
+
+	void displayTimer(int _val) override
+	{
+		if (mPlay)
+		{
+			mPlayFrame +=1;
+		}
+		else if (mSimulating)
+		{
+			timeStepping();
+			mWorld->bake();
+		}
+		glutPostRedisplay();
+		glutTimerFunc(mDisplayTimeout, refreshTimer, _val);
 	}
 
 	void drawSkels() override
