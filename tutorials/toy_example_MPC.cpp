@@ -10,6 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
+#include <omp.h>
 #include "ControlPBP/ControlPBP.h"
 #include "ControlPBP/Eigen/Eigen"
 
@@ -39,6 +40,8 @@ const double default_density = 2e3;
 #define Horizontal_V 1
 
 #define Vertical_A 5000
+
+static omp_lock_t lock;
 
 class Controller
 {
@@ -252,6 +255,8 @@ public:
 			//NOTE: for multithreaded operation, one would typically run each iteration of the following loop in a separate thread. 
 			//The getControl(), getPreviousSampleIdx(), and updateResults() methods of the optimizer are thread-safe. Regarding the physics simulation,
 			//one would typically have a separate instance of the whole physics world for each thread, with full physics state stored/loaded similar to the state and nextState arrays here.
+			
+			#pragma omp parallel for	
 			for (int i=0; i<nSamples; i++)
 			{
 				//get control from C-PBP
@@ -261,8 +266,12 @@ public:
 				//get the mapping from this to previous state (affected by resampling operations)
 				int previousStateIdx=pbp.getPreviousSampleIdx(i);
 
+				// set openmp lock
+				omp_set_lock(&lock);
 				//simulate to get next state.
 				int collision_checkout = simulateCube(state[previousStateIdx],control,nextState[i]);
+				// unzet openmp lock
+				omp_unset_lock(&lock);
 
 				//evaluate state cost
 				float cost=AaltoGames::squared(nextState[i][1]  *10.0f ) + AaltoGames::squared(control  *10.0f ) + collision_checkout * 100.0f;
@@ -605,6 +614,9 @@ SkeletonPtr createCube()
 
 int main(int argc, char* argv[])
 {
+	// init openmp lock
+	omp_init_lock(&lock);
+
 	std::cout<<"This is a toy example for Model Predictive Control"<<std::endl;
 	SkeletonPtr environment = createFloor();
 	addWall(environment, environment->getBodyNode("floor"),1);
@@ -627,4 +639,7 @@ int main(int argc, char* argv[])
 	glutInit(&argc, argv);
 	window.initWindow(640, 480, "A toy example for Model Predictive Control");
 	glutMainLoop();
+
+	//destroy openmp lock
+	omp_destroy_lock(&lock);
 }
