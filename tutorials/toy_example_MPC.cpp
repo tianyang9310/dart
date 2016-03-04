@@ -256,7 +256,7 @@ public:
 			//The getControl(), getPreviousSampleIdx(), and updateResults() methods of the optimizer are thread-safe. Regarding the physics simulation,
 			//one would typically have a separate instance of the whole physics world for each thread, with full physics state stored/loaded similar to the state and nextState arrays here.
 			
-			#pragma omp parallel for	
+			#pragma omp parallel for num_threads(8)	
 			for (int i=0; i<nSamples; i++)
 			{
 				//get control from C-PBP
