@@ -20,7 +20,7 @@
                     <geometry>
                         <box>
                             <!--size>1.0*0.1088 1.0*0.1088 2.2*0.1088</size-->
-                            <size>0.1088 0.2088 0.23936</size>
+                            <size>0.1088 0.1088 0.23936</size>
                         </box>
                     </geometry>
                 </visualization_shape>
@@ -29,7 +29,7 @@
                     <geometry>
                         <box>
                             <!--size>1.0*0.1088 1.0*0.1088 2.2*0.1088</size-->
-                            <size>0.1088 0.2088 0.23936</size>
+                            <size>0.1088 0.1088 0.23936</size>
                         </box>
                     </geometry>
                 </collision_shape>                                

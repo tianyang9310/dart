@@ -66,12 +66,30 @@ public:
   void addPDForces()
   {
     // Lesson 2
+	  Eigen::VectorXd q = mBiped->getPositions();
+	  Eigen::VectorXd dq = mBiped->getVelocities();
+
+	  Eigen::VectorXd p = -mKp * (q- mTargetPositions);
+	  Eigen::VectorXd d = -mKd * dq;
+
+	  mForces = p + d;
+	  mBiped->setForces(mForces);
   }
 
   /// Add commanind forces from Stable-PD controllers
   void addSPDForces()
   {
     // Lesson 3
+	Eigen::VectorXd q = mBiped->getPositions();
+    Eigen::VectorXd dq = mBiped->getVelocities();
+
+    Eigen::MatrixXd invM = (mBiped->getMassMatrix() + mKd * mBiped->getTimeStep()).inverse();
+    Eigen::VectorXd p = -mKp * (q + dq * mBiped->getTimeStep() - mTargetPositions);
+    Eigen::VectorXd d = -mKd * dq;
+    Eigen::VectorXd qddot = invM * (-mBiped->getCoriolisAndGravityForces() + p + d + mBiped->getConstraintForces());
+
+    mForces += p + d - mKd * qddot * mBiped->getTimeStep();
+    mBiped->setForces(mForces);
   }
   
   /// add commanding forces from ankle strategy
@@ -157,6 +175,9 @@ public:
   {
     mController->clearForces();
     
+	// Lesson 2
+	//mController->addPDForces();
+
     // Lesson 3
     mController->addSPDForces();
 
@@ -209,6 +230,9 @@ SkeletonPtr loadBiped()
 
   SkeletonPtr biped = world->getSkeleton("biped");
 
+  // To make sure the bipedal robots act like human, 
+  // 1. enforce joint limit
+  // 2. enable self-collision
   for (size_t i=0; i<biped->getNumJoints(); ++i)
   {
 	  biped->getJoint(i)->setPositionLimited(true);
@@ -217,6 +241,14 @@ SkeletonPtr loadBiped()
   // Enable self-collision detection in DART
   // By default DART doesn't check the self collision
   biped->enableSelfCollision();
+
+  // set initial position of the robot
+  biped->setPosition(biped->getDof("j_thigh_left_z")->getIndexInSkeleton(), 0.15);
+  biped->setPosition(biped->getDof("j_thigh_right_z")->getIndexInSkeleton(), 0.15);
+  biped->setPosition(biped->getDof("j_shin_left")->getIndexInSkeleton(), -0.4);
+  biped->setPosition(biped->getDof("j_shin_right")->getIndexInSkeleton(), -0.4);
+  biped->setPosition(biped->getDof("j_heel_left_1")->getIndexInSkeleton(), 0.25);
+  biped->setPosition(biped->getDof("j_heel_right_1")->getIndexInSkeleton(), 0.25); 
 
   return biped;
 }
