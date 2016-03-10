@@ -89,7 +89,7 @@
             </body>
 
             <body name="h_heel_left">
-                <transformation>0.01649408 -0.80354016 -0.09072832 0.0 0.0 0.0</transformation>
+                <transformation>0.04649408 -0.80354016 -0.09072832 0.0 0.0 0.0</transformation>
                 <inertia>
                     <mass>0.5831</mass>
                     <offset>0.0216 -0.0216 0.0</offset>
@@ -99,7 +99,7 @@
                     <geometry>
                         <box>
                             <!--size>1.0000*0.108 0.5000*0.108 1.0000*0.108</size-->
-                            <size>0.1080 0.0540 0.1080</size>
+                            <size>0.2080 0.0540 0.1080</size>
                         </box>
                     </geometry>
                     <color>1.0 0.5 0.0</color>
@@ -109,7 +109,7 @@
                     <geometry>
                         <box>
                             <!--size>1.0000*0.108 0.5000*0.108 1.0000*0.108</size-->
-                            <size>0.1080 0.0540 0.1080</size>
+                            <size>0.2080 0.0540 0.1080</size>
                         </box>
                     </geometry>
                 </collision_shape>                                
@@ -169,7 +169,7 @@
             </body>
 
             <body name="h_heel_right">
-                <transformation>0.01649408 -0.80354016 0.09072832 0.0 0.0 0.0</transformation>
+                <transformation>0.04649408 -0.80354016 0.09072832 0.0 0.0 0.0</transformation>
                 <inertia>
                     <mass>0.5831</mass>
                     <offset>0.0216 -0.0216 0.0</offset>
@@ -179,7 +179,7 @@
                     <geometry>
                         <box>
                             <!--size>1.0000*0.108 0.5000*0.108 1.0000*0.108</size-->
-                            <size>0.1080 0.0540 0.1080</size>
+                            <size>0.2080 0.0540 0.1080</size>
                         </box>
                     </geometry>
                     <color>1.0 0.5 0.0</color>
@@ -189,7 +189,7 @@
                     <geometry>
                         <box>
                             <!--size>1.0000*0.108 0.5000*0.108 1.0000*0.108</size-->
-                            <size>0.1080 0.0540 0.1080</size>
+                            <size>0.2080 0.0540 0.1080</size>
                         </box>
                     </geometry>
                 </collision_shape>                                

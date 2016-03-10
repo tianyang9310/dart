@@ -72,7 +72,7 @@ public:
 	  Eigen::VectorXd p = -mKp * (q- mTargetPositions);
 	  Eigen::VectorXd d = -mKd * dq;
 
-	  mForces = p + d;
+	  mForces += p + d;
 	  mBiped->setForces(mForces);
   }
 
@@ -88,7 +88,7 @@ public:
     Eigen::VectorXd d = -mKd * dq;
     Eigen::VectorXd qddot = invM * (-mBiped->getCoriolisAndGravityForces() + p + d + mBiped->getConstraintForces());
 
-    mForces = p + d - mKd * qddot * mBiped->getTimeStep();
+    mForces += p + d - mKd * qddot * mBiped->getTimeStep();
     mBiped->setForces(mForces);
   }
   
@@ -96,8 +96,13 @@ public:
   void addAnkleStrategyForces()
   {
     // Lesson 4
+	// to prove that we do have the ankle stratgy 
+	  std::cout<<"Current angle between foot and shin"<<std::endl;
+	  std::cout<<mBiped->getDof("j_heel_left_1")->getPosition()<<std::endl;
+	  std::cout<<mBiped->getDof("j_heel_right_1")->getPosition()<<std::endl;
+
 	Eigen::Vector3d COM = mBiped->getCOM();
-	Eigen::Vector3d offset(0.5, 0, 0);
+	Eigen::Vector3d offset(0.03, 0, 0);
 	Eigen::Vector3d COP = mBiped->getBodyNode("h_heel_left")->getTransform() * offset;
 	double diff = COM[0] - COP[0] ;
 
@@ -113,15 +118,15 @@ public:
 	{
 		double k1 = 10.0;
 		double kd = 0.50;
-		mForces[leftHeelIndex] = -k1 * diff -kd *dDiff;
-		mForces[rightHeelIndex] = -k1 * diff -kd *dDiff;
+		mForces[leftHeelIndex] += -k1 * diff -kd *dDiff;
+		mForces[rightHeelIndex] += -k1 * diff -kd *dDiff;
 	}
 	else if (diff > -20.0 && diff < 0.0 )
 	{
 		double k1 = 100.0;
 		double kd = 5.0;
-		mForces[leftHeelIndex] = -k1 * diff -kd *dDiff;
-		mForces[rightHeelIndex] = -k1 * diff -kd *dDiff;
+		mForces[leftHeelIndex] += -k1 * diff -kd *dDiff;
+		mForces[rightHeelIndex] += -k1 * diff -kd *dDiff;
 	}
 	mBiped->setForces(mForces);
   }
@@ -218,7 +223,7 @@ public:
     // Apply body forces based on user input, and color the body shape red
     if(mForceCountDown > 0)
     {
-      BodyNode* bn = mWorld->getSkeleton("biped")->getBodyNode("h_abdomen");
+      BodyNode* bn = mWorld->getSkeleton("biped")->getBodyNode("h_pelvis");
       const ShapePtr& shape = bn->getVisualizationShape(0);
       shape->setColor(dart::Color::Red());
       
@@ -231,9 +236,17 @@ public:
       
       --mForceCountDown;
     }
+	std::cout<<"The COM is "<<std::endl<<mWorld->getSkeleton("biped")->getCOM()<<std::endl;
     
     // Step the simulation forward
     SimWindow::timeStepping();
+  }
+
+  void drawSkels() override
+  {
+	glEnable(GL_LIGHTING);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	SimWindow::drawSkels();
   }
 
 protected:
@@ -314,7 +327,7 @@ SkeletonPtr createFloor()
   double floor_height = 0.01;
   std::shared_ptr<BoxShape> box(
       new BoxShape(Eigen::Vector3d(floor_width, floor_height, floor_width)));
-  box->setColor(dart::Color::Black());
+  box->setColor(dart::Color::Gray(0.2));
   
   body->addVisualizationShape(box);
   body->addCollisionShape(box);
