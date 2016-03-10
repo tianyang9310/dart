@@ -88,7 +88,7 @@ public:
     Eigen::VectorXd d = -mKd * dq;
     Eigen::VectorXd qddot = invM * (-mBiped->getCoriolisAndGravityForces() + p + d + mBiped->getConstraintForces());
 
-    mForces += p + d - mKd * qddot * mBiped->getTimeStep();
+    mForces = p + d - mKd * qddot * mBiped->getTimeStep();
     mBiped->setForces(mForces);
   }
   
@@ -96,6 +96,34 @@ public:
   void addAnkleStrategyForces()
   {
     // Lesson 4
+	Eigen::Vector3d COM = mBiped->getCOM();
+	Eigen::Vector3d offset(0.5, 0, 0);
+	Eigen::Vector3d COP = mBiped->getBodyNode("h_heel_left")->getTransform() * offset;
+	double diff = COM[0] - COP[0] ;
+
+	Eigen::Vector3d dCOM = mBiped->getCOMLinearVelocity();
+	Eigen::Vector3d dCOP = mBiped->getBodyNode("h_heel_left")->getLinearVelocity(offset);
+    double dDiff = dCOM[0] - dCOP[0];
+
+	// both left and right heel use the same deviation computed above because now we assume 
+	// the robots' two legs work in an identical fashion.
+	int leftHeelIndex = mBiped->getDof("j_heel_left_1")->getIndexInSkeleton();
+	int rightHeelIndex = mBiped->getDof("j_heel_right_1")->getIndexInSkeleton();
+	if (diff < 10.0 && diff > 0.0)
+	{
+		double k1 = 10.0;
+		double kd = 0.50;
+		mForces[leftHeelIndex] = -k1 * diff -kd *dDiff;
+		mForces[rightHeelIndex] = -k1 * diff -kd *dDiff;
+	}
+	else if (diff > -20.0 && diff < 0.0 )
+	{
+		double k1 = 100.0;
+		double kd = 5.0;
+		mForces[leftHeelIndex] = -k1 * diff -kd *dDiff;
+		mForces[rightHeelIndex] = -k1 * diff -kd *dDiff;
+	}
+	mBiped->setForces(mForces);
   }
   
   // Send velocity commands on wheel actuators
@@ -176,7 +204,7 @@ public:
     mController->clearForces();
     
 	// Lesson 2
-	//mController->addPDForces();
+	// mController->addPDForces();
 
     // Lesson 3
     mController->addSPDForces();
