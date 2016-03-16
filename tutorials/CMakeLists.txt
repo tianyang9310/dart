@@ -5,10 +5,11 @@ message(STATUS "")
 message(STATUS "[ Tutorials ]")
 
 add_subdirectory( ControlPBP )
+add_subdirectory( toyexample )
 
 foreach(tutorial ${tutorials_src})
   get_filename_component(tutorial_base ${tutorial} NAME_WE)
   message(STATUS "Adding tutorial: ${tutorial_base}")
   add_executable(${tutorial_base} ${tutorial})
-  target_link_libraries(${tutorial_base} dart ControlPBP )
+  target_link_libraries(${tutorial_base} dart ControlPBP toyexample)
 endforeach(tutorial)
