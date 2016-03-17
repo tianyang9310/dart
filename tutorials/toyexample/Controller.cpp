@@ -14,10 +14,11 @@ extern const double obstacle_radius;
 extern const double wall_thickness;
 extern const double cube_length;
 
-Controller::Controller(SkeletonPtr cube, SkeletonPtr world_setup)
+Controller::Controller(SkeletonPtr cube, SkeletonPtr world_setup, dart::collision::CollisionDetector* detector)
 {
 	mCube          = cube;
 	mWorld_Setup   = world_setup;
+	mDetector      = detector;
 	mSpeed         = 0.1;		
 	mCollisionThre = cube_length;
 }
@@ -76,6 +77,44 @@ bool Controller::collisionEvent()
 		return collision;
 	}
 
+	return collision;
+}
+
+bool Controller::collisionEvent_detector()
+{
+	bool collision = false;
+	size_t collision_count = mDetector->getNumContacts();
+	for (size_t i = 0; i< collision_count; ++i)
+	{
+		const dart::collision::Contact& contact = mDetector->getContact(i);
+
+		if ((contact.bodyNode1.lock()->getName() == "obstacle_1" && 
+					contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
+			(contact.bodyNode2.lock()->getName() == "obstacle_1" && 
+					contact.bodyNode1.lock()->getSkeleton()->getName() == "cube")|| 
+			(contact.bodyNode1.lock()->getName() == "obstacle_2" && 
+					contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
+			(contact.bodyNode2.lock()->getName() == "obstacle_2" && 
+					contact.bodyNode1.lock()->getSkeleton()->getName() == "cube")|| 
+			(contact.bodyNode1.lock()->getName() == "obstacle_3" && 
+					contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
+			(contact.bodyNode2.lock()->getName() == "obstacle_3" && 
+					contact.bodyNode1.lock()->getSkeleton()->getName() == "cube")||
+			(contact.bodyNode1.lock()->getName() == "wall_3" && 
+					contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
+			(contact.bodyNode2.lock()->getName() == "wall_3" && 
+					contact.bodyNode1.lock()->getSkeleton()->getName() == "cube")||
+			(contact.bodyNode1.lock()->getName() == "wall_4" && 
+					contact.bodyNode2.lock()->getSkeleton()->getName() == "cube")|| 
+			(contact.bodyNode2.lock()->getName() == "wall_4" && 
+					contact.bodyNode1.lock()->getSkeleton()->getName() == "cube"))
+		/*if (contact.bodyNode1.lock()->getSkeleton()->getName() == "cube" ||
+				contact.bodyNode2.lock()->getSkeleton()->getName() == "cube") */
+		{
+			collision = true;
+			break;
+		}
+	}
 	return collision;
 }
 

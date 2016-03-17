@@ -25,12 +25,14 @@ using namespace dart::gui;
 class Controller
 {
 public:
-	Controller(SkeletonPtr cube, SkeletonPtr world_setup);
+	Controller(SkeletonPtr cube, SkeletonPtr world_setup, dart::collision::CollisionDetector* detector);
 	void setCubeVelocity();
 	bool collisionEvent();
+	bool collisionEvent_detector();
 protected:
 	SkeletonPtr mCube;
 	SkeletonPtr mWorld_Setup;	
+	dart::collision::CollisionDetector* mDetector;
 	double mSpeed;
 	double mCollisionThre;
 };
