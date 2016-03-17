@@ -22,10 +22,12 @@ MyWindow::MyWindow(WorldPtr world)
 
 void MyWindow::timeStepping() 
 {
-	if (mController->collisionEvent_detector())
+	if (mController->collisionEvent())
 	{
 		std::cout<<"collision detected!"<<std::endl;
 	}
+
+	mController->setCubeAcc();
 
 	SimWindow::timeStepping();
 }

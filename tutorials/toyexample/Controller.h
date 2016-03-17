@@ -8,6 +8,7 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H 
 
+#include <random>
 #include "dart/dart.h"
 #include "../ControlPBP/ControlPBP.h"
 
@@ -27,6 +28,7 @@ class Controller
 public:
 	Controller(SkeletonPtr cube, SkeletonPtr world_setup, dart::collision::CollisionDetector* detector);
 	void setCubeVelocity();
+	void setCubeAcc();
 	bool collisionEvent();
 	bool collisionEvent_detector();
 protected:
@@ -34,6 +36,9 @@ protected:
 	SkeletonPtr mWorld_Setup;	
 	dart::collision::CollisionDetector* mDetector;
 	double mSpeed;
+	double mAcc;
+	bool   mRandFlag;
+	std::default_random_engine mGenerator;
 	double mCollisionThre;
 };
 

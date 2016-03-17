@@ -7,6 +7,7 @@
 
 
 #include "Controller.h"
+#include <math.h>
 
 namespace toyexample{
 
@@ -19,13 +20,34 @@ Controller::Controller(SkeletonPtr cube, SkeletonPtr world_setup, dart::collisio
 	mCube          = cube;
 	mWorld_Setup   = world_setup;
 	mDetector      = detector;
+	mCollisionThre = cube_length / sqrt(2);
+	
 	mSpeed         = 0.1;		
-	mCollisionThre = cube_length;
+	mAcc		   = 0.1;
+	mRandFlag      = true;
+
+	mCube->getJoint(0)->setActuatorType(Joint::FORCE);
 }
 
 void Controller::setCubeVelocity()
 {
 	mCube->getDof(0)->setVelocity(mSpeed);	
+}
+
+void Controller::setCubeAcc()
+{
+	if (!mRandFlag)
+	{
+		mCube->getDof(1)->setCommand(mCube->getMass() * mAcc);
+	}
+	else
+	{
+		double mRandAcc;
+		std::uniform_real_distribution<double> mDistribution(-1.0, 1.0);
+		mRandAcc = mAcc * mDistribution(mGenerator);
+		//std::cout<<mRandAcc<<std::endl;
+		mCube->getDof(1)->setCommand(mCube->getMass() * mRandAcc);
+	}
 }
 
 bool Controller::collisionEvent()
