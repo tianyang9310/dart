@@ -159,6 +159,7 @@ SkeletonPtr createCube()
 	
 	// create a shape
 	std::shared_ptr<BoxShape> box = std::make_shared<BoxShape>(Eigen::Vector3d(cube_length, cube_length, cube_length));
+	//std::shared_ptr<EllipsoidShape> box = std::make_shared<EllipsoidShape>(Eigen::Vector3d(cube_length, cube_length, cube_length));
 	box->setColor(dart::Color::Black(0.6));
 	body->addVisualizationShape(box);
 	body->addCollisionShape(box);

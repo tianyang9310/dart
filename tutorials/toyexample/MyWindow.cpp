@@ -11,11 +11,23 @@ namespace toyexample{
 MyWindow::MyWindow(WorldPtr world)
 {
 	setWorld(world);	
-	mController =  std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("cube")));
+	mController =  std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("cube"), mWorld->getSkeleton("world_setup")));
+
+	mWorld->getConstraintSolver()->setCollisionDetector(new dart::collision::BulletCollisionDetector());
+	detector = mWorld->getConstraintSolver()->getCollisionDetector();
+	detector->detectCollision(true, true);
+
+
+	mController->setCubeVelocity();
 }
 
 void MyWindow::timeStepping() 
 {
+	if (mController->collisionEvent())
+	{
+		std::cout<<"collision detected!"<<std::endl;
+	}
+
 	SimWindow::timeStepping();
 }
 

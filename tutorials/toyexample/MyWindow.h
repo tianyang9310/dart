@@ -27,6 +27,7 @@ public:
 	void timeStepping() override;
 protected:
 	std::unique_ptr<Controller> mController;
+	dart::collision::CollisionDetector* detector;
 };
 				 
 } // namespace toyexample
