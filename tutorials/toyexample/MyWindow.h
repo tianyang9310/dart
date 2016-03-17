@@ -24,6 +24,8 @@ class MyWindow : public dart::gui::SimWindow
 {
 public:
 	MyWindow(WorldPtr world);
+	double MyControlPBP();
+	bool simCube(float *state, float ctrlAcc, float *nextState, double &pos_dof0, WorldPtr mSubWorld, Controller* mSubController);
 	void timeStepping() override;
 protected:
 	std::unique_ptr<Controller> mController;

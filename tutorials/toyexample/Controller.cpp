@@ -23,7 +23,7 @@ Controller::Controller(SkeletonPtr cube, SkeletonPtr world_setup, dart::collisio
 	mCollisionThre = cube_length / sqrt(2);
 	
 	mSpeed         = 0.1;		
-	mAcc		   = 0.1;
+	mAcc		   = 1;
 	mRandFlag      = true;
 
 	mCube->getJoint(0)->setActuatorType(Joint::FORCE);
@@ -48,6 +48,11 @@ void Controller::setCubeAcc()
 		//std::cout<<mRandAcc<<std::endl;
 		mCube->getDof(1)->setCommand(mCube->getMass() * mRandAcc);
 	}
+}
+
+void Controller::setCubeAcc(float Acc)
+{
+	mCube->getDof(1)->setCommand(mCube->getMass() * Acc);
 }
 
 bool Controller::collisionEvent()

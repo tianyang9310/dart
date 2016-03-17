@@ -29,8 +29,10 @@ public:
 	Controller(SkeletonPtr cube, SkeletonPtr world_setup, dart::collision::CollisionDetector* detector);
 	void setCubeVelocity();
 	void setCubeAcc();
+	void setCubeAcc(float Acc);
 	bool collisionEvent();
 	bool collisionEvent_detector();
+	friend class MyWindow;
 protected:
 	SkeletonPtr mCube;
 	SkeletonPtr mWorld_Setup;	
