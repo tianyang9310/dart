@@ -11,8 +11,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <omp.h>
-#include "ControlPBP/ControlPBP.h"
-#include "ControlPBP/Eigen/Eigen"
+#include "../ControlPBP/ControlPBP.h"
 
 using namespace dart::common;
 using namespace dart::utils;
