@@ -21,6 +21,7 @@ MyWindow::MyWindow(WorldPtr world)
 	mController->setCubeVelocity();
 
 
+	mWorld->setTimeStep(0.01);
 	srand ((unsigned int)time(NULL));
 }
 
@@ -88,6 +89,7 @@ double MyWindow::MyControlPBP()
 	// clone a world
 	WorldPtr mSubWorld			    = std::make_shared<World>();
 	mSubWorld						= mWorld->clone();
+	mSubWorld->setTimeStep(0.01);
 	double position_record_dof_0    = mWorld->getSkeleton("cube")->getDof(0)->getPosition();
 	double position_record_dof_1    = mWorld->getSkeleton("cube")->getDof(1)->getPosition();
 	double position_record_dof_2    = mWorld->getSkeleton("cube")->getDof(2)->getPosition();
@@ -104,8 +106,8 @@ double MyWindow::MyControlPBP()
 
 	//initialize the optimizer
 	AaltoGames::ControlPBP pbp;
-	const int nSamples				= 128;	//N in the paper
-	int nTimeSteps				    = 400;	//K in the paper
+	const int nSamples				= 32;	//N in the paper
+	int nTimeSteps				    = 100;	//K in the paper
 	const int nStateDimensions		= 2;
 	const int nControlDimensions	= 1;
 	float minControl				= -mSubController->mAcc;	//lower sampling bound
