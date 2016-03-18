@@ -10,7 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
-#include <omp.h>
+//#include <omp.h>
 #include "../ControlPBP/ControlPBP.h"
 
 using namespace dart::common;
@@ -40,7 +40,7 @@ const double default_density = 2e3;
 
 #define Vertical_A 5000
 
-static omp_lock_t lock;
+//static omp_lock_t lock;
 
 class Controller
 {
@@ -266,11 +266,11 @@ public:
 				int previousStateIdx=pbp.getPreviousSampleIdx(i);
 
 				// set openmp lock
-				omp_set_lock(&lock);
+				//omp_set_lock(&lock);
 				//simulate to get next state.
 				int collision_checkout = simulateCube(state[previousStateIdx],control,nextState[i]);
 				// unzet openmp lock
-				omp_unset_lock(&lock);
+				//omp_unset_lock(&lock);
 
 				//evaluate state cost
 				float cost=AaltoGames::squared(nextState[i][1]  *10.0f ) + AaltoGames::squared(control  *10.0f ) + collision_checkout * 100.0f;
@@ -614,7 +614,7 @@ SkeletonPtr createCube()
 int main(int argc, char* argv[])
 {
 	// init openmp lock
-	omp_init_lock(&lock);
+	//omp_init_lock(&lock);
 
 	std::cout<<"This is a toy example for Model Predictive Control"<<std::endl;
 	SkeletonPtr environment = createFloor();
@@ -640,5 +640,5 @@ int main(int argc, char* argv[])
 	glutMainLoop();
 
 	//destroy openmp lock
-	omp_destroy_lock(&lock);
+	//omp_destroy_lock(&lock);
 }
