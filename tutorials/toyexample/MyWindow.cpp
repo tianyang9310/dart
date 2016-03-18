@@ -52,6 +52,8 @@ bool MyWindow::simCube(float *state, float ctrlAcc, float *nextState, double &po
 	mSubWorld->getSkeleton("cube")->getDof(1)->setVelocity(state[1]);
 	mSubWorld->getSkeleton("cube")->getDof(2)->setVelocity(vel_dof2);
 	
+	render();
+	glFlush();
 
 	if (mSubController->collisionEvent())
 	{
@@ -89,9 +91,9 @@ double MyWindow::MyControlPBP()
 	// controlStd
 	// controlDiffStd
 	// controlDiffDiffStd
-	// stateStd  -- can be NULL
+	// stateStd  -- can be NULL 1. set as NULL
 	// mutationScale
-	// pbp.Params
+	// pbp.Params  1. No backward pass
 	// cost
 
 	// clone a world
@@ -104,6 +106,10 @@ double MyWindow::MyControlPBP()
 	double velocity_record_dof_0    = mWorld->getSkeleton("cube")->getDof(0)->getVelocity();
 	double velocity_record_dof_1    = mWorld->getSkeleton("cube")->getDof(1)->getVelocity();
 	double velocity_record_dof_2    = mWorld->getSkeleton("cube")->getDof(2)->getVelocity();
+
+	WorldPtr tmp = mWorld;
+	setWorld(mSubWorld);
+
 	Controller*	mSubController;
 	dart::collision::CollisionDetector* mSubDetector;
 
@@ -114,7 +120,7 @@ double MyWindow::MyControlPBP()
 
 	//initialize the optimizer
 	AaltoGames::ControlPBP pbp;
-	const int nSamples				= 32;	//N in the paper
+	const int nSamples				= 1;	//N in the paper
 	int nTimeSteps				    = 300;	//K in the paper
 	const int nStateDimensions		= 2;
 	const int nControlDimensions	= 1;
@@ -127,13 +133,13 @@ double MyWindow::MyControlPBP()
 	float controlStd				= 1.0f*C;	//sqrt(\sigma_{0}^2 C_u) of the paper (we're not explicitly specifying C_u as u is a scalar here). In effect, a "tolerance" for torque minimization in this test
 	float controlDiffStd			= 1.0f*C;	//sqrt(\sigma_{1}^2 C_u) in the paper. In effect, a "tolerance" for angular jerk minimization in this test
 	float controlDiffDiffStd		= 100.0f*C; //sqrt(\sigma_{2}^2 C_u) in the paper. A large value to have no effect in this test.
-	float stateStd[nStateDimensions]= {1e-3, 1e-3};	//square roots of the diagonal elements of Q in the paper
-	//float* stateStd = NULL;
+	//float stateStd[nStateDimensions]= {1e-3, 1e-3};	//square roots of the diagonal elements of Q in the paper
+	float* stateStd = NULL;
 	float mutationScale=0.25f;		//\sigma_m in the paper
 	pbp.init(nSamples,nTimeSteps,nStateDimensions,nControlDimensions,&minControl,&maxControl,&controlMean,&controlStd,&controlDiffStd,&controlDiffDiffStd,mutationScale,stateStd);
 
 	//set further params: portion of "no prior" samples, resampling threshold, whether to use the backwards smoothing pass, and the regularization of the smoothing pass
-	pbp.setParams(0.1f,0.5f,true,0.001f);  
+	pbp.setParams(0.1f,0.5f,false,0.001f);  
 
 	//allocate simulation states
 	float state[nSamples][nStateDimensions];
@@ -198,7 +204,7 @@ double MyWindow::MyControlPBP()
 			//omp_unset_lock(&lock);
 
 			//evaluate state cost
-			float cost=AaltoGames::squared(nextState[i][1]  *10.0f ) + AaltoGames::squared(control  *10.0f ) + float(collision_checking) * 100.0f;
+			float cost=AaltoGames::squared(nextState[i][0]  *10.0f ) + AaltoGames::squared(control  *10.0f ) + float(collision_checking) * 100.0f;
 
 			//store the state and cost to C-PBP. Note that in general, the stored state does not need to contain full simulation state as in this simple case.
 			//instead, one may use arbitrary state features
@@ -221,6 +227,7 @@ double MyWindow::MyControlPBP()
 	float control;
 	pbp.getBestControl(0,&control);
 
+	setWorld(tmp);
 	return control;
 }
 
