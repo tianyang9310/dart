@@ -52,10 +52,10 @@ bool MyWindow::simCube(float *state, float ctrlAcc, float *nextState, double &po
 	mSubWorld->getSkeleton("cube")->getDof(1)->setVelocity(state[1]);
 	mSubWorld->getSkeleton("cube")->getDof(2)->setVelocity(vel_dof2);
 	
-	std::cout<<"at "<<tim_idx<<" rendering "<<smpl_idx<<"th sample, "<<"ctrl is "<<ctrlAcc<<std::endl;
-	std::cout<<pos_dof0<<" "<<state[0]<<" "<<pos_dof2<<" "<<state[1]<<" "<<vel_dof2<<std::endl;
-	render();
-	glFlush();
+//	std::cout<<"at "<<tim_idx<<" rendering "<<smpl_idx<<"th sample, "<<"ctrl is "<<ctrlAcc<<std::endl;
+//	std::cout<<pos_dof0<<" "<<state[0]<<" "<<pos_dof2<<" "<<state[1]<<" "<<vel_dof2<<std::endl;
+//	render();
+//	glFlush();
 
 	if (mSubController->collisionEvent())
 	{
@@ -206,7 +206,7 @@ double MyWindow::MyControlPBP()
 			//omp_unset_lock(&lock);
 
 			//evaluate state cost
-			float cost=AaltoGames::squared(nextState[i][0]  *10.0f ) + AaltoGames::squared(control  *10.0f ) + float(collision_checking) * 100.0f;
+			float cost=AaltoGames::squared(nextState[i][0]  *10.0f ) + AaltoGames::squared(control  *10.0f ) + AaltoGames::squared((0.3625 - pos_dof0[i]) *5.0f)+ float(collision_checking) * 100.0f;
 
 			//store the state and cost to C-PBP. Note that in general, the stored state does not need to contain full simulation state as in this simple case.
 			//instead, one may use arbitrary state features
