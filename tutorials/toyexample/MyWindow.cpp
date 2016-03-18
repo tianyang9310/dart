@@ -32,20 +32,25 @@ void MyWindow::timeStepping()
 		std::cout<<"collision detected!"<<std::endl;
 	}
 
-	mController->setCubeAcc();
+	// ideal condition is we don't need to set horizontal velocity at each timestep.
+	// The ControlPBP can always lead to avoiding obstacles.
+	mController->setCubeVelocity();
+	double best_ctrl = MyControlPBP();
+	std::cout<<"Best CTRL: "<<best_ctrl<<std::endl;
+	mController->setCubeAcc(best_ctrl);
 
 	SimWindow::timeStepping();
 }
 
-bool MyWindow::simCube(float *state, float ctrlAcc, float *nextState, double &pos_dof0, WorldPtr mSubWorld, Controller* mSubController)
+bool MyWindow::simCube(float *state, float ctrlAcc, float *nextState, double &pos_dof0, double &pos_dof2, double &vel_dof2, WorldPtr mSubWorld, Controller* mSubController)
 {
 	bool collision = false;
 	mSubWorld->getSkeleton("cube")->getDof(0)->setPosition(pos_dof0);
 	mSubWorld->getSkeleton("cube")->getDof(1)->setPosition(state[0]);
-	mSubWorld->getSkeleton("cube")->getDof(2)->setPosition(0);
+	mSubWorld->getSkeleton("cube")->getDof(2)->setPosition(pos_dof2);
 	mSubWorld->getSkeleton("cube")->getDof(0)->setVelocity(mSubController->mSpeed);
 	mSubWorld->getSkeleton("cube")->getDof(1)->setVelocity(state[1]);
-	mSubWorld->getSkeleton("cube")->getDof(2)->setVelocity(0);
+	mSubWorld->getSkeleton("cube")->getDof(2)->setVelocity(vel_dof2);
 	
 	if (mSubController->collisionEvent())
 	{
@@ -61,6 +66,8 @@ bool MyWindow::simCube(float *state, float ctrlAcc, float *nextState, double &po
 		nextState[0] = mSubWorld->getSkeleton("cube")->getDof(1)->getPosition(); 
 		nextState[1] = mSubWorld->getSkeleton("cube")->getDof(1)->getVelocity(); 
 		pos_dof0     = mSubWorld->getSkeleton("cube")->getDof(0)->getPosition();
+		pos_dof2     = mSubWorld->getSkeleton("cube")->getDof(2)->getPosition();
+		vel_dof2     = mSubWorld->getSkeleton("cube")->getDof(2)->getVelocity();
 	}
 	
 	if (mSubController->collisionEvent())
@@ -107,7 +114,7 @@ double MyWindow::MyControlPBP()
 	//initialize the optimizer
 	AaltoGames::ControlPBP pbp;
 	const int nSamples				= 32;	//N in the paper
-	int nTimeSteps				    = 100;	//K in the paper
+	int nTimeSteps				    = 300;	//K in the paper
 	const int nStateDimensions		= 2;
 	const int nControlDimensions	= 1;
 	float minControl				= -mSubController->mAcc;	//lower sampling bound
@@ -150,6 +157,18 @@ double MyWindow::MyControlPBP()
 	{
 		pos_dof0[i] = position_record_dof_0;
 	}
+	// keeping the z position for each samples
+	double pos_dof2[nSamples];
+	for (int i=0; i<nSamples; i++)
+	{
+		pos_dof2[i] = position_record_dof_2;
+	}
+	// keeping the z velocity for each samples
+	double vel_dof2[nSamples];
+	for (int i=0; i<nSamples; i++)
+	{
+		vel_dof2[i] = velocity_record_dof_2;
+	}
 
 	//simulate forward 
 	for (int k=0; k<nTimeSteps; k++)
@@ -173,7 +192,7 @@ double MyWindow::MyControlPBP()
 			// set openmp lock
 			//omp_set_lock(&lock);
 			//simulate to get next state.
-			bool collision_checking = simCube(state[previousStateIdx],control,nextState[i],pos_dof0[i], mSubWorld, mSubController);
+			bool collision_checking = simCube(state[previousStateIdx],control,nextState[i],pos_dof0[i], pos_dof2[i], vel_dof2[i], mSubWorld, mSubController);
 			// unzet openmp lock
 			//omp_unset_lock(&lock);
 
