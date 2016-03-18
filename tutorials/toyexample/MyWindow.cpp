@@ -20,8 +20,8 @@ MyWindow::MyWindow(WorldPtr world)
 
 	mController->setCubeVelocity();
 
-
-	mWorld->setTimeStep(0.01);
+	mNewTimeStep = 0.01;
+	mWorld->setTimeStep(mNewTimeStep);
 	srand ((unsigned int)time(NULL));
 }
 
@@ -52,6 +52,7 @@ bool MyWindow::simCube(float *state, float ctrlAcc, float *nextState, double &po
 	mSubWorld->getSkeleton("cube")->getDof(1)->setVelocity(state[1]);
 	mSubWorld->getSkeleton("cube")->getDof(2)->setVelocity(vel_dof2);
 	
+
 	if (mSubController->collisionEvent())
 	{
 		collision = true;
@@ -96,7 +97,7 @@ double MyWindow::MyControlPBP()
 	// clone a world
 	WorldPtr mSubWorld			    = std::make_shared<World>();
 	mSubWorld						= mWorld->clone();
-	mSubWorld->setTimeStep(0.01);
+	mSubWorld->setTimeStep(mNewTimeStep);
 	double position_record_dof_0    = mWorld->getSkeleton("cube")->getDof(0)->getPosition();
 	double position_record_dof_1    = mWorld->getSkeleton("cube")->getDof(1)->getPosition();
 	double position_record_dof_2    = mWorld->getSkeleton("cube")->getDof(2)->getPosition();

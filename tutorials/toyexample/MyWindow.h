@@ -30,6 +30,7 @@ public:
 protected:
 	std::unique_ptr<Controller> mController;
 	dart::collision::CollisionDetector* detector;
+	double mNewTimeStep;
 };
 				 
 } // namespace toyexample
