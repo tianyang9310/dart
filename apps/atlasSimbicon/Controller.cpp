@@ -90,6 +90,14 @@ Controller::~Controller()
 void Controller::update(double _currentTime)
 {
   // Compute control force
+  
+  /*
+  for (size_t i = 6 ; i<mAtlasRobot->getNumDofs() ; ++i)
+  {
+	  mAtlasRobot->getDof(i)->setPosition(mCurrentStateMachine->getCurrentState()->getDesiredJointPosition(i));
+  }
+  */
+
   mCurrentStateMachine->computeControlForce(mAtlasRobot->getTimeStep());
 }
 
