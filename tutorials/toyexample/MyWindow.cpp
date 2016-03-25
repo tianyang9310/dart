@@ -8,7 +8,7 @@
 #include <time.h>
 namespace toyexample{
 
-MyWindow::MyWindow(WorldPtr world)
+MyWindow::MyWindow(WorldPtr world):N(3),K(100),traj_dof0_x(N,K),traj_dof1_y(N,K)
 {
 	setWorld(world);	
 
@@ -23,6 +23,9 @@ MyWindow::MyWindow(WorldPtr world)
 	mNewTimeStep = 0.01;
 	mWorld->setTimeStep(mNewTimeStep);
 	srand ((unsigned int)time(NULL));
+
+	traj_dof0_x.setZero();
+	traj_dof1_y.setZero();
 }
 
 void MyWindow::timeStepping() 
@@ -42,6 +45,28 @@ void MyWindow::timeStepping()
 	SimWindow::timeStepping();
 }
 
+void MyWindow::drawSkels()
+{
+	if ( (!traj_dof0_x.isZero()) || (!traj_dof1_y.isZero()) )
+    {
+		// draw trajectories according to traj_dof0_x and traj_dof1_y
+		double mLineWidth = 1.0;
+		glLineWidth(mLineWidth);
+		for (int i=0; i<N; i++)
+		{
+			glBegin(GL_LINE_STRIP);
+			for (int j=0; j<K; j++)
+			{
+				glVertex2f(traj_dof0_x(i,j)+ mWorld->getSkeleton("cube")->getBodyNode(0)->getParentJoint()->getTransformFromParentBodyNode().translation().x()
+						, traj_dof1_y(i,j));
+			}
+			glEnd();
+		}
+	}
+
+	SimWindow::drawSkels();
+}
+
 bool MyWindow::simCube(float *state, float ctrlAcc, float *nextState, double &pos_dof0, double &pos_dof2, double &vel_dof2, WorldPtr mSubWorld, Controller* mSubController, int smpl_idx, int tim_idx)
 {
 	bool collision = false;
@@ -55,8 +80,8 @@ bool MyWindow::simCube(float *state, float ctrlAcc, float *nextState, double &po
 	std::cout<<"---------------------------------------------------------------"<<std::endl;
 	std::cout<<"at "<<tim_idx<<" rendering "<<smpl_idx<<"th sample, "<<"ctrl is "<<ctrlAcc<<std::endl;
 	std::cout<<pos_dof0<<" "<<state[0]<<" "<<pos_dof2<<" "<<state[1]<<" "<<vel_dof2<<std::endl;
-	render();
-	glFlush();
+	//render();
+	//glFlush();
 
 	if (mSubController->collisionEvent())
 	{
@@ -124,8 +149,10 @@ double MyWindow::MyControlPBP()
 
 	//initialize the optimizer
 	AaltoGames::ControlPBP pbp;
-	const int nSamples				= 3;	//N in the paper
-	int nTimeSteps				    = 300;	//K in the paper
+	
+	// setting of nSamples and nTimeSteps, go to constructor of MyWindow, and set N and K
+	const int nSamples				= N;	//N in the paper
+    int nTimeSteps					= K;	//K in the paper
 	const int nStateDimensions		= 2;
 	const int nControlDimensions	= 1;
 	float minControl				= -mSubController->mAcc;	//lower sampling bound
@@ -216,12 +243,16 @@ double MyWindow::MyControlPBP()
 			//          previous state; if not resampling, previousStateIdx is simply i
 			//
 			// get the mapping from this to previous state (affected by resampling operations)
-			 int previousStateIdx=pbp.getPreviousSampleIdx(i);
-			 bool collision_checking = simCube(state[previousStateIdx],control,nextState[i],pos_dof0[i], pos_dof2[i], vel_dof2[i], mSubWorld, mSubController, i, k);
+			int previousStateIdx=pbp.getPreviousSampleIdx(i);
+			bool collision_checking = simCube(state[previousStateIdx],control,nextState[i],pos_dof0[i], pos_dof2[i], vel_dof2[i], mSubWorld, mSubController, i, k);
 			// --------------------------------------------------------------------------------------------------------------------
 			
 			// unzet openmp lock
 			//omp_unset_lock(&lock);
+
+			// keep record of x (dof0) and y (dof1) of points in trajectory
+			traj_dof0_x(i,k) = pos_dof0[i];
+			traj_dof1_y(i,k) = nextState[i][0];
 
 			//evaluate state cost
 			float cost=AaltoGames::squared(nextState[i][0]  *10.0f ) + AaltoGames::squared(control  *10.0f ) + AaltoGames::squared((0.3625 - pos_dof0[i]) *5.0f)+ float(collision_checking) * 100.0f;
@@ -263,6 +294,10 @@ double MyWindow::MyControlPBP()
 	pbp.getBestControl(0,&control);
 
 	setWorld(tmp);
+
+	render();
+	glFlush();
+
 	return control;
 }
 
