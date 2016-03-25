@@ -143,7 +143,15 @@ double MyWindow::MyControlPBP()
 	pbp.init(nSamples,nTimeSteps,nStateDimensions,nControlDimensions,&minControl,&maxControl,&controlMean,&controlStd,&controlDiffStd,&controlDiffDiffStd,mutationScale,stateStd);
 
 	//set further params: portion of "no prior" samples, resampling threshold, whether to use the backwards smoothing pass, and the regularization of the smoothing pass
-	pbp.setParams(0.1f,0.5f,false,0.001f);  
+	
+	// ----------------------------------------------------------------------------------------------
+	//           if no resampling, we can directly set resampling threshold as 0 
+	//	since if resmpl_thre < 1/N, then no resampling, please note that false here indicates
+	//						wether there is backwards smoothing pass
+	//
+	//pbp.setParams(0.1f,0.5f,false,0.001f);  
+	pbp.setParams(0.1f,0.0f,false,0.001f);  
+	// ----------------------------------------------------------------------------------------------
 
 	//allocate simulation states
 	float state[nSamples][nStateDimensions];
@@ -197,14 +205,21 @@ double MyWindow::MyControlPBP()
 			float control;
 			pbp.getControl(i,&control);
 
-			//get the mapping from this to previous state (affected by resampling operations)
-			int previousStateIdx=pbp.getPreviousSampleIdx(i);
 
 			// set openmp lock
 			//omp_set_lock(&lock);
 			//simulate to get next state.
-			// bool collision_checking = simCube(state[previousStateIdx],control,nextState[i],pos_dof0[i], pos_dof2[i], vel_dof2[i], mSubWorld, mSubController, i, k);
-			bool collision_checking = simCube(state[i],control,nextState[i],pos_dof0[i], pos_dof2[i], vel_dof2[i], mSubWorld, mSubController, i, k);
+			
+			// --------------------------------------------------------------------------------------------------------------------
+			//          we disable resampling precedure in setParams, actually previousStateIdx can always return the 
+			//          correct index. In other words, if resampling, then previousStateIdx can link to the correct
+			//          previous state; if not resampling, previousStateIdx is simply i
+			//
+			// get the mapping from this to previous state (affected by resampling operations)
+			 int previousStateIdx=pbp.getPreviousSampleIdx(i);
+			 bool collision_checking = simCube(state[previousStateIdx],control,nextState[i],pos_dof0[i], pos_dof2[i], vel_dof2[i], mSubWorld, mSubController, i, k);
+			// --------------------------------------------------------------------------------------------------------------------
+			
 			// unzet openmp lock
 			//omp_unset_lock(&lock);
 
