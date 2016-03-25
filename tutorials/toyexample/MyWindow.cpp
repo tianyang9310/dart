@@ -52,17 +52,17 @@ bool MyWindow::simCube(float *state, float ctrlAcc, float *nextState, double &po
 	mSubWorld->getSkeleton("cube")->getDof(1)->setVelocity(state[1]);
 	mSubWorld->getSkeleton("cube")->getDof(2)->setVelocity(vel_dof2);
 	
-//	std::cout<<"at "<<tim_idx<<" rendering "<<smpl_idx<<"th sample, "<<"ctrl is "<<ctrlAcc<<std::endl;
-//	std::cout<<pos_dof0<<" "<<state[0]<<" "<<pos_dof2<<" "<<state[1]<<" "<<vel_dof2<<std::endl;
-//	render();
-//	glFlush();
+	std::cout<<"---------------------------------------------------------------"<<std::endl;
+	std::cout<<"at "<<tim_idx<<" rendering "<<smpl_idx<<"th sample, "<<"ctrl is "<<ctrlAcc<<std::endl;
+	std::cout<<pos_dof0<<" "<<state[0]<<" "<<pos_dof2<<" "<<state[1]<<" "<<vel_dof2<<std::endl;
+	render();
+	glFlush();
 
 	if (mSubController->collisionEvent())
 	{
 		collision = true;
 		nextState[0] = state[0];
 		nextState[1] = state[1];
-		return collision;
 	}
 	else
 	{
@@ -73,13 +73,15 @@ bool MyWindow::simCube(float *state, float ctrlAcc, float *nextState, double &po
 		pos_dof0     = mSubWorld->getSkeleton("cube")->getDof(0)->getPosition();
 		pos_dof2     = mSubWorld->getSkeleton("cube")->getDof(2)->getPosition();
 		vel_dof2     = mSubWorld->getSkeleton("cube")->getDof(2)->getVelocity();
+		if (mSubController->collisionEvent())
+		{
+			collision = true;
+		}
 	}
 	
-	if (mSubController->collisionEvent())
-	{
-		collision = true;
-		return collision;
-	}
+	std::cout<<"___________After world simulate one step further______________"<<std::endl;
+	std::cout<<pos_dof0<<" "<<nextState[0]<<" "<<pos_dof2<<" "<<nextState[1]<<" "<<vel_dof2<<std::endl;
+	std::cout<<"---------------------------------------------------------------"<<std::endl<<std::endl;
 	return collision;
 }
 
@@ -122,7 +124,7 @@ double MyWindow::MyControlPBP()
 
 	//initialize the optimizer
 	AaltoGames::ControlPBP pbp;
-	const int nSamples				= 2;	//N in the paper
+	const int nSamples				= 3;	//N in the paper
 	int nTimeSteps				    = 300;	//K in the paper
 	const int nStateDimensions		= 2;
 	const int nControlDimensions	= 1;
@@ -201,7 +203,8 @@ double MyWindow::MyControlPBP()
 			// set openmp lock
 			//omp_set_lock(&lock);
 			//simulate to get next state.
-			bool collision_checking = simCube(state[previousStateIdx],control,nextState[i],pos_dof0[i], pos_dof2[i], vel_dof2[i], mSubWorld, mSubController, i, k);
+			// bool collision_checking = simCube(state[previousStateIdx],control,nextState[i],pos_dof0[i], pos_dof2[i], vel_dof2[i], mSubWorld, mSubController, i, k);
+			bool collision_checking = simCube(state[i],control,nextState[i],pos_dof0[i], pos_dof2[i], vel_dof2[i], mSubWorld, mSubController, i, k);
 			// unzet openmp lock
 			//omp_unset_lock(&lock);
 
@@ -212,6 +215,21 @@ double MyWindow::MyControlPBP()
 			//instead, one may use arbitrary state features
 			pbp.updateResults(i,&control,nextState[i],cost);
 		}
+
+		// testify what the heck those bookkeeping variables are
+		for (int i=0; i<nSamples; i++)
+		{
+			std::cout<<std::endl;
+			std::cout<<"***************************************************************";
+			std::cout<<std::endl;
+			std::cout<<"        "<<i<<"th sample's bookkeeping parameters"<<std::endl;
+			std::cout<<"pos_dof0  ---  "<<pos_dof0[i]<<std::endl;
+			std::cout<<"pos_dof2  ---  "<<pos_dof2[i]<<std::endl;
+			std::cout<<"vel_dof2  ---  "<<vel_dof2[i]<<std::endl;
+			std::cout<<"***************************************************************";
+			std::cout<<std::endl;
+		}
+
 		//update all states, will be used at the next step
 		std::memcpy(state,nextState,sizeof(state));
 
