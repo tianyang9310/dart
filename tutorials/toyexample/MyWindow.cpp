@@ -6,9 +6,12 @@
 
 #include "MyWindow.h"
 #include <time.h>
+
+#define PRINT_CONTROL_PBP false
+
 namespace toyexample{
 
-MyWindow::MyWindow(WorldPtr world):N(3),K(100),traj_dof0_x(N,K),traj_dof1_y(N,K)
+MyWindow::MyWindow(WorldPtr world):N(32),K(300),traj_dof0_x(N,K),traj_dof1_y(N,K)
 {
 	setWorld(world);	
 
@@ -57,8 +60,8 @@ void MyWindow::drawSkels()
 			glBegin(GL_LINE_STRIP);
 			for (int j=0; j<K; j++)
 			{
-				glVertex2f(traj_dof0_x(i,j)+ mWorld->getSkeleton("cube")->getBodyNode(0)->getParentJoint()->getTransformFromParentBodyNode().translation().x()
-						, traj_dof1_y(i,j));
+				glVertex2f(traj_dof0_x(i,j) + mWorld->getSkeleton("cube")->getBodyNode(0)->getParentJoint()->getTransformFromParentBodyNode().translation().x(), 
+						   traj_dof1_y(i,j) + mWorld->getSkeleton("cube")->getBodyNode(0)->getParentJoint()->getTransformFromParentBodyNode().translation().y());
 			}
 			glEnd();
 		}
@@ -76,10 +79,13 @@ bool MyWindow::simCube(float *state, float ctrlAcc, float *nextState, double &po
 	mSubWorld->getSkeleton("cube")->getDof(0)->setVelocity(mSubController->mSpeed);
 	mSubWorld->getSkeleton("cube")->getDof(1)->setVelocity(state[1]);
 	mSubWorld->getSkeleton("cube")->getDof(2)->setVelocity(vel_dof2);
-	
-	std::cout<<"---------------------------------------------------------------"<<std::endl;
-	std::cout<<"at "<<tim_idx<<" rendering "<<smpl_idx<<"th sample, "<<"ctrl is "<<ctrlAcc<<std::endl;
-	std::cout<<pos_dof0<<" "<<state[0]<<" "<<pos_dof2<<" "<<state[1]<<" "<<vel_dof2<<std::endl;
+
+	if (PRINT_CONTROL_PBP)
+	{
+		std::cout<<"---------------------------------------------------------------"<<std::endl;
+		std::cout<<"at "<<tim_idx<<" rendering "<<smpl_idx<<"th sample, "<<"ctrl is "<<ctrlAcc<<std::endl;
+		std::cout<<pos_dof0<<" "<<state[0]<<" "<<pos_dof2<<" "<<state[1]<<" "<<vel_dof2<<std::endl;
+	}
 	//render();
 	//glFlush();
 
@@ -104,9 +110,12 @@ bool MyWindow::simCube(float *state, float ctrlAcc, float *nextState, double &po
 		}
 	}
 	
-	std::cout<<"___________After world simulate one step further______________"<<std::endl;
-	std::cout<<pos_dof0<<" "<<nextState[0]<<" "<<pos_dof2<<" "<<nextState[1]<<" "<<vel_dof2<<std::endl;
-	std::cout<<"---------------------------------------------------------------"<<std::endl<<std::endl;
+	if (PRINT_CONTROL_PBP)
+	{
+		std::cout<<"___________After world simulate one step further______________"<<std::endl;
+		std::cout<<pos_dof0<<" "<<nextState[0]<<" "<<pos_dof2<<" "<<nextState[1]<<" "<<vel_dof2<<std::endl;
+		std::cout<<"---------------------------------------------------------------"<<std::endl<<std::endl;
+	}
 	return collision;
 }
 
@@ -263,19 +272,21 @@ double MyWindow::MyControlPBP()
 		}
 
 		// testify what the heck those bookkeeping variables are
-		for (int i=0; i<nSamples; i++)
+		if (PRINT_CONTROL_PBP)
 		{
-			std::cout<<std::endl;
-			std::cout<<"***************************************************************";
-			std::cout<<std::endl;
-			std::cout<<"        "<<i<<"th sample's bookkeeping parameters"<<std::endl;
-			std::cout<<"pos_dof0  ---  "<<pos_dof0[i]<<std::endl;
-			std::cout<<"pos_dof2  ---  "<<pos_dof2[i]<<std::endl;
-			std::cout<<"vel_dof2  ---  "<<vel_dof2[i]<<std::endl;
-			std::cout<<"***************************************************************";
-			std::cout<<std::endl;
+			for (int i=0; i<nSamples; i++)
+			{
+				std::cout<<std::endl;
+				std::cout<<"***************************************************************";
+				std::cout<<std::endl;
+				std::cout<<"        "<<i<<"th sample's bookkeeping parameters"<<std::endl;
+				std::cout<<"		pos_dof0  ---  "<<pos_dof0[i]<<std::endl;
+				std::cout<<"		pos_dof2  ---  "<<pos_dof2[i]<<std::endl;
+				std::cout<<"		vel_dof2  ---  "<<vel_dof2[i]<<std::endl;
+				std::cout<<"***************************************************************";
+				std::cout<<std::endl;
+			}
 		}
-
 		//update all states, will be used at the next step
 		std::memcpy(state,nextState,sizeof(state));
 
