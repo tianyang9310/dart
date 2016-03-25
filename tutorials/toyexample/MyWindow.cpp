@@ -174,8 +174,8 @@ double MyWindow::MyControlPBP()
 	float controlDiffStd			= 100.0f*C;	//sqrt(\sigma_{1}^2 C_u) in the paper. In effect, a "tolerance" for angular jerk minimization in this test
 	float controlDiffDiffStd		= 100.0f*C; //sqrt(\sigma_{2}^2 C_u) in the paper. A large value to have no effect in this test.
 	//float stateStd[nStateDimensions]= {1e-3, 1e-3};	//square roots of the diagonal elements of Q in the paper
-	float* stateStd = NULL;
-	float mutationScale=0.25f;		//\sigma_m in the paper
+	float* stateStd					= NULL;
+	float mutationScale				=0.1f;		//\sigma_m in the paper, larger sigma_m means that ctrl of last timestep has little impact on current ctrl
 	pbp.init(nSamples,nTimeSteps,nStateDimensions,nControlDimensions,&minControl,&maxControl,&controlMean,&controlStd,&controlDiffStd,&controlDiffDiffStd,mutationScale,stateStd);
 
 	//set further params: portion of "no prior" samples, resampling threshold, whether to use the backwards smoothing pass, and the regularization of the smoothing pass
@@ -263,8 +263,19 @@ double MyWindow::MyControlPBP()
 			traj_dof0_x(i,k) = pos_dof0[i];
 			traj_dof1_y(i,k) = nextState[i][0];
 
-			//evaluate state cost
-			float cost=AaltoGames::squared(nextState[i][0]  *10.0f ) + AaltoGames::squared(control  *10.0f ) + AaltoGames::squared((0.3625 - pos_dof0[i]) *5.0f)+ float(collision_checking) * 100.0f;
+			// --------------------------------------------------------------------------------------------------------------------
+			//											  evaluate state cost
+			float targetPos_dof0_x = 0.3625;
+			float targetPos_dof1_y = 0.0;
+			float targetVel_dof0_x = 0.0;
+			float targetVel_dof1_y = 0.0;
+
+			float cost			   = AaltoGames::squared((pos_dof0[i]     - targetPos_dof0_x) *10.0f) +  // horizontal distance between cube and target
+									 AaltoGames::squared((nextState[i][0] - targetPos_dof1_y) *10.0f) +  // vertical distance between cube and target
+									 AaltoGames::squared((nextState[i][1] - targetVel_dof1_y) *10.0f) +  // vertical velocity of cube
+									 //AaltoGames::squared(control							  *10.0f) +  // control
+									 float(collision_checking) * 100.0f;
+			// --------------------------------------------------------------------------------------------------------------------
 
 			//store the state and cost to C-PBP. Note that in general, the stored state does not need to contain full simulation state as in this simple case.
 			//instead, one may use arbitrary state features
