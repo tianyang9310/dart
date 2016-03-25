@@ -166,12 +166,12 @@ double MyWindow::MyControlPBP()
 	const int nControlDimensions	= 1;
 	float minControl				= -mSubController->mAcc;	//lower sampling bound
 	float maxControl				= mSubController->mAcc;	//upper sampling bound
-	float controlMean=0;	//we're using torque as the control, makes sense to have zero mean
+	float controlMean				= 0.0f;	//we're using torque as the control, makes sense to have zero mean
 	//Square root of the diagonal elements of C_u in the paper, i.e., stdev of a Gaussian prior for control.
 	//Note that the optimizer interface does not have the C_u as a parameter, and instead uses meand and stdev arrays as parameters. 
-	float C							= 10;	
+	float C							= maxControl * 2.0;	
 	float controlStd				= 1.0f*C;	//sqrt(\sigma_{0}^2 C_u) of the paper (we're not explicitly specifying C_u as u is a scalar here). In effect, a "tolerance" for torque minimization in this test
-	float controlDiffStd			= 1.0f*C;	//sqrt(\sigma_{1}^2 C_u) in the paper. In effect, a "tolerance" for angular jerk minimization in this test
+	float controlDiffStd			= 100.0f*C;	//sqrt(\sigma_{1}^2 C_u) in the paper. In effect, a "tolerance" for angular jerk minimization in this test
 	float controlDiffDiffStd		= 100.0f*C; //sqrt(\sigma_{2}^2 C_u) in the paper. A large value to have no effect in this test.
 	//float stateStd[nStateDimensions]= {1e-3, 1e-3};	//square roots of the diagonal elements of Q in the paper
 	float* stateStd = NULL;
