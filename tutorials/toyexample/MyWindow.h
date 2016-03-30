@@ -28,6 +28,7 @@ public:
 	void drawSkels() override;
 	bool simCube(float *state, float ctrlAcc, float *nextState, double &pos_dof0, double &pos_dof2, double &vel_dof2, WorldPtr mSubWorld, Controller* mSubController, int smpl_idx, int tim_idx);
 	void timeStepping() override;
+	void keyboard(unsigned char key, int x, int y) override;
 protected:
 	std::unique_ptr<Controller> mController;
 	dart::collision::CollisionDetector* detector;
@@ -36,6 +37,11 @@ protected:
 	int K;   // nTimeSteps
 	Eigen::MatrixXd traj_dof0_x;  // x position
 	Eigen::MatrixXd traj_dof1_y;  // y position
+	float targetPos_dof0_x; 
+	float targetPos_dof1_y; 
+	float targetVel_dof0_x; 
+	float targetVel_dof1_y; 
+	float delta_targetPos_dof1_y;
 };
 				 
 } // namespace toyexample

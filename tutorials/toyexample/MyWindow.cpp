@@ -29,6 +29,12 @@ MyWindow::MyWindow(WorldPtr world):N(32),K(300),traj_dof0_x(N,K),traj_dof1_y(N,K
 
 	traj_dof0_x.setZero();
 	traj_dof1_y.setZero();
+
+	targetPos_dof0_x       = 0.3625;
+	targetPos_dof1_y       = 0.0;
+	targetVel_dof0_x       = 0.0;
+	targetVel_dof1_y       = 0.0;
+	delta_targetPos_dof1_y = 0.003;
 }
 
 void MyWindow::timeStepping() 
@@ -50,11 +56,20 @@ void MyWindow::timeStepping()
 
 void MyWindow::drawSkels()
 {
+	//mWorld->getSkeleton("cube")->getBodyNode(0)->getParentJoint()->getTransformFromParentBodyNode().translation().x()	
+	// is constantly -0.175
+	//mWorld->getSkeleton("cube")->getBodyNode(0)->getTransform().translation().matrix().block<1,1>(0, 0)
+	// is increased from -0.175
+	//mWorld->getSkeleton("cube")->getDof(0)->getPosition()
+	// is increased from 0
+
+	// ----------------------------------------------------------------------------------------------
+	//					 draw trajectories according to traj_dof0_x and traj_dof1_y
 	if ( (!traj_dof0_x.isZero()) || (!traj_dof1_y.isZero()) )
     {
-		// draw trajectories according to traj_dof0_x and traj_dof1_y
 		double mLineWidth = 1.0;
 		glLineWidth(mLineWidth);
+		glColor3f(0.42,0.42,0.42);
 		for (int i=0; i<N; i++)
 		{
 			glBegin(GL_LINE_STRIP);
@@ -66,6 +81,22 @@ void MyWindow::drawSkels()
 			glEnd();
 		}
 	}
+	// ----------------------------------------------------------------------------------------------
+	
+
+	// ----------------------------------------------------------------------------------------------
+	//								draw traget position
+	float target_radius = 0.005;
+	glBegin(GL_TRIANGLE_FAN);
+	glColor3f(0,1,0);
+	for (float i = 90; i <270; i=i+0.5)
+	{
+		glVertex2f((targetPos_dof0_x + mWorld->getSkeleton("cube")->getBodyNode(0)->getParentJoint()->getTransformFromParentBodyNode().translation().x() + target_radius * cos(i*DART_RADIAN)),
+				   (targetPos_dof1_y + target_radius * sin(i*DART_RADIAN)));
+	}
+	glEnd();
+	// ----------------------------------------------------------------------------------------------
+
 
 	SimWindow::drawSkels();
 }
@@ -265,11 +296,6 @@ double MyWindow::MyControlPBP()
 
 			// --------------------------------------------------------------------------------------------------------------------
 			//											  evaluate state cost
-			float targetPos_dof0_x = 0.3625;
-			float targetPos_dof1_y = 0.0;
-			float targetVel_dof0_x = 0.0;
-			float targetVel_dof1_y = 0.0;
-
 			float cost			   = AaltoGames::squared((pos_dof0[i]     - targetPos_dof0_x) *10.0f) +  // horizontal distance between cube and target
 									 AaltoGames::squared((nextState[i][0] - targetPos_dof1_y) *10.0f) +  // vertical distance between cube and target
 									 AaltoGames::squared((nextState[i][1] - targetVel_dof1_y) *10.0f) +  // vertical velocity of cube
@@ -321,6 +347,25 @@ double MyWindow::MyControlPBP()
 	glFlush();
 
 	return control;
+}
+
+void MyWindow::keyboard(unsigned char key, int x, int y)
+{
+	switch(key)
+	{
+		case '1':
+		// move target in positive y direction
+		targetPos_dof1_y +=delta_targetPos_dof1_y;
+		break;
+
+		case '2':
+		// move target in negative y direction
+		targetPos_dof1_y -=delta_targetPos_dof1_y;
+		break;
+
+		default:
+		SimWindow::keyboard(key, x, y); // ' ', 'p', '[', ']', 'v', 's', ',', '.', 'c', 'ESC'
+	}
 }
 
 
