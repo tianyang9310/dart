@@ -88,32 +88,6 @@
                 </collision_shape>                                
             </body>
 
-            <body name="h_heel_left">
-                <transformation>0.04649408 -0.80354016 -0.09072832 0.0 0.0 0.0</transformation>
-                <inertia>
-                    <mass>0.5831</mass>
-                    <offset>0.0216 -0.0216 0.0</offset>
-                </inertia>
-                <visualization_shape>
-                    <transformation>0.0216 -0.0216 0.0 0.0 0.0 0.0</transformation>
-                    <geometry>
-                        <box>
-                            <!--size>1.0000*0.108 0.5000*0.108 1.0000*0.108</size-->
-                            <size>0.2080 0.0540 0.1080</size>
-                        </box>
-                    </geometry>
-                    <color>1.0 0.5 0.0</color>
-                </visualization_shape>
-                <collision_shape>
-                    <transformation>0.0216 -0.0216 0.0 0.0 0.0 0.0</transformation>
-                    <geometry>
-                        <box>
-                            <!--size>1.0000*0.108 0.5000*0.108 1.0000*0.108</size-->
-                            <size>0.2080 0.0540 0.1080</size>
-                        </box>
-                    </geometry>
-                </collision_shape>                                
-            </body>
 
             <!-- Right Leg -->
             <body name="h_thigh_right">
@@ -168,32 +142,6 @@
                 </collision_shape>                                
             </body>
 
-            <body name="h_heel_right">
-                <transformation>0.04649408 -0.80354016 0.09072832 0.0 0.0 0.0</transformation>
-                <inertia>
-                    <mass>0.5831</mass>
-                    <offset>0.0216 -0.0216 0.0</offset>
-                </inertia>
-                <visualization_shape>
-                    <transformation>0.0216 -0.0216 0.0 0.0 0.0 0.0</transformation>
-                    <geometry>
-                        <box>
-                            <!--size>1.0000*0.108 0.5000*0.108 1.0000*0.108</size-->
-                            <size>0.2080 0.0540 0.1080</size>
-                        </box>
-                    </geometry>
-                    <color>1.0 0.5 0.0</color>
-                </visualization_shape>
-                <collision_shape>
-                    <transformation>0.0216 -0.0216 0.0 0.0 0.0 0.0</transformation>
-                    <geometry>
-                        <box>
-                            <!--size>1.0000*0.108 0.5000*0.108 1.0000*0.108</size-->
-                            <size>0.2080 0.0540 0.1080</size>
-                        </box>
-                    </geometry>
-                </collision_shape>                                
-            </body>
             
 
             <!-- JOINT: Pelvis -->
@@ -229,27 +177,7 @@
                 <init_vel>0</init_vel>
             </joint>
 
-            <joint type="universal" name="j_heel_left">
-                <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
-                <parent>h_shin_left</parent>
-                <child>h_heel_left</child>
-                <axis>
-                    <xyz>0.0 0.0 1.0</xyz>
-                  <limit>
-                    <lower>-1.57</lower>
-                    <upper>3.14</upper>
-                  </limit>                  
-                </axis>
-                <axis2>
-                    <xyz>1.0 0.0 0.0</xyz>
-                  <limit>
-                    <lower>-1.57</lower>
-                    <upper>1.57</upper>
-                  </limit>                  
-                </axis2>
-                <init_pos>0 0</init_pos>
-                <init_vel>0 0</init_vel>
-            </joint>
+
 
             <!-- JOINT: Right Leg -->
             <joint type="euler" name="j_thigh_right">
@@ -274,28 +202,6 @@
                 </axis>
                 <init_pos>-0.17</init_pos>
                 <init_vel>0</init_vel>
-            </joint>
-
-            <joint type="universal" name="j_heel_right">
-                <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
-                <parent>h_shin_right</parent>
-                <child>h_heel_right</child>
-                <axis>
-                    <xyz>0.0 0.0 1.0</xyz>
-                  <limit>
-                    <lower>-1.57</lower>
-                    <upper>3.14</upper>
-                  </limit>                  
-                </axis>
-                <axis2>
-                  <xyz>1.0 0.0 0.0</xyz>
-                  <limit>
-                    <lower>-1.57</lower>
-                    <upper>1.57</upper>
-                  </limit>                  
-                </axis2>
-                <init_pos>0 0</init_pos>
-                <init_vel>0 0</init_vel>
             </joint>
 
         </skeleton>	

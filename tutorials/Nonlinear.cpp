@@ -93,6 +93,7 @@ public:
   }
   
   /// add commanding forces from ankle strategy
+  /*
   void addAnkleStrategyForces()
   {
     // Lesson 4
@@ -130,7 +131,8 @@ public:
 	}
 	mBiped->setForces(mForces);
   }
-  
+ */
+
   // Send velocity commands on wheel actuators
   void setWheelCommands()
   {
@@ -215,7 +217,7 @@ public:
     mController->addSPDForces();
 
     // Lesson 4
-    mController->addAnkleStrategyForces();
+    //mController->addAnkleStrategyForces();
     
     // Lesson 6
     mController->setWheelCommands();
@@ -288,8 +290,8 @@ SkeletonPtr loadBiped()
   biped->setPosition(biped->getDof("j_thigh_right_z")->getIndexInSkeleton(), 0.15);
   biped->setPosition(biped->getDof("j_shin_left")->getIndexInSkeleton(), -0.4);
   biped->setPosition(biped->getDof("j_shin_right")->getIndexInSkeleton(), -0.4);
-  biped->setPosition(biped->getDof("j_heel_left_1")->getIndexInSkeleton(), 0.25);
-  biped->setPosition(biped->getDof("j_heel_right_1")->getIndexInSkeleton(), 0.25); 
+  //biped->setPosition(biped->getDof("j_heel_left_1")->getIndexInSkeleton(), 0.25);
+  //biped->setPosition(biped->getDof("j_heel_right_1")->getIndexInSkeleton(), 0.25); 
 
   return biped;
 }
