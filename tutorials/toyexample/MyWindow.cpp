@@ -363,9 +363,49 @@ void MyWindow::keyboard(unsigned char key, int x, int y)
 		targetPos_dof1_y -=delta_targetPos_dof1_y;
 		break;
 
+		case '3':
+		// move obstacle in positive y direction
+		moveObstacle(1, delta_targetPos_dof1_y);
+		break;
+
+		case '4':
+		// move obstacle in negative y direction
+		moveObstacle(1, -delta_targetPos_dof1_y);
+		break;
+
+		case '5':
+		// move obstacle in positive y direction
+		moveObstacle(2, delta_targetPos_dof1_y);
+		break;
+
+		case '6':
+		// move obstacle in negative y direction
+		moveObstacle(2, -delta_targetPos_dof1_y);
+		break;
+
+		case '7':
+		// move obstacle in positive y direction
+		moveObstacle(3, delta_targetPos_dof1_y);
+		break;
+
+		case '8':
+		// move obstacle in negative y direction
+		moveObstacle(3, -delta_targetPos_dof1_y);
+		break;
+
 		default:
 		SimWindow::keyboard(key, x, y); // ' ', 'p', '[', ']', 'v', 's', ',', '.', 'c', 'ESC'
 	}
+}
+
+void MyWindow::moveObstacle(int obstacle_idx, float delta)
+{
+	BodyNodePtr obstacle = mWorld->getSkeleton("world_setup")->getBodyNode("obstacle_"+std::to_string(obstacle_idx));
+
+	Eigen::Isometry3d tf = obstacle->getParentJoint()->getTransformFromParentBodyNode();
+	tf.translation().y() += delta;
+	obstacle->getParentJoint()->setTransformFromParentBodyNode(tf);
+	
 }
 
 

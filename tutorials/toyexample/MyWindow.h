@@ -29,6 +29,7 @@ public:
 	bool simCube(float *state, float ctrlAcc, float *nextState, double &pos_dof0, double &pos_dof2, double &vel_dof2, WorldPtr mSubWorld, Controller* mSubController, int smpl_idx, int tim_idx);
 	void timeStepping() override;
 	void keyboard(unsigned char key, int x, int y) override;
+	void moveObstacle(int obstacle_idx,float delta);
 protected:
 	std::unique_ptr<Controller> mController;
 	dart::collision::CollisionDetector* detector;
