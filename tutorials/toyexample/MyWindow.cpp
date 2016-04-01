@@ -49,7 +49,7 @@ void MyWindow::timeStepping()
 
 	// ideal condition is we don't need to set horizontal velocity at each timestep.
 	// The ControlPBP can always lead to avoiding obstacles.
-	mController->setCubeVelocity();
+	// mController->setCubeVelocity();
 	double best_ctrl = MyControlPBP();
 	std::cout<<"Best CTRL: "<<best_ctrl<<std::endl;
 	mController->setCubeAcc(best_ctrl);
@@ -220,7 +220,7 @@ double MyWindow::MyControlPBP()
 	//						wether there is backwards smoothing pass
 	//
 	//pbp.setParams(0.1f,0.5f,false,0.001f);  
-	pbp.setParams(0.1f,0.0f,false,0.001f);  
+	pbp.setParams(0.1f,0.0f,true,0.001f);  
 	// ----------------------------------------------------------------------------------------------
 
 	//allocate simulation states
@@ -356,6 +356,11 @@ void MyWindow::keyboard(unsigned char key, int x, int y)
 {
 	switch(key)
 	{
+		case 'n':
+		// setVelocity
+		mController->setCubeVelocity();
+		break;
+
 		case '1':
 		// move target 
 		obstacle_idx      = 0;
