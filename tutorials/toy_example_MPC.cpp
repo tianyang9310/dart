@@ -45,6 +45,10 @@ int main(int argc, char* argv[])
 	world->addSkeleton(cube);
 
 	MyWindow window(world);
+
+	std::cout<<"1: target; 2: first obstacle; 3: second obstacle; 4: third obstacle"<<std::endl;
+	std::cout<<"h: move left"<<std::endl<<"j: move down"<<std::endl<<"k: move up"<<std::endl<<"l: move right"<<std::endl<<"r: reset"<<std::endl;
+
 	glutInit(&argc, argv);
 	window.initWindow(1024, 768, "TOY EXAMPLE");
 	glutMainLoop();

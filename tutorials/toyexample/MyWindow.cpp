@@ -11,6 +11,7 @@
 
 namespace toyexample{
 
+
 MyWindow::MyWindow(WorldPtr world):N(32),K(300),traj_dof0_x(N,K),traj_dof1_y(N,K)
 {
 	setWorld(world);	
@@ -35,6 +36,8 @@ MyWindow::MyWindow(WorldPtr world):N(32),K(300),traj_dof0_x(N,K),traj_dof1_y(N,K
 	targetVel_dof0_x       = 0.0;
 	targetVel_dof1_y       = 0.0;
 	delta_targetPos_dof1_y = 0.003;
+
+	obstacle_idx		   = 0;
 }
 
 void MyWindow::timeStepping() 
@@ -354,43 +357,48 @@ void MyWindow::keyboard(unsigned char key, int x, int y)
 	switch(key)
 	{
 		case '1':
-		// move target in positive y direction
-		targetPos_dof1_y +=delta_targetPos_dof1_y;
+		// move target 
+		obstacle_idx      = 0;
 		break;
 
 		case '2':
-		// move target in negative y direction
-		targetPos_dof1_y -=delta_targetPos_dof1_y;
+		// move first obstacle
+		obstacle_idx      = 2;
 		break;
 
 		case '3':
-		// move obstacle in positive y direction
-		moveObstacle(1, delta_targetPos_dof1_y);
+		// move second obstacle
+		obstacle_idx      = 1;
 		break;
 
 		case '4':
-		// move obstacle in negative y direction
-		moveObstacle(1, -delta_targetPos_dof1_y);
+		// move third obstacle
+		obstacle_idx      = 3;
 		break;
 
-		case '5':
-		// move obstacle in positive y direction
-		moveObstacle(2, delta_targetPos_dof1_y);
+		case 'h':
+		// move left
+		moveObject(-delta_targetPos_dof1_y, false);
 		break;
 
-		case '6':
-		// move obstacle in negative y direction
-		moveObstacle(2, -delta_targetPos_dof1_y);
+		case 'j':
+		// move down
+		moveObject(-delta_targetPos_dof1_y, true);
 		break;
 
-		case '7':
-		// move obstacle in positive y direction
-		moveObstacle(3, delta_targetPos_dof1_y);
+		case 'k':
+		// move up
+		moveObject(delta_targetPos_dof1_y, true);
 		break;
 
-		case '8':
-		// move obstacle in negative y direction
-		moveObstacle(3, -delta_targetPos_dof1_y);
+		case 'l':
+		// move right
+		moveObject(delta_targetPos_dof1_y, false);
+		break;
+
+		case 'r':
+		// reset
+		resetObject();
 		break;
 
 		default:
@@ -398,14 +406,53 @@ void MyWindow::keyboard(unsigned char key, int x, int y)
 	}
 }
 
-void MyWindow::moveObstacle(int obstacle_idx, float delta)
+void MyWindow::moveObject(float delta, bool Y_direction)
 {
-	BodyNodePtr obstacle = mWorld->getSkeleton("world_setup")->getBodyNode("obstacle_"+std::to_string(obstacle_idx));
+	if (obstacle_idx == 0)
+	{
+		if (Y_direction)
+		{
+			targetPos_dof1_y     +=delta;
+		}
+	}
+	else
+	{
+		BodyNodePtr obstacle  = mWorld->getSkeleton("world_setup")->getBodyNode("obstacle_"+std::to_string(obstacle_idx));
+		Eigen::Isometry3d tf  = obstacle->getParentJoint()->getTransformFromParentBodyNode();
+		if (Y_direction)
+		{
+			tf.translation().y() += delta;
+		}
+		else
+		{
+			tf.translation().x() += delta;
+		}
+		obstacle->getParentJoint()->setTransformFromParentBodyNode(tf);
+	}
+}
 
-	Eigen::Isometry3d tf = obstacle->getParentJoint()->getTransformFromParentBodyNode();
-	tf.translation().y() += delta;
-	obstacle->getParentJoint()->setTransformFromParentBodyNode(tf);
-	
+ 
+void MyWindow::resetObject()
+{
+	extern const double floor_length;
+	extern const double obstacle_radius;
+	extern const double obstacle_2_wall;
+	extern const double obstacle_height;
+	targetPos_dof1_y = 0;
+	for (int i = 1; i<4; i++)
+	{
+		BodyNodePtr obstacle  = mWorld->getSkeleton("world_setup")->getBodyNode("obstacle_"+std::to_string(i));
+		Eigen::Isometry3d tf  = obstacle->getParentJoint()->getTransformFromParentBodyNode();
+		if (i < 2)
+		{
+			tf.translation() = Eigen::Vector3d(0.0, -floor_length/4 + obstacle_radius +  obstacle_2_wall, obstacle_height/2.0);
+		}
+		else
+		{
+			tf.translation() = Eigen::Vector3d(((i - 2.5)*2)*floor_length/4.0, floor_length/4 - obstacle_radius/2.0 - obstacle_2_wall , obstacle_height/2.0);
+		}
+		obstacle->getParentJoint()->setTransformFromParentBodyNode(tf);
+	}
 }
 
 
