@@ -80,6 +80,11 @@ void MyWindow::drawSkels()
 			{
 				glVertex2f(traj_dof0_x(i,j) + mWorld->getSkeleton("cube")->getBodyNode(0)->getParentJoint()->getTransformFromParentBodyNode().translation().x(), 
 						   traj_dof1_y(i,j) + mWorld->getSkeleton("cube")->getBodyNode(0)->getParentJoint()->getTransformFromParentBodyNode().translation().y());
+		//		if ( j<K-2 && j > 1 && fabs(traj_dof1_y(i,j)-traj_dof1_y(i,j+1))> 8*fabs(traj_dof1_y(i,j)-traj_dof1_y(i,j-1)))
+		//		{
+		//			glEnd();
+		//			glBegin(GL_LINE_STRIP);
+		//		}
 			}
 			glEnd();
 		}
@@ -220,7 +225,7 @@ double MyWindow::MyControlPBP()
 	//						wether there is backwards smoothing pass
 	//
 	//pbp.setParams(0.1f,0.5f,false,0.001f);  
-	pbp.setParams(0.1f,0.0f,true,0.001f);  
+	pbp.setParams(0.1f,0.15f,true,0.001f);  
 	// ----------------------------------------------------------------------------------------------
 
 	//allocate simulation states
