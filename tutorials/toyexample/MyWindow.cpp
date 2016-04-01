@@ -45,6 +45,7 @@ void MyWindow::timeStepping()
 	if (mController->collisionEvent())
 	{
 		std::cout<<"collision detected!"<<std::endl;
+		mWorld->getSkeleton("cube")->getBodyNode(0)->getVisualizationShape(0)->setColor(dart::Color::Red());
 	}
 
 	// ideal condition is we don't need to set horizontal velocity at each timestep.
@@ -305,7 +306,7 @@ double MyWindow::MyControlPBP()
 			// --------------------------------------------------------------------------------------------------------------------
 			//											  evaluate state cost
 			float cost			   = AaltoGames::squared((pos_dof0[i]     - targetPos_dof0_x) *10.0f) +  // horizontal distance between cube and target
-									 AaltoGames::squared((nextState[i][0] - targetPos_dof1_y) *10.0f) +  // vertical distance between cube and target
+									 AaltoGames::squared((nextState[i][0] - targetPos_dof1_y) *15.0f) +  // vertical distance between cube and target
 									 AaltoGames::squared((nextState[i][1] - targetVel_dof1_y) *10.0f) +  // vertical velocity of cube
 									 //AaltoGames::squared(control							  *10.0f) +  // control
 									 float(collision_checking) * 100.0f;
