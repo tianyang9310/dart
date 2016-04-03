@@ -32,13 +32,20 @@ public:
 	void moveObject(float delta, bool Y_direction);
 	void resetObject();
 protected:
+	//-------------------------------------------------------------------
+	//declaration of  related parameters of PBP
+	AaltoGames::ControlPBP pbp;
+	const int nSamples;	//N in the paper
+    const int nTimeSteps;	//K in the paper
+	const int nStateDimensions;
+	const int nControlDimensions;
+	Eigen::MatrixXd traj_dof0_x;  // x position
+	Eigen::MatrixXd traj_dof1_y;  // y position
+	//-------------------------------------------------------------------
+
 	std::unique_ptr<Controller> mController;
 	dart::collision::CollisionDetector* detector;
 	double mNewTimeStep;
-	int N;   // nSamples
-	int K;   // nTimeSteps
-	Eigen::MatrixXd traj_dof0_x;  // x position
-	Eigen::MatrixXd traj_dof1_y;  // y position
 	float targetPos_dof0_x; 
 	float targetPos_dof1_y; 
 	float targetVel_dof0_x; 

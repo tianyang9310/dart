@@ -12,7 +12,7 @@
 namespace toyexample{
 
 
-MyWindow::MyWindow(WorldPtr world):N(32),K(300),traj_dof0_x(N,K),traj_dof1_y(N,K)
+MyWindow::MyWindow(WorldPtr world):nSamples(32),nTimeSteps(300),nStateDimensions(2),nControlDimensions(1),traj_dof0_x(nSamples,nTimeSteps),traj_dof1_y(nSamples,nTimeSteps)
 {
 	setWorld(world);	
 
@@ -28,8 +28,6 @@ MyWindow::MyWindow(WorldPtr world):N(32),K(300),traj_dof0_x(N,K),traj_dof1_y(N,K
 	mWorld->setTimeStep(mNewTimeStep);
 	srand ((unsigned int)time(NULL));
 
-	traj_dof0_x.setZero();
-	traj_dof1_y.setZero();
 
 	targetPos_dof0_x       = 0.3625;
 	targetPos_dof1_y       = 0.0;
@@ -38,6 +36,52 @@ MyWindow::MyWindow(WorldPtr world):N(32),K(300),traj_dof0_x(N,K),traj_dof1_y(N,K
 	delta_targetPos_dof1_y = 0.003;
 
 	obstacle_idx		   = 0;
+	
+	// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+	// $$$$$$$$$$$$$$$$$$$$$$$$$       definition of PBP       $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+	// 
+	// parameters need to be tuned
+	// nSamples
+	// nTimeSteps
+	// controlMean
+	// C
+	// controlStd
+	// controlDiffStd
+	// controlDiffDiffStd
+	// stateStd  -- can be NULL 1. set as NULL
+	// mutationScale
+	// pbp.Params  1. No backward pass
+	// cost
+	//
+	float minControl				= -mController->mAcc;	//lower sampling bound
+	float maxControl				= mController->mAcc;	//upper sampling bound
+	float controlMean			    = 0.0f;	//we're using torque as the control, makes sense to have zero mean
+	//Square root of the diagonal elements of C_u in the paper, i.e., stdev of a Gaussian prior for control.
+	//Note that the optimizer interface does not have the C_u as a parameter, and instead uses meand and stdev arrays as parameters. 
+	float C							= maxControl * 2.0;	
+	float controlStd				= 1.0f*C;	//sqrt(\sigma_{0}^2 C_u) of the paper (we're not explicitly specifying C_u as u is a scalar here). In effect, a "tolerance" for torque minimization in this test
+	float controlDiffStd			= 100.0f*C;	//sqrt(\sigma_{1}^2 C_u) in the paper. In effect, a "tolerance" for angular jerk minimization in this test
+	float controlDiffDiffStd		= 100.0f*C; //sqrt(\sigma_{2}^2 C_u) in the paper. A large value to have no effect in this test.
+	//float stateStd[nStateDimensions]= {1e-3, 1e-3};	//square roots of the diagonal elements of Q in the paper
+	float* stateStd					= NULL;
+	float mutationScale				=0.1f;		//\sigma_m in the paper, larger sigma_m means that ctrl of last timestep has little impact on current ctrl
+	pbp.init(nSamples,nTimeSteps,nStateDimensions,nControlDimensions,&minControl,&maxControl,&controlMean,&controlStd,&controlDiffStd,&controlDiffDiffStd,mutationScale,stateStd);
+
+	//set further params: portion of "no prior" samples, resampling threshold, whether to use the backwards smoothing pass, and the regularization of the smoothing pass
+	
+	// -------------------------------------------------------------------------------------------
+	//           if no resampling, we can directly set resampling threshold as 0 
+	//	since if resmpl_thre < 1/N, then no resampling, please note that false here indicates
+	//						wether there is backwards smoothing pass
+	//
+	//pbp.setParams(0.1f,0.5f,false,0.001f);  
+	pbp.setParams(0.1f,0.15f,true,0.001f);  
+	// -------------------------------------------------------------------------------------------
+	
+	traj_dof0_x.setZero();
+	traj_dof1_y.setZero();
+	// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+	// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 }
 
 void MyWindow::timeStepping() 
@@ -74,10 +118,10 @@ void MyWindow::drawSkels()
 		double mLineWidth = 1.0;
 		glLineWidth(mLineWidth);
 		glColor3f(0.42,0.42,0.42);
-		for (int i=0; i<N; i++)
+		for (int i=0; i<nSamples; i++)
 		{
 			glBegin(GL_LINE_STRIP);
-			for (int j=0; j<K; j++)
+			for (int j=0; j<nTimeSteps; j++)
 			{
 				glVertex2f(traj_dof0_x(i,j) + mWorld->getSkeleton("cube")->getBodyNode(0)->getParentJoint()->getTransformFromParentBodyNode().translation().x(), 
 						   traj_dof1_y(i,j) + mWorld->getSkeleton("cube")->getBodyNode(0)->getParentJoint()->getTransformFromParentBodyNode().translation().y());
@@ -161,19 +205,6 @@ bool MyWindow::simCube(float *state, float ctrlAcc, float *nextState, double &po
 
 double MyWindow::MyControlPBP()
 {
-	// parameters need to be tuned
-	// nSamples
-	// nTimeSteps
-	// controlMean
-	// C
-	// controlStd
-	// controlDiffStd
-	// controlDiffDiffStd
-	// stateStd  -- can be NULL 1. set as NULL
-	// mutationScale
-	// pbp.Params  1. No backward pass
-	// cost
-
 	// clone a world
 	WorldPtr mSubWorld			    = std::make_shared<World>();
 	mSubWorld						= mWorld->clone();
@@ -196,43 +227,9 @@ double MyWindow::MyControlPBP()
 	mSubDetector->detectCollision(true, true);
 	mSubController = new Controller(mSubWorld->getSkeleton("cube"),mSubWorld->getSkeleton("world_setup"), mSubDetector);
 
-	//initialize the optimizer
-	AaltoGames::ControlPBP pbp;
-	
-	// setting of nSamples and nTimeSteps, go to constructor of MyWindow, and set N and K
-	const int nSamples				= N;	//N in the paper
-    int nTimeSteps					= K;	//K in the paper
-	const int nStateDimensions		= 2;
-	const int nControlDimensions	= 1;
-	float minControl				= -mSubController->mAcc;	//lower sampling bound
-	float maxControl				= mSubController->mAcc;	//upper sampling bound
-	float controlMean				= 0.0f;	//we're using torque as the control, makes sense to have zero mean
-	//Square root of the diagonal elements of C_u in the paper, i.e., stdev of a Gaussian prior for control.
-	//Note that the optimizer interface does not have the C_u as a parameter, and instead uses meand and stdev arrays as parameters. 
-	float C							= maxControl * 2.0;	
-	float controlStd				= 1.0f*C;	//sqrt(\sigma_{0}^2 C_u) of the paper (we're not explicitly specifying C_u as u is a scalar here). In effect, a "tolerance" for torque minimization in this test
-	float controlDiffStd			= 100.0f*C;	//sqrt(\sigma_{1}^2 C_u) in the paper. In effect, a "tolerance" for angular jerk minimization in this test
-	float controlDiffDiffStd		= 100.0f*C; //sqrt(\sigma_{2}^2 C_u) in the paper. A large value to have no effect in this test.
-	//float stateStd[nStateDimensions]= {1e-3, 1e-3};	//square roots of the diagonal elements of Q in the paper
-	float* stateStd					= NULL;
-	float mutationScale				=0.1f;		//\sigma_m in the paper, larger sigma_m means that ctrl of last timestep has little impact on current ctrl
-	pbp.init(nSamples,nTimeSteps,nStateDimensions,nControlDimensions,&minControl,&maxControl,&controlMean,&controlStd,&controlDiffStd,&controlDiffDiffStd,mutationScale,stateStd);
-
-	//set further params: portion of "no prior" samples, resampling threshold, whether to use the backwards smoothing pass, and the regularization of the smoothing pass
-	
-	// ----------------------------------------------------------------------------------------------
-	//           if no resampling, we can directly set resampling threshold as 0 
-	//	since if resmpl_thre < 1/N, then no resampling, please note that false here indicates
-	//						wether there is backwards smoothing pass
-	//
-	//pbp.setParams(0.1f,0.5f,false,0.001f);  
-	pbp.setParams(0.1f,0.15f,true,0.001f);  
-	// ----------------------------------------------------------------------------------------------
-
 	//allocate simulation states
 	float state[nSamples][nStateDimensions];
 	float nextState[nSamples][nStateDimensions];
-
 
 	float masterState[nStateDimensions];
 	masterState[0] = position_record_dof_1; 
@@ -281,11 +278,7 @@ double MyWindow::MyControlPBP()
 			float control;
 			pbp.getControl(i,&control);
 
-
-			// set openmp lock
-			//omp_set_lock(&lock);
 			//simulate to get next state.
-			
 			// --------------------------------------------------------------------------------------------------------------------
 			//          we disable resampling precedure in setParams, actually previousStateIdx can always return the 
 			//          correct index. In other words, if resampling, then previousStateIdx can link to the correct
@@ -296,9 +289,6 @@ double MyWindow::MyControlPBP()
 			bool collision_checking = simCube(state[previousStateIdx],control,nextState[i],pos_dof0[i], pos_dof2[i], vel_dof2[i], mSubWorld, mSubController, i, k);
 			// --------------------------------------------------------------------------------------------------------------------
 			
-			// unzet openmp lock
-			//omp_unset_lock(&lock);
-
 			// keep record of x (dof0) and y (dof1) of points in trajectory
 			traj_dof0_x(i,k) = pos_dof0[i];
 			traj_dof1_y(i,k) = nextState[i][0];
