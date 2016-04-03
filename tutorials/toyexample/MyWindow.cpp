@@ -185,7 +185,7 @@ double MyWindow::MyControlPBP()
 	double velocity_record_dof_1    = mWorld->getSkeleton("cube")->getDof(1)->getVelocity();
 	double velocity_record_dof_2    = mWorld->getSkeleton("cube")->getDof(2)->getVelocity();
 
-	WorldPtr tmp = mWorld;
+	WorldPtr world_tmp = mWorld;
 	setWorld(mSubWorld);
 
 	Controller*	mSubController;
@@ -350,7 +350,7 @@ double MyWindow::MyControlPBP()
 	float control;
 	pbp.getBestControl(0,&control);
 
-	setWorld(tmp);
+	setWorld(world_tmp);
 
 	render();
 	glFlush();
