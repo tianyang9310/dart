@@ -153,13 +153,19 @@
             </joint>
 
             <!-- JOINT: Left Leg -->
-            <joint type="euler" name="j_thigh_left">
+            <joint type="revolute" name="j_thigh_left">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_pelvis</parent>
                 <child>h_thigh_left</child>
-                <axis_order>zyx</axis_order>
-                <init_pos>0 0 0</init_pos>
-                <init_vel>0 0 0</init_vel>
+                <axis>
+                    <xyz>0.0 0.0 1.0</xyz>
+                  <limit>
+                    <lower>-0.785</lower>
+                    <upper>2.267</upper>
+                  </limit>                  
+                </axis>
+                <init_pos>0</init_pos>
+                <init_vel>0</init_vel>
             </joint>
 
             <joint type="revolute" name="j_shin_left">
@@ -169,24 +175,30 @@
                 <axis>
                   <xyz>0.0 0.0 1.0</xyz>
                   <limit>
-                    <lower>-3.14</lower>
+                    <lower>-2.267</lower>
                     <upper>0.0</upper>
                   </limit>                  
                 </axis>
-                <init_pos>-0.17</init_pos>
+                <init_pos>0</init_pos>
                 <init_vel>0</init_vel>
             </joint>
 
 
 
             <!-- JOINT: Right Leg -->
-            <joint type="euler" name="j_thigh_right">
+            <joint type="revolute" name="j_thigh_right">
                 <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
                 <parent>h_pelvis</parent>
                 <child>h_thigh_right</child>
-                <axis_order>zyx</axis_order>
-                <init_pos>0 0 0</init_pos>
-                <init_vel>0 0 0</init_vel>
+                <axis>
+                    <xyz>0.0 0.0 1.0</xyz>
+                  <limit>
+                    <lower>-0.785</lower>
+                    <upper>2.267</upper>
+                  </limit>                  
+                </axis>
+                <init_pos>0</init_pos>
+                <init_vel>0</init_vel>
             </joint>
 
             <joint type="revolute" name="j_shin_right">
@@ -196,11 +208,11 @@
                 <axis>
                     <xyz>0.0 0.0 1.0</xyz>
                   <limit>
-                    <lower>-3.14</lower>
+                    <lower>-2.267</lower>
                     <upper>0.0</upper>
                   </limit>                  
                 </axis>
-                <init_pos>-0.17</init_pos>
+                <init_pos>0</init_pos>
                 <init_vel>0</init_vel>
             </joint>
 
