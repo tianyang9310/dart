@@ -39,7 +39,7 @@ SkeletonPtr loadBiped()
 {
   
   // Create the world with a skeleton
-  WorldPtr world = SkelParser::readWorld(DART_DATA_PATH"skel/Nonlinear_Biped.skel");
+  WorldPtr world = SkelParser::readWorld(DART_DATA_PATH"skel/Nonlinear_Biped_stick.skel");
   assert(world != nullptr);
 
   SkeletonPtr biped = world->getSkeleton("biped");
@@ -57,8 +57,8 @@ SkeletonPtr loadBiped()
   biped->enableSelfCollision();
 
   // set initial position of the robot
-  biped->setPosition(biped->getDof("j_thigh_left_z")->getIndexInSkeleton(), 0.15);
-  biped->setPosition(biped->getDof("j_thigh_right_z")->getIndexInSkeleton(), 0.15);
+  biped->setPosition(biped->getDof("j_thigh_left")->getIndexInSkeleton(), 0.25);
+  biped->setPosition(biped->getDof("j_thigh_right")->getIndexInSkeleton(), -0.15);
   biped->setPosition(biped->getDof("j_shin_left")->getIndexInSkeleton(), -0.4);
   biped->setPosition(biped->getDof("j_shin_right")->getIndexInSkeleton(), -0.4);
 
