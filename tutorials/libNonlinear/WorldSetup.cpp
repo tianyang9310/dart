@@ -62,6 +62,25 @@ SkeletonPtr loadBiped()
   biped->setPosition(biped->getDof("j_shin_left")->getIndexInSkeleton(), -0.4);
   biped->setPosition(biped->getDof("j_shin_right")->getIndexInSkeleton(), -0.4);
 
+  WeldJoint::Properties properties_left;
+  properties_left.mName=std::string("j_foot_left");
+  WeldJoint::Properties properties_right;
+  properties_right.mName=std::string("j_foot_right");
+  
+  BodyNodePtr leftFoot = biped->createJointAndBodyNodePair<WeldJoint>(biped->getBodyNode("h_shin_left"), properties_left, BodyNode::Properties(std::string("h_foot_left"))).second;
+  BodyNodePtr rightFoot = biped->createJointAndBodyNodePair<WeldJoint>(biped->getBodyNode("h_shin_right"), properties_right, BodyNode::Properties(std::string("h_foot_right"))).second;
+  std::shared_ptr<EllipsoidShape> sphere = std::make_shared<EllipsoidShape>(Eigen::Vector3d(0.007474, 0.007474, 0.007474));
+  leftFoot->addVisualizationShape(sphere);
+  leftFoot->addCollisionShape(sphere);
+  rightFoot->addVisualizationShape(sphere);
+  rightFoot->addCollisionShape(sphere);
+
+  Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
+  tf.translation() = Eigen::Vector3d(0, -0.3737, 0);
+  leftFoot->getParentJoint()->setTransformFromParentBodyNode(tf);
+  rightFoot->getParentJoint()->setTransformFromParentBodyNode(tf);
+
+
   return biped;
 }
 

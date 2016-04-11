@@ -9,7 +9,7 @@
 
 namespace nonlinear{
 
-MyWindow::MyWindow(WorldPtr world)
+MyWindow::MyWindow(WorldPtr world):SimWindow()
 {
 	setWorld(world);	
 
@@ -18,6 +18,7 @@ MyWindow::MyWindow(WorldPtr world)
 
 void MyWindow::timeStepping() 
 {
+	mController->update(mWorld->getTime());
 	SimWindow::timeStepping();
 }
 

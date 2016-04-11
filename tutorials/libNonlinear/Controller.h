@@ -9,6 +9,9 @@
 #define CONTROLLER_H 
 
 #include "dart/dart.h"
+#include "StateMachine.h"
+#include "State.h"
+#include "TerminalCondition.h"
 
 namespace nonlinear{
 
@@ -24,10 +27,19 @@ class Controller
 {
 public:
 	Controller(const SkeletonPtr& biped);
-	void setTargetPositions(const Eigen::VectorXd& pose);
+	void update(double _currentTime);
+	void buildStateMachines();
+	StateMachine* createWalkingStateMachine();
+//--------------------------------------------------------------------------------------  
+	//void setTargetPositions(const Eigen::VectorXd& pose);
+//--------------------------------------------------------------------------------------  
 protected:
   SkeletonPtr mBiped;
-  
+
+  /// Current State Machine
+  StateMachine* mCurrentStateMachine;
+
+//--------------------------------------------------------------------------------------  
   /// Joint forces for the biped (output of the Controller)
   Eigen::VectorXd mForces;
   
@@ -36,15 +48,7 @@ protected:
 
   /// Control gains for the derivative error terms in the PD controller
   Eigen::MatrixXd mKd;
-
-  /// Target positions for the PD controllers
-  Eigen::VectorXd mTargetPositions;
-  
-  /// For ankle strategy: Error in the previous timestep
-  double mPreOffset;
-  
-  /// For velocity actuator: Current speed of the skateboard
-  double mSpeed;
+//--------------------------------------------------------------------------------------  
 };
 
 
