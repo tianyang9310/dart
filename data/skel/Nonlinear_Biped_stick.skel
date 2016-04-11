@@ -143,13 +143,28 @@
             </body>
 
             
-
             <!-- JOINT: Pelvis -->
+			<!--
             <joint type="free" name="j_pelvis">
                 <parent>world</parent>
                 <child>h_pelvis</child>
                 <init_pos>0 0 0 0 0 0</init_pos>
                 <init_vel>0 0 0 0 0 0</init_vel>
+            </joint>
+			-->
+
+            <!-- JOINT: Pelvis -->
+            <joint type="revolute" name="j_pelvis">
+                <transformation>0.0 0.0 0.0 0.0 0.0 0.0</transformation>
+                <parent>world</parent>
+                <child>h_pelvis</child>
+                <axis>
+                    <xyz>0.0 0.0 1.0</xyz>
+                  <limit>
+                    <lower>-0.157</lower>
+                    <upper>1.57</upper>
+                  </limit>                  
+                </axis>
             </joint>
 
             <!-- JOINT: Left Leg -->

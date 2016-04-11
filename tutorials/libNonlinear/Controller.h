@@ -38,6 +38,18 @@ protected:
 
   /// Current State Machine
   StateMachine* mCurrentStateMachine;
+  
+  ///// \brief Index for coronal left hip
+  //size_t mCoronalLeftHip;
+
+  ///// \brief Index for coronal right hip
+  //size_t mCoronalRightHip;
+
+  /// \brief Index for sagital left hip
+  size_t mSagitalLeftHip;
+
+  /// \brief Index for sagital right hip
+  size_t mSagitalRightHip;
 
 //--------------------------------------------------------------------------------------  
   /// Joint forces for the biped (output of the Controller)

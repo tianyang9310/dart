@@ -59,10 +59,10 @@ State::State(SkeletonPtr _skeleton, const std::string& _name)
     mEndTime(0.0),
     mFrame(0),
     mElapsedTime(0.0),
+    //mDesiredGlobalSwingLegAngleOnCoronal(0.0),
+    //mDesiredGlobalPelvisAngleOnCoronal(0.0),
     mDesiredGlobalSwingLegAngleOnSagital(0.0),
-    mDesiredGlobalSwingLegAngleOnCoronal(0.0),
-    mDesiredGlobalPelvisAngleOnSagital(0.0),
-    mDesiredGlobalPelvisAngleOnCoronal(0.0)
+    mDesiredGlobalPelvisAngleOnSagital(0.0)
 {
   int dof = mSkeleton->getNumDofs();
 
@@ -72,8 +72,8 @@ State::State(SkeletonPtr _skeleton, const std::string& _name)
   mKd = Eigen::VectorXd::Zero(dof);
   mSagitalCd = Eigen::VectorXd::Zero(dof);
   mSagitalCv = Eigen::VectorXd::Zero(dof);
-  mCoronalCd = Eigen::VectorXd::Zero(dof);
-  mCoronalCv = Eigen::VectorXd::Zero(dof);
+ // mCoronalCd = Eigen::VectorXd::Zero(dof);
+ // mCoronalCv = Eigen::VectorXd::Zero(dof);
   mTorque = Eigen::VectorXd::Zero(dof);
 
   for (int i = 0; i < dof; ++i)
@@ -82,11 +82,11 @@ State::State(SkeletonPtr _skeleton, const std::string& _name)
     mKd[i] = ATLAS_DEFAULT_KD;
   }
 
-  mPelvis     = mSkeleton->getBodyNode("pelvis");
-  mLeftFoot   = mSkeleton->getBodyNode("l_foot");
-  mRightFoot  = mSkeleton->getBodyNode("r_foot");
-  mLeftThigh  = mSkeleton->getBodyNode("l_uleg");
-  mRightThigh = mSkeleton->getBodyNode("r_uleg");
+  mPelvis     = mSkeleton->getBodyNode("h_pelvis");
+  mLeftFoot   = mSkeleton->getBodyNode("h_foot_left");
+  mRightFoot  = mSkeleton->getBodyNode("h_foot_right");
+  mLeftThigh  = mSkeleton->getBodyNode("h_thigh_left");
+  mRightThigh = mSkeleton->getBodyNode("h_thigh_right");
   mStanceFoot = nullptr;
 
   assert(mPelvis     != nullptr);
@@ -96,10 +96,10 @@ State::State(SkeletonPtr _skeleton, const std::string& _name)
   assert(mRightThigh != nullptr);
 //  assert(mStanceFoot != nullptr);
 
-  mCoronalLeftHip  = mSkeleton->getDof("l_leg_hpx")->getIndexInSkeleton(); // 10
-  mCoronalRightHip = mSkeleton->getDof("r_leg_hpx")->getIndexInSkeleton(); // 11
-  mSagitalLeftHip  = mSkeleton->getDof("l_leg_hpy")->getIndexInSkeleton(); // 13
-  mSagitalRightHip = mSkeleton->getDof("r_leg_hpy")->getIndexInSkeleton(); // 14
+ // mCoronalLeftHip  = mSkeleton->getDof("l_leg_hpx")->getIndexInSkeleton(); // 10
+ // mCoronalRightHip = mSkeleton->getDof("r_leg_hpx")->getIndexInSkeleton(); // 11
+  mSagitalLeftHip  = mSkeleton->getDof("j_thigh_left")->getIndexInSkeleton(); // 13
+  mSagitalRightHip = mSkeleton->getDof("j_thigh_right")->getIndexInSkeleton(); // 14
 }
 
 //==============================================================================
