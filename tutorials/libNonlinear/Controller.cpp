@@ -19,11 +19,12 @@ Controller::Controller(const SkeletonPtr& biped)\
   mSagitalLeftHip  = mBiped->getDof("j_thigh_left")->getIndexInSkeleton();
   mSagitalRightHip = mBiped->getDof("j_thigh_right")->getIndexInSkeleton();
 
+  buildStateMachines();
 }
 
 void Controller::update(double _currentTime)
 {
-	//mCurrentStateMachine->computeControlForce(mBiped->getTimeStep());
+//	mCurrentStateMachine->computeControlForce(mBiped->getTimeStep());
 }
 
 void Controller::buildStateMachines()

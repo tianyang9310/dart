@@ -159,9 +159,9 @@ void State::computeControlForce(double _timestep)
   // paper
   mDesiredJointPositionsBalance = mDesiredJointPositions
       + getSagitalCOMDistance() * mSagitalCd
-      + getSagitalCOMVelocity() * mSagitalCv
-      + getCoronalCOMDistance() * mCoronalCd
-      + getCoronalCOMVelocity() * mCoronalCv;
+      + getSagitalCOMVelocity() * mSagitalCv;
+     // + getCoronalCOMDistance() * mCoronalCd
+     // + getCoronalCOMVelocity() * mCoronalCv;
 
   //  cout << "Sagital D: " << getSagitalCOMDistance() << endl;
   //  cout << "Sagital V: " << getSagitalCOMVelocity() << endl;
@@ -468,11 +468,11 @@ void State::_updateTorqueForStanceLeg()
 //    cout << endl;
 
     // Torso control on coronal plane
-    double pelvisCoronalAngle = getCoronalPelvisAngle();
-    double tauTorsoCoronal
-        = -5000.0 * (pelvisCoronalAngle - mDesiredGlobalPelvisAngleOnCoronal)
-          - 1.0 * (0);
-    mTorque[mCoronalLeftHip] = -tauTorsoCoronal - mTorque[mCoronalRightHip];
+//    double pelvisCoronalAngle = getCoronalPelvisAngle();
+//    double tauTorsoCoronal
+//        = -5000.0 * (pelvisCoronalAngle - mDesiredGlobalPelvisAngleOnCoronal)
+//          - 1.0 * (0);
+//    mTorque[mCoronalLeftHip] = -tauTorsoCoronal - mTorque[mCoronalRightHip];
 
 //    cout << "Torque[mCoronalLeftHip]     : " << mTorque[mCoronalLeftHip] << endl;
 //    cout << "Torque[mCoronalRightHip]     : " << mTorque[mCoronalRightHip] << endl;
@@ -501,11 +501,11 @@ void State::_updateTorqueForStanceLeg()
 //    cout << endl;
 
     // Torso control on coronal plane
-    double pelvisCoronalAngle = getCoronalPelvisAngle();
-    double tauTorsoCoronal
-        = -5000.0 * (pelvisCoronalAngle - mDesiredGlobalPelvisAngleOnCoronal)
-          - 1.0 * (0);
-    mTorque[mCoronalRightHip] = -tauTorsoCoronal - mTorque[mCoronalLeftHip];
+//    double pelvisCoronalAngle = getCoronalPelvisAngle();
+//    double tauTorsoCoronal
+//        = -5000.0 * (pelvisCoronalAngle - mDesiredGlobalPelvisAngleOnCoronal)
+//          - 1.0 * (0);
+//    mTorque[mCoronalRightHip] = -tauTorsoCoronal - mTorque[mCoronalLeftHip];
 
     //    cout << "Torque[mCoronalLeftHip]     : " << mTorque[mCoronalLeftHip] << endl;
     //    cout << "Torque[mCoronalRightHip]     : " << mTorque[mCoronalRightHip] << endl;
