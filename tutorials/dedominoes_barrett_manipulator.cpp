@@ -363,7 +363,16 @@ int main(int argc, char*argv[])
 	world->addSkeleton(manipulator);
 	world->addSkeleton(domino);
 
-
+	//-------------------------------------------------------------------------------------
+	//--------    The number of total degree of freedom        ----------------------------
+	std::cout<<"#################################################################"<<std::endl;
+	size_t num_dof = manipulator->getNumDofs();
+	for (size_t i=0; i<num_dof; i++)
+	{
+		std::cout<<manipulator->getDof(i)->getName()<<std::endl;
+	}
+	std::cout<<"#################################################################"<<std::endl;
+	//-------------------------------------------------------------------------------------
 
 	MyWindow window(world);
 
