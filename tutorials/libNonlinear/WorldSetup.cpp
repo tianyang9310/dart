@@ -69,18 +69,28 @@ SkeletonPtr loadBiped()
   
   BodyNodePtr leftFoot = biped->createJointAndBodyNodePair<WeldJoint>(biped->getBodyNode("h_shin_left"), properties_left, BodyNode::Properties(std::string("h_foot_left"))).second;
   BodyNodePtr rightFoot = biped->createJointAndBodyNodePair<WeldJoint>(biped->getBodyNode("h_shin_right"), properties_right, BodyNode::Properties(std::string("h_foot_right"))).second;
-  std::shared_ptr<EllipsoidShape> sphere = std::make_shared<EllipsoidShape>(Eigen::Vector3d(0.007474, 0.007474, 0.007474));
-  leftFoot->addVisualizationShape(sphere);
-  leftFoot->addCollisionShape(sphere);
-  rightFoot->addVisualizationShape(sphere);
-  rightFoot->addCollisionShape(sphere);
+  std::shared_ptr<EllipsoidShape> leftsphere = std::make_shared<EllipsoidShape>(Eigen::Vector3d(0.007474, 0.007474, 0.007474));
+  std::shared_ptr<EllipsoidShape> rightsphere = std::make_shared<EllipsoidShape>(Eigen::Vector3d(0.007474, 0.007474, 0.007474));
+  leftFoot->addVisualizationShape(leftsphere);
+  leftFoot->addCollisionShape(leftsphere);
+  rightFoot->addVisualizationShape(rightsphere);
+  rightFoot->addCollisionShape(rightsphere);
 
-  Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
-  tf.translation() = Eigen::Vector3d(0, -0.3737, 0);
-  leftFoot->getParentJoint()->setTransformFromParentBodyNode(tf);
-  rightFoot->getParentJoint()->setTransformFromParentBodyNode(tf);
+  Eigen::Isometry3d lefttf(Eigen::Isometry3d::Identity());
+  Eigen::Isometry3d righttf(Eigen::Isometry3d::Identity());
+  lefttf.translation() = Eigen::Vector3d(0, -0.3737, 0);
+  righttf.translation() = Eigen::Vector3d(0, -0.3737, 0);
+  leftFoot->getParentJoint()->setTransformFromParentBodyNode(lefttf);
+  rightFoot->getParentJoint()->setTransformFromParentBodyNode(righttf);
 
-
+  /*
+  SkeletonPtr new_biped;
+  biped->getBodyNode("h_pelvis")->copyTo<PlanarJoint>(new_biped->getBodyNode(0));
+  for (size_t i=0; i<new_biped->getNumBodyNodes(); i++)
+  {
+	  std::cout<<new_biped->getBodyNode(i)->getName()<<std::endl;
+  }
+  */
   return biped;
 }
 
