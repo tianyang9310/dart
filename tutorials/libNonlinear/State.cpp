@@ -183,8 +183,8 @@ void State::computeControlForce(double _timestep)
 
   // Compute torques for all the joints except for hip (standing and swing)
   // joints. The first 6 dof is for base body force so it is set to zero.
-  mTorque.head<6>() = Vector6d::Zero();
-  for (int i = 6; i < dof; ++i)
+  mTorque.head<3>() = Vector3d::Zero();
+  for (int i = 3; i < dof; ++i)
   {
     mTorque[i] = -mKp[i] * (q[i] - mDesiredJointPositionsBalance[i])
                  -mKd[i] * dq[i];
@@ -200,6 +200,10 @@ void State::computeControlForce(double _timestep)
   _updateTorqueForStanceLeg();
 
   // Apply control torque to the skeleton
+
+  std::cout<<"###################################################################"<<std::endl;
+  std::cout<<mTorque.matrix()<<std::endl;
+  std::cout<<"###################################################################"<<std::endl;
   mSkeleton->setForces(mTorque);
 
   mElapsedTime += _timestep;

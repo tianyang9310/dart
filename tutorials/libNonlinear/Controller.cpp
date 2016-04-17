@@ -25,6 +25,12 @@ Controller::Controller(const SkeletonPtr& biped)\
 void Controller::update(double _currentTime)
 {
 	mCurrentStateMachine->computeControlForce(mBiped->getTimeStep());
+	/*
+	for (size_t i=0;i<mBiped->getNumDofs();i++)
+	{
+		std::cout<<mBiped->getDof(i)->getForce()<<std::endl;
+	}
+	*/
 }
 
 void Controller::buildStateMachines()
