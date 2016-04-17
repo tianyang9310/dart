@@ -49,7 +49,7 @@ SkeletonPtr loadBiped()
   // 2. enable self-collision
   for (size_t i=0; i<biped->getNumJoints(); ++i)
   {
-	  biped->getJoint(i)->setPositionLimited(true);
+	  biped->getJoint(i)->setPositionLimitEnforced(true);
   }
   
   // Enable self-collision detection in DART
@@ -83,14 +83,12 @@ SkeletonPtr loadBiped()
   leftFoot->getParentJoint()->setTransformFromParentBodyNode(lefttf);
   rightFoot->getParentJoint()->setTransformFromParentBodyNode(righttf);
 
-  /*
-  SkeletonPtr new_biped;
-  biped->getBodyNode("h_pelvis")->copyTo<PlanarJoint>(new_biped->getBodyNode(0));
-  for (size_t i=0; i<new_biped->getNumBodyNodes(); i++)
+  biped->getDof(2)->setName("j_pelvis_rot");
+  for (size_t i=0; i<biped->getNumDofs();i++)
   {
-	  std::cout<<new_biped->getBodyNode(i)->getName()<<std::endl;
+	  std::cout<<biped->getDof(i)->getName()<<std::endl;
   }
-  */
+
   return biped;
 }
 

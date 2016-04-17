@@ -65,25 +65,29 @@
             <body name="h_shin_left">
                 <transformation>0.0 -0.42984016 -0.01572832 0.0 0.0 0.0</transformation>
                 <inertia>
-                    <mass>0.017738</mass>
+                    <mass>0.01393139</mass>
                     <offset>0.0 -0.18685 0.0</offset>
                 </inertia>
                 <visualization_shape>
-                    <transformation>0.0 -0.18685 0.0 0.0 0.0 0.0</transformation>
+                    <transformation>0.0 -0.18685 0.0 1.570796 0.0 0.0</transformation>
                     <geometry>
-                        <box>
+                        <cylinder>
                             <!--size>0.2000*0.3737 1.0000*0.3737 0.2000*0.3737</size-->
-                            <size>0.007474 0.3737 0.007474</size>
-                        </box>
+                            <!--size>0.007474 0.3737 0.007474</size-->
+							<radius>0.003737</radius>
+							<height>0.3737</height>
+                        </cylinder>
                     </geometry>
                 </visualization_shape>
                 <collision_shape>
-                    <transformation>0.0 -0.18685 0.0 0.0 0.0 0.0</transformation>
+                    <transformation>0.0 -0.18685 0.0 1.570796 0.0 0.0</transformation>
                     <geometry>
-                        <box>
+                        <cylinder>
                             <!--size>0.2000*0.3737 1.0000*0.3737 0.2000*0.3737</size-->
-                            <size>0.007474 0.3737 0.007474</size>
-                        </box>
+                            <!--size>0.007474 0.3737 0.007474</size-->
+							<radius>0.003737</radius>
+							<height>0.3737</height>
+                        </cylinder>
                     </geometry>
                 </collision_shape>                                
             </body>
@@ -119,36 +123,39 @@
             <body name="h_shin_right">
                 <transformation>0.0 -0.42984016 0.01572832 0.0 0.0 0.0</transformation>
                 <inertia>
-                    <mass>0.017738</mass>
+                    <mass>0.01393139</mass>
                     <offset>0.0 -0.18685 0.0</offset>
                 </inertia>
                 <visualization_shape>
-                    <transformation>0.0 -0.18685 0.0 0.0 0.0 0.0</transformation>
+                    <transformation>0.0 -0.18685 0.0 1.570796 0.0 0.0</transformation>
                     <geometry>
-                        <box>
+                        <cylinder>
                             <!--size>0.2000*0.3737 1.0000*0.3737 0.2000*0.3737</size-->
-                            <size>0.007474 0.3737 0.007474</size>
-                        </box>
+                            <!--size>0.007474 0.3737 0.007474</size-->
+							<radius>0.003737</radius>
+							<height>0.3737</height>
+                        </cylinder>
                     </geometry>
                 </visualization_shape>
                 <collision_shape>
-                    <transformation>0.0 -0.18685 0.0 0.0 0.0 0.0</transformation>
+                    <transformation>0.0 -0.18685 0.0 1.570796 0.0 0.0</transformation>
                     <geometry>
-                        <box>
+                        <cylinder>
                             <!--size>0.2000*0.3737 1.0000*0.3737 0.2000*0.3737</size-->
-                            <size>0.007474 0.3737 0.007474</size>
-                        </box>
+                            <!--size>0.007474 0.3737 0.007474</size-->
+							<radius>0.003737</radius>
+							<height>0.3737</height>
+                        </cylinder>
                     </geometry>
                 </collision_shape>                                
             </body>
 
             
             <!-- JOINT: Pelvis -->
-            <joint type="free" name="j_pelvis">
+            <joint type="planar" name="j_pelvis">
                 <parent>world</parent>
                 <child>h_pelvis</child>
-                <init_pos>0 0 0 0 0 0</init_pos>
-                <init_vel>0 0 0 0 0 0</init_vel>
+				<plane type="xy"/>
             </joint>
 
             <!-- JOINT: Left Leg -->
