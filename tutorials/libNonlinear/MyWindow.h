@@ -24,6 +24,7 @@ class MyWindow:public dart::gui::SimWindow
 {
 public:
 	MyWindow(WorldPtr world);
+	void drawCOM(Eigen::Vector3d mCOM);
 	void drawSkels() override;
 	void timeStepping() override;
 	void keyboard(unsigned char key, int x, int y) override;

@@ -24,7 +24,7 @@ Controller::Controller(const SkeletonPtr& biped)\
 
 void Controller::update(double _currentTime)
 {
-	mCurrentStateMachine->computeControlForce(mBiped->getTimeStep());
+	//mCurrentStateMachine->computeControlForce(mBiped->getTimeStep());
 	/*
 	for (size_t i=0;i<mBiped->getNumDofs();i++)
 	{

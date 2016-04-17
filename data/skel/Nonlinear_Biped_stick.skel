@@ -12,7 +12,7 @@
             <body name="h_pelvis">
                 <transformation>0 0.05 0 0 0 0</transformation>
                 <inertia>
-                    <mass>0.15456431</mass>
+                    <mass>10</mass>
                     <offset>0.0 0 0.0</offset>
                 </inertia>
                 <visualization_shape>
@@ -39,7 +39,7 @@
             <body name="h_thigh_left">
                 <transformation>0.0 -0.05774016 -0.01572832 0.0 0.0 0.0</transformation>
                 <inertia>
-                    <mass>0.065709</mass>
+                    <mass>0.71428571</mass>
                     <offset>0.0 -0.18605 0.0</offset>
                 </inertia>
                 <visualization_shape>
@@ -65,7 +65,7 @@
             <body name="h_shin_left">
                 <transformation>0.0 -0.42984016 -0.01572832 0.0 0.0 0.0</transformation>
                 <inertia>
-                    <mass>0.01393139</mass>
+                    <mass>0.571428</mass>
                     <offset>0.0 -0.18685 0.0</offset>
                 </inertia>
                 <visualization_shape>
@@ -97,7 +97,7 @@
             <body name="h_thigh_right">
                 <transformation>0.0 -0.05774016 0.01572832 0.0 0.0 0.0</transformation>
                 <inertia>
-                    <mass>0.065709</mass>
+                    <mass>0.71428571</mass>
                     <offset>0.0 -0.18605 0.0</offset>
                 </inertia>
                 <visualization_shape>
@@ -123,7 +123,7 @@
             <body name="h_shin_right">
                 <transformation>0.0 -0.42984016 0.01572832 0.0 0.0 0.0</transformation>
                 <inertia>
-                    <mass>0.01393139</mass>
+                    <mass>0.571428</mass>
                     <offset>0.0 -0.18685 0.0</offset>
                 </inertia>
                 <visualization_shape>

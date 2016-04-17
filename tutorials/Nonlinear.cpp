@@ -34,6 +34,12 @@ int main(int argc, char* argv[])
 
   world->addSkeleton(floor);
   world->addSkeleton(biped);
+
+  // -----------------------------------------------------------------------------------------
+  std::cout<<"##################   getCOM() in the main file#####################"<<std::endl;
+  std::cout<<world->getSkeleton("biped")->getCOM().matrix()<<std::endl;
+  std::cout<<"###################################################################"<<std::endl;
+  // -----------------------------------------------------------------------------------------
   
   MyWindow window(world);
 

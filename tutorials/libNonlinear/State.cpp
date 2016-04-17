@@ -162,7 +162,7 @@ void State::computeControlForce(double _timestep)
       + getSagitalCOMVelocity() * mSagitalCv;
      // + getCoronalCOMDistance() * mCoronalCd
      // + getCoronalCOMVelocity() * mCoronalCv;
-
+	 
   //  cout << "Sagital D: " << getSagitalCOMDistance() << endl;
   //  cout << "Sagital V: " << getSagitalCOMVelocity() << endl;
   //  cout << endl;
@@ -201,9 +201,12 @@ void State::computeControlForce(double _timestep)
 
   // Apply control torque to the skeleton
 
-  std::cout<<"###################################################################"<<std::endl;
+  // -----------------------------------------------------------------------------------------
+  std::cout<<"##################   mTorques                 #####################"<<std::endl;
   std::cout<<mTorque.matrix()<<std::endl;
   std::cout<<"###################################################################"<<std::endl;
+  // -----------------------------------------------------------------------------------------
+   
   mSkeleton->setForces(mTorque);
 
   mElapsedTime += _timestep;
@@ -267,6 +270,13 @@ double State::getSagitalCOMDistance()
 {
   Eigen::Vector3d xAxis = getCOMFrame().linear().col(0);  // x-axis
   Eigen::Vector3d d = getCOM() - getStanceAnklePosition();
+
+  // -----------------------------------------------------------------------------------------
+  std::cout<<"##################   getCOM()                 #####################"<<std::endl;
+  std::cout<<getCOM().matrix()<<std::endl;
+  std::cin.get();
+  std::cout<<"###################################################################"<<std::endl;
+  // -----------------------------------------------------------------------------------------
 
   return d.dot(xAxis);
 }

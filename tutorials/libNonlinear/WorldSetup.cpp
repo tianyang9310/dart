@@ -57,10 +57,10 @@ SkeletonPtr loadBiped()
   biped->enableSelfCollision();
 
   // set initial position of the robot
-  biped->setPosition(biped->getDof("j_thigh_left")->getIndexInSkeleton(), 0.25);
-  biped->setPosition(biped->getDof("j_thigh_right")->getIndexInSkeleton(), -0.15);
-  biped->setPosition(biped->getDof("j_shin_left")->getIndexInSkeleton(), -0.4);
-  biped->setPosition(biped->getDof("j_shin_right")->getIndexInSkeleton(), -0.4);
+//  biped->setPosition(biped->getDof("j_thigh_left")->getIndexInSkeleton(), 0.25);
+//  biped->setPosition(biped->getDof("j_thigh_right")->getIndexInSkeleton(), -0.15);
+//  biped->setPosition(biped->getDof("j_shin_left")->getIndexInSkeleton(), -0.4);
+//  biped->setPosition(biped->getDof("j_shin_right")->getIndexInSkeleton(), -0.4);
 
   WeldJoint::Properties properties_left;
   properties_left.mName=std::string("j_foot_left");
@@ -75,6 +75,16 @@ SkeletonPtr loadBiped()
   leftFoot->addCollisionShape(leftsphere);
   rightFoot->addVisualizationShape(rightsphere);
   rightFoot->addCollisionShape(rightsphere);
+
+  dart::dynamics::Inertia leftInertia;
+  dart::dynamics::Inertia rightInertia;
+  leftInertia.setMass(0.142857143);
+  rightInertia.setMass(0.142857143);
+  leftInertia.setMoment(leftsphere->computeInertia(leftInertia.getMass()));
+  rightInertia.setMoment(rightsphere->computeInertia(rightInertia.getMass()));
+  leftFoot->setInertia(leftInertia);
+  rightFoot->setInertia(rightInertia);
+
 
   Eigen::Isometry3d lefttf(Eigen::Isometry3d::Identity());
   Eigen::Isometry3d righttf(Eigen::Isometry3d::Identity());
