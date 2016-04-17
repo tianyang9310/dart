@@ -231,11 +231,60 @@ public:
 				case 'f':
 					mHasControlFingers = !mHasControlFingers;
 				break;
+
+				case 'h':
+				// move left
+				moveObject_X(false);
+				break;
+
+				case 'j':
+				// move down
+				moveObject_Y(false);
+				break;
+
+				case 'k':
+				// move up
+				moveObject_Y(true);
+				break;
+
+				case 'l':
+				// move right
+				moveObject_X(true);
+				break;
 			}
 		}
 		SimWindow::keyboard(key, x, y);
 	}
 
+	void moveObject_X(bool direction, float delta=0.5)
+	{
+		BodyNodePtr obstacle  = mWorld->getSkeleton("domino")->getBodyNode(0);
+		Eigen::Isometry3d tf  = obstacle->getParentJoint()->getTransformFromParentBodyNode();
+		if (direction)
+		{
+			tf.translation().x() += delta;
+		}
+		else
+		{
+			tf.translation().x() -= delta;
+		}
+		obstacle->getParentJoint()->setTransformFromParentBodyNode(tf);
+	}
+
+	void moveObject_Y(bool direction, float delta=0.5)
+	{
+		BodyNodePtr obstacle  = mWorld->getSkeleton("domino")->getBodyNode(0);
+		Eigen::Isometry3d tf  = obstacle->getParentJoint()->getTransformFromParentBodyNode();
+		if (direction)
+		{
+			tf.translation().y() += delta;
+		}
+		else
+		{
+			tf.translation().y() -= delta;
+		}
+		obstacle->getParentJoint()->setTransformFromParentBodyNode(tf);
+	}
 	
 	void timeStepping() override
 	{
