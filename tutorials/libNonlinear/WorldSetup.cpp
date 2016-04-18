@@ -43,6 +43,7 @@ SkeletonPtr loadBiped()
   assert(world != nullptr);
 
   SkeletonPtr biped = world->getSkeleton("biped");
+  biped->getDof(2)->setName("j_pelvis_rot");
 
   // To make sure the bipedal robots act like human, 
   // 1. enforce joint limit
@@ -57,10 +58,11 @@ SkeletonPtr loadBiped()
   biped->enableSelfCollision();
 
   // set initial position of the robot
-//  biped->setPosition(biped->getDof("j_thigh_left")->getIndexInSkeleton(), 0.25);
-//  biped->setPosition(biped->getDof("j_thigh_right")->getIndexInSkeleton(), -0.15);
-//  biped->setPosition(biped->getDof("j_shin_left")->getIndexInSkeleton(), -0.4);
-//  biped->setPosition(biped->getDof("j_shin_right")->getIndexInSkeleton(), -0.4);
+  biped->setPosition(biped->getDof("j_pelvis_rot")->getIndexInSkeleton(), DART_RADIAN * (4.75));
+  biped->setPosition(biped->getDof("j_thigh_left")->getIndexInSkeleton(), 0.7);
+  biped->setPosition(biped->getDof("j_thigh_right")->getIndexInSkeleton(), 0.0);
+  biped->setPosition(biped->getDof("j_shin_left")->getIndexInSkeleton(), 0.05);
+  biped->setPosition(biped->getDof("j_shin_right")->getIndexInSkeleton(), 0.01);
 
   WeldJoint::Properties properties_left;
   properties_left.mName=std::string("j_foot_left");
@@ -93,7 +95,6 @@ SkeletonPtr loadBiped()
   leftFoot->getParentJoint()->setTransformFromParentBodyNode(lefttf);
   rightFoot->getParentJoint()->setTransformFromParentBodyNode(righttf);
 
-  biped->getDof(2)->setName("j_pelvis_rot");
   for (size_t i=0; i<biped->getNumDofs();i++)
   {
 	  std::cout<<biped->getDof(i)->getName()<<std::endl;

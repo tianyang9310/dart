@@ -36,8 +36,9 @@ int main(int argc, char* argv[])
   world->addSkeleton(biped);
 
   // -----------------------------------------------------------------------------------------
-  std::cout<<"##################   getCOM() in the main file#####################"<<std::endl;
+  std::cout<<"##################   getCOM() MAIN             #####################"<<std::endl;
   std::cout<<world->getSkeleton("biped")->getCOM().matrix()<<std::endl;
+  std::cout<<world->getSkeleton("biped")->getBodyNode("h_foot_left")->getTransform().matrix()<<std::endl;
   std::cout<<"###################################################################"<<std::endl;
   // -----------------------------------------------------------------------------------------
   

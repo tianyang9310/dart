@@ -47,7 +47,7 @@ void MyWindow::drawCOM(Eigen::Vector3d mCOM)
 void MyWindow::drawSkels()
 {
 	drawCOM(mWorld->getSkeleton("biped")->getCOM());
-	for (size_t i = 0; i<mWorld->getSkeleton("biped")->getNumBodyNodes(); i++)
+	for (size_t i = 0; i<mWorld->getSkeleton("biped")->getNumBodyNodes()-2; i++)
 	{
 		drawCOM(mWorld->getSkeleton("biped")->getBodyNode(i)->getCOM());
 	}

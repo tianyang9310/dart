@@ -24,7 +24,7 @@ Controller::Controller(const SkeletonPtr& biped)\
 
 void Controller::update(double _currentTime)
 {
-	//mCurrentStateMachine->computeControlForce(mBiped->getTimeStep());
+	mCurrentStateMachine->computeControlForce(mBiped->getTimeStep());
 	/*
 	for (size_t i=0;i<mBiped->getNumDofs();i++)
 	{
@@ -47,7 +47,7 @@ StateMachine* Controller::createWalkingStateMachine()
   const double cd13 = 2.2;
   const double cv13 = 0.0;
 
-  const double pelvis = DART_RADIAN * 0.0;//-4.75;  // angle b/w pelvis and torso
+  const double pelvis = DART_RADIAN * -4.75;  // angle b/w pelvis and torso
 
   const double swh02  =  0.40;  // swing hip
   const double swk02  = -1.10;  // swing knee

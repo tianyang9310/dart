@@ -163,6 +163,13 @@ void State::computeControlForce(double _timestep)
      // + getCoronalCOMDistance() * mCoronalCd
      // + getCoronalCOMVelocity() * mCoronalCv;
 	 
+  // -----------------------------------------------------------------------------------------
+  std::cout<<"##################   mDesiredJointPositionsBalance                 #####################"<<std::endl;
+  std::cout<<mDesiredJointPositionsBalance.matrix()<<std::endl;
+  //std::cin.get();
+  std::cout<<"###################################################################"<<std::endl;
+  // -----------------------------------------------------------------------------------------
+
   //  cout << "Sagital D: " << getSagitalCOMDistance() << endl;
   //  cout << "Sagital V: " << getSagitalCOMVelocity() << endl;
   //  cout << endl;
@@ -199,14 +206,35 @@ void State::computeControlForce(double _timestep)
   // Torso and swing-hip control
   _updateTorqueForStanceLeg();
 
+ // // -----------------------------------------------------------------------------------------
+ // std::cout<<"##################   q                #####################"<<std::endl;
+ // std::cout<<q.matrix()<<std::endl;
+ // std::cout<<"###################################################################"<<std::endl;
+ // // -----------------------------------------------------------------------------------------
+ // // -----------------------------------------------------------------------------------------
+ // std::cout<<"##################   dq                #####################"<<std::endl;
+ // std::cout<<dq.matrix()<<std::endl;
+ // std::cout<<"###################################################################"<<std::endl;
+ // // -----------------------------------------------------------------------------------------
+ // // -----------------------------------------------------------------------------------------
+ // std::cout<<"##################   mKp                #####################"<<std::endl;
+ // std::cout<<mKp.matrix()<<std::endl;
+ // std::cout<<"###################################################################"<<std::endl;
+ // // -----------------------------------------------------------------------------------------
+ // // -----------------------------------------------------------------------------------------
+ // std::cout<<"##################   mKd                #####################"<<std::endl;
+ // std::cout<<mKd.matrix()<<std::endl;
+ // std::cout<<"###################################################################"<<std::endl;
+ // // -----------------------------------------------------------------------------------------
+ // 
+ // // -----------------------------------------------------------------------------------------
+ // std::cout<<"##################   mTorque                 #####################"<<std::endl;
+ // std::cout<<mTorque.matrix()<<std::endl;
+ // std::cin.get();
+ // std::cout<<"###################################################################"<<std::endl;
+ // // -----------------------------------------------------------------------------------------
+  
   // Apply control torque to the skeleton
-
-  // -----------------------------------------------------------------------------------------
-  std::cout<<"##################   mTorques                 #####################"<<std::endl;
-  std::cout<<mTorque.matrix()<<std::endl;
-  std::cout<<"###################################################################"<<std::endl;
-  // -----------------------------------------------------------------------------------------
-   
   mSkeleton->setForces(mTorque);
 
   mElapsedTime += _timestep;
@@ -226,7 +254,7 @@ void State::end(double _currentTime)
 {
   mEndTime = _currentTime;
 }
-
+//
 //==============================================================================
 Eigen::Vector3d State::getCOM() const
 {
@@ -261,7 +289,7 @@ Eigen::Isometry3d State::getCOMFrame() const
   T.linear().col(0) = xAxis;
   T.linear().col(1) = yAxis;
   T.linear().col(2) = zAxis;
-
+  
   return T;
 }
 
@@ -270,13 +298,6 @@ double State::getSagitalCOMDistance()
 {
   Eigen::Vector3d xAxis = getCOMFrame().linear().col(0);  // x-axis
   Eigen::Vector3d d = getCOM() - getStanceAnklePosition();
-
-  // -----------------------------------------------------------------------------------------
-  std::cout<<"##################   getCOM()                 #####################"<<std::endl;
-  std::cout<<getCOM().matrix()<<std::endl;
-  std::cin.get();
-  std::cout<<"###################################################################"<<std::endl;
-  // -----------------------------------------------------------------------------------------
 
   return d.dot(xAxis);
 }
@@ -334,12 +355,21 @@ double State::getSagitalPelvisAngle() const
 {
   Matrix3d comR = getCOMFrame().linear();
   Vector3d comY = comR.col(1);
+  
 
   Vector3d pelvisZ = mPelvis->getTransform().linear().col(2);
   Vector3d projPelvisZ = (comR.transpose() * pelvisZ);
   projPelvisZ[2] = 0.0;
+  // -----------------------------------------------------------------------------------------
+  std::cout<<"##################   angle                 #####################"<<std::endl;
+  std::cout<<comR.transpose().matrix()<<std::endl;
+  std::cout<<mPelvis->getTransform().linear().matrix()<<std::endl;
+  std::cin.get();
+  std::cout<<"###################################################################"<<std::endl;
+  // -----------------------------------------------------------------------------------------
   projPelvisZ.normalize();
   double angle = _getAngleBetweenTwoVectors(projPelvisZ, comY);
+  
 
   Vector3d cross = comY.cross(projPelvisZ);
 
@@ -350,23 +380,23 @@ double State::getSagitalPelvisAngle() const
 }
 
 //==============================================================================
-double State::getCoronalPelvisAngle() const
-{
-  Matrix3d comR = getCOMFrame().linear();
-  Vector3d comY = comR.col(1);
-  Vector3d pelvisZ = mPelvis->getTransform().linear().col(2);
-  Vector3d projPelvisZ = (comR.transpose() * pelvisZ);
-  projPelvisZ[0] = 0.0;
-  projPelvisZ.normalize();
-  double angle = _getAngleBetweenTwoVectors(projPelvisZ, comY);
-
-  Vector3d cross = comY.cross(projPelvisZ);
-
-  if (cross[0] > 0.0)
-    return angle;
-  else
-    return -angle;
-}
+// double State::getCoronalPelvisAngle() const
+// {
+//   Matrix3d comR = getCOMFrame().linear();
+//   Vector3d comY = comR.col(1);
+//   Vector3d pelvisZ = mPelvis->getTransform().linear().col(2);
+//   Vector3d projPelvisZ = (comR.transpose() * pelvisZ);
+//   projPelvisZ[0] = 0.0;
+//   projPelvisZ.normalize();
+//   double angle = _getAngleBetweenTwoVectors(projPelvisZ, comY);
+// 
+//   Vector3d cross = comY.cross(projPelvisZ);
+// 
+//   if (cross[0] > 0.0)
+//     return angle;
+//   else
+//     return -angle;
+// }
 
 //==============================================================================
 double State::getSagitalLeftLegAngle() const
@@ -407,42 +437,42 @@ double State::getSagitalRightLegAngle() const
 }
 
 //==============================================================================
-double State::getCoronalLeftLegAngle() const
-{
-  Matrix3d comR = getCOMFrame().linear();
-  Vector3d comY = comR.col(1);
-  Vector3d thighAxisZ = mLeftThigh->getTransform().linear().col(2);
-  Vector3d projThighAZ = (comR.transpose() * thighAxisZ);
-  projThighAZ[0] = 0.0;
-  projThighAZ.normalize();
-  double angle = _getAngleBetweenTwoVectors(projThighAZ, comY);
-
-  Vector3d cross = comY.cross(projThighAZ);
-
-  if (cross[0] > 0.0)
-    return angle;
-  else
-    return -angle;
-}
+// double State::getCoronalLeftLegAngle() const
+// {
+//   Matrix3d comR = getCOMFrame().linear();
+//   Vector3d comY = comR.col(1);
+//   Vector3d thighAxisZ = mLeftThigh->getTransform().linear().col(2);
+//   Vector3d projThighAZ = (comR.transpose() * thighAxisZ);
+//   projThighAZ[0] = 0.0;
+//   projThighAZ.normalize();
+//   double angle = _getAngleBetweenTwoVectors(projThighAZ, comY);
+// 
+//   Vector3d cross = comY.cross(projThighAZ);
+// 
+//   if (cross[0] > 0.0)
+//     return angle;
+//   else
+//     return -angle;
+// }
 
 //==============================================================================
-double State::getCoronalRightLegAngle() const
-{
-  Matrix3d comR = getCOMFrame().linear();
-  Vector3d comY = comR.col(1);
-  Vector3d thighAxisZ = mRightThigh->getTransform().linear().col(2);
-  Vector3d projThighAZ = (comR.transpose() * thighAxisZ);
-  projThighAZ[0] = 0.0;
-  projThighAZ.normalize();
-  double angle = _getAngleBetweenTwoVectors(projThighAZ, comY);
-
-  Vector3d cross = comY.cross(projThighAZ);
-
-  if (cross[0] > 0.0)
-    return angle;
-  else
-    return -angle;
-}
+// double State::getCoronalRightLegAngle() const
+// {
+//   Matrix3d comR = getCOMFrame().linear();
+//   Vector3d comY = comR.col(1);
+//   Vector3d thighAxisZ = mRightThigh->getTransform().linear().col(2);
+//   Vector3d projThighAZ = (comR.transpose() * thighAxisZ);
+//   projThighAZ[0] = 0.0;
+//   projThighAZ.normalize();
+//   double angle = _getAngleBetweenTwoVectors(projThighAZ, comY);
+// 
+//   Vector3d cross = comY.cross(projThighAZ);
+// 
+//   if (cross[0] > 0.0)
+//     return angle;
+//   else
+//     return -angle;
+// }
 
 //==============================================================================
 Eigen::Vector3d State::_getJointPosition(BodyNode* _bodyNode) const
