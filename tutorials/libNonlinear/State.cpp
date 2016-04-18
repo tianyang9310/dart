@@ -164,6 +164,13 @@ void State::computeControlForce(double _timestep)
      // + getCoronalCOMVelocity() * mCoronalCv;
 	 
 
+  // -----------------------------------------------------------------------------------------
+  std::cout<<"##################   mSagitalCd                #####################"<<std::endl;
+  std::cout<<mSagitalCd.transpose()<<std::endl;
+  std::cout<<"###################################################################"<<std::endl;
+  // -----------------------------------------------------------------------------------------
+
+
   //  cout << "Sagital D: " << getSagitalCOMDistance() << endl;
   //  cout << "Sagital V: " << getSagitalCOMVelocity() << endl;
   //  cout << endl;
@@ -293,6 +300,14 @@ double State::getSagitalCOMDistance()
   Eigen::Vector3d xAxis = getCOMFrame().linear().col(0);  // x-axis
   Eigen::Vector3d d = getCOM() - getStanceAnklePosition();
 
+//  // ---------------------------------------------------------------------------
+//  std::cout<<"############## get SagitalComDistance  ##################"<<std::endl;
+//  std::cout<<d.dot(xAxis)<<std::endl;
+//  std::cout<<mSkeleton->getCOM().transpose()<<std::endl;
+//  std::cout<<getStanceAnklePosition().transpose()<<std::endl;
+//  std::cin.get();
+//  // ---------------------------------------------------------------------------
+
   return d.dot(xAxis);
 }
 
@@ -301,27 +316,34 @@ double State::getSagitalCOMVelocity()
 {
   Eigen::Vector3d xAxis = getCOMFrame().linear().col(0);  // x-axis
   Eigen::Vector3d v = getCOMVelocity();
+  
+ // // ---------------------------------------------------------------------------
+ // std::cout<<"############## get SagitalComvelocity  ##################"<<std::endl;
+ // std::cout<<v.dot(xAxis)<<std::endl;
+ // std::cout<<mSkeleton->getCOMLinearVelocity().transpose()<<std::endl;
+ // std::cin.get();
+ // // ---------------------------------------------------------------------------
 
   return v.dot(xAxis);
 }
 
 //==============================================================================
-double State::getCoronalCOMDistance()
-{
-  Eigen::Vector3d yAxis = getCOMFrame().linear().col(2);  // z-axis
-  Eigen::Vector3d d = getCOM() - getStanceAnklePosition();
-
-  return d.dot(yAxis);
-}
+//double State::getCoronalCOMDistance()
+//{
+//  Eigen::Vector3d yAxis = getCOMFrame().linear().col(2);  // z-axis
+//  Eigen::Vector3d d = getCOM() - getStanceAnklePosition();
+//
+//  return d.dot(yAxis);
+//}
 
 //==============================================================================
-double State::getCoronalCOMVelocity()
-{
-  Eigen::Vector3d yAxis = getCOMFrame().linear().col(2);  // z-axis
-  Eigen::Vector3d v = getCOMVelocity();
-
-  return v.dot(yAxis);
-}
+//double State::getCoronalCOMVelocity()
+//{
+//  Eigen::Vector3d yAxis = getCOMFrame().linear().col(2);  // z-axis
+//  Eigen::Vector3d v = getCOMVelocity();
+//
+//  return v.dot(yAxis);
+//}
 
 //==============================================================================
 Eigen::Vector3d State::getStanceAnklePosition() const
@@ -596,10 +618,10 @@ void State::setDesiredSwingLegGlobalAngleOnSagital(double _val)
 }
 
 //==============================================================================
-void State::setDesiredSwingLegGlobalAngleOnCoronal(double _val)
-{
-  mDesiredGlobalSwingLegAngleOnCoronal = _val;
-}
+// void State::setDesiredSwingLegGlobalAngleOnCoronal(double _val)
+// {
+//   mDesiredGlobalSwingLegAngleOnCoronal = _val;
+// }
 
 //==============================================================================
 void State::setDesiredPelvisGlobalAngleOnSagital(double _val)
@@ -608,10 +630,10 @@ void State::setDesiredPelvisGlobalAngleOnSagital(double _val)
 }
 
 //==============================================================================
-void State::setDesiredPelvisGlobalAngleOnCoronal(double _val)
-{
-  mDesiredGlobalPelvisAngleOnCoronal = _val;
-}
+// void State::setDesiredPelvisGlobalAngleOnCoronal(double _val)
+// {
+//   mDesiredGlobalPelvisAngleOnCoronal = _val;
+// }
 
 //==============================================================================
 void State::setProportionalGain(int _idx, double _val)
@@ -694,20 +716,20 @@ void State::setFeedbackSagitalCOMVelocity(size_t _index, double _val)
 }
 
 //==============================================================================
-void State::setFeedbackCoronalCOMDistance(size_t _index, double _val)
-{
-  assert(static_cast<int>(_index) <= mCoronalCd.size() && "Invalid index.");
-
-  mCoronalCd[_index] = _val;
-}
+// void State::setFeedbackCoronalCOMDistance(size_t _index, double _val)
+// {
+//   assert(static_cast<int>(_index) <= mCoronalCd.size() && "Invalid index.");
+// 
+//   mCoronalCd[_index] = _val;
+// }
 
 //==============================================================================
-void State::setFeedbackCoronalCOMVelocity(size_t _index, double _val)
-{
-  assert(static_cast<int>(_index) <= mCoronalCv.size() && "Invalid index.");
-
-  mCoronalCv[_index] = _val;
-}
+// void State::setFeedbackCoronalCOMVelocity(size_t _index, double _val)
+// {
+//   assert(static_cast<int>(_index) <= mCoronalCv.size() && "Invalid index.");
+// 
+//   mCoronalCv[_index] = _val;
+// }
 
 //==============================================================================
 void State::setStanceFootToLeftFoot()
