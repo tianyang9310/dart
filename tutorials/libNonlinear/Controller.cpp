@@ -120,20 +120,20 @@ StateMachine* Controller::createWalkingStateMachine()
   //state0->setFeedbackCoronalCOMVelocity(mCoronalLeftHip,  -cv); // coronal left hip
   //state0->setFeedbackCoronalCOMDistance(mCoronalRightHip, -cd); // coronal right hip
   //state0->setFeedbackCoronalCOMVelocity(mCoronalRightHip, -cv); // coronal right hip
-  state0->setFeedbackSagitalCOMDistance(mSagitalLeftHip,  cd02); // sagital left hip
-  state0->setFeedbackSagitalCOMVelocity(mSagitalLeftHip,  cv02); // sagital left hip
-  state0->setFeedbackSagitalCOMDistance(mSagitalRightHip, cd02); // sagital right hip
-  state0->setFeedbackSagitalCOMVelocity(mSagitalRightHip, cv02); // sagital right hip
+  state0->setFeedbackSagitalCOMDistance(mSagitalLeftHip,     0); // sagital left hip
+  state0->setFeedbackSagitalCOMVelocity(mSagitalLeftHip,     0); // sagital left hip
+  state0->setFeedbackSagitalCOMDistance(mSagitalRightHip,  cd02); // sagital right hip
+  state0->setFeedbackSagitalCOMVelocity(mSagitalRightHip,  cv02); // sagital right hip
 
   //-- State 1
   //---- pelvis
   state1->setDesiredJointPosition("j_pelvis_rot", pelvis); // angle b/w pelvis and torso
   //---- swing leg
-  state1->setDesiredJointPosition("j_thigh_left", swh13); // left hip
-  state1->setDesiredJointPosition("j_shin_left", swk13); // left knee
+  state1->setDesiredJointPosition("j_thigh_right", swh13); // left hip
+  state1->setDesiredJointPosition("j_shin_right", swk13); // left knee
   //state1->setDesiredJointPosition("l_leg_aky", swa13); // left ankle
   //---- stance leg
-  state1->setDesiredJointPosition("j_shin_right", stk13); // right knee
+  state1->setDesiredJointPosition("j_shin_left", stk13); // right knee
   //state1->setDesiredJointPosition("r_leg_aky", sta13); // right ankle
   //---- arm
   //state1->setDesiredJointPosition("l_arm_shy", DART_RADIAN * +10.00); // left arm
@@ -145,10 +145,10 @@ StateMachine* Controller::createWalkingStateMachine()
   //state1->setFeedbackCoronalCOMVelocity(mCoronalLeftHip,  -cv);  // coronal left hip
   //state1->setFeedbackCoronalCOMDistance(mCoronalRightHip, -cd);  // coronal right hip
   //state1->setFeedbackCoronalCOMVelocity(mCoronalRightHip, -cv);  // coronal right hip
-  state1->setFeedbackSagitalCOMDistance(mSagitalLeftHip,  cd13);  // sagital left hip
-  state1->setFeedbackSagitalCOMVelocity(mSagitalLeftHip,  cv13);  // sagital left hip
-  state1->setFeedbackSagitalCOMDistance(mSagitalRightHip, cd13);  // sagital right hip
-  state1->setFeedbackSagitalCOMVelocity(mSagitalRightHip, cv13);  // sagital right hip
+  state1->setFeedbackSagitalCOMDistance(mSagitalLeftHip,      0);  // sagital left hip
+  state1->setFeedbackSagitalCOMVelocity(mSagitalLeftHip,      0);  // sagital left hip
+  state1->setFeedbackSagitalCOMDistance(mSagitalRightHip,  cd13);  // sagital right hip
+  state1->setFeedbackSagitalCOMVelocity(mSagitalRightHip,  cv13);  // sagital right hip
 
   //-- State 2
   //---- pelvis
@@ -170,20 +170,20 @@ StateMachine* Controller::createWalkingStateMachine()
   //state2->setFeedbackCoronalCOMVelocity(mCoronalLeftHip,  -cv);  // coronal left hip
   //state2->setFeedbackCoronalCOMDistance(mCoronalRightHip, -cd);  // coronal right hip
   //state2->setFeedbackCoronalCOMVelocity(mCoronalRightHip, -cv);  // coronal right hip
-  state2->setFeedbackSagitalCOMDistance(mSagitalLeftHip,  cd02);  // sagital left hip
-  state2->setFeedbackSagitalCOMVelocity(mSagitalLeftHip,  cv02);  // sagital left hip
-  state2->setFeedbackSagitalCOMDistance(mSagitalRightHip, cd02);  // sagital right hip
-  state2->setFeedbackSagitalCOMVelocity(mSagitalRightHip, cv02);  // sagital right hip
+  state2->setFeedbackSagitalCOMDistance(mSagitalLeftHip,   cd02);  // sagital left hip
+  state2->setFeedbackSagitalCOMVelocity(mSagitalLeftHip,   cv02);  // sagital left hip
+  state2->setFeedbackSagitalCOMDistance(mSagitalRightHip,     0 );  // sagital right hip
+  state2->setFeedbackSagitalCOMVelocity(mSagitalRightHip,     0 );  // sagital right hip
 
   //-- State 3
   //---- pelvis
   state3->setDesiredJointPosition("j_pelvis_rot", pelvis); // angle b/w pelvis and torso
   //---- swing leg
-  state3->setDesiredJointPosition("j_thigh_right", swh13); // right hip
-  state3->setDesiredJointPosition("j_shin_right", swk13); // right knee
+  state3->setDesiredJointPosition("j_thigh_left", swh13); // right hip
+  state3->setDesiredJointPosition("j_shin_left", swk13); // right knee
   //state3->setDesiredJointPosition("r_leg_aky", swa13); // right ankle
   //---- stance leg
-  state3->setDesiredJointPosition("j_shin_left", stk13); // left knee
+  state3->setDesiredJointPosition("j_shin_right", stk13); // left knee
   //state3->setDesiredJointPosition("l_leg_aky", sta13); // left ankle
   //---- arm
   //state3->setDesiredJointPosition("l_arm_shy", DART_RADIAN * -20.00); // left arm
@@ -195,10 +195,10 @@ StateMachine* Controller::createWalkingStateMachine()
   //state3->setFeedbackCoronalCOMVelocity(mCoronalLeftHip,  -cv);  // coronal left hip
   //state3->setFeedbackCoronalCOMDistance(mCoronalRightHip, -cd);  // coronal right hip
   //state3->setFeedbackCoronalCOMVelocity(mCoronalRightHip, -cv);  // coronal right hip
-  state3->setFeedbackSagitalCOMDistance(mSagitalLeftHip,  cd13);  // sagital left hip
-  state3->setFeedbackSagitalCOMVelocity(mSagitalLeftHip,  cv13);  // sagital left hip
-  state3->setFeedbackSagitalCOMDistance(mSagitalRightHip, cd13);  // sagital right hip
-  state3->setFeedbackSagitalCOMVelocity(mSagitalRightHip, cv13);  // sagital right hip
+  state3->setFeedbackSagitalCOMDistance(mSagitalLeftHip,   cd13);  // sagital left hip
+  state3->setFeedbackSagitalCOMVelocity(mSagitalLeftHip,   cv13);  // sagital left hip
+  state3->setFeedbackSagitalCOMDistance(mSagitalRightHip,     0);  // sagital right hip
+  state3->setFeedbackSagitalCOMVelocity(mSagitalRightHip,     0);  // sagital right hip
 
   sm->addState(state0);
   sm->addState(state1);

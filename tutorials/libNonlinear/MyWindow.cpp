@@ -19,7 +19,17 @@ MyWindow::MyWindow(WorldPtr world):SimWindow()
 void MyWindow::timeStepping() 
 {
 	mController->update(mWorld->getTime());
+
+
+//	SkeletonPtr mBiped = mWorld->getSkeleton("biped");
+//	Eigen::VectorXd mTmpPositions = mBiped->getPositions();
+
 	SimWindow::timeStepping();
+
+//	mBiped->getDof(0)->setPosition(mTmpPositions[0]);
+//	mBiped->getDof(1)->setPosition(mTmpPositions[1]);
+//	mBiped->getDof(2)->setPosition(mTmpPositions[2]);
+
 }
 
 void MyWindow::drawCOM(Eigen::Vector3d mCOM)

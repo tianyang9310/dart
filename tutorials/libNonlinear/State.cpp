@@ -163,14 +163,6 @@ void State::computeControlForce(double _timestep)
      // + getCoronalCOMDistance() * mCoronalCd
      // + getCoronalCOMVelocity() * mCoronalCv;
 	 
-
-  // -----------------------------------------------------------------------------------------
-  std::cout<<"##################   mSagitalCd                #####################"<<std::endl;
-  std::cout<<mSagitalCd.transpose()<<std::endl;
-  std::cout<<"###################################################################"<<std::endl;
-  // -----------------------------------------------------------------------------------------
-
-
   //  cout << "Sagital D: " << getSagitalCOMDistance() << endl;
   //  cout << "Sagital V: " << getSagitalCOMVelocity() << endl;
   //  cout << endl;
