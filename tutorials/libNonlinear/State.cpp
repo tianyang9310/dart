@@ -163,12 +163,6 @@ void State::computeControlForce(double _timestep)
      // + getCoronalCOMDistance() * mCoronalCd
      // + getCoronalCOMVelocity() * mCoronalCv;
 	 
-  // -----------------------------------------------------------------------------------------
-  std::cout<<"##################   mDesiredJointPositionsBalance                 #####################"<<std::endl;
-  std::cout<<mDesiredJointPositionsBalance.matrix()<<std::endl;
-  //std::cin.get();
-  std::cout<<"###################################################################"<<std::endl;
-  // -----------------------------------------------------------------------------------------
 
   //  cout << "Sagital D: " << getSagitalCOMDistance() << endl;
   //  cout << "Sagital V: " << getSagitalCOMVelocity() << endl;
@@ -359,17 +353,11 @@ double State::getSagitalPelvisAngle() const
 
   Vector3d pelvisZ = mPelvis->getTransform().linear().col(2);
   Vector3d projPelvisZ = (comR.transpose() * pelvisZ);
-  projPelvisZ[2] = 0.0;
-  // -----------------------------------------------------------------------------------------
-  std::cout<<"##################   angle                 #####################"<<std::endl;
-  std::cout<<comR.transpose().matrix()<<std::endl;
-  std::cout<<mPelvis->getTransform().linear().matrix()<<std::endl;
-  std::cin.get();
-  std::cout<<"###################################################################"<<std::endl;
-  // -----------------------------------------------------------------------------------------
+  //projPelvisZ[2] = 0.0;
   projPelvisZ.normalize();
   double angle = _getAngleBetweenTwoVectors(projPelvisZ, comY);
   
+  angle = 1.5708-angle;
 
   Vector3d cross = comY.cross(projPelvisZ);
 

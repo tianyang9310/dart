@@ -102,14 +102,14 @@ StateMachine* Controller::createWalkingStateMachine()
   // Set desired joint position
   //-- State 0
   //---- pelvis
-  state0->setDesiredJointPosition("j_pelvis_rot", -pelvis); // angle b/w pelvis and torso
+  state0->setDesiredJointPosition("j_pelvis_rot", pelvis); // angle b/w pelvis and torso
   //---- swing leg
-  state0->setDesiredJointPosition("j_thigh_right", -swh02); // right hip
-  state0->setDesiredJointPosition("j_shin_right", -swk02); // right knee
-  //state0->setDesiredJointPosition("r_leg_aky", -swa02); // right ankle
+  state0->setDesiredJointPosition("j_thigh_right", swh02); // right hip
+  state0->setDesiredJointPosition("j_shin_right", swk02); // right knee
+  //state0->setDesiredJointPosition("r_leg_aky", swa02); // right ankle
   //---- stance leg
-  state0->setDesiredJointPosition("j_shin_left", -stk02); // left knee
-  //state0->setDesiredJointPosition("l_leg_aky", -sta02); // left ankle
+  state0->setDesiredJointPosition("j_shin_left", stk02); // left knee
+  //state0->setDesiredJointPosition("l_leg_aky", sta02); // left ankle
   //---- arm
   //state0->setDesiredJointPosition("l_arm_shy", DART_RADIAN * -20.00); // left arm
   //state0->setDesiredJointPosition("r_arm_shy", DART_RADIAN * +10.00); // right arm
@@ -127,14 +127,14 @@ StateMachine* Controller::createWalkingStateMachine()
 
   //-- State 1
   //---- pelvis
-  state1->setDesiredJointPosition("j_pelvis_rot", -pelvis); // angle b/w pelvis and torso
+  state1->setDesiredJointPosition("j_pelvis_rot", pelvis); // angle b/w pelvis and torso
   //---- swing leg
-  state1->setDesiredJointPosition("j_thigh_left", -swh13); // left hip
-  state1->setDesiredJointPosition("j_shin_left", -swk13); // left knee
-  //state1->setDesiredJointPosition("l_leg_aky", -swa13); // left ankle
+  state1->setDesiredJointPosition("j_thigh_left", swh13); // left hip
+  state1->setDesiredJointPosition("j_shin_left", swk13); // left knee
+  //state1->setDesiredJointPosition("l_leg_aky", swa13); // left ankle
   //---- stance leg
-  state1->setDesiredJointPosition("j_shin_right", -stk13); // right knee
-  //state1->setDesiredJointPosition("r_leg_aky", -sta13); // right ankle
+  state1->setDesiredJointPosition("j_shin_right", stk13); // right knee
+  //state1->setDesiredJointPosition("r_leg_aky", sta13); // right ankle
   //---- arm
   //state1->setDesiredJointPosition("l_arm_shy", DART_RADIAN * +10.00); // left arm
   //state1->setDesiredJointPosition("r_arm_shy", DART_RADIAN * -20.00); // right arm
@@ -152,14 +152,14 @@ StateMachine* Controller::createWalkingStateMachine()
 
   //-- State 2
   //---- pelvis
-  state2->setDesiredJointPosition("j_pelvis_rot", -pelvis); // angle b/w pelvis and torso
+  state2->setDesiredJointPosition("j_pelvis_rot", pelvis); // angle b/w pelvis and torso
   //---- swing leg
-  state2->setDesiredJointPosition("j_thigh_left", -swh02); // left hip
-  state2->setDesiredJointPosition("j_shin_left", -swk02); // left knee
-  //state2->setDesiredJointPosition("l_leg_aky", -swa02); // left ankle
+  state2->setDesiredJointPosition("j_thigh_left", swh02); // left hip
+  state2->setDesiredJointPosition("j_shin_left", swk02); // left knee
+  //state2->setDesiredJointPosition("l_leg_aky", swa02); // left ankle
   //---- stance leg
-  state2->setDesiredJointPosition("j_shin_right", -stk02); // right knee
-  //state2->setDesiredJointPosition("r_leg_aky", -sta02); // right ankle
+  state2->setDesiredJointPosition("j_shin_right", stk02); // right knee
+  //state2->setDesiredJointPosition("r_leg_aky", sta02); // right ankle
   //---- arm
   //state2->setDesiredJointPosition("l_arm_shy", DART_RADIAN * +10.00); // left arm
   //state2->setDesiredJointPosition("r_arm_shy", DART_RADIAN * -20.00); // right arm
@@ -177,14 +177,14 @@ StateMachine* Controller::createWalkingStateMachine()
 
   //-- State 3
   //---- pelvis
-  state3->setDesiredJointPosition("j_pelvis_rot", -pelvis); // angle b/w pelvis and torso
+  state3->setDesiredJointPosition("j_pelvis_rot", pelvis); // angle b/w pelvis and torso
   //---- swing leg
-  state3->setDesiredJointPosition("j_thigh_right", -swh13); // right hip
-  state3->setDesiredJointPosition("j_shin_right", -swk13); // right knee
-  //state3->setDesiredJointPosition("r_leg_aky", -swa13); // right ankle
+  state3->setDesiredJointPosition("j_thigh_right", swh13); // right hip
+  state3->setDesiredJointPosition("j_shin_right", swk13); // right knee
+  //state3->setDesiredJointPosition("r_leg_aky", swa13); // right ankle
   //---- stance leg
-  state3->setDesiredJointPosition("j_shin_left", -stk13); // left knee
-  //state3->setDesiredJointPosition("l_leg_aky", -sta13); // left ankle
+  state3->setDesiredJointPosition("j_shin_left", stk13); // left knee
+  //state3->setDesiredJointPosition("l_leg_aky", sta13); // left ankle
   //---- arm
   //state3->setDesiredJointPosition("l_arm_shy", DART_RADIAN * -20.00); // left arm
   //state3->setDesiredJointPosition("r_arm_shy", DART_RADIAN * +10.00); // right arm
@@ -205,7 +205,7 @@ StateMachine* Controller::createWalkingStateMachine()
   sm->addState(state2);
   sm->addState(state3);
 
-  sm->setInitialState(state1);
+  sm->setInitialState(state0);
 
   return sm;
 }

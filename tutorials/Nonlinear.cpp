@@ -35,14 +35,18 @@ int main(int argc, char* argv[])
   world->addSkeleton(floor);
   world->addSkeleton(biped);
 
+  MyWindow window(world);
+
+  for (int i =0; i<biped->getNumDofs(); i++)
+  {
+  biped->getDof(i)->setPosition(window.mController->mCurrentStateMachine->mCurrentState->getDesiredJointPosition(i));
+  }
+
   // -----------------------------------------------------------------------------------------
   std::cout<<"##################   getCOM() MAIN             #####################"<<std::endl;
-  std::cout<<world->getSkeleton("biped")->getCOM().matrix()<<std::endl;
-  std::cout<<world->getSkeleton("biped")->getBodyNode("h_foot_left")->getTransform().matrix()<<std::endl;
+  std::cout<<world->getSkeleton("biped")->getCOM().transpose()<<std::endl;
   std::cout<<"###################################################################"<<std::endl;
   // -----------------------------------------------------------------------------------------
-  
-  MyWindow window(world);
 
   // Initialize glut, initialize the window, and begin the glut event loop
   glutInit(&argc, argv);

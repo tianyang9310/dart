@@ -58,11 +58,11 @@ SkeletonPtr loadBiped()
   biped->enableSelfCollision();
 
   // set initial position of the robot
-  biped->setPosition(biped->getDof("j_pelvis_rot")->getIndexInSkeleton(), DART_RADIAN * (4.75));
-  biped->setPosition(biped->getDof("j_thigh_left")->getIndexInSkeleton(), 0.7);
-  biped->setPosition(biped->getDof("j_thigh_right")->getIndexInSkeleton(), 0.0);
-  biped->setPosition(biped->getDof("j_shin_left")->getIndexInSkeleton(), 0.05);
-  biped->setPosition(biped->getDof("j_shin_right")->getIndexInSkeleton(), 0.01);
+ // biped->setPosition(biped->getDof("j_pelvis_rot")->getIndexInSkeleton(), DART_RADIAN * (-4.75));
+ // biped->setPosition(biped->getDof("j_thigh_left")->getIndexInSkeleton(), 0.7);
+ // biped->setPosition(biped->getDof("j_thigh_right")->getIndexInSkeleton(), 0.0);
+ // biped->setPosition(biped->getDof("j_shin_left")->getIndexInSkeleton(), 0.05);
+ // biped->setPosition(biped->getDof("j_shin_right")->getIndexInSkeleton(), 0.01);
 
   WeldJoint::Properties properties_left;
   properties_left.mName=std::string("j_foot_left");
