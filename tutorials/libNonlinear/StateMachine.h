@@ -96,7 +96,6 @@ public:
   /// \brief Change state to a state whose index is _idx
   void transiteTo(size_t _idx, double _currentTime);
 
-protected:
   /// \brief Name
   std::string mName;
 
@@ -118,7 +117,6 @@ protected:
   /// \brief Elapsed time which is stopped time minus started time
   double mElapsedTime;
 
-private:
   /// \brief Check if this state machine contains _state
   bool _containState(const State* _state) const;
 

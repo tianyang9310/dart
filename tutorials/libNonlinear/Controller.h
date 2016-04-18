@@ -33,7 +33,6 @@ public:
 //--------------------------------------------------------------------------------------  
 	//void setTargetPositions(const Eigen::VectorXd& pose);
 //--------------------------------------------------------------------------------------  
-protected:
   SkeletonPtr mBiped;
 
   /// Current State Machine

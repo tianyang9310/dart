@@ -177,7 +177,6 @@ public:
   ///        from this state to the next state.
   virtual void end(double _currentTime);
 
-protected:
   /// \brief Get center of mass
   Eigen::Vector3d getCOM() const;
 
@@ -295,7 +294,6 @@ protected:
   /// \brief Joint map
   std::map<const std::string, int> mJointMap;
 
-private:
   /// \brief Get the parent joint's position of _bodyNode
   Eigen::Vector3d _getJointPosition(dart::dynamics::BodyNode* _bodyNode) const;
 

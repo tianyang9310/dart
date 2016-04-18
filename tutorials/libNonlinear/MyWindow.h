@@ -28,7 +28,6 @@ public:
 	void drawSkels() override;
 	void timeStepping() override;
 	void keyboard(unsigned char key, int x, int y) override;
-protected:
   std::unique_ptr<Controller> mController;
 };
 				 
