@@ -15,6 +15,7 @@ SkeletonPtr createFloor()
   // Give the floor a body
   BodyNodePtr body =
       floor->createJointAndBodyNodePair<WeldJoint>(nullptr).second;
+  body->setName("floor_BodyNode");
   
   // Give the body a shape
   double floor_width = 10.0;
@@ -64,6 +65,8 @@ SkeletonPtr loadBiped()
  // biped->setPosition(biped->getDof("j_shin_left")->getIndexInSkeleton(), 0.05);
  // biped->setPosition(biped->getDof("j_shin_right")->getIndexInSkeleton(), 0.01);
 
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//												add feet to the biped
   WeldJoint::Properties properties_left;
   properties_left.mName=std::string("j_foot_left");
   WeldJoint::Properties properties_right;
@@ -71,8 +74,8 @@ SkeletonPtr loadBiped()
   
   BodyNodePtr leftFoot = biped->createJointAndBodyNodePair<WeldJoint>(biped->getBodyNode("h_shin_left"), properties_left, BodyNode::Properties(std::string("h_foot_left"))).second;
   BodyNodePtr rightFoot = biped->createJointAndBodyNodePair<WeldJoint>(biped->getBodyNode("h_shin_right"), properties_right, BodyNode::Properties(std::string("h_foot_right"))).second;
-  std::shared_ptr<EllipsoidShape> leftsphere = std::make_shared<EllipsoidShape>(Eigen::Vector3d(0.007474, 0.007474, 0.007474));
-  std::shared_ptr<EllipsoidShape> rightsphere = std::make_shared<EllipsoidShape>(Eigen::Vector3d(0.007474, 0.007474, 0.007474));
+  std::shared_ptr<EllipsoidShape> leftsphere = std::make_shared<EllipsoidShape>(Eigen::Vector3d(0.07474, 0.07474*1, 0.07474));
+  std::shared_ptr<EllipsoidShape> rightsphere = std::make_shared<EllipsoidShape>(Eigen::Vector3d(0.07474, 0.07474*1, 0.07474));
   leftFoot->addVisualizationShape(leftsphere);
   leftFoot->addCollisionShape(leftsphere);
   rightFoot->addVisualizationShape(rightsphere);
@@ -94,11 +97,19 @@ SkeletonPtr loadBiped()
   righttf.translation() = Eigen::Vector3d(0, -0.3737, 0);
   leftFoot->getParentJoint()->setTransformFromParentBodyNode(lefttf);
   rightFoot->getParentJoint()->setTransformFromParentBodyNode(righttf);
+// ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
   for (size_t i=0; i<biped->getNumDofs();i++)
   {
 	  std::cout<<biped->getDof(i)->getName()<<std::endl;
   }
+
+  // add some color
+  biped->getBodyNode("h_thigh_right")->getVisualizationShape(0)->setColor(dart::Color::Red(0.5));
+  biped->getBodyNode("h_shin_right")->getVisualizationShape(0)->setColor(dart::Color::Green(0.5));
+  biped->getBodyNode("h_foot_right")->getVisualizationShape(0)->setColor(dart::Color::Orange(0.5));
+  biped->getBodyNode("h_foot_left")->getVisualizationShape(0)->setColor(dart::Color::Orange(0.5));
+  
 
   return biped;
 }

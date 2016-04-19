@@ -51,8 +51,8 @@
 //#define ATLAS_DEFAULT_KP 1e+3
 //#define ATLAS_DEFAULT_KD 0.008773  // No more than 1.0
 //#define ATLAS_DEFAULT_KP 87.72943
-#define ATLAS_DEFAULT_KD 0.008773  // No more than 1.0
-#define ATLAS_DEFAULT_KP 30
+#define ATLAS_DEFAULT_KD 1.8773  // No more than 1.0
+#define ATLAS_DEFAULT_KP 25
 
 
 namespace dart {

@@ -25,6 +25,16 @@ Controller::Controller(const SkeletonPtr& biped)\
 void Controller::update(double _currentTime)
 {
 	mCurrentStateMachine->computeControlForce(mBiped->getTimeStep());
+	
+//	//----------------------------------------------------------------------------
+//	std::cout<<"$$$$$$$$$$$$ verify right foot contact $$$$$$$$$$$$$$$$$$$"<<std::endl;
+//	std::cout<<"Current Time is "<<_currentTime<<std::endl;
+//	//std::cin.get();
+//	std::cout<<"left foot is ? "<<mBiped->getBodyNode("h_foot_left")->isColliding()<<std::endl;	
+//	std::cout<<"right foot is ? "<<mBiped->getBodyNode("h_foot_right")->isColliding()<<std::endl;
+//	std::cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<std::endl;
+//	//----------------------------------------------------------------------------
+
 	/*
 	for (size_t i=0;i<mBiped->getNumDofs();i++)
 	{
@@ -41,13 +51,13 @@ void Controller::buildStateMachines()
 
 StateMachine* Controller::createWalkingStateMachine()
 {
-  const double cd02 = 0.0;
+  const double cd02 = 0.5;
   const double cv02 = 0.2;
 
-  const double cd13 = 2.2;
-  const double cv13 = 0.0;
+  const double cd13 = 0.15;
+  const double cv13 = 0.06;
 
-  const double pelvis = DART_RADIAN * -4.75;  // angle b/w pelvis and torso
+  const double pelvis = DART_RADIAN *-1.478;// 4.75;  // angle b/w pelvis and torso
 
   const double swh02  =  0.40;  // swing hip
   const double swk02  = -1.10;  // swing knee
@@ -68,9 +78,9 @@ StateMachine* Controller::createWalkingStateMachine()
   State* state2 = new State(mBiped, "2");
   State* state3 = new State(mBiped, "3");
 
-  TerminalCondition* cond0 = new TimerCondition(state0, 0.3);
+  TerminalCondition* cond0 = new TimerCondition(state0, 0.28);
   TerminalCondition* cond1 = new BodyContactCondition(state1, mBiped->getBodyNode(std::string("h_foot_right")));
-  TerminalCondition* cond2 = new TimerCondition(state2, 0.3);
+  TerminalCondition* cond2 = new TimerCondition(state2, 0.28);
   TerminalCondition* cond3 = new BodyContactCondition(state3, mBiped->getBodyNode(std::string("h_foot_left")));
 
   state0->setTerminalCondition(cond0);
@@ -90,10 +100,10 @@ StateMachine* Controller::createWalkingStateMachine()
   state3->setStanceFootToRightFoot();
 
   // Set global desired pelvis angle
-  state0->setDesiredPelvisGlobalAngleOnSagital(DART_RADIAN * 0.0);
-  state1->setDesiredPelvisGlobalAngleOnSagital(DART_RADIAN * 0.0);
-  state2->setDesiredPelvisGlobalAngleOnSagital(DART_RADIAN * 0.0);
-  state3->setDesiredPelvisGlobalAngleOnSagital(DART_RADIAN * 0.0);
+  state0->setDesiredPelvisGlobalAngleOnSagital(pelvis);
+  state1->setDesiredPelvisGlobalAngleOnSagital(pelvis);
+  state2->setDesiredPelvisGlobalAngleOnSagital(pelvis);
+  state3->setDesiredPelvisGlobalAngleOnSagital(pelvis);
  // state0->setDesiredPelvisGlobalAngleOnCoronal(DART_RADIAN * 0.0);
  // state1->setDesiredPelvisGlobalAngleOnCoronal(DART_RADIAN * 0.0);
  // state2->setDesiredPelvisGlobalAngleOnCoronal(DART_RADIAN * 0.0);

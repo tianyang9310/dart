@@ -21,6 +21,11 @@ using namespace dart::gui;
 
 using namespace nonlinear;
 
+//--------------------------------------------------------------------------
+dart::collision::CollisionDetector* mGlobalDetector;
+MyWindow* mGlobalWindow;
+//--------------------------------------------------------------------------
+
 int main(int argc, char* argv[])
 {
   SkeletonPtr floor = createFloor();
@@ -31,11 +36,15 @@ int main(int argc, char* argv[])
   world->setGravity(Eigen::Vector3d(0.0, -9.81, 0.0));
 
   world->getConstraintSolver()->setCollisionDetector(new dart::collision::BulletCollisionDetector());
+//--------------------------------------------------------------------------
+  mGlobalDetector = world->getConstraintSolver()->getCollisionDetector();
+//--------------------------------------------------------------------------
 
   world->addSkeleton(floor);
   world->addSkeleton(biped);
 
   MyWindow window(world);
+  mGlobalWindow = &window;
 
   for (int i =0; i<biped->getNumDofs(); i++)
   {
@@ -45,6 +54,7 @@ int main(int argc, char* argv[])
   // -----------------------------------------------------------------------------------------
   std::cout<<"##################   getCOM() MAIN             #####################"<<std::endl;
   std::cout<<world->getSkeleton("biped")->getCOM().transpose()<<std::endl;
+  std::cout<<world->getSkeleton("biped")->getBodyNode("h_foot_left")->getCOM().transpose()<<std::endl;
   std::cout<<"###################################################################"<<std::endl;
   // -----------------------------------------------------------------------------------------
 

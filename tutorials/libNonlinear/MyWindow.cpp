@@ -32,6 +32,12 @@ void MyWindow::timeStepping()
 
 }
 
+void MyWindow::MyFlush()
+{
+	render();
+	glFlush();
+}
+
 void MyWindow::drawCOM(Eigen::Vector3d mCOM)
 {
 	// ----------------------------------------------------------------------------

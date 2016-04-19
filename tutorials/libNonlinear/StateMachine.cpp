@@ -38,6 +38,8 @@
 
 #include "State.h"
 
+#include <unistd.h>
+
 // Macro for functions not implemented yet
 #define NOT_YET(FUNCTION) std::cout << #FUNCTION\
                                   << "Not implemented yet."\
@@ -117,7 +119,20 @@ void StateMachine::computeControlForce(double _dt)
 
   // Check transition is needed from current state
   if (mCurrentState->isTerminalConditionSatisfied())
+  {
+	// -----------------------------------------------------------------------
+	//std::cout<<mCurrentState->getName()<<std::endl;
+	//std::cout<<"time step is "<<mElapsedTime<<std::endl;
+	// -----------------------------------------------------------------------
+	
     transiteTo(mCurrentState->getNextState(), mBeginTime + mElapsedTime);
+
+	// -----------------------------------------------------------------------
+	//std::cout<<mCurrentState->getName()<<std::endl;
+	//std::cin.get();
+	//sleep(3);
+	// -----------------------------------------------------------------------
+  }
 
   // Update control force
   mCurrentState->computeControlForce(_dt);

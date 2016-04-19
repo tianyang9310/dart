@@ -361,24 +361,26 @@ Eigen::Vector3d State::getRightAnklePosition() const
 //==============================================================================
 double State::getSagitalPelvisAngle() const
 {
-  Matrix3d comR = getCOMFrame().linear();
-  Vector3d comY = comR.col(1);
+ // Matrix3d comR = getCOMFrame().linear();
+ // Vector3d comY = comR.col(1);
+ // Vector3d pelvisZ = mPelvis->getTransform().linear().col(2);
+ // Vector3d projPelvisZ = (comR.transpose() * pelvisZ);
+ // projPelvisZ[2] = 0.0;
+ // projPelvisZ.normalize();
+ // double angle = _getAngleBetweenTwoVectors(projPelvisZ, comY);
+ // Vector3d cross = comY.cross(projPelvisZ);
+ // if (cross[2] > 0.0)
+ //   return angle;
+ // else
+ //   return -angle;
+
+  double angle;
+  double x = mPelvis->getTransform().linear().col(0)[0];
+  double y = mPelvis->getTransform().linear().col(0)[1];
+  angle    = std::atan2(y,x);
   
+  return angle;
 
-  Vector3d pelvisZ = mPelvis->getTransform().linear().col(2);
-  Vector3d projPelvisZ = (comR.transpose() * pelvisZ);
-  //projPelvisZ[2] = 0.0;
-  projPelvisZ.normalize();
-  double angle = _getAngleBetweenTwoVectors(projPelvisZ, comY);
-  
-  angle = 1.5708-angle;
-
-  Vector3d cross = comY.cross(projPelvisZ);
-
-  if (cross[2] > 0.0)
-    return angle;
-  else
-    return -angle;
 }
 
 //==============================================================================
@@ -503,10 +505,20 @@ void State::_updateTorqueForStanceLeg()
 
     // Torso control on sagital plane
     double pelvisSagitalAngle = getSagitalPelvisAngle();
+
+
+//  // -----------------------------------------------------------------------------------------
+//  std::cout<<"##################   pelvisSagitalangle                 #####################"<<std::endl;
+//  std::cout<<pelvisSagitalAngle/3.14*180<<std::endl;
+//  std::cin.get();
+//  std::cout<<"###################################################################"<<std::endl;
+//  // -----------------------------------------------------------------------------------------
+
+
     double tauTorsoSagital
-        = -5000.0 * (pelvisSagitalAngle + mDesiredGlobalPelvisAngleOnSagital)
+        = -100.0 * (pelvisSagitalAngle - mDesiredGlobalPelvisAngleOnSagital)
           - 1.0 * (0);
-    mTorque[mSagitalLeftHip] = tauTorsoSagital - mTorque[mSagitalRightHip];
+    mTorque[mSagitalLeftHip] = -tauTorsoSagital + mTorque[mSagitalRightHip];
 
 //    cout << "Torque[mSagitalLeftHip]     : " << mTorque[mSagitalLeftHip] << endl;
 //    cout << "Torque[mSagitalRightHip]     : " << mTorque[mSagitalRightHip] << endl;
@@ -537,9 +549,9 @@ void State::_updateTorqueForStanceLeg()
     // Torso control on sagital plane
     double pelvisSagitalAngle = getSagitalPelvisAngle();
     double tauTorsoSagital
-        = -5000.0 * (pelvisSagitalAngle + mDesiredGlobalPelvisAngleOnSagital)
+        = -100.0 * (pelvisSagitalAngle - mDesiredGlobalPelvisAngleOnSagital)
           - 1.0 * (0);
-    mTorque[mSagitalRightHip] = tauTorsoSagital - mTorque[mSagitalLeftHip];
+    mTorque[mSagitalRightHip] = -tauTorsoSagital + mTorque[mSagitalLeftHip];
 
 //    cout << "Torque[mSagitalLeftHip]     : " << mTorque[mSagitalLeftHip] << endl;
 //    cout << "Torque[mSagitalRightHip]    : " << mTorque[mSagitalRightHip] << endl;

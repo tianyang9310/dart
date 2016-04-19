@@ -37,6 +37,7 @@
 #include "TerminalCondition.h"
 
 #include "State.h"
+#include "MyWindow.h"
 
 // Macro for functions not implemented yet
 #define NOT_YET(FUNCTION) std::cout << #FUNCTION\
@@ -47,6 +48,7 @@ using namespace std;
 
 using namespace dart::dynamics;
 using namespace dart::constraint;
+using namespace nonlinear;
 
 //==============================================================================
 TerminalCondition::TerminalCondition(State* _state)
@@ -98,19 +100,53 @@ BodyContactCondition::~BodyContactCondition()
 {
 }
 
+
+// -----------------------------------------------------------------------------
+extern dart::collision::CollisionDetector* mGlobalDetector;
+extern MyWindow* mGlobalWindow;
+// -----------------------------------------------------------------------------
+
+
 //==============================================================================
 bool BodyContactCondition::isSatisfied()
 {
-  SoftBodyNode* soft = dynamic_cast<SoftBodyNode*>(mBodyNode);
-  if (soft)
-  {
-    for (size_t i = 0; i < soft->getNumPointMasses(); ++i)
-    {
-      PointMass* pm = soft->getPointMass(i);
-      if (pm->isColliding() > 0)
-        return true;
-    }
-  }
+
+// -----------------------------------------------------------------------------
+//                  find the collisions of the skeleton
+//	char c;
+//	std::cin.get(c);
+//	if (c==' ')
+//	{
+//		mGlobalWindow->keyboard(' ',0,0);
+//	}
+//
+//	std::cout<<std::endl;
+//	size_t collision_count = mGlobalDetector->getNumContacts();
+//	std::cout<<"There are "<<collision_count<<"contacts"<<"       ";
+//	for (size_t i=0; i<collision_count; i++)
+//	{
+//		const dart::collision::Contact& contact = mGlobalDetector->getContact(i);
+//		std::cout<<"for "<<i+1<<"th contact pairs are "<<contact.bodyNode1.lock()->getName()<<" and "<<contact.bodyNode2.lock()->getName()<<std::endl;
+//	}
+	
+	//mGlobalWindow->MyFlush();
+//	if (mBodyNode->isColliding() > 0)
+//	{
+//		std::cin.get();
+//	}
+// -----------------------------------------------------------------------------
+
+
+//  SoftBodyNode* soft = dynamic_cast<SoftBodyNode*>(mBodyNode);
+//  if (soft)
+//  {
+//    for (size_t i = 0; i < soft->getNumPointMasses(); ++i)
+//    {
+//      PointMass* pm = soft->getPointMass(i);
+//      if (pm->isColliding() > 0)
+//        return true;
+//    }
+//  }
 
   // TODO(JS): Need more elegant condition check method
   if (mBodyNode->isColliding() > 0)
