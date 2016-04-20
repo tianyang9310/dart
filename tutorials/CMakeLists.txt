@@ -4,6 +4,8 @@ list(SORT tutorials_src)
 message(STATUS "")
 message(STATUS "[ Tutorials ]")
 
+add_subdirectory(operationalSpaceControl)
+
 foreach(tutorial ${tutorials_src})
   get_filename_component(tutorial_base ${tutorial} NAME_WE)
   message(STATUS "Adding tutorial: ${tutorial_base}")
