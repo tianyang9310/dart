@@ -79,9 +79,9 @@ SkeletonPtr createManipulator()
 	manipulator->getJoint(0)->setTransformFromParentBodyNode(tf);
 
 	// set initial position for each DOF
-//	manipulator->getDof(1)->setPosition(75.0 * M_PI / 180.0);
-//	manipulator->getDof(3)->setPosition(90.0 * M_PI / 180.0);
-//	manipulator->getDof(5)->setPosition(-75.0 * M_PI / 180.0);
+	manipulator->getDof(1)->setPosition(75.0 * M_PI / 180.0);
+	manipulator->getDof(3)->setPosition(-90.0 * M_PI / 180.0);
+	manipulator->getDof(5)->setPosition(0.0 * M_PI / 180.0);
 	
 
 	//set Joint position limit to make the manipulator not collapse into itself.
@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
   window.setWorld(world);
 
   glutInit(&argc, argv);
-  window.initWindow(640, 480, "Forward Simulation");
+  window.initWindow(1024,768, "Forward Simulation");
   glutMainLoop();
 
   return 0;

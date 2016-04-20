@@ -59,12 +59,12 @@ Controller::Controller(dart::dynamics::SkeletonPtr _robot,
   }
 
   // Remove position limits
-  for (int i = 0; i < dof; ++i)
-    _robot->getJoint(i)->setPositionLimitEnforced(false);
+//  for (int i = 0; i < dof; ++i)
+//    _robot->getJoint(i)->setPositionLimitEnforced(false);
 
   // Set joint damping
-  for (int i = 0; i < dof; ++i)
-    _robot->getJoint(i)->setDampingCoefficient(0, 0.5);
+//  for (int i = 0; i < dof; ++i)
+//    _robot->getJoint(i)->setDampingCoefficient(0, 0.5);
 }
 
 //==============================================================================
@@ -88,7 +88,7 @@ void Controller::update(const Eigen::Vector3d& _targetPosition)
 
   // Compute operational space values
   Eigen::MatrixXd A = Jv*invM;                 // 3 x n
-  Eigen::Vector3d b = /*-(A*Cg) + */dJv*dq;    // 3 x 1
+  Eigen::Vector3d b = -(A*Cg) + dJv*dq;    // 3 x 1
   Eigen::MatrixXd M2 = Jv*invM*Jv.transpose(); // 3 x 3
 
   // Compute virtual operational space spring force at the end effector

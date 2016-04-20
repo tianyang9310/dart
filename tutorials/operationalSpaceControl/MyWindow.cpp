@@ -56,6 +56,7 @@ MyWindow::MyWindow(Controller* _controller)
 
   // Set the initial target positon to the initial position of the end effector
   mTargetPosition = mController->getEndEffector()->getTransform().translation();
+  mShowMarkers = false;
 }
 
 //==============================================================================
@@ -124,17 +125,17 @@ void MyWindow::print2File(dart::dynamics::SkeletonPtr mManipulator, bool mDynaic
 void MyWindow::drawSkels()
 {
   // Draw the target position
-  if (mRI)
-  {
-    mRI->setPenColor(Eigen::Vector3d(0.8, 0.2, 0.2));
-    mRI->pushMatrix();
-    mRI->translate(mTargetPosition);
-    mRI->drawEllipsoid(Eigen::Vector3d(0.05, 0.05, 0.05));
-    mRI->popMatrix();
-  }
+//  if (mRI)
+//  {
+//    mRI->setPenColor(Eigen::Vector4d(0.8, 0.2, 0.2,0.0));
+//    mRI->pushMatrix();
+//    mRI->translate(mTargetPosition);
+//    mRI->drawEllipsoid(Eigen::Vector3d(0.05, 0.05, 0.05));
+//    mRI->popMatrix();
+//  }
 
-  glEnable(GL_LIGHTING);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  //glEnable(GL_LIGHTING);
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // Draw skeletons
   SimWindow::drawSkels();
 }
