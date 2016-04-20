@@ -38,6 +38,81 @@
 
 #include "MyWindow.h"
 
+
+using namespace dart::dynamics;
+using namespace dart::simulation;
+using namespace dart::math;
+using namespace dart::gui;
+SkeletonPtr createFloor()
+{
+	
+	SkeletonPtr floor = Skeleton::create("floor");
+	
+	// Give the floor a body
+	BodyNodePtr body = floor->createJointAndBodyNodePair<WeldJoint>().second;
+
+	// Give the body a shape
+	std::shared_ptr<BoxShape> box = std::make_shared<BoxShape>(
+			Eigen::Vector3d(5, 5, 0.2));
+	box->setColor(dart::Color::Fuschia(0.3));
+
+	body->addVisualizationShape(box);
+	body->addCollisionShape(box);
+
+	// put the body into position
+	Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
+	tf.translation() = Eigen::Vector3d(0.0, 0.0, -0.2 / 2.0);
+	body->getParentJoint()->setTransformFromParentBodyNode(tf);
+
+	return floor;
+}
+
+SkeletonPtr createManipulator()
+{
+	dart::utils::DartLoader loader;
+	SkeletonPtr manipulator = loader.parseSkeleton(DART_DATA_PATH"/my_urdf/wam7.urdf");
+	manipulator->setName("manipulator");
+	Eigen::Isometry3d tf = Eigen::Isometry3d::Identity();
+
+	manipulator->getJoint(0)->setTransformFromParentBodyNode(tf);
+	tf.translation() = Eigen::Vector3d(-0.85, 0, 0);
+	manipulator->getJoint(0)->setTransformFromParentBodyNode(tf);
+
+	// set initial position for each DOF
+	manipulator->getDof(1)->setPosition(75.0 * M_PI / 180.0);
+	manipulator->getDof(3)->setPosition(90.0 * M_PI / 180.0);
+	manipulator->getDof(5)->setPosition(-75.0 * M_PI / 180.0);
+	
+
+	//set Joint position limit to make the manipulator not collapse into itself.
+	for (size_t i = 0 ; i < manipulator->getNumJoints(); ++ i)
+	{
+		manipulator->getJoint(i)->setPositionLimitEnforced(true);
+	}
+	
+	manipulator->enableSelfCollision();
+	std::cout << "Whether check self Collision:" << manipulator->isEnabledSelfCollisionCheck() << std::endl;
+	std::cout << "Whether check adjacent Collision:" << manipulator->isEnabledAdjacentBodyCheck() << std::endl;
+
+	// output bodynodes
+	std::cout<<"The manipulator has the following bodynodes: "<<std::endl;
+	for (size_t i = 0 ; i< manipulator->getNumBodyNodes(); i++)
+	{
+		std::cout<<manipulator->getBodyNode(i)->getName()<<std::endl;
+	}
+
+	// output Dof
+	std::cout<<"The manipulator has the following DOF: "<<std::endl;
+	for (size_t i = 0 ; i< manipulator->getNumDofs(); i++)
+	{
+		std::cout<<manipulator->getDof(i)->getName()<<std::endl;
+	}
+
+	
+
+	return manipulator;
+}
+
 int main(int argc, char* argv[])
 {
   // create and initialize the world
@@ -46,20 +121,14 @@ int main(int argc, char* argv[])
 
   // load skeletons
   dart::utils::DartLoader dl;
-  dart::dynamics::SkeletonPtr ground
-      = dl.parseSkeleton(DART_DATA_PATH"urdf/KR5/ground.urdf");
-  dart::dynamics::SkeletonPtr robot
-      = dl.parseSkeleton(DART_DATA_PATH"/my_urdf/wam7.urdf");
-  world->addSkeleton(ground);
-  world->addSkeleton(robot);
+  dart::dynamics::SkeletonPtr floor = createFloor();
+  dart::dynamics::SkeletonPtr manipulator = createManipulator();
+  world->addSkeleton(floor);
+  world->addSkeleton(manipulator);
 
-  // create and initialize the world
-  Eigen::Vector3d gravity(0.0, -9.81, 0.0);
-  world->setGravity(gravity);
-  world->setTimeStep(1.0/1000);
 
   // create a window and link it to the world
-  MyWindow window(new Controller(robot, nullptr));
+  MyWindow window(new Controller(manipulator, manipulator->getBodyNode("wam/wrist_palm_stump_link")));
   window.setWorld(world);
 
   glutInit(&argc, argv);

@@ -93,6 +93,8 @@ void MyWindow::drawSkels()
     mRI->popMatrix();
   }
 
+  glEnable(GL_LIGHTING);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // Draw skeletons
   SimWindow::drawSkels();
 }
