@@ -75,13 +75,13 @@ SkeletonPtr createManipulator()
 	Eigen::Isometry3d tf = Eigen::Isometry3d::Identity();
 
 	manipulator->getJoint(0)->setTransformFromParentBodyNode(tf);
-	tf.translation() = Eigen::Vector3d(-0.85, 0, 0);
+	tf.translation() = Eigen::Vector3d(0, 0, 0);
 	manipulator->getJoint(0)->setTransformFromParentBodyNode(tf);
 
 	// set initial position for each DOF
-	manipulator->getDof(1)->setPosition(75.0 * M_PI / 180.0);
-	manipulator->getDof(3)->setPosition(90.0 * M_PI / 180.0);
-	manipulator->getDof(5)->setPosition(-75.0 * M_PI / 180.0);
+//	manipulator->getDof(1)->setPosition(75.0 * M_PI / 180.0);
+//	manipulator->getDof(3)->setPosition(90.0 * M_PI / 180.0);
+//	manipulator->getDof(5)->setPosition(-75.0 * M_PI / 180.0);
 	
 
 	//set Joint position limit to make the manipulator not collapse into itself.

@@ -70,13 +70,15 @@ void MyWindow::timeStepping()
   {
     static double time = 0.0;
     const double dt = 0.0005;
-    const double radius = 0.6;
-    Eigen::Vector3d center = Eigen::Vector3d(0.0, 0.1, 0.0);
+    const double radius = 0.2;
+	double height = mTargetPosition[2];
+    Eigen::Vector3d center = Eigen::Vector3d(0.0, 0.0, 1.0);
 
     mTargetPosition = center;
-    mTargetPosition[0] = radius * std::sin(time);
-    mTargetPosition[1] = 0.25 * radius * std::sin(time);
-    mTargetPosition[2] = radius * std::cos(time);
+	mTargetPosition[2] = height;
+    mTargetPosition[0] = radius * std::cos(time);
+    mTargetPosition[1] = radius * std::sin(time);
+    //mTargetPosition[2] = radius * std::cos(time);
 
     time += dt;
   }
@@ -85,20 +87,30 @@ void MyWindow::timeStepping()
   mController->update(mTargetPosition);
   
   // keep positions, velocities, accelerations and forces into a file
-  print2File(mWorld->getSkeleton("manipulator"));
+  print2File(mWorld->getSkeleton("manipulator"), true);
 
   // Step forward the simulation
   mWorld->step();
 
+  print2File(mWorld->getSkeleton("manipulator"), false);
+
+
 }
 
-void MyWindow::print2File(dart::dynamics::SkeletonPtr mManipulator)
+void MyWindow::print2File(dart::dynamics::SkeletonPtr mManipulator, bool mDynaics)
 {
 	std::ofstream myFile;
 	myFile.open("training_data.dat", std::ofstream::out|std::ofstream::app);
 	if (myFile.is_open())
 	{
-		myFile<<mManipulator->getPositions().transpose()<<"		"<<mManipulator->getVelocities().transpose()<<"		"<<mManipulator->getAccelerations().transpose()<<"		"<<mManipulator->getForces().transpose()<<std::endl;
+		if (mDynaics)
+		{
+			myFile<<mManipulator->getForces().transpose();
+		}
+		else
+		{
+			myFile<<mManipulator->getPositions().transpose()<<"		"<<mManipulator->getVelocities().transpose()<<"		"<<mManipulator->getAccelerations().transpose()<<std::endl;
+		}
 		myFile.close();
 	}
 	else 
