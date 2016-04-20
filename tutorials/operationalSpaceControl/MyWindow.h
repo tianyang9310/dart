@@ -60,6 +60,7 @@ public:
   // Documentation inherited
   virtual void keyboard(unsigned char _key, int _x, int _y);
 
+  void print2File(dart::dynamics::SkeletonPtr mManipulator);
 private:
   /// \brief Operational space controller
   Controller* mController;

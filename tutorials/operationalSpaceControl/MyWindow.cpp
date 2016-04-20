@@ -34,9 +34,17 @@
  *   POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "apps/operationalSpaceControl/MyWindow.h"
+#include "MyWindow.h"
 
 #include <iostream>
+#include <fstream>
+
+using namespace dart::common;
+using namespace dart::utils;
+using namespace dart::dynamics;
+using namespace dart::simulation;
+using namespace dart::math;
+using namespace dart::gui;
 
 //==============================================================================
 MyWindow::MyWindow(Controller* _controller)
@@ -75,9 +83,29 @@ void MyWindow::timeStepping()
 
   // Update the controller and apply control force to the robot
   mController->update(mTargetPosition);
+  
+  // keep positions, velocities, accelerations and forces into a file
+  print2File(mWorld->getSkeleton("manipulator"));
 
   // Step forward the simulation
   mWorld->step();
+
+}
+
+void MyWindow::print2File(dart::dynamics::SkeletonPtr mManipulator)
+{
+	std::ofstream myFile;
+	myFile.open("training_data.dat", std::ofstream::out|std::ofstream::app);
+	if (myFile.is_open())
+	{
+		myFile<<mManipulator->getPositions().transpose()<<"		"<<mManipulator->getVelocities().transpose()<<"		"<<mManipulator->getAccelerations().transpose()<<"		"<<mManipulator->getForces().transpose()<<std::endl;
+		myFile.close();
+	}
+	else 
+	{
+		std::cout<<"cannot open the data file"<<std::endl;
+	}
+
 }
 
 //==============================================================================
