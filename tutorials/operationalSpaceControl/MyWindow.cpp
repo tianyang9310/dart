@@ -57,6 +57,8 @@ MyWindow::MyWindow(Controller* _controller)
   // Set the initial target positon to the initial position of the end effector
   mTargetPosition = mController->getEndEffector()->getTransform().translation();
   mShowMarkers = false;
+  mTrackBall.setRadius(2);
+  mZoom = 0.3;
 }
 
 //==============================================================================
@@ -71,7 +73,7 @@ void MyWindow::timeStepping()
   {
     static double time = 0.0;
     const double dt = 0.0005;
-    const double radius = 0.2;
+    const double radius = 0.6;
 	double height = mTargetPosition[2];
     Eigen::Vector3d center = Eigen::Vector3d(0.0, 0.0, 1.0);
 
@@ -125,16 +127,16 @@ void MyWindow::print2File(dart::dynamics::SkeletonPtr mManipulator, bool mDynaic
 void MyWindow::drawSkels()
 {
   // Draw the target position
-//  if (mRI)
-//  {
-//    mRI->setPenColor(Eigen::Vector4d(0.8, 0.2, 0.2,0.0));
-//    mRI->pushMatrix();
-//    mRI->translate(mTargetPosition);
-//    mRI->drawEllipsoid(Eigen::Vector3d(0.05, 0.05, 0.05));
-//    mRI->popMatrix();
-//  }
+  if (mRI && mShowMarkers)
+  {
+    mRI->setPenColor(Eigen::Vector4d(0.8, 0.2, 0.2,0.0));
+    mRI->pushMatrix();
+    mRI->translate(mTargetPosition);
+    mRI->drawEllipsoid(Eigen::Vector3d(0.05, 0.05, 0.05));
+    mRI->popMatrix();
+  }
 
-  //glEnable(GL_LIGHTING);
+ // glEnable(GL_LIGHTING);
   //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   // Draw skeletons
   SimWindow::drawSkels();

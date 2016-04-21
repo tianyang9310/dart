@@ -54,7 +54,7 @@ Controller::Controller(dart::dynamics::SkeletonPtr _robot,
 
   for (int i = 0; i < 3; ++i)
   {
-    mKp(i, i) = 750.0;
+    mKp(i, i) = 1750.0;
     mKv(i, i) = 250.0;
   }
 
