@@ -30,6 +30,7 @@ public:
 	void update(double _currentTime);
 	void buildStateMachines();
 	StateMachine* createWalkingStateMachine();
+    void keyboard(unsigned char _key, int _x, int _y, double _currentTime);
 //--------------------------------------------------------------------------------------  
 	//void setTargetPositions(const Eigen::VectorXd& pose);
 //--------------------------------------------------------------------------------------  
@@ -49,6 +50,8 @@ public:
 
   /// \brief Index for sagital right hip
   size_t mSagitalRightHip;
+
+  Eigen::VectorXd mInitialState;
 
 //--------------------------------------------------------------------------------------  
   /// Joint forces for the biped (output of the Controller)

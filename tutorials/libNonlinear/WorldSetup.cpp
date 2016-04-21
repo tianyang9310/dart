@@ -18,7 +18,7 @@ SkeletonPtr createFloor()
   body->setName("floor_BodyNode");
   
   // Give the body a shape
-  double floor_width = 10.0;
+  double floor_width = 100.0;
   double floor_height = 0.01;
   std::shared_ptr<BoxShape> box(
       new BoxShape(Eigen::Vector3d(floor_width, floor_height, floor_width)));

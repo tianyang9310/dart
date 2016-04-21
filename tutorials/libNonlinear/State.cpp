@@ -518,7 +518,7 @@ void State::_updateTorqueForStanceLeg()
     double tauTorsoSagital
         = -100.0 * (pelvisSagitalAngle - mDesiredGlobalPelvisAngleOnSagital)
           - 1.0 * (0);
-    mTorque[mSagitalLeftHip] = -tauTorsoSagital + mTorque[mSagitalRightHip];
+    mTorque[mSagitalLeftHip] = -tauTorsoSagital - mTorque[mSagitalRightHip];
 
 //    cout << "Torque[mSagitalLeftHip]     : " << mTorque[mSagitalLeftHip] << endl;
 //    cout << "Torque[mSagitalRightHip]     : " << mTorque[mSagitalRightHip] << endl;
@@ -551,7 +551,7 @@ void State::_updateTorqueForStanceLeg()
     double tauTorsoSagital
         = -100.0 * (pelvisSagitalAngle - mDesiredGlobalPelvisAngleOnSagital)
           - 1.0 * (0);
-    mTorque[mSagitalRightHip] = -tauTorsoSagital + mTorque[mSagitalLeftHip];
+    mTorque[mSagitalRightHip] = -tauTorsoSagital - mTorque[mSagitalLeftHip];
 
 //    cout << "Torque[mSagitalLeftHip]     : " << mTorque[mSagitalLeftHip] << endl;
 //    cout << "Torque[mSagitalRightHip]    : " << mTorque[mSagitalRightHip] << endl;

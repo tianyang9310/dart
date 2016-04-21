@@ -76,6 +76,7 @@ void MyWindow::drawSkels()
 
 void MyWindow::keyboard(unsigned char key, int x, int y)
 {
+	mController->keyboard(key, x, y, mWorld->getTime());
 	SimWindow::keyboard(key, x, y); // ' ', 'p', '[', ']', 'v', 's', ',', '.', 'c', 'ESC'
 }
 

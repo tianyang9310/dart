@@ -20,6 +20,21 @@ Controller::Controller(const SkeletonPtr& biped)\
   mSagitalRightHip = mBiped->getDof("j_thigh_right")->getIndexInSkeleton();
 
   buildStateMachines();
+
+  mInitialState = mBiped->getState();
+}
+
+void Controller::keyboard(unsigned char _key, int _x, int _y, double _currentTime)
+{
+	switch(_key)
+	{
+		case 'r':
+		mBiped->setState(mInitialState);
+		dtmsg << "Robot is reset." << std::endl;
+		break;
+		default:
+		break;
+	}
 }
 
 void Controller::update(double _currentTime)
