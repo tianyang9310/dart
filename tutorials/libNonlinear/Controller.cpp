@@ -74,16 +74,16 @@ StateMachine* Controller::createWalkingStateMachine()
 
   const double pelvis = DART_RADIAN *-1.478;// 4.75;  // angle b/w pelvis and torso
 
-  const double swh02  =  0.40;  // swing hip
-  const double swk02  = -1.10;  // swing knee
+  const double swh02  =  0.20;  // swing hip
+  const double swk02  = -0.55;  // swing knee
   //const double swa02  =  0.60;  // swing angle
-  const double stk02  = -0.05;  // stance knee
+  const double stk02  = -0.025;  // stance knee
   //const double sta02  =  0.00;  // stance ankle
 
-  const double swh13  = -0.70;  // swing hip
-  const double swk13  = -0.05;  // swing knee
+  const double swh13  = -0.35;  // swing hip
+  const double swk13  = -0.025;  // swing knee
   //const double swa13  =  0.15;  // swing angle
-  const double stk13  = -0.10;  // stance knee
+  const double stk13  = -0.05;  // stance knee
   //const double sta13  =  0.00;  // stance ankle
 
   StateMachine* sm = new StateMachine("walking");
