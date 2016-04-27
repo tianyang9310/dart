@@ -31,6 +31,8 @@ SkeletonPtr createFloor()
   Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
   tf.translation() = Eigen::Vector3d(0.0, -1.0, 0.0);
   body->getParentJoint()->setTransformFromParentBodyNode(tf);
+
+  std::cout<<"floor friction is "<<body->getBodyNodeProperties().mFrictionCoeff<<std::endl;
   
   return floor;
 }
