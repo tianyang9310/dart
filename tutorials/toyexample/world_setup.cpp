@@ -35,6 +35,7 @@ SkeletonPtr createFloor()
 	tf.translation() = Eigen::Vector3d(0.0, 0.0, -floor_height / 2.0);
 	floor->getParentJoint()->setTransformFromParentBodyNode(tf);
 
+	std::cout<<"floor friction is "<<floor->getBodyNodeProperties().mFrictionCoeff<<std::endl;
 	return world_setup;
 }
 
