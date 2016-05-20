@@ -5,12 +5,8 @@
     > Created Time: Thu May 19 22:53:10 2016
  ************************************************************************/
 
-#include <iostream>
-#include "dart/dart.h"
-using namespace dart;
-using namespace dynamics;
-using namespace simulation;
-using namespace utils;
+#include "WorldSetup.h"
+
 
 SkeletonPtr addFloor()
 {
@@ -30,7 +26,7 @@ SkeletonPtr addFloor()
 
 	// set inertia
 	dart::dynamics::Inertia inertia;
-	inertia.setMass(5510 * box->getVolume());
+	inertia.setMass(2e3 * box->getVolume());
 	inertia.setMoment(box->computeInertia(inertia.getMass()));
 	floor->setInertia(inertia);
 
@@ -70,18 +66,21 @@ SkeletonPtr addCartPole()
 
 	// put the body into the right position
 	Eigen::Isometry3d tf_cart(Eigen::Isometry3d::Identity());
-	tf_cart.translation() = Eigen::Vector3d(0.0, 0.0, 0.1 / 2.0);
+	tf_cart.translation() = Eigen::Vector3d(0.0, 0.0, 0.1 / 2.0+1e-3);
 	mCart->getParentJoint()->setTransformFromParentBodyNode(tf_cart);
 
 	// disable friction
 	mCart->setFrictionCoeff(0);
-	//std::cout<<"mCart friction is set as "<<mCart->getBodyNodeProperties().mFrictionCoeff<<std::endl;
+	std::cout<<"mCart friction is set as "<<mCart->getBodyNodeProperties().mFrictionCoeff<<std::endl;
 //--------------------------------------------------------------------------------------------------------------
 	// create a bodynode 
 	RevoluteJoint::Properties properties;
 	properties.mName  = "Joint_cart_pole";
+	properties.mAxis  = Eigen::Vector3d(0,1,0);
 	BodyNodePtr mPole = mCartPole->createJointAndBodyNodePair<RevoluteJoint>(mCart, properties).second;
 	mPole->setName("mPole");
+
+	std::cout<<"Axis of revolute joint is "<<properties.mAxis.transpose()<<std::endl;
 
 	// attach a shape
 	std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(0.02,0.25);
@@ -96,12 +95,18 @@ SkeletonPtr addCartPole()
 	mPole->setInertia(inertia_cylinder);
 
 	// put the body into the right position
-	Eigen::Isometry3d tf_pole(Eigen::Isometry3d::Identity());
-	tf_pole.translation() = Eigen::Vector3d(0.0, 0.0, 0.25 / 2.0);
-	mPole->getParentJoint()->setTransformFromParentBodyNode(tf_pole);
+	Eigen::Isometry3d Joint_cart_pole_parent(Eigen::Isometry3d::Identity());
+	Joint_cart_pole_parent.translation() = Eigen::Vector3d(0.0, 0.0, 0.1/2);
+	mPole->getParentJoint()->setTransformFromParentBodyNode(Joint_cart_pole_parent);
+
+	Eigen::Isometry3d Joint_cart_pole_child(Eigen::Isometry3d::Identity());
+	Joint_cart_pole_child.translation() = Eigen::Vector3d(0.0, 0.0, -0.25/2);
+	mPole->getParentJoint()->setTransformFromChildBodyNode(Joint_cart_pole_child);
+
 	
 	// disable frictin
 	mPole->setFrictionCoeff(0);
+	std::cout<<"mPole friction is set as "<<mPole->getBodyNodeProperties().mFrictionCoeff<<std::endl;
 //--------------------------------------------------------------------------------------------------------------
 	return mCartPole;
 }
