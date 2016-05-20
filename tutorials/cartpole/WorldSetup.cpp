@@ -19,7 +19,7 @@ SkeletonPtr addFloor()
 
 	// attach a shape
 	std::shared_ptr<BoxShape> box = std::make_shared<BoxShape>(
-			Eigen::Vector3d(5, 5, 0.1));
+			Eigen::Vector3d(50, 50, 0.1));
 	box->setColor(dart::Color::Gray(0.3));
 	floor->addVisualizationShape(box);
 	floor->addCollisionShape(box);
@@ -46,8 +46,15 @@ SkeletonPtr addCartPole()
 {
 	SkeletonPtr mCartPole = Skeleton::create("mCartPole");
 //--------------------------------------------------------------------------------------------------------------
+//	BodyNodePtr mHold = mCartPole->createJointAndBodyNodePair<FreeJoint>().second;
+//	mHold->setName("mHold");
+//	mHold->setFrictionCoeff(0);
+
+//--------------------------------------------------------------------------------------------------------------
 	// create a bodynode 
-	BodyNodePtr mCart = mCartPole->createJointAndBodyNodePair<PlanarJoint>().second;
+	PlanarJoint::Properties properties_cart;
+	properties_cart.mName = "Joint_hold_cart";
+	BodyNodePtr mCart = mCartPole->createJointAndBodyNodePair<FreeJoint>().second;
 
 	mCart->setName("mCart");
 
@@ -66,7 +73,7 @@ SkeletonPtr addCartPole()
 
 	// put the body into the right position
 	Eigen::Isometry3d tf_cart(Eigen::Isometry3d::Identity());
-	tf_cart.translation() = Eigen::Vector3d(0.0, 0.0, 0.1 / 2.0+1e-3);
+	tf_cart.translation() = Eigen::Vector3d(0.0, 0.0, 0.1 / 2.0);
 	mCart->getParentJoint()->setTransformFromParentBodyNode(tf_cart);
 
 	// disable friction
@@ -83,14 +90,14 @@ SkeletonPtr addCartPole()
 	std::cout<<"Axis of revolute joint is "<<properties.mAxis.transpose()<<std::endl;
 
 	// attach a shape
-	std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(0.02,0.25);
+	std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(0.005,0.25);
 	cylinder->setColor(dart::Color::Blue(0.7));
 	mPole->addVisualizationShape(cylinder);
 	mPole->addCollisionShape(cylinder);
 
 	// set inertia
 	dart::dynamics::Inertia inertia_cylinder;
-	inertia_cylinder.setMass(3500 * cylinder->getVolume());
+	inertia_cylinder.setMass(500 * cylinder->getVolume());
 	inertia_cylinder.setMoment(cylinder->computeInertia(inertia_cylinder.getMass()));
 	mPole->setInertia(inertia_cylinder);
 
