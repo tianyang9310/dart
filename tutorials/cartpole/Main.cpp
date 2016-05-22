@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 	std::cout<<std::endl;
 
 	glutInit(&argc, argv);
-	window.initWindow(640, 480, "Vehicle");
+	window.initWindow(1024, 768, "Vehicle");
 	glutMainLoop();
 
 	return 0;
