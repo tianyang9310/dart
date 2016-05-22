@@ -17,7 +17,6 @@ using namespace dart::common;
 using namespace dart::math;
 using namespace dart::gui;
 
-SkeletonPtr addFloor();
 SkeletonPtr addCartPole();
 void WorldSetup(WorldPtr mWorld);
 #endif
