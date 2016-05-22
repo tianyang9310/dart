@@ -7,119 +7,109 @@
 
 #include "WorldSetup.h"
 
-
-SkeletonPtr addFloor()
-{
-	SkeletonPtr mFloor = Skeleton::create("mFloor");
-
-	// create a bodynode 
-	BodyNodePtr floor = mFloor->createJointAndBodyNodePair<WeldJoint>().second;
-
-	floor->setName("floor");
-
-	// attach a shape
-	std::shared_ptr<BoxShape> box = std::make_shared<BoxShape>(
-			Eigen::Vector3d(50, 50, 0.1));
-	box->setColor(dart::Color::Gray(0.3));
-	floor->addVisualizationShape(box);
-	floor->addCollisionShape(box);
-
-	// set inertia
-	dart::dynamics::Inertia inertia;
-	inertia.setMass(2e3 * box->getVolume());
-	inertia.setMoment(box->computeInertia(inertia.getMass()));
-	floor->setInertia(inertia);
-
-	// put the body into the right position
-	Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
-	tf.translation() = Eigen::Vector3d(0.0, 0.0, -0.1 / 2.0);
-	floor->getParentJoint()->setTransformFromParentBodyNode(tf);
-
-	// disable friction
-	floor->setFrictionCoeff(0);
-	std::cout<<"floor friction is set as "<<floor->getBodyNodeProperties().mFrictionCoeff<<std::endl;
-	return mFloor;
-}
-
-
 SkeletonPtr addCartPole()
 {
+	double cart_length			= 0.15;
+	double cart_width			= 0.1;
+	double cart_height			= 0.05;
+	double cart_density 		= 50;
+	double pole_radius			= 0.005;
+	double pole_height			= 0.4;
+	double pole_density		    = 100;
+	double BN_friction			= 0;
+	double Joint_damping		= 0;
+//--------------------------------------------------------------------------------------------------------------
+
 	SkeletonPtr mCartPole = Skeleton::create("mCartPole");
 //--------------------------------------------------------------------------------------------------------------
-//	BodyNodePtr mHold = mCartPole->createJointAndBodyNodePair<FreeJoint>().second;
-//	mHold->setName("mHold");
-//	mHold->setFrictionCoeff(0);
+	BodyNodePtr mHold = mCartPole->createJointAndBodyNodePair<WeldJoint>().second;
+	mHold->getParentJoint()->setName("Joint_world_hold");
+	mHold->setName("mHold");
+	mHold->setFrictionCoeff(BN_friction);
 
 //--------------------------------------------------------------------------------------------------------------
 	// create a bodynode 
-	PlanarJoint::Properties properties_cart;
-	properties_cart.mName = "Joint_hold_cart";
-	BodyNodePtr mCart = mCartPole->createJointAndBodyNodePair<FreeJoint>().second;
+	PrismaticJoint::Properties properties_cart;
+	properties_cart.mAxis = Eigen::Vector3d::UnitX();
+	BodyNodePtr mCart_body = mCartPole->createJointAndBodyNodePair<PrismaticJoint>(mHold,properties_cart).second;
 
-	mCart->setName("mCart");
+	mCart_body->getParentJoint()->setName("Joint_hold_cart");
+	mCart_body->setName("mCart_body");
 
 	// attach a shape
-	std::shared_ptr<BoxShape> box = std::make_shared<BoxShape>(
-			Eigen::Vector3d(0.2, 0.2, 0.1));
-	box->setColor(dart::Color::Red(0.7));
-	mCart->addVisualizationShape(box);
-	mCart->addCollisionShape(box);
+	std::shared_ptr<BoxShape> box_cart = std::make_shared<BoxShape>(
+			Eigen::Vector3d(cart_length,cart_width,cart_height));
+	box_cart->setColor(dart::Color::Red(0.7));
+	mCart_body->addVisualizationShape(box_cart);
+	mCart_body->addCollisionShape(box_cart);
 
 	// set inertia
 	dart::dynamics::Inertia inertia_box;
-	inertia_box.setMass(3500 * box->getVolume());
-	inertia_box.setMoment(box->computeInertia(inertia_box.getMass()));
-	mCart->setInertia(inertia_box);
+	inertia_box.setMass(cart_density * box_cart->getVolume());
+	inertia_box.setMoment(box_cart->computeInertia(inertia_box.getMass()));
+	mCart_body->setInertia(inertia_box);
 
 	// put the body into the right position
 	Eigen::Isometry3d tf_cart(Eigen::Isometry3d::Identity());
-	tf_cart.translation() = Eigen::Vector3d(0.0, 0.0, 0.1 / 2.0);
-	mCart->getParentJoint()->setTransformFromParentBodyNode(tf_cart);
+	tf_cart.translation() = Eigen::Vector3d(0.0, 0.0, cart_height / 2.0);
+	mCart_body->getParentJoint()->setTransformFromParentBodyNode(tf_cart);
 
 	// disable friction
-	mCart->setFrictionCoeff(0);
-	std::cout<<"mCart friction is set as "<<mCart->getBodyNodeProperties().mFrictionCoeff<<std::endl;
+	mCart_body->setFrictionCoeff(BN_friction);
+	std::cout<<"mCart_body friction is set as "<<mCart_body->getBodyNodeProperties().mFrictionCoeff<<std::endl;
+
+	// disable joint friction
+	for (size_t i = 0; i<mCart_body->getParentJoint()->getNumDofs();++i)
+	{
+		mCart_body->getParentJoint()->getDof(i)->setDampingCoefficient(Joint_damping);
+	}
 //--------------------------------------------------------------------------------------------------------------
 	// create a bodynode 
-	RevoluteJoint::Properties properties;
-	properties.mName  = "Joint_cart_pole";
-	properties.mAxis  = Eigen::Vector3d(0,1,0);
-	BodyNodePtr mPole = mCartPole->createJointAndBodyNodePair<RevoluteJoint>(mCart, properties).second;
-	mPole->setName("mPole");
+	RevoluteJoint::Properties properties_pole;
+	properties_pole.mAxis  = Eigen::Vector3d::UnitY();
+	BodyNodePtr mPole_body = mCartPole->createJointAndBodyNodePair<RevoluteJoint>(mCart_body, properties_pole).second;
 
-	std::cout<<"Axis of revolute joint is "<<properties.mAxis.transpose()<<std::endl;
+	mPole_body->getParentJoint()->setName("Joint_cart_pole");
+	mPole_body->setName("mPole_body");
+
+	std::cout<<"Axis of revolute joint is "<<properties_pole.mAxis.transpose()<<std::endl;
 
 	// attach a shape
-	std::shared_ptr<CylinderShape> cylinder = std::make_shared<CylinderShape>(0.005,0.25);
-	cylinder->setColor(dart::Color::Blue(0.7));
-	mPole->addVisualizationShape(cylinder);
-	mPole->addCollisionShape(cylinder);
+	std::shared_ptr<CylinderShape> cylinder_pole = std::make_shared<CylinderShape>(pole_radius,pole_height);
+	cylinder_pole->setColor(dart::Color::Blue(0.7));
+	mPole_body->addVisualizationShape(cylinder_pole);
+	mPole_body->addCollisionShape(cylinder_pole);
 
 	// set inertia
 	dart::dynamics::Inertia inertia_cylinder;
-	inertia_cylinder.setMass(500 * cylinder->getVolume());
-	inertia_cylinder.setMoment(cylinder->computeInertia(inertia_cylinder.getMass()));
-	mPole->setInertia(inertia_cylinder);
+	inertia_cylinder.setMass(pole_density * cylinder_pole->getVolume());
+	inertia_cylinder.setMoment(cylinder_pole->computeInertia(inertia_cylinder.getMass()));
+	mPole_body->setInertia(inertia_cylinder);
 
 	// put the body into the right position
 	Eigen::Isometry3d Joint_cart_pole_parent(Eigen::Isometry3d::Identity());
-	Joint_cart_pole_parent.translation() = Eigen::Vector3d(0.0, 0.0, 0.1/2);
-	mPole->getParentJoint()->setTransformFromParentBodyNode(Joint_cart_pole_parent);
+	Joint_cart_pole_parent.translation() = Eigen::Vector3d(0.0, 0.0, cart_height/2);
+	mPole_body->getParentJoint()->setTransformFromParentBodyNode(Joint_cart_pole_parent);
 
 	Eigen::Isometry3d Joint_cart_pole_child(Eigen::Isometry3d::Identity());
-	Joint_cart_pole_child.translation() = Eigen::Vector3d(0.0, 0.0, -0.25/2);
-	mPole->getParentJoint()->setTransformFromChildBodyNode(Joint_cart_pole_child);
+	Joint_cart_pole_child.translation() = Eigen::Vector3d(0.0, 0.0, -pole_height/2);
+	mPole_body->getParentJoint()->setTransformFromChildBodyNode(Joint_cart_pole_child);
 
 	
-	// disable frictin
-	mPole->setFrictionCoeff(0);
-	std::cout<<"mPole friction is set as "<<mPole->getBodyNodeProperties().mFrictionCoeff<<std::endl;
+	// disable bodynode friction
+	mPole_body->setFrictionCoeff(BN_friction);
+	std::cout<<"mPole friction is set as "<<mPole_body->getBodyNodeProperties().mFrictionCoeff<<std::endl;
+
+	// disable joint friction
+	for (size_t i = 0; i<mPole_body->getParentJoint()->getNumDofs();++i)
+	{
+		mPole_body->getParentJoint()->getDof(i)->setDampingCoefficient(Joint_damping);
+	}
 //--------------------------------------------------------------------------------------------------------------
 	return mCartPole;
 }
 
 void WorldSetup(WorldPtr mWorld)
 {
-	mWorld->addSkeleton(addFloor());
 	mWorld->addSkeleton(addCartPole());
 }
