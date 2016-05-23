@@ -16,5 +16,5 @@ using namespace dart::gui;
 
 Controller::Controller(SkeletonPtr mCartPole):mCartPole(mCartPole)
 {
-	DDP mDDP(5000);
+	mDDP = std::unique_ptr<DDP>(new DDP(5000));
 }

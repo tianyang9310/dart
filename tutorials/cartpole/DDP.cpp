@@ -16,7 +16,8 @@ DDP::DDP(int T):
 	K(T)
 {
 	x		= Eigen::MatrixXd::Zero(x_dim,T);
-	u 		= Eigen::MatrixXd::Zero(u_dim,T);
+	u 		= Eigen::MatrixXd::Random(u_dim,T);
+	u.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
 	for (int i=0;i<T;i++)
 	{
 		Vx[i].setZero();
@@ -28,7 +29,38 @@ DDP::DDP(int T):
 	alpha	= 1;
 }
 
+void DDP::trajopt()
+{
+// one iteration of DDP
+//------------------------------------------------------------------------------------------------
+// backward pass
+
+//------------------------------------------------------------------------------------------------
+// forward  pass
+
+}
+
+void DDP::backwardpass()
+{
+
+}
+
+void DDP::forwardpass()
+{
+
+}
+
 void DDP::dynamics()
+{
+
+}
+
+void DDP::derivative()
+{
+
+}
+
+void DDP::cost()
 {
 
 }

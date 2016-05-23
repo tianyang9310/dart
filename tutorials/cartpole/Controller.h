@@ -9,6 +9,7 @@
 #define CONTROLLER_H 
 
 #include "dart/dart.h"
+#include "DDP.h"
 
 using namespace dart::dynamics;
 using namespace dart::simulation;
@@ -22,8 +23,9 @@ class Controller
 {
 public:
 	Controller(SkeletonPtr mCartPole);
-private:
+//------------------------------------------------------------------------------------------------
 	SkeletonPtr mCartPole;
+	std::unique_ptr<DDP> mDDP;
 };
 
 #endif

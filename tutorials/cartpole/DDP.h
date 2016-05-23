@@ -8,8 +8,9 @@
 #ifndef DDP_H
 #define DDP_H 
 
-#include "dart/dart.h"
 #include <vector>
+#include <cmath>
+#include "dart/dart.h"
 
 using namespace dart::dynamics;
 using namespace dart::simulation;
@@ -23,7 +24,12 @@ class DDP
 {
 public:
 	DDP(int T);
+	void trajopt();
+	void backwardpass();
+	void forwardpass();
 	void dynamics();
+	void cost();
+	void derivative();
 //------------------------------------------------------------------------------------------------
 	const int T;
 	static const int x_dim = 4;
