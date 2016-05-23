@@ -5,7 +5,8 @@
     > Created Time: Fri 20 May 2016 12:44:11 PM EDT
  ************************************************************************/
 
-#include"Controller.h"
+#include "Controller.h"
+#include "DDP.h"
 using namespace dart::dynamics;
 using namespace dart::simulation;
 using namespace dart::utils;
@@ -15,5 +16,5 @@ using namespace dart::gui;
 
 Controller::Controller(SkeletonPtr mCartPole):mCartPole(mCartPole)
 {
-
+	DDP mDDP(5000);
 }

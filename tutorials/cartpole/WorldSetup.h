@@ -11,7 +11,7 @@
 
 #include "dart/dart.h"
 
-#define mSTAT  // prompt of the statistics of mCartPole
+//#define mSTAT  // prompt of the statistics of mCartPole
 
 using namespace dart::dynamics;
 using namespace dart::simulation;

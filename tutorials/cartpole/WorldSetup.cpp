@@ -17,7 +17,7 @@ SkeletonPtr addCartPole()
 	double pole_radius			= 0.005;
 	double pole_height			= 0.3;
 	double pole_mass		    = 1e-200;
-	double end_perimeter		= 0.01*2;
+	double end_perimeter		= 0.001*2;
 	double end_mass			    = 0.4;
 	double BN_friction			= 0;
 	double Joint_damping		= 0;
@@ -106,7 +106,7 @@ SkeletonPtr addCartPole()
 		mPole_body->getParentJoint()->getDof(i)->setDampingCoefficient(Joint_damping);
 	}
 
-	mPole_body->getParentJoint()->getDof(0)->setPosition(0);
+	mPole_body->getParentJoint()->getDof(0)->setPosition(0);//M_PI);
 //--------------------------------------------------------------------------------------------------------------
 	BodyNodePtr mPole_end = mCartPole->createJointAndBodyNodePair<WeldJoint>(mPole_body).second;
 	mPole_end->getParentJoint()->setName("Joint_pole_end");

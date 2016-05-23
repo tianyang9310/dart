@@ -2,6 +2,8 @@
 #include "dart/dart.h"
 #include "MyWindow.h"
 #include "WorldSetup.h"
+#include "Controller.h"
+#include "DDP.h"
 
 
 using namespace dart::dynamics;
