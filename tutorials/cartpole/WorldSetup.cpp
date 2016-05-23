@@ -18,7 +18,7 @@ SkeletonPtr addCartPole()
 	double pole_height			= 0.3;
 	double pole_mass		    = 1e-200;
 	double end_perimeter		= 0.01*2;
-	double end_mass			    = 0.04;
+	double end_mass			    = 0.4;
 	double BN_friction			= 0;
 	double Joint_damping		= 0;
 //--------------------------------------------------------------------------------------------------------------
