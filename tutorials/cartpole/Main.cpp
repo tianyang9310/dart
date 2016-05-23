@@ -3,6 +3,7 @@
 #include "MyWindow.h"
 #include "WorldSetup.h"
 
+
 using namespace dart::dynamics;
 using namespace dart::simulation;
 using namespace dart::utils;
@@ -16,18 +17,11 @@ int main(int argc, char* argv[])
 	WorldSetup(mWorld);
 
 	MyWindow window(mWorld);
+#ifdef mSTAT
+	std::cout<<"-----------------------------------------------------------------------------------"<<std::endl;
 	std::cout<<"Gravity is "<<mWorld->getGravity().transpose()<<std::endl;
-	std::cout<<"Degree of Freedoms are"<<std::endl;
-	for(size_t i=0; i<mWorld->getSkeleton("mCartPole")->getNumDofs();i++)
-	{
-		std::cout<<mWorld->getSkeleton("mCartPole")->getDof(i)->getName()<<" "<<std::endl;
-	}
-	std::cout<<"Mass distribution: "<<std::endl;
-	for (size_t i=0; i<mWorld->getSkeleton("mCartPole")->getNumBodyNodes(); i++)
-	{
-		std::cout<<mWorld->getSkeleton("mCartPole")->getBodyNode(i)->getName()<<"  mass is "<<mWorld->getSkeleton("mCartPole")->getBodyNode(i)->getInertia().getMass()<<std::endl;
-	}
-	std::cout<<std::endl;
+	std::cout<<"-----------------------------------------------------------------------------------"<<std::endl;
+#endif
 
 	glutInit(&argc, argv);
 	window.initWindow(1024, 768, "Vehicle");

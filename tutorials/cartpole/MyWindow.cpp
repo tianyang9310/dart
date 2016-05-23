@@ -33,6 +33,10 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
 		mWorld->getSkeleton("mCartPole")->getDof(0)->setPosition(0);
 		break;
 
+	//	case 'o':
+	//	std::cout<<mWorld->getSkeleton("mCartPole")->getBodyNode(0)->getTransform().matrix()<<std::endl;
+	//	break;
+
 		default:
 		SimWindow::keyboard(_key, _x, _y);
 		break;

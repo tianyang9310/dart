@@ -13,12 +13,12 @@ SkeletonPtr addCartPole()
 	double cart_length			= 0.15;
 	double cart_width			= 0.08;
 	double cart_height			= 0.025;
-	double cart_mass 		    = 1;
+	double cart_mass 		    = 0.5;
 	double pole_radius			= 0.005;
 	double pole_height			= 0.3;
 	double pole_mass		    = 1e-200;
-	double end_perimeter		= 0.005*2;
-	double end_mass			    = 0.005;
+	double end_perimeter		= 0.01*2;
+	double end_mass			    = 0.04;
 	double BN_friction			= 0;
 	double Joint_damping		= 0;
 //--------------------------------------------------------------------------------------------------------------
@@ -60,7 +60,6 @@ SkeletonPtr addCartPole()
 
 	// disable friction
 	mCart_body->setFrictionCoeff(BN_friction);
-	std::cout<<"mCart_body friction is set as "<<mCart_body->getBodyNodeProperties().mFrictionCoeff<<std::endl;
 
 	// disable joint friction
 	for (size_t i = 0; i<mCart_body->getParentJoint()->getNumDofs();++i)
@@ -76,8 +75,6 @@ SkeletonPtr addCartPole()
 	mPole_body->getParentJoint()->setName("Joint_cart_pole");
 	mPole_body->setName("mPole_body");
 
-	std::cout<<"Axis of revolute joint is "<<properties_pole.mAxis.transpose()<<std::endl;
-
 	// attach a shape
 	std::shared_ptr<CylinderShape> cylinder_pole = std::make_shared<CylinderShape>(pole_radius,pole_height);
 	cylinder_pole->setColor(dart::Color::Blue(0.7));
@@ -89,8 +86,6 @@ SkeletonPtr addCartPole()
 	inertia_cylinder.setMass(pole_mass);
 	inertia_cylinder.setMoment(cylinder_pole->computeInertia(inertia_cylinder.getMass()));
 	mPole_body->setInertia(inertia_cylinder);
-
-	std::cout<<"Pole moment is "<<std::endl<<mPole_body->getInertia().getMoment()<<std::endl;
 
 	// put the body into the right position
 	Eigen::Isometry3d Joint_cart_pole_parent(Eigen::Isometry3d::Identity());
@@ -104,7 +99,6 @@ SkeletonPtr addCartPole()
 	
 	// disable bodynode friction
 	mPole_body->setFrictionCoeff(BN_friction);
-	std::cout<<"mPole friction is set as "<<mPole_body->getBodyNodeProperties().mFrictionCoeff<<std::endl;
 
 	// disable joint friction
 	for (size_t i = 0; i<mPole_body->getParentJoint()->getNumDofs();++i)
@@ -134,10 +128,32 @@ SkeletonPtr addCartPole()
 
 	mPole_end->setFrictionCoeff(BN_friction);
 //--------------------------------------------------------------------------------------------------------------
+#ifdef mSTAT
+	std::cout<<"-----------------------------------------------------------------------------------"<<std::endl;
 	std::cout<<"BodyNode volumes are "<<std::endl;
-	std::cout<<box_cart->getVolume()<<std::endl;
-	std::cout<<cylinder_pole->getVolume()<<std::endl;
-	std::cout<<ellipsoidshape_end->getVolume()<<std::endl;
+	std::cout<<"Cart body:		"<<box_cart->getVolume()<<std::endl;
+	std::cout<<"Pole body:		"<<cylinder_pole->getVolume()<<std::endl;
+	std::cout<<"Pole end:		"<<ellipsoidshape_end->getVolume()<<std::endl;
+	std::cout<<"-----------------------------------------------------------------------------------"<<std::endl;
+	std::cout<<"Mass and moment distribution: "<<std::endl;
+	for (size_t i=0; i<mCartPole->getNumBodyNodes(); i++)
+	{
+		std::cout<<mCartPole->getBodyNode(i)->getName()<<std::endl<<"mass is "<<mCartPole->getBodyNode(i)->getInertia().getMass()<<std::endl<<"moment is "<<std::endl<<mCartPole->getBodyNode(i)->getInertia().getMoment()<<std::endl;
+		std::cout<<"-----------------------------------------------------------------------------------"<<std::endl;
+	}
+	std::cout<<"BodyNode frictions are: "<<std::endl;
+	for (size_t i=0; i<mCartPole->getNumBodyNodes(); i++)
+	{
+		std::cout<<mCartPole->getBodyNode(i)->getName()<<":		"<<mCartPole->getBodyNode(i)->getBodyNodeProperties().mFrictionCoeff<<std::endl;
+	}
+	std::cout<<"-----------------------------------------------------------------------------------"<<std::endl;
+	std::cout<<"Degree of freedom dampings are: "<<std::endl;
+	for (size_t i=0; i<mCartPole->getNumDofs(); i++)
+	{
+		std::cout<<mCartPole->getDof(i)->getName()<<":	"<<mCartPole->getDof(i)->getDampingCoefficient()<<std::endl;
+	}
+	std::cout<<"-----------------------------------------------------------------------------------"<<std::endl;
+#endif
 //--------------------------------------------------------------------------------------------------------------
 	return mCartPole;
 }
