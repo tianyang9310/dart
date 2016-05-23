@@ -11,11 +11,11 @@ SkeletonPtr addCartPole()
 {
 	double cart_length			= 0.15;
 	double cart_width			= 0.1;
-	double cart_height			= 0.05;
+	double cart_height			= 0.025;
 	double cart_density 		= 50;
 	double pole_radius			= 0.005;
-	double pole_height			= 0.4;
-	double pole_density		    = 100;
+	double pole_height			= 0.3;
+	double pole_density		    = 200;
 	double BN_friction			= 0;
 	double Joint_damping		= 0;
 //--------------------------------------------------------------------------------------------------------------
@@ -86,13 +86,15 @@ SkeletonPtr addCartPole()
 	inertia_cylinder.setMoment(cylinder_pole->computeInertia(inertia_cylinder.getMass()));
 	mPole_body->setInertia(inertia_cylinder);
 
+	std::cout<<"Pole moment is "<<std::endl<<mPole_body->getInertia().getMoment()<<std::endl;
+
 	// put the body into the right position
 	Eigen::Isometry3d Joint_cart_pole_parent(Eigen::Isometry3d::Identity());
 	Joint_cart_pole_parent.translation() = Eigen::Vector3d(0.0, 0.0, cart_height/2);
 	mPole_body->getParentJoint()->setTransformFromParentBodyNode(Joint_cart_pole_parent);
 
 	Eigen::Isometry3d Joint_cart_pole_child(Eigen::Isometry3d::Identity());
-	Joint_cart_pole_child.translation() = Eigen::Vector3d(0.0, 0.0, -pole_height/2);
+	Joint_cart_pole_child.translation() = Eigen::Vector3d(0.0, 0.0, pole_height/2);
 	mPole_body->getParentJoint()->setTransformFromChildBodyNode(Joint_cart_pole_child);
 
 	
@@ -106,6 +108,7 @@ SkeletonPtr addCartPole()
 		mPole_body->getParentJoint()->getDof(i)->setDampingCoefficient(Joint_damping);
 	}
 //--------------------------------------------------------------------------------------------------------------
+	mPole_body->getParentJoint()->getDof(0)->setPosition(0);
 	return mCartPole;
 }
 

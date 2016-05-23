@@ -29,6 +29,10 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
 		mWorld->getSkeleton("mCartPole")->getDof(0)->setForce(-1);
 		break;
 
+		case 'r':
+		mWorld->getSkeleton("mCartPole")->getDof(0)->setPosition(0);
+		break;
+
 		default:
 		SimWindow::keyboard(_key, _x, _y);
 		break;
