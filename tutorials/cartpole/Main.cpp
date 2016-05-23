@@ -22,6 +22,11 @@ int main(int argc, char* argv[])
 	{
 		std::cout<<mWorld->getSkeleton("mCartPole")->getDof(i)->getName()<<" "<<std::endl;
 	}
+	std::cout<<"Mass distribution: "<<std::endl;
+	for (size_t i=0; i<mWorld->getSkeleton("mCartPole")->getNumBodyNodes(); i++)
+	{
+		std::cout<<mWorld->getSkeleton("mCartPole")->getBodyNode(i)->getName()<<"  mass is "<<mWorld->getSkeleton("mCartPole")->getBodyNode(i)->getInertia().getMass()<<std::endl;
+	}
 	std::cout<<std::endl;
 
 	glutInit(&argc, argv);

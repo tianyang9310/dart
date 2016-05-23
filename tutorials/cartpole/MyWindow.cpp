@@ -22,11 +22,11 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
 	switch(_key)
 	{
 		case 'a':
-		mWorld->getSkeleton("mCartPole")->getDof(0)->setForce(1);
+		mWorld->getSkeleton("mCartPole")->getDof(0)->setForce(100);
 		break;
 
 		case 'd':
-		mWorld->getSkeleton("mCartPole")->getDof(0)->setForce(-1);
+		mWorld->getSkeleton("mCartPole")->getDof(0)->setForce(-100);
 		break;
 
 		case 'r':

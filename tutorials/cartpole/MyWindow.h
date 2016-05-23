@@ -15,7 +15,7 @@ class MyWindow : public dart::gui::SimWindow {
 public:
 	MyWindow(WorldPtr world);
 	
-	void timeStepping();
+	void timeStepping() override;
 	
 	void drawSkels() override;
 	

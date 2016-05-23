@@ -9,13 +9,16 @@
 
 SkeletonPtr addCartPole()
 {
+	double hold_mass			= 1e200;
 	double cart_length			= 0.15;
-	double cart_width			= 0.1;
+	double cart_width			= 0.08;
 	double cart_height			= 0.025;
-	double cart_density 		= 50;
+	double cart_mass 		    = 1;
 	double pole_radius			= 0.005;
 	double pole_height			= 0.3;
-	double pole_density		    = 200;
+	double pole_mass		    = 1e-200;
+	double end_perimeter		= 0.005*2;
+	double end_mass			    = 0.005;
 	double BN_friction			= 0;
 	double Joint_damping		= 0;
 //--------------------------------------------------------------------------------------------------------------
@@ -26,6 +29,7 @@ SkeletonPtr addCartPole()
 	mHold->getParentJoint()->setName("Joint_world_hold");
 	mHold->setName("mHold");
 	mHold->setFrictionCoeff(BN_friction);
+	mHold->setMass(hold_mass);
 
 //--------------------------------------------------------------------------------------------------------------
 	// create a bodynode 
@@ -45,7 +49,7 @@ SkeletonPtr addCartPole()
 
 	// set inertia
 	dart::dynamics::Inertia inertia_box;
-	inertia_box.setMass(cart_density * box_cart->getVolume());
+	inertia_box.setMass(cart_mass);
 	inertia_box.setMoment(box_cart->computeInertia(inertia_box.getMass()));
 	mCart_body->setInertia(inertia_box);
 
@@ -82,7 +86,7 @@ SkeletonPtr addCartPole()
 
 	// set inertia
 	dart::dynamics::Inertia inertia_cylinder;
-	inertia_cylinder.setMass(pole_density * cylinder_pole->getVolume());
+	inertia_cylinder.setMass(pole_mass);
 	inertia_cylinder.setMoment(cylinder_pole->computeInertia(inertia_cylinder.getMass()));
 	mPole_body->setInertia(inertia_cylinder);
 
@@ -107,8 +111,34 @@ SkeletonPtr addCartPole()
 	{
 		mPole_body->getParentJoint()->getDof(i)->setDampingCoefficient(Joint_damping);
 	}
-//--------------------------------------------------------------------------------------------------------------
+
 	mPole_body->getParentJoint()->getDof(0)->setPosition(0);
+//--------------------------------------------------------------------------------------------------------------
+	BodyNodePtr mPole_end = mCartPole->createJointAndBodyNodePair<WeldJoint>(mPole_body).second;
+	mPole_end->getParentJoint()->setName("Joint_pole_end");
+	mPole_end->setName("mPole_end");
+
+	std::shared_ptr<EllipsoidShape> ellipsoidshape_end = std::make_shared<EllipsoidShape>(Eigen::Vector3d::Constant(end_perimeter));
+	ellipsoidshape_end->setColor(dart::Color::Black(0.7));
+	mPole_end->addVisualizationShape(ellipsoidshape_end);
+	mPole_end->addCollisionShape(ellipsoidshape_end);
+
+	dart::dynamics::Inertia Inertia_ellipsoid;
+	Inertia_ellipsoid.setMass(end_mass);
+	Inertia_ellipsoid.setMoment(ellipsoidshape_end->computeInertia(Inertia_ellipsoid.getMass()));
+	mPole_end->setInertia(Inertia_ellipsoid);
+
+	Eigen::Isometry3d Joint_pole_end(Eigen::Isometry3d::Identity());
+	Joint_pole_end.translation() = Eigen::Vector3d(0.0, 0.0, -pole_height/2);
+	mPole_end->getParentJoint()->setTransformFromParentBodyNode(Joint_pole_end);
+
+	mPole_end->setFrictionCoeff(BN_friction);
+//--------------------------------------------------------------------------------------------------------------
+	std::cout<<"BodyNode volumes are "<<std::endl;
+	std::cout<<box_cart->getVolume()<<std::endl;
+	std::cout<<cylinder_pole->getVolume()<<std::endl;
+	std::cout<<ellipsoidshape_end->getVolume()<<std::endl;
+//--------------------------------------------------------------------------------------------------------------
 	return mCartPole;
 }
 
