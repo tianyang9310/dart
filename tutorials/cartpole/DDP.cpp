@@ -27,6 +27,10 @@ DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t, Worl
 	u 		= Eigen::MatrixXd::Random(u_dim,T)*2;
 	u.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
 	C		= Eigen::VectorXd::Zero(T);
+	x_new   = Eigen::MatrixXd::Zero(x_dim,T);
+	u_new   = Eigen::MatrixXd::Zero(u_dim,T);
+	C_new	= Eigen::VectorXd::Zero(T);
+	dV.setZero();
 	for (int i=0;i<T;i++)
 	{
 		Vx[i].setZero();
@@ -95,23 +99,147 @@ void DDP::trajopt()
 // one iteration of DDP
 //------------------------------------------------------------------------------------------------
 // backward pass
+	bool diverge = true;
+	while (diverge)
+	{
+		diverge = backwardpass();
+		if (diverge)
+		{
+			mu *=5;
+		}
+	}
+	mu = 1;
 
 //------------------------------------------------------------------------------------------------
 // forward  pass
+	bool forward_done = false;
+	while(!forward_done)
+	{
+		forwardpass();
+		double dCost = C.sum() - C_new.sum();
+		double expected = -alpha*(dV[0]+alpha*dV[1]);
+		double z;
+		if (expected>0)
+		{
+			z = dCost/expected;
+		}
+		else
+		{
+			z = 2*(dCost > 0)-1;
+			dtmsg<<"non-positive expected reduction "<<z<<std::endl;
+		}
+		if (z>0)
+		{
+			forward_done = true;
+			break;
+		}
+		else
+		{
+			alpha *=0.5;
+		}
+	}
+	alpha = 1;
+	x = x_new;
+	u = u_new;
+	C = C_new;
 
 }
 
-void DDP::backwardpass()
+bool DDP::backwardpass()
 {
+//  variable initialization
+	bool localDiverge = false;
+	dV.setZero();
+	for (int i=0;i<T;i++)
+	{
+		Vx[i].setZero();
+		Vxx[i].setZero();
+		k[i].setZero();
+		K[i].setZero();
+	}
+
 	for (int i=T-1;i>=0;i--)
 	{
 		derivative(x.col(i),u.col(i),i);
-	}
+		if (i==T-1)
+		{
+			Vx[i]  = Cx;
+			Vxx[i] = Cxx;
+			continue;
+		}
+		Eigen::Matrix<double,1,x_dim>	  Qx;	
+		Eigen::Matrix<double,1,u_dim>	  Qu;
+		Eigen::Matrix<double,x_dim,x_dim> Qxx;
+		Eigen::Matrix<double,u_dim,u_dim> Quu;
+		Eigen::Matrix<double,u_dim,x_dim> Qux;
+		Eigen::Matrix<double,u_dim,u_dim> Quu_reg;
+		Eigen::Matrix<double,u_dim,x_dim> Qux_reg;
+		Qx		= Cx + Vx[i+1]*fx;
+		Qu		= Cu + Vx[i+1]*fu;
+		Qxx		= Cxx + fx.transpose()*Vxx[i+1]*fx;
+		Quu		= Cuu + fu.transpose()*Vxx[i+1]*fu;
+		Qux		= Cux + fu.transpose()*Vxx[i+1]*fx;
+		Quu_reg = Quu + mu*Eigen::Matrix<double,u_dim,u_dim>::Identity();
+		Qux_reg = Qux;
+//----------------------------------------------------------------------------------------------------------------------------------
+//      backward debugging
+		if (i%1000 == 0)
+		{
+			std::cout<<i<<std::endl;
+			std::cout<<"Qx "<<std::endl<<Qx<<std::endl;
+			std::cout<<"Qu "<<std::endl<<Qu<<std::endl;
+			std::cout<<"Qxx "<<std::endl<<Qxx<<std::endl;
+			std::cout<<"Quu "<<std::endl<<Quu<<std::endl;
+			std::cout<<"Qux "<<std::endl<<Qux<<std::endl;
+			std::cout<<"value function derivative "<<std::endl;
+			std::cout<<"Vx "<<std::endl<<Vx[i]<<std::endl;
+			std::cout<<"Vxx "<<std::endl<<Vxx[i]<<std::endl;
+			//std::cin.get();
+		}
+//----------------------------------------------------------------------------------------------------------------------------------
+		if (Quu_reg(0)<=0)
+		{
+			localDiverge = true;
+			return localDiverge;
+		}
+		k[i]	= -Qu/Quu_reg(0);
+		K[i]	- -Qux_reg/Quu_reg(0);
 
+		dV	   += (Eigen::Matrix<double,1,x_dim>()<< k[i].transpose()*Qu, 1/2*k[i].transpose()*Quu*k[i]).finished();
+		Vx[i]   = (Qx.transpose()+K[i].transpose()*Quu*k[i]+K[i].transpose()*Qu+Qux.transpose()*k[i]).transpose();
+		Vxx[i]  = Qxx + K[i].transpose()*Quu*K[i]+K[i].transpose()*Qux+Qux.transpose()*K[i];
+		Vxx[i]  = 0.5*(Vxx[i]+Vxx[i].transpose());
+	}
+	return localDiverge;
 }
 
 void DDP::forwardpass()
 {
+	x_new.setZero();
+	u_new.setZero();
+	C_new.setZero();
+//  x_new initial state shoud be (0,0,0,0).(transpose)
+	{
+		// reset x to zero
+		// When clone the world, x is automatically reset to 0
+		WorldPtr DARTdynamicsWorld = mDDPWorld->clone();
+		for (int i=0; i<T-1; i++)
+		{
+			u_new.col(i) = u.col(i) + alpha*k[i] + K[i]*(x_new.col(i)-x.col(i));
+			DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(u_new.col(i)[0]);	
+			DARTdynamicsWorld->step();
+
+			x_new(0,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition();
+			x_new(1,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
+			x_new(2,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity();
+			x_new(3,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
+			C_new[i]=cost(x_new.col(i),u_new.col(i));
+		}
+		u_new.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
+		C_new[T-1]=cost(x_new.col(T-1),u_new.col(T-1));
+	}
+
+
 
 }
 

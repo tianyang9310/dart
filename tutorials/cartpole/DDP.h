@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <cmath>
+#include <unistd.h>
 #include "dart/dart.h"
 
 using namespace dart::dynamics;
@@ -25,7 +26,7 @@ class DDP
 public:
 	DDP(int T, double m_c, double m_p, double l, double g, double delta_t, WorldPtr mDDPWorld);
 	void trajopt();
-	void backwardpass();
+	bool backwardpass();
 	void forwardpass();
 	void DARTdynamics();
 	Eigen::VectorXd dynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i);
@@ -38,6 +39,9 @@ public:
 	Eigen::MatrixXd x;
 	Eigen::MatrixXd u;
 	Eigen::VectorXd C;
+	Eigen::MatrixXd x_new;
+	Eigen::MatrixXd u_new;
+	Eigen::VectorXd C_new;
 	std::vector<Eigen::Matrix<double,1,x_dim>> Vx;
 	std::vector<Eigen::Matrix<double,x_dim,x_dim>> Vxx;
 	Eigen::Matrix<double,1,x_dim> dV;

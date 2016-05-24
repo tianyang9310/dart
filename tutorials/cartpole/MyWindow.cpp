@@ -49,6 +49,7 @@ void MyWindow::timeStepping()
 
 		// reset x to zero
 		// When clone the world, x0 is automatically reset to 0
+		mController->mDDP->trajopt();
 	}
 	// apply external force via u[i]
 	int mSimFrameCount;
