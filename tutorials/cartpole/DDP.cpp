@@ -24,7 +24,7 @@ DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t, Worl
 
 	x		= Eigen::MatrixXd::Zero(x_dim,T);
 //	u 		= Eigen::MatrixXd::Constant(u_dim,T,1);
-	u 		= Eigen::MatrixXd::Random(u_dim,T)*2;
+	u 		= Eigen::MatrixXd::Random(u_dim,T)*10;
 	u.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
 	C		= Eigen::VectorXd::Zero(T);
 	x_new   = Eigen::MatrixXd::Zero(x_dim,T);
@@ -71,7 +71,7 @@ DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t, Worl
 //	std::cout<<"Cxx:"<<std::endl<<Cxx<<std::endl;
 //	std::cout<<"Cuu:"<<std::endl<<Cuu<<std::endl;
 //	std::cout<<"Cux:"<<std::endl<<Cux<<std::endl;
-//	backwardpass();
+//	backwardpass(); //need brief to use
 //	std::cout<<"fx: "<<std::endl<<fx<<std::endl;
 //	std::cout<<"fu: "<<std::endl<<fu<<std::endl;
 //	std::cout<<"Cx: "<<std::endl<<Cx<<std::endl;
@@ -103,6 +103,24 @@ void DDP::trajopt()
 	while (diverge)
 	{
 		diverge = backwardpass();
+//------------------------------------------------------------------------------------------------
+//      backward debugging
+		std::cout<<"Ready to print k and K..."<<std::endl;
+		std::cout<<"Press any key to continue..."<<std::endl;
+		std::cin.get();
+		for (int i = 0; i<T; i++)
+		{
+			std::clog<<k[i]<<" ";
+		}
+		std::cout<<std::endl;
+		for (int i = 0; i<T; i++)
+		{
+			std::clog<<K[i]<<std::endl;
+		}
+		std::cout<<std::endl;
+		std::cout<<"Press any key to continue..."<<std::endl;
+		std::cin.get();
+//------------------------------------------------------------------------------------------------
 		if (diverge)
 		{
 			mu *=5;
@@ -116,18 +134,27 @@ void DDP::trajopt()
 	while(!forward_done)
 	{
 		forwardpass();
+
+		std::cout<<C.transpose()<<std::endl;
+		std::cout<<C_new.transpose()<<std::endl;
+
 		double dCost = C.sum() - C_new.sum();
 		double expected = -alpha*(dV[0]+alpha*dV[1]);
 		double z;
 		if (expected>0)
 		{
 			z = dCost/expected;
-			dtmsg<<"positive expected reduction "<<std::endl;
+			std::cout<<"dCost: "<<dCost<<" expected: "<<expected<<std::endl;
+			dtmsg<<"positive expected reduction "<<z<<std::endl;
+			std::cout<<"Press any key to continue..."<<std::endl;
+			std::cin.get();
 		}
 		else
 		{
 			z = 2*(dCost > 0)-1;
 			dtmsg<<"non-positive expected reduction "<<z<<std::endl;
+			std::cout<<"Press any key to continue..."<<std::endl;
+			std::cin.get();
 		}
 		if (z>0)
 		{
@@ -136,7 +163,7 @@ void DDP::trajopt()
 		}
 		else
 		{
-			alpha *=0.5;
+			alpha *=0.1;
 		}
 	}
 	alpha = 1;
@@ -188,6 +215,13 @@ bool DDP::backwardpass()
 		if (i%1000 == 0)
 		{
 			dtmsg<<" "<<i<<std::endl;
+			std::cout<<"fx "<<std::endl<<fx<<std::endl;
+			std::cout<<"fu "<<std::endl<<fu<<std::endl;
+			std::cout<<"Cx "<<std::endl<<Cx<<std::endl;
+			std::cout<<"Cu "<<std::endl<<Cu<<std::endl;
+			std::cout<<"Cxx "<<std::endl<<Cxx<<std::endl;
+			std::cout<<"Cuu "<<std::endl<<Cuu<<std::endl;
+			std::cout<<"Cux "<<std::endl<<Cux<<std::endl;
 			std::cout<<"Qx "<<std::endl<<Qx<<std::endl;
 			std::cout<<"Qu "<<std::endl<<Qu<<std::endl;
 			std::cout<<"Qxx "<<std::endl<<Qxx<<std::endl;
@@ -244,6 +278,15 @@ void DDP::forwardpass()
 			x_new(2,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity();
 			x_new(3,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
 			C_new[i]=cost(x_new.col(i),u_new.col(i));
+
+//----------------------------------------------------------------------------------------------- 
+// debug C_new cost
+			std::cout<<"x_new: "<<x_new.col(i)<<" u_new: "<<u_new.col(i)<<std::endl;
+			std::cout<<cost(x_new.col(i),u_new.col(i))<<std::endl;;
+			std::cout<<C_new[i]<<std::endl;
+			std::cout<<"Press any key to continue..."<<std::endl;
+			std::cin.get();
+//----------------------------------------------------------------------------------------------- 
 		}
 		u_new.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
 		C_new[T-1]=cost(x_new.col(T-1),u_new.col(T-1));
