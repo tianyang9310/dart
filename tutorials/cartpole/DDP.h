@@ -30,7 +30,7 @@ public:
 	void DARTdynamics();
 	Eigen::VectorXd dynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i);
 	double cost(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i);
-	void derivative();
+	void derivative(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i, int mIterator);
 //------------------------------------------------------------------------------------------------
 	const int T;
 	static const int x_dim = 4;
@@ -43,6 +43,13 @@ public:
 	Eigen::Matrix<double,1,x_dim> dV;
 	std::vector<Eigen::Matrix<double,1,u_dim>> k;
 	std::vector<Eigen::Matrix<double,1,x_dim>> K;
+	Eigen::Matrix<double,x_dim,x_dim> fx;
+	Eigen::Matrix<double,x_dim,u_dim> fu;
+	Eigen::Matrix<double,1,x_dim>	  Cx;
+	Eigen::Matrix<double,1,u_dim>	  Cu;
+	Eigen::Matrix<double,x_dim,x_dim> Cxx;
+	Eigen::Matrix<double,u_dim,u_dim> Cuu;
+	Eigen::Matrix<double,u_dim,x_dim> Cux;
 	double mu;
 	double alpha;
 //------------------------------------------------------------------------------------------------
@@ -52,6 +59,9 @@ public:
 	double g;
 	double delta_t;
 	WorldPtr mDDPWorld;
+	double coef_upward;
+	double coef_ctrl;
+	double h;
 };
 
 #endif
