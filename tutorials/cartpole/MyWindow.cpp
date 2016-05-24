@@ -10,6 +10,10 @@ MyWindow::MyWindow(WorldPtr world)
 	mController = std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("mCartPole"), mWorld->getTimeStep(), mSnapshot->clone()));
 	mDDP_iter   = 0;
 	x_fly		= Eigen::MatrixXd::Zero(mController->mDDP->x_dim, mController->mDDP->T);
+
+	std::cout<<"########################################"<<std::endl;
+	std::cout<<" Begin Differential Dynamic Programming "<<std::endl;
+	std::cout<<"########################################"<<std::endl;
 }
 
 inline void MyWindow::mPointer_Debug()
@@ -34,22 +38,27 @@ inline void MyWindow::mDofStat()
 
 void MyWindow::timeStepping() 
 {
-	std::cout<<mWorld->getTime()<<std::endl;
+	std::cout<<'\r'<<mWorld->getTime();
 	if (mWorld->getSimFrames()==mController->mDDP->T-1)
 	{
+		// reset x to zero
+		// When clone the world, x0 is automatically reset to 0
+		std::cout<<std::endl;
+		mController->mDDP->trajopt();
+
+
 		std::cout<<"########################################"<<std::endl;
 		std::cout<<"       Finish "<<++mDDP_iter<<"th DDP iteration        "<<std::endl;
 		std::cout<<"########################################"<<std::endl;
-		mPointer_Debug();
-		mDofStat();
+		//mPointer_Debug();
+		//mDofStat();
 		setWorld(mSnapshot->clone());
-		mDofStat();
-		mPointer_Debug();
-		std::cin.get();
+		//mDofStat();
+		//mPointer_Debug();
 
-		// reset x to zero
-		// When clone the world, x0 is automatically reset to 0
-		mController->mDDP->trajopt();
+
+		// pause for user interactive control
+		std::cin.get();
 	}
 	// apply external force via u[i]
 	int mSimFrameCount;

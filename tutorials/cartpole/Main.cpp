@@ -29,6 +29,7 @@ int main(int argc, char* argv[])
 	std::cout<<"-----------------------------------------------------------------------------------"<<std::endl;
 #endif
 
+
 	glutInit(&argc, argv);
 	window.initWindow(1024, 768, "Vehicle");
 	glutMainLoop();

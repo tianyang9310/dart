@@ -122,6 +122,7 @@ void DDP::trajopt()
 		if (expected>0)
 		{
 			z = dCost/expected;
+			dtmsg<<"positive expected reduction "<<std::endl;
 		}
 		else
 		{
@@ -148,6 +149,7 @@ void DDP::trajopt()
 bool DDP::backwardpass()
 {
 //  variable initialization
+	dtmsg<<"Backward pass starting..."<<std::endl;
 	bool localDiverge = false;
 	dV.setZero();
 	for (int i=0;i<T;i++)
@@ -185,21 +187,22 @@ bool DDP::backwardpass()
 //      backward debugging
 		if (i%1000 == 0)
 		{
-			std::cout<<i<<std::endl;
+			dtmsg<<" "<<i<<std::endl;
 			std::cout<<"Qx "<<std::endl<<Qx<<std::endl;
 			std::cout<<"Qu "<<std::endl<<Qu<<std::endl;
 			std::cout<<"Qxx "<<std::endl<<Qxx<<std::endl;
 			std::cout<<"Quu "<<std::endl<<Quu<<std::endl;
 			std::cout<<"Qux "<<std::endl<<Qux<<std::endl;
 			std::cout<<"value function derivative "<<std::endl;
-			std::cout<<"Vx "<<std::endl<<Vx[i]<<std::endl;
-			std::cout<<"Vxx "<<std::endl<<Vxx[i]<<std::endl;
+			std::cout<<"Vx "<<std::endl<<Vx[i+1]<<std::endl;
+			std::cout<<"Vxx "<<std::endl<<Vxx[i+1]<<std::endl;
 			//std::cin.get();
 		}
 //----------------------------------------------------------------------------------------------------------------------------------
 		if (Quu_reg(0)<=0)
 		{
 			localDiverge = true;
+			dtmsg<<"Diverge occurs in the backward pass"<<std::endl;
 			return localDiverge;
 		}
 		k[i]	= -Qu/Quu_reg(0);
@@ -209,12 +212,19 @@ bool DDP::backwardpass()
 		Vx[i]   = (Qx.transpose()+K[i].transpose()*Quu*k[i]+K[i].transpose()*Qu+Qux.transpose()*k[i]).transpose();
 		Vxx[i]  = Qxx + K[i].transpose()*Quu*K[i]+K[i].transpose()*Qux+Qux.transpose()*K[i];
 		Vxx[i]  = 0.5*(Vxx[i]+Vxx[i].transpose());
+//----------------------------------------------------------------------------------------------------------------------------------
+//      backward debugging
+//		std::cout<<(Qx.transpose()+K[i].transpose()*Quu*k[i]+K[i].transpose()*Qu+Qux.transpose()*k[i]).transpose()<<std::endl;
+//		std::cout<<Vx[i]<<std::endl;
+//		std::cin.get();
+//----------------------------------------------------------------------------------------------------------------------------------
 	}
 	return localDiverge;
 }
 
 void DDP::forwardpass()
 {
+	dtmsg<<"Forward pass starting..."<<std::endl;
 	x_new.setZero();
 	u_new.setZero();
 	C_new.setZero();
