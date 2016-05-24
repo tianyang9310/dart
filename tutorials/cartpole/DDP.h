@@ -28,7 +28,7 @@ public:
 	void backwardpass();
 	void forwardpass();
 	void dynamics();
-	void cost();
+	double cost(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i);
 	void derivative();
 //------------------------------------------------------------------------------------------------
 	const int T;
@@ -36,6 +36,7 @@ public:
 	static const int u_dim = 1;
 	Eigen::MatrixXd x;
 	Eigen::MatrixXd u;
+	Eigen::VectorXd C;
 	std::vector<Eigen::Matrix<double,1,x_dim>> Vx;
 	std::vector<Eigen::Matrix<double,x_dim,x_dim>> Vxx;
 	Eigen::Matrix<double,1,x_dim> dV;
