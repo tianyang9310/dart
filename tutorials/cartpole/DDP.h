@@ -23,11 +23,12 @@ using namespace dart::gui;
 class DDP
 {
 public:
-	DDP(int T);
+	DDP(int T, double m_c, double m_p, double l, double g, double delta_t);
 	void trajopt();
 	void backwardpass();
 	void forwardpass();
-	void dynamics();
+	Eigen::VectorXd DARTdynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i);
+	Eigen::VectorXd dynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i);
 	double cost(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i);
 	void derivative();
 //------------------------------------------------------------------------------------------------
@@ -44,6 +45,12 @@ public:
 	std::vector<Eigen::Matrix<double,1,x_dim>> K;
 	double mu;
 	double alpha;
+//------------------------------------------------------------------------------------------------
+	double m_c;
+	double m_p;
+	double l;
+	double g;
+	double delta_t;
 };
 
 #endif

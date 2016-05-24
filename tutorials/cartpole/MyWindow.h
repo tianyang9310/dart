@@ -29,6 +29,7 @@ private:
 	std::unique_ptr<Controller> mController;
 	WorldPtr mSnapshot;
 	int mDDP_iter;
+	Eigen::MatrixXd x_fly;
 };
 
 #endif  

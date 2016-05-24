@@ -6,8 +6,9 @@ MyWindow::MyWindow(WorldPtr world)
 {
 	setWorld(world);
 	mSnapshot   = mWorld->clone();
-	mController = std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("mCartPole")));
+	mController = std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("mCartPole"), mWorld->getTimeStep()));
 	mDDP_iter   = 0;
+	x_fly		= Eigen::MatrixXd::Zero(mController->mDDP->x_dim, mController->mDDP->T);
 }
 
 inline void MyWindow::mPointer_Debug()
@@ -44,11 +45,27 @@ void MyWindow::timeStepping()
 		mDofStat();
 		mPointer_Debug();
 		std::cin.get();
+
+		// reset x to zero
+		// When clone the world, x is automatically reset to 0
 	}
 	// apply external force via u[i]
-	// std::cout<<mController->mDDP->u.col(mWorld->getSimFrames())<<std::endl;
-	mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(mController->mDDP->u.col(mWorld->getSimFrames())[0]); 
+	int mSimFrameCount;
+	mSimFrameCount = mWorld->getSimFrames();
+	std::cout<<mSimFrameCount<<"th control is "<<mController->mDDP->u.col(mSimFrameCount)<<std::endl;
+	mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(mController->mDDP->u.col(mSimFrameCount)[0]); 
+//------------------------------------------------------------------------------------------------
 	SimWindow::timeStepping();
+//------------------------------------------------------------------------------------------------
+	// bookkeeping x[i+1]
+	mSimFrameCount = mWorld->getSimFrames();
+	std::cout<<mSimFrameCount<<"th step state is"<<std::endl;
+	x_fly(0,mSimFrameCount) = mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition();
+	x_fly(1,mSimFrameCount) = mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
+	x_fly(2,mSimFrameCount) = mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity();
+	x_fly(3,mSimFrameCount) = mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
+	std::cout<<x_fly.col(mSimFrameCount).transpose()<<std::endl;
+	std::cin.get();
 }
 
 void MyWindow::drawSkels() 

@@ -14,7 +14,12 @@ using namespace dart::common;
 using namespace dart::math;
 using namespace dart::gui;
 
-Controller::Controller(SkeletonPtr mCartPole):mCartPole(mCartPole)
+extern double cart_mass;
+extern double end_mass;
+extern double pole_height;
+extern double g;
+
+Controller::Controller(SkeletonPtr mCartPole, double delta_t):mCartPole(mCartPole)
 {
-	mDDP = std::unique_ptr<DDP>(new DDP(50));
+	mDDP = std::unique_ptr<DDP>(new DDP(50, cart_mass, end_mass, pole_height, g, delta_t));
 }
