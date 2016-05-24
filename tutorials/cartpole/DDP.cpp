@@ -7,7 +7,7 @@
 
 #include "DDP.h"
 
-DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t):
+DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t, WorldPtr mDDPWorld):
 	//x_dim and u_dim are initialized in the header file
 	T(T),
 	Vx(T),
@@ -18,7 +18,8 @@ DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t):
 	m_p(m_p),
 	l(l),
 	g(g),
-	delta_t(delta_t)
+	delta_t(delta_t),
+	mDDPWorld(mDDPWorld)
 {
 
 	x		= Eigen::MatrixXd::Zero(x_dim,T);
@@ -38,14 +39,33 @@ DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t):
 	alpha	= 1;
 	
 // initial trajectory
-	for (int i=0;i<T-1;i++)
+// using DARTdynamics
 	{
-		x.col(i+1)=dynamics(x.col(i),u.col(i));
+		// reset x to zero
+		// When clone the world, x is automatically reset to 0
+		WorldPtr DARTdynamicsWorld = mDDPWorld->clone();
+		for (int i=0; i<T-1; i++)
+		{
+			DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(u.col(i)[0]);	
+			DARTdynamicsWorld->step();
+
+			x(0,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition();
+			x(1,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
+			x(2,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity();
+			x(3,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
+		}
 	}
 
+
+//	using dynamics
+//	for (int i=0;i<T-1;i++)
+//	{
+//		x.col(i+1)=dynamics(x.col(i),u.col(i));
+//	}
+
 // DDP initial data and class variable output
-	std::cout<<"Initial control sequence is"<<std::endl<<u<<std::endl;
-	std::cout<<"Initial state   sequence is"<<std::endl<<x.transpose()<<std::endl;
+//	std::cout<<"Initial control sequence is"<<std::endl<<u<<std::endl;
+//	std::cout<<"Initial state   sequence is"<<std::endl<<x.transpose()<<std::endl;
 //	std::cout<<m_c<<" "<<m_p<<" "<<l<<" "<<g<<" "<<delta_t<<std::endl;
 //	std::cout<<C.sum()<<std::endl;
 }
@@ -71,9 +91,9 @@ void DDP::forwardpass()
 
 }
 
-Eigen::VectorXd DDP::DARTdynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i)
+void DDP::DARTdynamics()
 {
-
+// No implementation since DART step funtion can directly be called	
 }
 
 Eigen::VectorXd DDP::dynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i)

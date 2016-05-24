@@ -22,7 +22,7 @@ using namespace dart::gui;
 class Controller
 {
 public:
-	Controller(SkeletonPtr mCartPole, double delta_t);
+	Controller(SkeletonPtr mCartPole, double delta_t, WorldPtr mDDPWorld);
 //------------------------------------------------------------------------------------------------
 	SkeletonPtr mCartPole;
 	std::unique_ptr<DDP> mDDP;

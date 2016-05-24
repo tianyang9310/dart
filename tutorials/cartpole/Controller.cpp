@@ -19,7 +19,7 @@ extern double end_mass;
 extern double pole_height;
 extern double g;
 
-Controller::Controller(SkeletonPtr mCartPole, double delta_t):mCartPole(mCartPole)
+Controller::Controller(SkeletonPtr mCartPole, double delta_t, WorldPtr mDDPWorld):mCartPole(mCartPole)
 {
-	mDDP = std::unique_ptr<DDP>(new DDP(50, cart_mass, end_mass, pole_height, g, delta_t));
+	mDDP = std::unique_ptr<DDP>(new DDP(50, cart_mass, end_mass, pole_height, g, delta_t, mDDPWorld));
 }

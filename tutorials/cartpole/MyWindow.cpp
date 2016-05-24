@@ -1,12 +1,13 @@
 #include "MyWindow.h"
 //#define mPOINTER_DEBUG
 //#define mDOFSTAT
+//#define mDYNAMICS_DEBUG
 
 MyWindow::MyWindow(WorldPtr world)
 {
 	setWorld(world);
 	mSnapshot   = mWorld->clone();
-	mController = std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("mCartPole"), mWorld->getTimeStep()));
+	mController = std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("mCartPole"), mWorld->getTimeStep(), mSnapshot->clone()));
 	mDDP_iter   = 0;
 	x_fly		= Eigen::MatrixXd::Zero(mController->mDDP->x_dim, mController->mDDP->T);
 }
@@ -47,16 +48,19 @@ void MyWindow::timeStepping()
 		std::cin.get();
 
 		// reset x to zero
-		// When clone the world, x is automatically reset to 0
+		// When clone the world, x0 is automatically reset to 0
 	}
 	// apply external force via u[i]
 	int mSimFrameCount;
 	mSimFrameCount = mWorld->getSimFrames();
+#ifdef mDYNAMICS_DEBUG
 	std::cout<<mSimFrameCount<<"th control is "<<mController->mDDP->u.col(mSimFrameCount)<<std::endl;
+#endif
 	mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(mController->mDDP->u.col(mSimFrameCount)[0]); 
 //------------------------------------------------------------------------------------------------
 	SimWindow::timeStepping();
 //------------------------------------------------------------------------------------------------
+#ifdef mDYNAMICS_DEBUG
 	// bookkeeping x[i+1]
 	mSimFrameCount = mWorld->getSimFrames();
 	std::cout<<mSimFrameCount<<"th step state is"<<std::endl;
@@ -66,6 +70,7 @@ void MyWindow::timeStepping()
 	x_fly(3,mSimFrameCount) = mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
 	std::cout<<x_fly.col(mSimFrameCount).transpose()<<std::endl;
 	std::cin.get();
+#endif
 }
 
 void MyWindow::drawSkels() 
