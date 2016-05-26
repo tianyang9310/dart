@@ -11,6 +11,9 @@
 #include <vector>
 #include <cmath>
 #include <unistd.h>
+#include <string>
+#include <fstream>
+#include <Python.h>
 #include "dart/dart.h"
 
 using namespace dart::dynamics;
@@ -32,6 +35,13 @@ public:
 	Eigen::VectorXd dynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i);
 	double cost(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i);
 	void derivative(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i, int mIterator);
+
+	template<typename dataFormat_std>
+	void write2file_std(dataFormat_std data, const std::string name);
+	template<typename dataFormat_eigen>
+	void write2file_eigen(dataFormat_eigen data, const std::string name);
+
+	void plot();
 //------------------------------------------------------------------------------------------------
 	const int T;
 	static const int x_dim = 4;

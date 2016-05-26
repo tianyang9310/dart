@@ -92,6 +92,17 @@ DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t, Worl
 //	std::cout<<"Initial state   sequence is"<<std::endl<<x.transpose()<<std::endl;
 //	std::cout<<m_c<<" "<<m_p<<" "<<l<<" "<<g<<" "<<delta_t<<std::endl;
 //	std::cout<<C.sum()<<std::endl;
+
+// using dynamic_pointer_cast to get height
+//typedef std::shared_ptr<CylinderShape> CylinderShapePtr;
+//	std::cout<<"dynamic casting, press any key to continue..."<<std::endl;
+//	dart::dynamics::ShapePtr mShapePtr = mDDPWorld->getSkeleton("mCartPole")->getBodyNode("mPole_body")->getCollisionShape(0);
+//	CylinderShapePtr mCylinderShapePtr;
+//	mCylinderShapePtr= std::dynamic_pointer_cast<CylinderShape>(mShapePtr);
+//	std::cout<<mCylinderShapePtr->getHeight()<<std::endl;
+//	std::cout<<typeid(mShapePtr).name()<<std::endl;
+//	std::cin.get();
+
 }
 
 void DDP::trajopt()
@@ -105,18 +116,15 @@ void DDP::trajopt()
 		diverge = backwardpass();
 //------------------------------------------------------------------------------------------------
 //      backward debugging
-		std::cout<<"Ready to print k and K..."<<std::endl;
-		std::cout<<"Press any key to continue..."<<std::endl;
+		std::cout<<"Press any key to print data to file..."<<std::endl;
 		std::cin.get();
-		for (int i = 0; i<T; i++)
-		{
-			std::clog<<k[i]<<" ";
-		}
-		std::cout<<std::endl;
-		for (int i = 0; i<T; i++)
-		{
-			std::clog<<K[i]<<std::endl;
-		}
+		write2file_std(k,"k");
+		write2file_std(K,"K");
+		write2file_std(Vx,"Vx");
+		write2file_std(Vxx,"Vxx");
+		write2file_eigen(x,"x");
+		write2file_eigen(u,"u");
+	//	plot();
 		std::cout<<std::endl;
 		std::cout<<"Press any key to continue..."<<std::endl;
 		std::cin.get();
@@ -412,4 +420,50 @@ double DDP::cost(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i)
 			    std::pow(x_i(3),2);
 	}
 	return result;
+}
+
+template<typename dataFormat_std>
+void DDP::write2file_std(dataFormat_std data, const std::string name)
+{
+	std::string name_ext = name;
+	name_ext.append(".out");
+	std::ofstream outFile(name_ext, std::ios::out);
+	if (outFile.fail())
+	{
+		dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
+	}
+	outFile.precision(8);
+	for (size_t i=0; i<data.size(); i++)
+	{
+		outFile<<data[i]<<std::endl;
+	}
+	outFile.close();
+}
+
+template<typename dataFormat_eigen>
+void DDP::write2file_eigen(dataFormat_eigen data, const std::string name)
+{
+	std::string name_ext = name;
+	name_ext.append(".out");
+	std::ofstream outFile(name_ext, std::ios::out);
+	if (outFile.fail())
+	{
+		dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
+	}
+	outFile.precision(8);
+	outFile<<data<<std::endl;
+	outFile.close();
+}
+
+void DDP::plot()
+{
+	PyObject *pModule,*pFunc;
+    /* import */
+    pModule = PyImport_Import(PyString_FromString("../../../tutorials/cartpole/MyPyPlot"));
+
+    /* great_module.great_function */
+    pFunc = PyObject_GetAttrString(pModule, "Plot"); 
+    
+    /* call */
+    PyObject_CallObject(pFunc,nullptr);
 }
