@@ -124,7 +124,7 @@ void DDP::trajopt()
 		write2file_std(Vxx,"Vxx");
 		write2file_eigen(x,"x");
 		write2file_eigen(u,"u");
-	//	plot();
+		std::cout<<"Please use python script to plot figures"<<std::endl;
 		std::cout<<std::endl;
 		std::cout<<"Press any key to continue..."<<std::endl;
 		std::cin.get();
@@ -453,17 +453,4 @@ void DDP::write2file_eigen(dataFormat_eigen data, const std::string name)
 	outFile.precision(8);
 	outFile<<data<<std::endl;
 	outFile.close();
-}
-
-void DDP::plot()
-{
-	PyObject *pModule,*pFunc;
-    /* import */
-    pModule = PyImport_Import(PyString_FromString("../../../tutorials/cartpole/MyPyPlot"));
-
-    /* great_module.great_function */
-    pFunc = PyObject_GetAttrString(pModule, "Plot"); 
-    
-    /* call */
-    PyObject_CallObject(pFunc,nullptr);
 }

@@ -40,8 +40,6 @@ public:
 	void write2file_std(dataFormat_std data, const std::string name);
 	template<typename dataFormat_eigen>
 	void write2file_eigen(dataFormat_eigen data, const std::string name);
-
-	void plot();
 //------------------------------------------------------------------------------------------------
 	const int T;
 	static const int x_dim = 4;
