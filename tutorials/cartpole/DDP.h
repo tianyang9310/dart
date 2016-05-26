@@ -13,7 +13,6 @@
 #include <unistd.h>
 #include <string>
 #include <fstream>
-#include <Python.h>
 #include "dart/dart.h"
 
 using namespace dart::dynamics;

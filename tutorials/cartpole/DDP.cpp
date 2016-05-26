@@ -21,15 +21,17 @@ DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t, Worl
 	delta_t(delta_t),
 	mDDPWorld(mDDPWorld)
 {
-
+// -----------------------------------------------------------------------------------------------
 	x		= Eigen::MatrixXd::Zero(x_dim,T);
 //	u 		= Eigen::MatrixXd::Constant(u_dim,T,1);
-	u 		= Eigen::MatrixXd::Random(u_dim,T)*10;
+	u 		= Eigen::MatrixXd::Random(u_dim,T)*100;
 	u.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
 	C		= Eigen::VectorXd::Zero(T);
+// -----------------------------------------------------------------------------------------------
 	x_new   = Eigen::MatrixXd::Zero(x_dim,T);
 	u_new   = Eigen::MatrixXd::Zero(u_dim,T);
 	C_new	= Eigen::VectorXd::Zero(T);
+// -----------------------------------------------------------------------------------------------
 	dV.setZero();
 	for (int i=0;i<T;i++)
 	{
@@ -39,17 +41,18 @@ DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t, Worl
 		K[i].setZero();
 		C[i]=cost(x.col(i),u.col(i));
 	}
+// -----------------------------------------------------------------------------------------------
 	mu			= 1;
 	alpha		= 1;
-	coef_upward = 100;
+	coef_upward = 50;
 	coef_ctrl   = 1;
 	h			= 1e-6;
 	
-// initial trajectory
-// using DARTdynamics
+// -----------------------------------------------------------------------------------------------
+// produce initial trajectory using DARTdynamics
 	{
-		// reset x to zero
-		// When clone the world, x is automatically reset to 0
+		// reset x0 to zero
+		// When clone the world, x0 is automatically reset to 0
 		WorldPtr DARTdynamicsWorld = mDDPWorld->clone();
 		for (int i=0; i<T-1; i++)
 		{
@@ -63,72 +66,83 @@ DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t, Worl
 		}
 	}
 
+// -----------------------------------------------------------------------------------------------
 // testing derivative
-//	std::cout<<"fx: "<<std::endl<<fx<<std::endl;
-//	std::cout<<"fu: "<<std::endl<<fu<<std::endl;
-//	std::cout<<"Cx: "<<std::endl<<Cx<<std::endl;
-//	std::cout<<"Cu: "<<std::endl<<Cu<<std::endl;
-//	std::cout<<"Cxx:"<<std::endl<<Cxx<<std::endl;
-//	std::cout<<"Cuu:"<<std::endl<<Cuu<<std::endl;
-//	std::cout<<"Cux:"<<std::endl<<Cux<<std::endl;
-//	backwardpass(); //need brief to use
-//	std::cout<<"fx: "<<std::endl<<fx<<std::endl;
-//	std::cout<<"fu: "<<std::endl<<fu<<std::endl;
-//	std::cout<<"Cx: "<<std::endl<<Cx<<std::endl;
-//	std::cout<<"Cu: "<<std::endl<<Cu<<std::endl;
-//	std::cout<<"Cxx:"<<std::endl<<Cxx<<std::endl;
-//	std::cout<<"Cuu:"<<std::endl<<Cuu<<std::endl;
-//	std::cout<<"Cux:"<<std::endl<<Cux<<std::endl;
-//	std::cin.get();
-
-//	using dynamics
+	/*
+	std::cout<<"fx: "<<std::endl<<fx<<std::endl;
+	std::cout<<"fu: "<<std::endl<<fu<<std::endl;
+	std::cout<<"Cx: "<<std::endl<<Cx<<std::endl;
+	std::cout<<"Cu: "<<std::endl<<Cu<<std::endl;
+	std::cout<<"Cxx:"<<std::endl<<Cxx<<std::endl;
+	std::cout<<"Cuu:"<<std::endl<<Cuu<<std::endl;
+	std::cout<<"Cux:"<<std::endl<<Cux<<std::endl;
+	for (int i=T-1;i>=0;i--)
+	{
+		derivative(x.col(i),u.col(i),i);
+	}
+	std::cout<<"fx: "<<std::endl<<fx<<std::endl;
+	std::cout<<"fu: "<<std::endl<<fu<<std::endl;
+	std::cout<<"Cx: "<<std::endl<<Cx<<std::endl;
+	std::cout<<"Cu: "<<std::endl<<Cu<<std::endl;
+	std::cout<<"Cxx:"<<std::endl<<Cxx<<std::endl;
+	std::cout<<"Cuu:"<<std::endl<<Cuu<<std::endl;
+	std::cout<<"Cux:"<<std::endl<<Cux<<std::endl;
+	std::cin.get();
+	*/
+// -----------------------------------------------------------------------------------------------
+// produce initial trajectory using dynamics
 //	for (int i=0;i<T-1;i++)
 //	{
 //		x.col(i+1)=dynamics(x.col(i),u.col(i));
 //	}
 
-// DDP initial data and class variable output
+// -----------------------------------------------------------------------------------------------
+// DDP initial data and some variable output
 //	std::cout<<"Initial control sequence is"<<std::endl<<u<<std::endl;
 //	std::cout<<"Initial state   sequence is"<<std::endl<<x.transpose()<<std::endl;
 //	std::cout<<m_c<<" "<<m_p<<" "<<l<<" "<<g<<" "<<delta_t<<std::endl;
-//	std::cout<<C.sum()<<std::endl;
+	std::cout<<"Initial cost is "<<C.sum()<<std::endl;
+	std::cout<<"Press any key to print initial x and u to file..."<<std::endl;
+	std::cin.get();
+	write2file_eigen(x,"x");
+	write2file_eigen(u,"u");
+	std::cout<<"Please use python script to plot figures"<<std::endl;
+	std::cout<<"Press any key to continue..."<<std::endl;
+	std::cin.get();
 
-// using dynamic_pointer_cast to get height
-//typedef std::shared_ptr<CylinderShape> CylinderShapePtr;
-//	std::cout<<"dynamic casting, press any key to continue..."<<std::endl;
-//	dart::dynamics::ShapePtr mShapePtr = mDDPWorld->getSkeleton("mCartPole")->getBodyNode("mPole_body")->getCollisionShape(0);
-//	CylinderShapePtr mCylinderShapePtr;
-//	mCylinderShapePtr= std::dynamic_pointer_cast<CylinderShape>(mShapePtr);
-//	std::cout<<mCylinderShapePtr->getHeight()<<std::endl;
-//	std::cout<<typeid(mShapePtr).name()<<std::endl;
-//	std::cin.get();
-
+// -----------------------------------------------------------------------------------------------
+// using dynamic_pointer_cast to downcast  shared_point from ShapeStr to CylinderShape
+	/*
+	typedef std::shared_ptr<CylinderShape> CylinderShapePtr;
+	std::cout<<"dynamic casting, press any key to continue..."<<std::endl;
+	dart::dynamics::ShapePtr mShapePtr = mDDPWorld->getSkeleton("mCartPole")->getBodyNode("mPole_body")->getCollisionShape(0);
+	CylinderShapePtr mCylinderShapePtr;
+	mCylinderShapePtr= std::dynamic_pointer_cast<CylinderShape>(mShapePtr);
+	std::cout<<mCylinderShapePtr->getHeight()<<std::endl;
+	std::cout<<typeid(mShapePtr).name()<<std::endl;
+	std::cin.get();
+	*/
 }
 
 void DDP::trajopt()
 {
 // one iteration of DDP
-//------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------
 // backward pass
 	bool diverge = true;
 	while (diverge)
 	{
 		diverge = backwardpass();
-//------------------------------------------------------------------------------------------------
-//      backward debugging
-		std::cout<<"Press any key to print data to file..."<<std::endl;
+// -----------------------------------------------------------------------------------------------
+//  backward debugging
+		std::cout<<"Press any key to print k, K, Vx, Vxx to file..."<<std::endl;
 		std::cin.get();
 		write2file_std(k,"k");
 		write2file_std(K,"K");
 		write2file_std(Vx,"Vx");
 		write2file_std(Vxx,"Vxx");
-		write2file_eigen(x,"x");
-		write2file_eigen(u,"u");
-		std::cout<<"Please use python script to plot figures"<<std::endl;
-		std::cout<<std::endl;
-		std::cout<<"Press any key to continue..."<<std::endl;
-		std::cin.get();
-//------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------
 		if (diverge)
 		{
 			mu *=5;
@@ -136,7 +150,8 @@ void DDP::trajopt()
 	}
 	mu = 1;
 
-//------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------
 // forward  pass
 	bool forward_done = false;
 	while(!forward_done)
@@ -175,10 +190,20 @@ void DDP::trajopt()
 		}
 	}
 	alpha = 1;
+//------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------
 	x = x_new;
 	u = u_new;
 	C = C_new;
-
+//------------------------------------------------------------------------------------------------
+	std::cout<<"Current cost is "<<C.sum()<<std::endl;
+	std::cout<<"Press any key to print x and u to file..."<<std::endl;
+	std::cin.get();
+	write2file_eigen(x,"x");
+	write2file_eigen(u,"u");
+	std::cout<<"Please use python script to plot figures"<<std::endl;
+	std::cout<<"Press any key to continue..."<<std::endl;
+	std::cin.get();
 }
 
 bool DDP::backwardpass()
@@ -220,24 +245,40 @@ bool DDP::backwardpass()
 		Qux_reg = Qux;
 //----------------------------------------------------------------------------------------------------------------------------------
 //      backward debugging
-		if (i%1000 == 0)
+		if (i%400 == 0)
 		{
-			dtmsg<<" "<<i<<std::endl;
+			dtmsg<<" "<<i<<" step in backward pass"<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"fx "<<std::endl<<fx<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"fu "<<std::endl<<fu<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"Cx "<<std::endl<<Cx<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"Cu "<<std::endl<<Cu<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"Cxx "<<std::endl<<Cxx<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"Cuu "<<std::endl<<Cuu<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"Cux "<<std::endl<<Cux<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"Qx "<<std::endl<<Qx<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"Qu "<<std::endl<<Qu<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"Qxx "<<std::endl<<Qxx<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"Quu "<<std::endl<<Quu<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"Qux "<<std::endl<<Qux<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"value function derivative "<<std::endl;
 			std::cout<<"Vx "<<std::endl<<Vx[i+1]<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"Vxx "<<std::endl<<Vxx[i+1]<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
 			//std::cin.get();
 		}
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -254,12 +295,6 @@ bool DDP::backwardpass()
 		Vx[i]   = (Qx.transpose()+K[i].transpose()*Quu*k[i]+K[i].transpose()*Qu+Qux.transpose()*k[i]).transpose();
 		Vxx[i]  = Qxx + K[i].transpose()*Quu*K[i]+K[i].transpose()*Qux+Qux.transpose()*K[i];
 		Vxx[i]  = 0.5*(Vxx[i]+Vxx[i].transpose());
-//----------------------------------------------------------------------------------------------------------------------------------
-//      backward debugging
-//		std::cout<<(Qx.transpose()+K[i].transpose()*Quu*k[i]+K[i].transpose()*Qu+Qux.transpose()*k[i]).transpose()<<std::endl;
-//		std::cout<<Vx[i]<<std::endl;
-//		std::cin.get();
-//----------------------------------------------------------------------------------------------------------------------------------
 	}
 	return localDiverge;
 }
@@ -289,7 +324,7 @@ void DDP::forwardpass()
 
 //----------------------------------------------------------------------------------------------- 
 // debug C_new cost
-			std::cout<<"x_new: "<<x_new.col(i)<<" u_new: "<<u_new.col(i)<<std::endl;
+			std::cout<<"x_new: "<<x_new.col(i).transpose()<<" u_new: "<<u_new.col(i)<<std::endl;
 			std::cout<<cost(x_new.col(i),u_new.col(i))<<std::endl;;
 			std::cout<<C_new[i]<<std::endl;
 			std::cout<<"Press any key to continue..."<<std::endl;
