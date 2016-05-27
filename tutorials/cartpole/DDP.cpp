@@ -21,6 +21,11 @@ DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t, Worl
 	delta_t(delta_t),
 	mDDPWorld(mDDPWorld)
 {
+	mu			= 1;
+	alpha		= 1;
+	coef_upward = 10;
+	coef_ctrl   = 1;
+	h			= 1e-6;
 // -----------------------------------------------------------------------------------------------
 	x		= Eigen::MatrixXd::Zero(x_dim,T);
 //	u 		= Eigen::MatrixXd::Constant(u_dim,T,1);
@@ -41,13 +46,6 @@ DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t, Worl
 		K[i].setZero();
 		C[i]=cost(x.col(i),u.col(i));
 	}
-// -----------------------------------------------------------------------------------------------
-	mu			= 1;
-	alpha		= 1;
-	coef_upward = 50;
-	coef_ctrl   = 1;
-	h			= 1e-6;
-	
 // -----------------------------------------------------------------------------------------------
 // produce initial trajectory using DARTdynamics
 	{
@@ -136,6 +134,7 @@ void DDP::trajopt()
 		diverge = backwardpass();
 // -----------------------------------------------------------------------------------------------
 //  backward debugging
+		std::cout<<diverge<<std::endl;
 		std::cout<<"Press any key to print k, K, Vx, Vxx to file..."<<std::endl;
 		std::cin.get();
 		write2file_std(k,"k");
@@ -158,8 +157,11 @@ void DDP::trajopt()
 	{
 		forwardpass();
 
-		std::cout<<C.transpose()<<std::endl;
-		std::cout<<C_new.transpose()<<std::endl;
+		std::cout<<"One forward iteration finishes..."<<std::endl;
+		std::cout<<"Press any key to continue..."<<std::endl;
+		std::cin.get();
+		//std::cout<<C.transpose()<<std::endl;
+		//std::cout<<C_new.transpose()<<std::endl;
 
 		double dCost = C.sum() - C_new.sum();
 		double expected = -alpha*(dV[0]+alpha*dV[1]);
@@ -271,7 +273,9 @@ bool DDP::backwardpass()
 			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"Quu "<<std::endl<<Quu<<std::endl;
 			std::cout<<"***************************************"<<std::endl;
-			std::cout<<"Qux "<<std::endl<<Qux<<std::endl;
+			std::cout<<"Quu_reg "<<std::endl<<Quu_reg<<std::endl;
+			std::cout<<"***************************************"<<std::endl;
+			std::cout<<"Qux_reg "<<std::endl<<Qux_reg<<std::endl;
 			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"value function derivative "<<std::endl;
@@ -324,19 +328,16 @@ void DDP::forwardpass()
 
 //----------------------------------------------------------------------------------------------- 
 // debug C_new cost
-			std::cout<<"x_new: "<<x_new.col(i).transpose()<<" u_new: "<<u_new.col(i)<<std::endl;
-			std::cout<<cost(x_new.col(i),u_new.col(i))<<std::endl;;
-			std::cout<<C_new[i]<<std::endl;
-			std::cout<<"Press any key to continue..."<<std::endl;
-			std::cin.get();
+//			std::cout<<"x_new: "<<x_new.col(i).transpose()<<" u_new: "<<u_new.col(i)<<std::endl;
+//			std::cout<<cost(x_new.col(i),u_new.col(i))<<std::endl;;
+//			std::cout<<C_new[i]<<std::endl;
+//			std::cout<<"Press any key to continue..."<<std::endl;
+//			std::cin.get();
 //----------------------------------------------------------------------------------------------- 
 		}
 		u_new.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
 		C_new[T-1]=cost(x_new.col(T-1),u_new.col(T-1));
 	}
-
-
-
 }
 
 void DDP::DARTdynamics()
@@ -445,7 +446,7 @@ double DDP::cost(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i)
 	coef_upward*std::pow((1+std::cos(x_i(1))),2)+ 
 	    	    std::pow(x_i(2),2) + 
 			    std::pow(x_i(3),2) + 
-			(!std::isnan(u_i(0)))*coef_ctrl*std::pow(u_i(0,0),2);
+			coef_ctrl*std::pow(u_i(0),2);
 	}
 	else
 	{
