@@ -70,8 +70,13 @@ public:
 	double g;
 	double delta_t;
 	WorldPtr mDDPWorld;
-	double coef_upward;
-	double coef_ctrl;
+	double coef_x0;
+	double coef_x1;
+	double coef_x2;
+	double coef_x3;
+	double coef_u;
+	double coef_final;
+	double coef_running;
 	double h;
 };
 

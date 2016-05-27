@@ -23,13 +23,18 @@ DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t, Worl
 {
 	mu			= 1;
 	alpha		= 1;
-	coef_upward = 10;
-	coef_ctrl   = 1;
+	coef_x0     = 1;
+	coef_x1     = 10;
+	coef_x2     = 1;
+	coef_x3     = 5;
+	coef_u      = 1;
+	coef_final  = 500;
+	coef_running= 0.1;
 	h			= 1e-6;
 // -----------------------------------------------------------------------------------------------
 	x		= Eigen::MatrixXd::Zero(x_dim,T);
-//	u 		= Eigen::MatrixXd::Constant(u_dim,T,1);
-	u 		= Eigen::MatrixXd::Random(u_dim,T)*100;
+	u 		= Eigen::MatrixXd::Constant(u_dim,T,0);
+	//u 		= Eigen::MatrixXd::Random(u_dim,T)*100;
 	u.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
 	C		= Eigen::VectorXd::Zero(T);
 // -----------------------------------------------------------------------------------------------
@@ -376,17 +381,28 @@ void DDP::derivative(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i, int mIterator=0)
 	Cux.setZero();
 	if(!std::isnan(u_i(0)))
 	{
-		Cu(0)	= coef_ctrl*2*u_i(0);
-		Cuu(0)  = coef_ctrl*2;
+		Cu(0)	= coef_running*coef_u*2*u_i(0);
+		Cuu(0)  = coef_running*coef_u*2;
+		Cx(0)	= coef_running*coef_x0*2*x(0);
+		Cx(1)  	= coef_running*coef_x1*2*(1+std::cos(x(1)))*(-std::sin(x(1)));
+		Cx(2)  	= coef_running*coef_x2*2*x(2);
+		Cx(3)  	= coef_running*coef_x3*2*x(3);
+		Cxx(0,0)= coef_running*coef_x0*2;
+		Cxx(1,1)= coef_running*coef_x1*2*(-std::cos(x(1))-std::cos(2*x(1)));
+		Cxx(2,2)= coef_running*coef_x2*2;
+		Cxx(3,3)= coef_running*coef_x3*2;
 	}
-	Cx(0)	 = 2*x(0);
-	Cx(1)  	 = coef_upward*2*(1+std::cos(x(1)))*(-std::sin(x(1)));
-	Cx(2)  	 = 2*x(2);
-	Cx(3)  	 = 2*x(3);
-	Cxx(0,0) = 2;
-	Cxx(1,1) = coef_upward*2*(-std::cos(x(1))-std::cos(2*x(1)));
-	Cxx(2,2) = 2;
-	Cxx(3,3) = 2;
+	else
+	{
+		Cx(0)	= coef_final*coef_x0*2*x(0);
+		Cx(1)  	= coef_final*coef_x1*2*(1+std::cos(x(1)))*(-std::sin(x(1)));
+		Cx(2)  	= coef_final*coef_x2*2*x(2);
+		Cx(3)  	= coef_final*coef_x3*2*x(3);
+		Cxx(0,0)= coef_final*coef_x0*2;
+		Cxx(1,1)= coef_final*coef_x1*2*(-std::cos(x(1))-std::cos(2*x(1)));
+		Cxx(2,2)= coef_final*coef_x2*2;
+		Cxx(3,3)= coef_final*coef_x3*2;
+	}
 	
 // fx, fu are computed according to finite difference
 	fx.setZero();
@@ -442,18 +458,18 @@ double DDP::cost(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i)
 	double result;
 	if(!std::isnan(u_i(0)))
 	{
-	result    = std::pow(x_i(0),2) + 
-	coef_upward*std::pow((1+std::cos(x_i(1))),2)+ 
-	    	    std::pow(x_i(2),2) + 
-			    std::pow(x_i(3),2) + 
-			coef_ctrl*std::pow(u_i(0),2);
+	result    = coef_running*coef_x0*std::pow(x_i(0),2) + 
+				coef_running*coef_x1*std::pow((1+std::cos(x_i(1))),2)+ 
+	    	    coef_running*coef_x2*std::pow(x_i(2),2) + 
+			    coef_running*coef_x3*std::pow(x_i(3),2) + 
+				coef_running*coef_u*std::pow(u_i(0),2);
 	}
 	else
 	{
-	result    = std::pow(x_i(0),2) + 
-	coef_upward*std::pow((1+std::cos(x_i(1))),2)+ 
-	    	    std::pow(x_i(2),2) + 
-			    std::pow(x_i(3),2);
+	result    = coef_final*coef_x0*std::pow(x_i(0),2) + 
+				coef_final*coef_x1*std::pow((1+std::cos(x_i(1))),2)+ 
+	    	    coef_final*coef_x2*std::pow(x_i(2),2) + 
+			    coef_final*coef_x3*std::pow(x_i(3),2);
 	}
 	return result;
 }
