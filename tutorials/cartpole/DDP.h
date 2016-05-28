@@ -26,15 +26,17 @@ using namespace dart::gui;
 class DDP
 {
 public:
-	DDP(int T, double m_c, double m_p, double l, double g, double delta_t, WorldPtr mDDPWorld);
 	void trajopt();
 	bool backwardpass();
 	void forwardpass();
-	void DARTdynamics();
-	Eigen::VectorXd dynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i);
-	double cost(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i);
-	void derivative(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i, int mIterator);
+//------------------------------------------------------------------------------------------------
+	DDP(int T, WorldPtr mDDPWorld);
+	Eigen::MatrixXd LQRdynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_in_dynamics);
+	double LQRcost(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i);
+	void LQRderivative(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i);
 
+
+//------------------------------------------------------------------------------------------------
 	template<typename dataFormat_std>
 	void write2file_std(dataFormat_std data, const std::string name);
 	template<typename dataFormat_eigen>
@@ -78,6 +80,12 @@ public:
 	double coef_final;
 	double coef_running;
 	double h;
+//------------------------------------------------------------------------------------------------
+	Eigen::Matrix<double,x_dim,x_dim> Qf;
+	Eigen::Matrix<double,x_dim,x_dim> Q;
+	Eigen::Matrix<double,u_dim,u_dim> R;
+	Eigen::Matrix<double,x_dim,1>     x_f;
+	Eigen::Matrix<double,x_dim,1>	  x_0;
 };
 
 #endif
