@@ -1,10 +1,3 @@
-/*************************************************************************
-    > File Name: Controller.h
-    > Author: Yang Tian
-    > Mail: tianyang9310@gmail.com 
-    > Created Time: Fri 20 May 2016 12:42:04 PM EDT
- ************************************************************************/
-
 #ifndef CONTROLLER_H
 #define CONTROLLER_H 
 

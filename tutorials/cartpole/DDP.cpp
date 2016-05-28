@@ -23,18 +23,18 @@ DDP::DDP(int T, double m_c, double m_p, double l, double g, double delta_t, Worl
 {
 	mu			= 1;
 	alpha		= 1;
-	coef_x0     = 1;
-	coef_x1     = 10;
-	coef_x2     = 1;
-	coef_x3     = 5;
+	coef_x0     = 0.1;
+	coef_x1     = 2;
+	coef_x2     = 0.01;
+	coef_x3     = 0.01;
 	coef_u      = 1;
-	coef_final  = 500;
-	coef_running= 0.1;
+	coef_final  = 0;
+	coef_running= 1e-3;
 	h			= 1e-6;
 // -----------------------------------------------------------------------------------------------
 	x		= Eigen::MatrixXd::Zero(x_dim,T);
-	u 		= Eigen::MatrixXd::Constant(u_dim,T,0);
-	//u 		= Eigen::MatrixXd::Random(u_dim,T)*100;
+	//u 		= Eigen::MatrixXd::Constant(u_dim,T,10);
+	u 		= Eigen::MatrixXd::Random(u_dim,T)*150;
 	u.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
 	C		= Eigen::VectorXd::Zero(T);
 // -----------------------------------------------------------------------------------------------
@@ -137,6 +137,12 @@ void DDP::trajopt()
 	while (diverge)
 	{
 		diverge = backwardpass();
+		if (diverge)
+		{
+			mu *=5;
+		}
+	}
+	mu = 1;
 // -----------------------------------------------------------------------------------------------
 //  backward debugging
 		std::cout<<diverge<<std::endl;
@@ -147,12 +153,6 @@ void DDP::trajopt()
 		write2file_std(Vx,"Vx");
 		write2file_std(Vxx,"Vxx");
 // -----------------------------------------------------------------------------------------------
-		if (diverge)
-		{
-			mu *=5;
-		}
-	}
-	mu = 1;
 
 // -----------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------
@@ -252,7 +252,7 @@ bool DDP::backwardpass()
 		Qux_reg = Qux;
 //----------------------------------------------------------------------------------------------------------------------------------
 //      backward debugging
-		if (i%400 == 0)
+		if (i%100 == 0)
 		{
 			dtmsg<<" "<<i<<" step in backward pass"<<std::endl;
 			std::cout<<"***************************************"<<std::endl;
