@@ -58,7 +58,7 @@ void MyWindow::timeStepping()
 
 
 		// pause for user interactive control
-		std::cin.get();
+	//	std::cin.get();
 	}
 	// apply external force via u[i]
 	int mSimFrameCount;

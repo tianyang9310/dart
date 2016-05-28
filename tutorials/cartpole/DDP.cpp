@@ -9,10 +9,10 @@ DDP::DDP(int T, WorldPtr mDDPWorld):
 	mDDPWorld(mDDPWorld)
 {
 	Q.setZero();
-	Q(0,0)		= 0.1;
-	Q(1,1)		= 0.1;
+	Q(0,0)		= 0.01;
+	Q(1,1)		= 0.01;
 	Qf.setIdentity()*5;
-	Qf(1,1)		= 100;
+	Qf(1,1)		= 1000;
 	R.setIdentity();
 	x_f.setZero();
 	x_f(1)      = M_PI;
@@ -77,12 +77,12 @@ DDP::DDP(int T, WorldPtr mDDPWorld):
 //	std::cout<<m_c<<" "<<m_p<<" "<<l<<" "<<g<<" "<<delta_t<<std::endl;
 	std::cout<<"Initial cost is "<<C.sum()<<std::endl;
 	std::cout<<"Press any key to print initial x and u to file..."<<std::endl;
-	std::cin.get();
+//	std::cin.get();
 	write2file_eigen(x,"x");
 	write2file_eigen(u,"u");
 	std::cout<<"Please use python script to plot figures"<<std::endl;
 	std::cout<<"Press any key to continue..."<<std::endl;
-	std::cin.get();
+	//std::cin.get();
 }
 
 Eigen::MatrixXd DDP::LQRdynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_in_dynamics)
@@ -128,12 +128,12 @@ void DDP::trajopt()
 			mu +=5;
 		}
 	}
-	mu = 1;
+	mu = 0;
 // -----------------------------------------------------------------------------------------------
 //  backward debugging
 		std::cout<<diverge<<std::endl;
 		std::cout<<"Press any key to print k, K, Vx, Vxx to file..."<<std::endl;
-		std::cin.get();
+	//	std::cin.get();
 		write2file_std(k,"k");
 		write2file_std(K,"K");
 		write2file_std(Vx,"Vx");
@@ -150,7 +150,7 @@ void DDP::trajopt()
 
 		std::cout<<"One forward iteration finishes..."<<std::endl;
 		std::cout<<"Press any key to continue..."<<std::endl;
-		std::cin.get();
+	//	std::cin.get();
 		//std::cout<<C.transpose()<<std::endl;
 		//std::cout<<C_new.transpose()<<std::endl;
 
@@ -163,14 +163,14 @@ void DDP::trajopt()
 			std::cout<<"dCost: "<<dCost<<" expected: "<<expected<<std::endl;
 			dtmsg<<"positive expected reduction "<<z<<std::endl;
 			std::cout<<"Press any key to continue..."<<std::endl;
-			std::cin.get();
+	//		std::cin.get();
 		}
 		else
 		{
 			z = 2*(dCost > 0)-1;
 			dtmsg<<"non-positive expected reduction "<<z<<std::endl;
 			std::cout<<"Press any key to continue..."<<std::endl;
-			std::cin.get();
+	//		std::cin.get();
 		}
 		if (z>0)
 		{
@@ -191,18 +191,20 @@ void DDP::trajopt()
 //------------------------------------------------------------------------------------------------
 	std::cout<<"Current cost is "<<C.sum()<<std::endl;
 	std::cout<<"Press any key to print x and u to file..."<<std::endl;
-	std::cin.get();
+	//std::cin.get();
 	write2file_eigen(x,"x");
 	write2file_eigen(u,"u");
 	std::cout<<"Please use python script to plot figures"<<std::endl;
 	std::cout<<"Press any key to continue..."<<std::endl;
-	std::cin.get();
+	//std::cin.get();
 }
 
 bool DDP::backwardpass()
 {
 //  variable initialization
 	dtmsg<<"Backward pass starting..."<<std::endl;
+	std::cout<<"mu is "<<mu<<"Please press any key to continue..."<<std::endl;
+	std::cin.get();
 	bool localDiverge = false;
 	dV.setZero();
 	for (int i=0;i<T;i++)
@@ -284,7 +286,7 @@ bool DDP::backwardpass()
 			return localDiverge;
 		}
 		k[i]	= -Qu/Quu_reg(0);
-		K[i]	- -Qux_reg/Quu_reg(0);
+		K[i]	= -Qux_reg/Quu_reg(0);
 
 		dV	   += (Eigen::Matrix<double,1,x_dim>()<< k[i].transpose()*Qu, 1/2*k[i].transpose()*Quu*k[i]).finished();
 		Vx[i]   = (Qx.transpose()+K[i].transpose()*Quu*k[i]+K[i].transpose()*Qu+Qux.transpose()*k[i]).transpose();
