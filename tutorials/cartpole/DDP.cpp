@@ -8,11 +8,13 @@ DDP::DDP(int T, WorldPtr mDDPWorld):
 	K(T),
 	mDDPWorld(mDDPWorld)
 {
+// --------------------------------------------------
+// constant initialization
 	Q.setZero();
 	Q(0,0)		= 0.01;
 	Q(1,1)		= 0.01;
-	Qf.setIdentity()*5;
-	Qf(1,1)		= 1000;
+	Qf.setIdentity();
+	Qf(1,1)		= 100;
 	R.setIdentity();
 	x_f.setZero();
 	x_f(1)      = M_PI;
@@ -20,19 +22,38 @@ DDP::DDP(int T, WorldPtr mDDPWorld):
 	mu    = 0;
 	alpha = 1;
 	h     = 1e-6;
-// -----------------------------------------------------------------------------------------------
-	x		= Eigen::MatrixXd::Zero(x_dim,T);
+	delta_t		= mDDPWorld->getTimeStep();
+	g			= -mDDPWorld->getGravity()(2);;
+	m_c			= mDDPWorld->getSkeleton("mCartPole")->getBodyNode("mCart_body")->getMass();
+	m_p			= mDDPWorld->getSkeleton("mCartPole")->getBodyNode("mPole_end")->getMass();
+	l			= std::dynamic_pointer_cast<CylinderShape>(mDDPWorld->getSkeleton("mCartPole")->getBodyNode("mPole_body")->getCollisionShape(0))->getHeight();
+// --------------------------------------------------
+//	regard cost as continuous cost
+	Q			= Q*delta_t;
+	R			= R*delta_t;
+// --------------------------------------------------
+// produce initial trajectory
 	u 		= Eigen::MatrixXd::Constant(u_dim,T,0);
 	//u 		= Eigen::MatrixXd::Random(u_dim,T)*150;
 	u.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
-	C		= Eigen::VectorXd::Zero(T);
-// produce initial trajectory using DARTdynamics
+
+	x	    = Eigen::MatrixXd::Zero(x_dim,T);
+// --------------------------------------------------
 	x		= LQRdynamics(x_0, u);
-// -----------------------------------------------------------------------------------------------
+// --------------------------------------------------
+//	x.col(0)	= x_0;
+//	for (int i=0;i<T-1;i++)
+//	{
+//		x.col(i+1)=dynamics(x.col(i),u.col(i));
+//	}	
+
+// --------------------------------------------------
+	C		= Eigen::VectorXd::Zero(T);
+// --------------------------------------------------
 	x_new   = Eigen::MatrixXd::Zero(x_dim,T);
 	u_new   = Eigen::MatrixXd::Zero(u_dim,T);
 	C_new	= Eigen::VectorXd::Zero(T);
-// -----------------------------------------------------------------------------------------------
+// --------------------------------------------------
 	dV.setZero();
 	for (int i=0;i<T;i++)
 	{
@@ -46,7 +67,7 @@ DDP::DDP(int T, WorldPtr mDDPWorld):
 		}
 	}
 	C[T-1]  = 0.5*(x.col(T-1) - x_f).transpose()*Qf*(x.col(T-1) - x_f);
-// -----------------------------------------------------------------------------------------------
+// --------------------------------------------------
 // testing derivative
 	/*
 	std::cout<<"fx: "<<std::endl<<fx<<std::endl;
@@ -70,11 +91,11 @@ DDP::DDP(int T, WorldPtr mDDPWorld):
 	std::cin.get();
 	*/
 
-// -----------------------------------------------------------------------------------------------
+// --------------------------------------------------
 // DDP initial data and some variable output
+//	std::cout<<m_c<<" "<<m_p<<" "<<l<<" "<<g<<" "<<delta_t<<std::endl;	
 //	std::cout<<"Initial control sequence is"<<std::endl<<u<<std::endl;
 //	std::cout<<"Initial state   sequence is"<<std::endl<<x.transpose()<<std::endl;
-//	std::cout<<m_c<<" "<<m_p<<" "<<l<<" "<<g<<" "<<delta_t<<std::endl;
 	std::cout<<"Initial cost is "<<C.sum()<<std::endl;
 	std::cout<<"Press any key to print initial x and u to file..."<<std::endl;
 //	std::cin.get();
@@ -116,8 +137,7 @@ Eigen::MatrixXd DDP::LQRdynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_in_dynam
 void DDP::trajopt()
 {
 // one iteration of DDP
-// -----------------------------------------------------------------------------------------------
-// -----------------------------------------------------------------------------------------------
+// --------------------------------------------------
 // backward pass
 	bool diverge = true;
 	while (diverge)
@@ -129,19 +149,17 @@ void DDP::trajopt()
 		}
 	}
 	mu = 0;
-// -----------------------------------------------------------------------------------------------
+// --------------------------------------------------
 //  backward debugging
 		std::cout<<diverge<<std::endl;
 		std::cout<<"Press any key to print k, K, Vx, Vxx to file..."<<std::endl;
-	//	std::cin.get();
 		write2file_std(k,"k");
 		write2file_std(K,"K");
 		write2file_std(Vx,"Vx");
 		write2file_std(Vxx,"Vxx");
-// -----------------------------------------------------------------------------------------------
+		std::cin.get();
+// --------------------------------------------------
 
-// -----------------------------------------------------------------------------------------------
-// -----------------------------------------------------------------------------------------------
 // forward  pass
 	bool forward_done = false;
 	while(!forward_done)
@@ -183,12 +201,11 @@ void DDP::trajopt()
 		}
 	}
 	alpha = 1;
-//------------------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------------------
+// --------------------------------------------------
 	x = x_new;
 	u = u_new;
 	C = C_new;
-//------------------------------------------------------------------------------------------------
+// --------------------------------------------------
 	std::cout<<"Current cost is "<<C.sum()<<std::endl;
 	std::cout<<"Press any key to print x and u to file..."<<std::endl;
 	//std::cin.get();
@@ -203,8 +220,6 @@ bool DDP::backwardpass()
 {
 //  variable initialization
 	dtmsg<<"Backward pass starting..."<<std::endl;
-	std::cout<<"mu is "<<mu<<"Please press any key to continue..."<<std::endl;
-	std::cin.get();
 	bool localDiverge = false;
 	dV.setZero();
 	for (int i=0;i<T;i++)
@@ -215,15 +230,12 @@ bool DDP::backwardpass()
 		K[i].setZero();
 	}
 
-	for (int i=T-1;i>=0;i--)
+	Vx[T-1]		= (Qf*(x.col(T-1)-x_f)).transpose();
+	Vxx[T-1]	= Qf;
+
+	for (int i=T-2;i>=0;i--)
 	{
 		LQRderivative(x.col(i),u.col(i));
-		if (i==T-1)
-		{
-			Vx[i]  = Cx;
-			Vxx[i] = Cxx;
-			continue;
-		}
 		Eigen::Matrix<double,1,x_dim>	  Qx;	
 		Eigen::Matrix<double,1,u_dim>	  Qu;
 		Eigen::Matrix<double,x_dim,x_dim> Qxx;
@@ -238,7 +250,7 @@ bool DDP::backwardpass()
 		Qux		= Cux + fu.transpose()*Vxx[i+1]*fx;
 		Quu_reg = Quu + mu*Eigen::Matrix<double,u_dim,u_dim>::Identity();
 		Qux_reg = Qux;
-//----------------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------
 //      backward debugging
 		if (i%100 == 0)
 		{
@@ -276,9 +288,10 @@ bool DDP::backwardpass()
 			std::cout<<"***************************************"<<std::endl;
 			std::cout<<"Vxx "<<std::endl<<Vxx[i+1]<<std::endl;
 			std::cout<<"***************************************"<<std::endl;
+			std::cout<<"Break point in backward pass. Press any key to continue"<<std::endl;
 			//std::cin.get();
 		}
-//----------------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------
 		if (Quu_reg(0)<=0)
 		{
 			localDiverge = true;
@@ -319,14 +332,14 @@ void DDP::forwardpass()
 			x_new(3,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
 			C_new[i]=LQRcost(x_new.col(i),u_new.col(i));
 
-//----------------------------------------------------------------------------------------------- 
+// --------------------------------------------------
 // debug C_new cost
 //			std::cout<<"x_new: "<<x_new.col(i).transpose()<<" u_new: "<<u_new.col(i)<<std::endl;
 //			std::cout<<cost(x_new.col(i),u_new.col(i))<<std::endl;;
 //			std::cout<<C_new[i]<<std::endl;
 //			std::cout<<"Press any key to continue..."<<std::endl;
 //			std::cin.get();
-//----------------------------------------------------------------------------------------------- 
+// --------------------------------------------------
 		}
 		u_new.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
 		C_new[T-1]=0.5*(x_new.col(T-1)-x_f).transpose()*Qf*(x_new.col(T-1)-x_f);
@@ -410,6 +423,28 @@ double DDP::LQRcost(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i)
 	result		 += 0.5*(x_i - x_f).transpose()*Q*(x_i-x_f);
 	result		 += 0.5*u_i.transpose()*R*u_i;
 	return result;
+}
+
+Eigen::MatrixXd DDP::dynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i)
+{
+// According to x0 and u(0:T-1) to update x(1:T-1) and get a full trajectory
+// --------------------------------------------------
+//  due to the convention of direction of theta are different, therefore I manually change it.
+	Eigen::MatrixXd x_i_1(x_i.size(),1);
+
+	double mSin_x_i_1	  = std::sin(x_i(1));
+	double mCos_x_i_1 	  = std::cos(x_i(1));
+	double mX_i_3_squared = std::pow(x_i(3),2);
+	double denomiator     = m_c+m_p*std::pow(mSin_x_i_1,2);
+	
+	x_i_1(2) = x_i(2) + delta_t * (-m_p*mSin_x_i_1*(l*mX_i_3_squared+g*mCos_x_i_1))/denomiator + delta_t * u_i(0)/denomiator;
+
+	x_i_1(3) = x_i(3) + delta_t * ( - m_p*l*mX_i_3_squared*mSin_x_i_1*mCos_x_i_1 - (m_c+m_p)*g*mSin_x_i_1)/(l*denomiator) + delta_t * (  mCos_x_i_1 * u_i(0))/(l*denomiator);
+
+	x_i_1(0) = x_i(0) + delta_t * x_i_1(2);
+	x_i_1(1) = x_i(1) + delta_t * x_i_1(3);
+	
+	return x_i_1;
 }
 
 template<typename dataFormat_std>

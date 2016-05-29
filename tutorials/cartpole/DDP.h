@@ -29,19 +29,20 @@ public:
 	void trajopt();
 	bool backwardpass();
 	void forwardpass();
-//------------------------------------------------------------------------------------------------
+// --------------------------------------------------
 	DDP(int T, WorldPtr mDDPWorld);
 	Eigen::MatrixXd LQRdynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_in_dynamics);
 	double LQRcost(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i);
 	void LQRderivative(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i);
 
+	Eigen::MatrixXd dynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i);
 
-//------------------------------------------------------------------------------------------------
+// --------------------------------------------------
 	template<typename dataFormat_std>
 	void write2file_std(dataFormat_std data, const std::string name);
 	template<typename dataFormat_eigen>
 	void write2file_eigen(dataFormat_eigen data, const std::string name);
-//------------------------------------------------------------------------------------------------
+// --------------------------------------------------
 	const int T;
 	static const int x_dim = 4;
 	static const int u_dim = 1;
@@ -65,27 +66,21 @@ public:
 	Eigen::Matrix<double,u_dim,x_dim> Cux;
 	double mu;
 	double alpha;
-//------------------------------------------------------------------------------------------------
-	double m_c;
-	double m_p;
-	double l;
-	double g;
+// --------------------------------------------------
 	double delta_t;
 	WorldPtr mDDPWorld;
-	double coef_x0;
-	double coef_x1;
-	double coef_x2;
-	double coef_x3;
-	double coef_u;
-	double coef_final;
-	double coef_running;
 	double h;
-//------------------------------------------------------------------------------------------------
+// --------------------------------------------------
 	Eigen::Matrix<double,x_dim,x_dim> Qf;
 	Eigen::Matrix<double,x_dim,x_dim> Q;
 	Eigen::Matrix<double,u_dim,u_dim> R;
 	Eigen::Matrix<double,x_dim,1>     x_f;
 	Eigen::Matrix<double,x_dim,1>	  x_0;
+// --------------------------------------------------
+	double m_c;
+	double m_p;
+	double l;
+	double g;	
 };
 
 #endif

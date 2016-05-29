@@ -7,22 +7,18 @@
 
 #include "WorldSetup.h"
 
-double cart_mass     = -1;
-double end_mass      = -1;
-double pole_height	 = -1;
-
 SkeletonPtr addCartPole()
 {
 	double hold_mass			= 1e200;
 	double cart_length			= 0.15;
 	double cart_width			= 0.08;
 	double cart_height			= 0.025;
-		   cart_mass 		    = 1;
+	double cart_mass 		    = 1;
 	double pole_radius			= 0.005;
-		   pole_height			= 0.5;
+	double pole_height			= 0.5;
 	double pole_mass		    = 1e-200;
 	double end_perimeter		= 0.001*2;
-		   end_mass			    = 1;
+	double end_mass			    = 1;
 	double BN_friction			= 0;
 	double Joint_damping		= 0;
 //--------------------------------------------------------------------------------------------------------------
