@@ -1,6 +1,6 @@
 #include "DDP.h"
 
-DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost):
+DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<double(const Eigen::VectorXd)> FinalCost ):
 	T(T),
 	Vx(T),
 	Vxx(T),
@@ -8,7 +8,8 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 	K(T),
 	mDDPWorld(mDDPWorld),
 	StepDynamics(StepDynamics),
-	StepCost(StepCost)
+	StepCost(StepCost),
+	FinalCost(FinalCost)
 {
 // --------------------------------------------------
 // constant initialization
@@ -58,7 +59,7 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 		K[i].setZero();
 		if (i<T-1)
 		{
-			C[i]=LQRcost(x.col(i),u.col(i));
+			C[i]=StepCost(x.col(i),u.col(i));
 		}
 	}
 	C[T-1]  = 0.5*(x.col(T-1) - x_f).transpose()*Qf*(x.col(T-1) - x_f);
@@ -317,7 +318,7 @@ void DDP::forwardpass()
 			x_new(1,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
 			x_new(2,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity();
 			x_new(3,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
-			C_new[i]=LQRcost(x_new.col(i),u_new.col(i));
+			C_new[i]=StepCost(x_new.col(i),u_new.col(i));
 
 // --------------------------------------------------
 // debug C_new cost
@@ -402,14 +403,6 @@ void DDP::LQRderivative(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i)
 		f_xt_ut_delta(3) = DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
 		fu.col(0) = (f_xt_ut_delta - f_xt_ut)/h;
 	}
-}
-
-double DDP::LQRcost(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i)
-{
-	double result = 0;
-	result		 += 0.5*(x_i - x_f).transpose()*Q*(x_i-x_f);
-	result		 += 0.5*u_i.transpose()*R*u_i;
-	return result;
 }
 
 template<typename dataFormat_std>

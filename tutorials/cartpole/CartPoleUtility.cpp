@@ -69,4 +69,16 @@ double CartPoleStepCost(const VectorXd xi, const VectorXd ui, const VectorXd xd,
 	return (0.5*(xi-xd).transpose()*Q*(xi-xd) + 0.5*ui.transpose()*R*ui)(0);
 }
 
+double CartPoleFinalCost(const VectorXd xT, const VectorXd xd, const MatrixXd Qf)
+{
+// --------------------------------------------------
+//	CartPole Final Cost Function
+//	Computing cT according to xT
+//	Note:
+//		Matrix multiplication produces matrix<double,1,1>, therefore
+//		use (0) to retrieve the value
+// --------------------------------------------------
+	return ( 0.5*(xT-xd).transpose()*Qf*(xT-xd) )(0);
+}
+
 }

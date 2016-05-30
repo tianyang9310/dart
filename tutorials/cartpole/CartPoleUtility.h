@@ -13,6 +13,8 @@ VectorXd DartStepDynamics(VectorXd xi, VectorXd ui, dart::simulation::WorldPtr m
 
 double CartPoleStepCost(const VectorXd xi, const VectorXd ui, const VectorXd xd, const MatrixXd Q, const MatrixXd R);
 
+double CartPoleFinalCost(const VectorXd xT, const VectorXd xd, const MatrixXd Qf);
+
 }
 
 #endif
