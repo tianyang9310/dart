@@ -23,8 +23,10 @@ Controller::Controller(WorldPtr mDDPWorld)
 	Q(1,1)				= 0.01;
 
 	Eigen::Matrix<double,1,1> R;
-	R(0,0)				= 0;
+	R(0,0)				= 1;
 
+	Q			= Q*delta_t;
+	R			= R*delta_t;
 
 //	mDDP = std::unique_ptr<DDP>(new DDP(2000, mDDPWorld, std::bind(CartPoleStepDynamics, std::placeholders::_1, std::placeholders::_2, m_c, m_p, l, g, delta_t), std::bind(CartPoleStepCost, std::placeholders::_1, std::placeholders::_2, xd, Q, R)));
 

@@ -62,6 +62,7 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 		}
 	}
 	C[T-1]  = 0.5*(x.col(T-1) - x_f).transpose()*Qf*(x.col(T-1) - x_f);
+
 // --------------------------------------------------
 // testing derivative
 	/*
