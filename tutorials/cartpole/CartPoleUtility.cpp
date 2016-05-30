@@ -2,7 +2,7 @@
 
 namespace CartPoleUtility{
 
-VectorXd CartPoleStepDynamics(VectorXd xi, VectorXd ui, double m_c, double m_p, double l, double g, double delta_t)
+VectorXd CartPoleStepDynamics(const VectorXd xi, const VectorXd ui, double m_c, double m_p, double l, double g, double delta_t)
 {
 // --------------------------------------------------
 //	CartPole Step Dynamics Function
@@ -26,6 +26,34 @@ VectorXd CartPoleStepDynamics(VectorXd xi, VectorXd ui, double m_c, double m_p, 
 
 	xi_1(1) = xi(1) + delta_t * xi_1(3);
 	
+	return xi_1;
+}
+
+VectorXd DartStepDynamics(VectorXd xi, VectorXd ui, dart::simulation::WorldPtr mWorld)
+{
+// --------------------------------------------------
+//	Dart Step Dynamics Function
+//	Computing xi_1 according to xi and ui using dart simulation
+//	Note:
+//		Directly use the World Pointer passed in.
+// --------------------------------------------------
+	dart::dynamics::SkeletonPtr mCartPole = mWorld->getSkeleton("mCartPole");
+	VectorXd xi_1(xi.rows());
+
+	mCartPole->getDof("Joint_hold_cart")->setPosition(xi(0));
+	mCartPole->getDof("Joint_cart_pole")->setPosition(xi(1));
+	mCartPole->getDof("Joint_hold_cart")->setVelocity(xi(2));
+	mCartPole->getDof("Joint_cart_pole")->setVelocity(xi(3));
+
+	mCartPole->getDof("Joint_hold_cart")->setForce(ui(0));	
+
+	mWorld->step();
+
+	xi_1(0) = mCartPole->getDof("Joint_hold_cart")->getPosition();
+	xi_1(1) = mCartPole->getDof("Joint_cart_pole")->getPosition();
+	xi_1(2) = mCartPole->getDof("Joint_hold_cart")->getVelocity();
+	xi_1(3) = mCartPole->getDof("Joint_cart_pole")->getVelocity();
+
 	return xi_1;
 }
 
