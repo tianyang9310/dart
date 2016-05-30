@@ -7,7 +7,7 @@ MyWindow::MyWindow(WorldPtr world)
 {
 	setWorld(world);
 	mSnapshot   = mWorld->clone();
-	mController = std::unique_ptr<Controller>(new Controller(mWorld->getSkeleton("mCartPole"), mWorld->getTimeStep(), mSnapshot->clone()));
+	mController = std::unique_ptr<Controller>(new Controller(mSnapshot->clone()));
 	mDDP_iter   = 0;
 	x_fly		= Eigen::MatrixXd::Zero(mController->mDDP->x_dim, mController->mDDP->T);
 

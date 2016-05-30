@@ -3,6 +3,8 @@
 
 #include "dart/dart.h"
 #include "DDP.h"
+#include "CartPoleUtility.h"
+#include <functional>
 
 using namespace dart::dynamics;
 using namespace dart::simulation;
@@ -11,13 +13,15 @@ using namespace dart::common;
 using namespace dart::math;
 using namespace dart::gui;
 
+using namespace CartPoleUtility;
+using namespace Eigen;
+using namespace std;
 
 class Controller
 {
 public:
-	Controller(SkeletonPtr mCartPole, double delta_t, WorldPtr mDDPWorld);
+	Controller(WorldPtr mDDPWorld);
 //------------------------------------------------------------------------------------------------
-	SkeletonPtr mCartPole;
 	std::unique_ptr<DDP> mDDP;
 };
 

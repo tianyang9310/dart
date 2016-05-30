@@ -1,12 +1,13 @@
 #include "DDP.h"
 
-DDP::DDP(int T, WorldPtr mDDPWorld):
+DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics):
 	T(T),
 	Vx(T),
 	Vxx(T),
 	k(T),
 	K(T),
-	mDDPWorld(mDDPWorld)
+	mDDPWorld(mDDPWorld),
+	StepDynamics(StepDynamics)
 {
 // --------------------------------------------------
 // constant initialization
@@ -423,28 +424,6 @@ double DDP::LQRcost(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i)
 	result		 += 0.5*(x_i - x_f).transpose()*Q*(x_i-x_f);
 	result		 += 0.5*u_i.transpose()*R*u_i;
 	return result;
-}
-
-Eigen::MatrixXd DDP::dynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i)
-{
-// According to x0 and u(0:T-1) to update x(1:T-1) and get a full trajectory
-// --------------------------------------------------
-//  due to the convention of direction of theta are different, therefore I manually change it.
-	Eigen::MatrixXd x_i_1(x_i.size(),1);
-
-	double mSin_x_i_1	  = std::sin(x_i(1));
-	double mCos_x_i_1 	  = std::cos(x_i(1));
-	double mX_i_3_squared = std::pow(x_i(3),2);
-	double denomiator     = m_c+m_p*std::pow(mSin_x_i_1,2);
-	
-	x_i_1(2) = x_i(2) + delta_t * (-m_p*mSin_x_i_1*(l*mX_i_3_squared+g*mCos_x_i_1))/denomiator + delta_t * u_i(0)/denomiator;
-
-	x_i_1(3) = x_i(3) + delta_t * ( - m_p*l*mX_i_3_squared*mSin_x_i_1*mCos_x_i_1 - (m_c+m_p)*g*mSin_x_i_1)/(l*denomiator) + delta_t * (  mCos_x_i_1 * u_i(0))/(l*denomiator);
-
-	x_i_1(0) = x_i(0) + delta_t * x_i_1(2);
-	x_i_1(1) = x_i(1) + delta_t * x_i_1(3);
-	
-	return x_i_1;
 }
 
 template<typename dataFormat_std>

@@ -3,6 +3,7 @@
 #include "MyWindow.h"
 #include "WorldSetup.h"
 #include "Controller.h"
+#include "CartPoleUtility.h"
 #include "DDP.h"
 
 

@@ -3,6 +3,7 @@
 
 #include "dart/dart.h"
 #include "Controller.h"
+#include "CartPoleUtility.h"
 
 using namespace dart::dynamics;
 using namespace dart::simulation;

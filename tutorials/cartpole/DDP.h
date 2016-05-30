@@ -1,18 +1,11 @@
-/*************************************************************************
-    > File Name: DDP.h
-    > Author: Yang Tian
-    > Mail: tianyang9310@gmail.com 
-    > Created Time: Mon 23 May 2016 11:49:13 AM EDT
- ************************************************************************/
-
 #ifndef DDP_H
 #define DDP_H 
 
 #include <vector>
 #include <cmath>
-#include <unistd.h>
 #include <string>
 #include <fstream>
+#include <functional>
 #include "dart/dart.h"
 
 using namespace dart::dynamics;
@@ -30,13 +23,12 @@ public:
 	bool backwardpass();
 	void forwardpass();
 // --------------------------------------------------
-	DDP(int T, WorldPtr mDDPWorld);
+	DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)>);
 	Eigen::MatrixXd LQRdynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_in_dynamics);
 	double LQRcost(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i);
 	void LQRderivative(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i);
 
-	Eigen::MatrixXd dynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_i);
-
+	std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics;
 // --------------------------------------------------
 	template<typename dataFormat_std>
 	void write2file_std(dataFormat_std data, const std::string name);
