@@ -24,10 +24,10 @@ public:
 	void forwardpass();
 // --------------------------------------------------
 	DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)>);
-	Eigen::MatrixXd LQRdynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_in_dynamics);
 	double LQRcost(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i);
 	void LQRderivative(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i);
 
+	Eigen::MatrixXd TrajGenerator(const Eigen::VectorXd _x0, const Eigen::MatrixXd _u);
 	std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics;
 // --------------------------------------------------
 	template<typename dataFormat_std>

@@ -40,14 +40,7 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 
 	x	    = Eigen::MatrixXd::Zero(x_dim,T);
 // --------------------------------------------------
-	x		= LQRdynamics(x_0, u);
-// --------------------------------------------------
-//	x.col(0)	= x_0;
-//	for (int i=0;i<T-1;i++)
-//	{
-//		x.col(i+1)=StepDynamics(x.col(i),u.col(i));
-//	}	
-
+	x		= TrajGenerator(x_0, u);
 // --------------------------------------------------
 	C		= Eigen::VectorXd::Zero(T);
 // --------------------------------------------------
@@ -107,33 +100,24 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 	//std::cin.get();
 }
 
-Eigen::MatrixXd DDP::LQRdynamics(Eigen::MatrixXd x_i, Eigen::MatrixXd u_in_dynamics)
+Eigen::MatrixXd DDP::TrajGenerator(const Eigen::VectorXd _x0, const Eigen::MatrixXd _u)
 {
-	Eigen::MatrixXd x_in_dynamics;
-	x_in_dynamics.setZero(x_dim,T);
-	x_in_dynamics.col(0) = x_i;
-	WorldPtr DARTWorld_in_dynamics = mDDPWorld->clone();
-	SkeletonPtr mCartPole_in_dynamics = DARTWorld_in_dynamics->getSkeleton("mCartPole");
-	mCartPole_in_dynamics->getDof("Joint_hold_cart")->setPosition(x_i(0));
-	mCartPole_in_dynamics->getDof("Joint_cart_pole")->setPosition(x_i(1));
-	mCartPole_in_dynamics->getDof("Joint_hold_cart")->setVelocity(x_i(2));
-	mCartPole_in_dynamics->getDof("Joint_cart_pole")->setVelocity(x_i(3));
+// --------------------------------------------------
+//	Whole Trajectory Generator
+//	Computing _x according to _x0 and _u using step dynamics
+// --------------------------------------------------
+
+	Eigen::MatrixXd _x;
+	_x.setZero(_x0.rows(),T);
+	_x.col(0) = _x0;
 
 	for (int i=0; i<T-1; i++)
 	{
-		DARTWorld_in_dynamics->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(u_in_dynamics.col(i)(0));	
-
-		DARTWorld_in_dynamics->step();
-
-		x_in_dynamics(0,i+1) = mCartPole_in_dynamics->getDof("Joint_hold_cart")->getPosition();
-		x_in_dynamics(1,i+1) = mCartPole_in_dynamics->getDof("Joint_cart_pole")->getPosition();
-		x_in_dynamics(2,i+1) = mCartPole_in_dynamics->getDof("Joint_hold_cart")->getVelocity();
-		x_in_dynamics(3,i+1) = mCartPole_in_dynamics->getDof("Joint_cart_pole")->getVelocity();
+		_x.col(i+1) = StepDynamics(_x.col(i), _u.col(i));
 	}
 	
-	return x_in_dynamics;
+	return _x;
 }
-
 
 void DDP::trajopt()
 {
