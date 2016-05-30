@@ -45,7 +45,7 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 //	x.col(0)	= x_0;
 //	for (int i=0;i<T-1;i++)
 //	{
-//		x.col(i+1)=dynamics(x.col(i),u.col(i));
+//		x.col(i+1)=StepDynamics(x.col(i),u.col(i));
 //	}	
 
 // --------------------------------------------------
