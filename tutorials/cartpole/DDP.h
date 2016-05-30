@@ -69,11 +69,6 @@ public:
 	Eigen::Matrix<double,u_dim,u_dim> R;
 	Eigen::Matrix<double,x_dim,1>     x_f;
 	Eigen::Matrix<double,x_dim,1>	  x_0;
-// --------------------------------------------------
-	double m_c;
-	double m_p;
-	double l;
-	double g;	
 };
 
 #endif

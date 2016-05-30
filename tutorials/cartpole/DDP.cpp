@@ -26,10 +26,6 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 	alpha = 1;
 	h     = 1e-6;
 	delta_t		= mDDPWorld->getTimeStep();
-	g			= -mDDPWorld->getGravity()(2);;
-	m_c			= mDDPWorld->getSkeleton("mCartPole")->getBodyNode("mCart_body")->getMass();
-	m_p			= mDDPWorld->getSkeleton("mCartPole")->getBodyNode("mPole_end")->getMass();
-	l			= std::dynamic_pointer_cast<CylinderShape>(mDDPWorld->getSkeleton("mCartPole")->getBodyNode("mPole_body")->getCollisionShape(0))->getHeight();
 // --------------------------------------------------
 //	regard cost as continuous cost
 	Q			= Q*delta_t;
@@ -62,7 +58,7 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 			C[i]=StepCost(x.col(i),u.col(i));
 		}
 	}
-	C[T-1]  = 0.5*(x.col(T-1) - x_f).transpose()*Qf*(x.col(T-1) - x_f);
+	C[T-1]  = FinalCost(x.col(T-1));
 
 // --------------------------------------------------
 // testing derivative
@@ -90,7 +86,6 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 
 // --------------------------------------------------
 // DDP initial data and some variable output
-//	std::cout<<m_c<<" "<<m_p<<" "<<l<<" "<<g<<" "<<delta_t<<std::endl;	
 //	std::cout<<"Initial control sequence is"<<std::endl<<u<<std::endl;
 //	std::cout<<"Initial state   sequence is"<<std::endl<<x.transpose()<<std::endl;
 	std::cout<<"Initial cost is "<<C.sum()<<std::endl;
@@ -330,7 +325,7 @@ void DDP::forwardpass()
 // --------------------------------------------------
 		}
 		u_new.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
-		C_new[T-1]=0.5*(x_new.col(T-1)-x_f).transpose()*Qf*(x_new.col(T-1)-x_f);
+		C_new[T-1]=FinalCost(x_new.col(T-1));
 	}
 }
 
