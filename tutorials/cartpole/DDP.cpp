@@ -1,13 +1,14 @@
 #include "DDP.h"
 
-DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics):
+DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost):
 	T(T),
 	Vx(T),
 	Vxx(T),
 	k(T),
 	K(T),
 	mDDPWorld(mDDPWorld),
-	StepDynamics(StepDynamics)
+	StepDynamics(StepDynamics),
+	StepCost(StepCost)
 {
 // --------------------------------------------------
 // constant initialization

@@ -23,12 +23,13 @@ public:
 	bool backwardpass();
 	void forwardpass();
 // --------------------------------------------------
-	DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)>);
+	DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost);
 	double LQRcost(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i);
 	void LQRderivative(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i);
 
 	Eigen::MatrixXd TrajGenerator(const Eigen::VectorXd _x0, const Eigen::MatrixXd _u);
 	std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics;
+	std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost;
 // --------------------------------------------------
 	template<typename dataFormat_std>
 	void write2file_std(dataFormat_std data, const std::string name);
