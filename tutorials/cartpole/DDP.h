@@ -23,7 +23,7 @@ public:
 	bool backwardpass();
 	void forwardpass();
 // --------------------------------------------------
-	DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<double(const Eigen::VectorXd)> FinalCost);
+	DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<double(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR);
 	void LQRderivative(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i);
 
 	Eigen::MatrixXd TrajGenerator(const Eigen::VectorXd _x0, const Eigen::MatrixXd _u);
@@ -60,7 +60,6 @@ public:
 	double mu;
 	double alpha;
 // --------------------------------------------------
-	double delta_t;
 	WorldPtr mDDPWorld;
 	double h;
 // --------------------------------------------------
@@ -69,6 +68,8 @@ public:
 	Eigen::Matrix<double,u_dim,u_dim> R;
 	Eigen::Matrix<double,x_dim,1>     x_f;
 	Eigen::Matrix<double,x_dim,1>	  x_0;
+// --------------------------------------------------
+	bool isLQR;
 };
 
 #endif

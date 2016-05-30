@@ -1,6 +1,6 @@
 #include "DDP.h"
 
-DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<double(const Eigen::VectorXd)> FinalCost ):
+DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<double(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR):
 	T(T),
 	Vx(T),
 	Vxx(T),
@@ -13,23 +13,22 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 {
 // --------------------------------------------------
 // constant initialization
-	Q.setZero();
-	Q(0,0)		= 0.01;
-	Q(1,1)		= 0.01;
-	Qf.setIdentity();
-	Qf(1,1)		= 100;
-	R.setIdentity();
+	isLQR		= false;
+	if (!LQR.empty())
+	{
+		isLQR	= true;
+		Q		= std::get<0>(LQR[0]);
+		R		= std::get<1>(LQR[0]);
+		Qf		= std::get<2>(LQR[0]);
+	}
+
 	x_f.setZero();
 	x_f(1)      = M_PI;
 	x_0.setZero();
 	mu    = 0;
 	alpha = 1;
 	h     = 1e-6;
-	delta_t		= mDDPWorld->getTimeStep();
-// --------------------------------------------------
-//	regard cost as continuous cost
-	Q			= Q*delta_t;
-	R			= R*delta_t;
+
 // --------------------------------------------------
 // produce initial trajectory
 	u 		= Eigen::MatrixXd::Constant(u_dim,T,0);

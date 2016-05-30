@@ -31,7 +31,10 @@ Controller::Controller(WorldPtr mDDPWorld)
 	Q			= Q*delta_t;
 	R			= R*delta_t;
 
-//	mDDP = std::unique_ptr<DDP>(new DDP(2000, mDDPWorld, std::bind(CartPoleStepDynamics, std::placeholders::_1, std::placeholders::_2, m_c, m_p, l, g, delta_t), std::bind(CartPoleStepCost, std::placeholders::_1, std::placeholders::_2, xd, Q, R), std::bind(CartPoleFinalCost,std::placeholders::_1, xd, Qf)));
+	std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR;
+	LQR.push_back(std::make_tuple(Q,R,Qf));
 
-	mDDP = std::unique_ptr<DDP>(new DDP(2000, mDDPWorld, std::bind(DartStepDynamics, std::placeholders::_1, std::placeholders::_2, mDDPWorld), std::bind(CartPoleStepCost, std::placeholders::_1, std::placeholders::_2, xd, Q, R), std::bind(CartPoleFinalCost,std::placeholders::_1, xd, Qf)));
+//	mDDP = std::unique_ptr<DDP>(new DDP(2000, mDDPWorld, std::bind(CartPoleStepDynamics, std::placeholders::_1, std::placeholders::_2, m_c, m_p, l, g, delta_t), std::bind(CartPoleStepCost, std::placeholders::_1, std::placeholders::_2, xd, Q, R), std::bind(CartPoleFinalCost,std::placeholders::_1, xd, Qf), LQR));
+
+	mDDP = std::unique_ptr<DDP>(new DDP(2000, mDDPWorld, std::bind(DartStepDynamics, std::placeholders::_1, std::placeholders::_2, mDDPWorld), std::bind(CartPoleStepCost, std::placeholders::_1, std::placeholders::_2, xd, Q, R), std::bind(CartPoleFinalCost,std::placeholders::_1, xd, Qf), LQR));
 }
