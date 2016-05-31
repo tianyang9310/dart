@@ -32,18 +32,46 @@ public:
 	template<typename FuncType>
 	Eigen::MatrixXd FiniteDiff(FuncType Func, Eigen::VectorXd Var)
 	{
+		// Note:
+		//		1. The order of mixed partial derivatives of Hessian
+		//			Determine whether it's hessian via the dimensions of output
+		//		2. This finite difference function can return Jacobian
+		//			In other words, if the output is 1 by 1 and input is x by 1, 
+		//			then it returns 1 by x. If the output is x by 1 and input is x by 1,
+		//			then it returns x by x
+		//		3. Therefore for the output of single value function, extra effort is needed
+		//			to make sure the derivative is x by 1. (The returned one is 1 by x)
 		int VarDim = Var.rows();
-		int OutputDim = (Func(Var)).rows();
-		Eigen::MatrixXd J_FD(OutputDim,VarDim);
+		int OutputDim;
+		bool Hessian;
+		Eigen::MatrixXd J_FD;
+		if ((Func(Var)).cols() == 1)
+		{
+			OutputDim = (Func(Var)).rows();
+			Hessian	  = false;
+			J_FD.resize(OutputDim,VarDim);
+		}
+		else
+		{
+			OutputDim = (Func(Var)).cols();
+			Hessian	  = true;
+			J_FD.resize(VarDim,OutputDim);
+		}
 
 		Eigen::MatrixXd IndicatorVec(Var.rows(),Var.rows());
 		IndicatorVec.setIdentity();
 
 		for (int i=0; i<VarDim; i++)
 		{
-			J_FD.col(i) =  (Func(Var+h*IndicatorVec.col(i)) - Func(Var-h*IndicatorVec.col(i)))/(2*h);
+			if (!Hessian)
+			{
+				J_FD.col(i) =  (Func(Var+h*IndicatorVec.col(i)) - Func(Var-h*IndicatorVec.col(i)))/(2*h);
+			}
+			else
+			{
+				J_FD.row(i) =  (Func(Var+h*IndicatorVec.col(i)) - Func(Var-h*IndicatorVec.col(i)))/(2*h);
+			}
 		}
-
 		return J_FD;
 	}
 

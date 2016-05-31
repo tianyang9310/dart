@@ -21,3 +21,5 @@
 	*. StepDynamics, StepCost, FinalCost have different arguments
 
 	*. Lambda expression is used to encapsulate function and their arguments. Thereafter, pass into finite difference function only a function handle and an argument
+	
+8. Only first order derivative dynamics is considered

@@ -54,10 +54,10 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 		K[i].setZero();
 		if (i<T-1)
 		{
-			C.col(i) = StepCost(x.col(i),u.col(i));
+			C.row(i) = StepCost(x.col(i),u.col(i));
 		}
 	}
-	C.col(T-1)  = FinalCost(x.col(T-1));
+	C.row(T-1)  = FinalCost(x.col(T-1));
 
 // --------------------------------------------------
 // testing derivative
@@ -219,12 +219,10 @@ bool DDP::backwardpass()
 	}
 	else
 	{
-	// use finite difference to compute Vx and Vxx
-//		Cx = FiniteDiff([=](Eigen::VectorXd Var){
-//				return StepDynamics(Var.head(_xi.rows()), Var.tail(_ui.rows()));}, 
-//				(Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui).finished());
-//		Vx[T-1]		= Cx;
-//		Vxx[T-1]	= Cxx;
+		Vx[T-1]  = FiniteDiff(FinalCost,x.col(T-1));
+		Vxx[T-1] = FiniteDiff([=](Eigen::VectorXd Var){
+						return FiniteDiff(FinalCost,Var);},
+						x.col(T-1));
 	}
 
 	for (int i=T-2;i>=0;i--)
@@ -325,7 +323,7 @@ void DDP::forwardpass()
 			x_new(1,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
 			x_new(2,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity();
 			x_new(3,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
-			C_new.col(i) = StepCost(x_new.col(i),u_new.col(i));
+			C_new.row(i) = StepCost(x_new.col(i),u_new.col(i));
 
 // --------------------------------------------------
 // debug C_new cost
@@ -337,7 +335,7 @@ void DDP::forwardpass()
 // --------------------------------------------------
 		}
 		u_new.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
-		C_new.col(T-1) = FinalCost(x_new.col(T-1));
+		C_new.row(T-1) = FinalCost(x_new.col(T-1));
 	}
 }
 
@@ -357,7 +355,10 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
 	}
 	else
 	{
-		// use finite difference to compute
+//		  = FiniteDiff(FinalCost,x.col(T-1));
+//		  = FiniteDiff([=](Eigen::VectorXd Var){
+//						return FiniteDiff(FinalCost,Var);},
+//						x.col(T-1));
 	}
 	
 // fx, fu are computed according to finite difference
