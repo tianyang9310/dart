@@ -14,7 +14,7 @@
 
 6. a major bug in backward pass, that is the last Vx and Vxx are not initiated correctly
 
-7. when using comma initialization, it is required that input all the data. It is not allowed to input one column at each for loop
+7. __when using comma initialization, it is required that input all the data. It is not allowed to input one column at each for loop__
 
 	*. Because finite difference method is a general funciton. Basically it handles all kinds of functions. So I use function template
 

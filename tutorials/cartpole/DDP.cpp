@@ -59,31 +59,6 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 	}
 	C.row(T-1)  = FinalCost(x.col(T-1));
 
-// --------------------------------------------------
-// testing derivative
-	/*
-	std::cout<<"fx: "<<std::endl<<fx<<std::endl;
-	std::cout<<"fu: "<<std::endl<<fu<<std::endl;
-	std::cout<<"Cx: "<<std::endl<<Cx<<std::endl;
-	std::cout<<"Cu: "<<std::endl<<Cu<<std::endl;
-	std::cout<<"Cxx:"<<std::endl<<Cxx<<std::endl;
-	std::cout<<"Cuu:"<<std::endl<<Cuu<<std::endl;
-	std::cout<<"Cux:"<<std::endl<<Cux<<std::endl;
-	for (int i=T-1;i>=0;i--)
-	{
-		derivative(x.col(i),u.col(i),i);
-	}
-	std::cout<<"fx: "<<std::endl<<fx<<std::endl;
-	std::cout<<"fu: "<<std::endl<<fu<<std::endl;
-	std::cout<<"Cx: "<<std::endl<<Cx<<std::endl;
-	std::cout<<"Cu: "<<std::endl<<Cu<<std::endl;
-	std::cout<<"Cxx:"<<std::endl<<Cxx<<std::endl;
-	std::cout<<"Cuu:"<<std::endl<<Cuu<<std::endl;
-	std::cout<<"Cux:"<<std::endl<<Cux<<std::endl;
-	std::cin.get();
-	*/
-
-// --------------------------------------------------
 // DDP initial data and some variable output
 //	std::cout<<"Initial control sequence is"<<std::endl<<u<<std::endl;
 //	std::cout<<"Initial state   sequence is"<<std::endl<<x.transpose()<<std::endl;
@@ -214,12 +189,12 @@ bool DDP::backwardpass()
 
 	if (isLQR)
 	{
-		Vx[T-1]		= (Qf*(x.col(T-1)-x_f)).transpose();
+		Vx[T-1]		= (Qf*(x.col(T-1)-x_f));
 		Vxx[T-1]	= Qf;
 	}
 	else
 	{
-		Vx[T-1]  = FiniteDiff(FinalCost,x.col(T-1));
+		Vx[T-1]  = (FiniteDiff(FinalCost,x.col(T-1))).transpose();
 		Vxx[T-1] = FiniteDiff([=](Eigen::VectorXd Var){
 						return FiniteDiff(FinalCost,Var);},
 						x.col(T-1));
@@ -229,15 +204,15 @@ bool DDP::backwardpass()
 	{
 		Derivative(x.col(i),u.col(i));
 
-		Eigen::Matrix<double,1,x_dim>	  Qx;	
-		Eigen::Matrix<double,1,u_dim>	  Qu;
+		Eigen::Matrix<double,x_dim,1>	  Qx;	
+		Eigen::Matrix<double,u_dim,1>	  Qu;
 		Eigen::Matrix<double,x_dim,x_dim> Qxx;
 		Eigen::Matrix<double,u_dim,u_dim> Quu;
 		Eigen::Matrix<double,u_dim,x_dim> Qux;
 		Eigen::Matrix<double,u_dim,u_dim> Quu_reg;
 		Eigen::Matrix<double,u_dim,x_dim> Qux_reg;
-		Qx		= Cx + Vx[i+1]*fx;
-		Qu		= Cu + Vx[i+1]*fu;
+		Qx		= Cx + fx.transpose()*Vx[i+1];
+		Qu		= Cu + fu.transpose()*Vx[i+1];
 		Qxx		= Cxx + fx.transpose()*Vxx[i+1]*fx;
 		Quu		= Cuu + fu.transpose()*Vxx[i+1]*fu;
 		Qux		= Cux + fu.transpose()*Vxx[i+1]*fx;
@@ -291,11 +266,13 @@ bool DDP::backwardpass()
 			dtmsg<<"Diverge occurs in the backward pass"<<std::endl;
 			return localDiverge;
 		}
-		k[i]	= -Qu/Quu_reg(0);
-		K[i]	= -Qux_reg/Quu_reg(0);
+		//k[i]	= -Qu/Quu_reg(0);
+		//K[i]	= -Qux_reg/Quu_reg(0);
+		k[i]	= Quu_reg.ldlt().solve(-Qu);
+		K[i]	= Quu_reg.ldlt().solve(-Qux_reg);
 
-		dV	   += (Eigen::Matrix<double,1,x_dim>()<< k[i].transpose()*Qu, 1/2*k[i].transpose()*Quu*k[i]).finished();
-		Vx[i]   = (Qx.transpose()+K[i].transpose()*Quu*k[i]+K[i].transpose()*Qu+Qux.transpose()*k[i]).transpose();
+		dV	   += (Eigen::Vector2d() << k[i].transpose()*Qu, 0.5*k[i].transpose()*Quu*k[i]).finished();
+		Vx[i]   = Qx+K[i].transpose()*Quu*k[i]+K[i].transpose()*Qu+Qux.transpose()*k[i];
 		Vxx[i]  = Qxx + K[i].transpose()*Quu*K[i]+K[i].transpose()*Qux+Qux.transpose()*K[i];
 		Vxx[i]  = 0.5*(Vxx[i]+Vxx[i].transpose());
 	}
@@ -347,8 +324,8 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
 // is discreteized system.
 	if (isLQR)
 	{
-		Cx = (Q*(_xi - x_f)).transpose();
-		Cu = (R*_ui).transpose();
+		Cx = (Q*(_xi - x_f));
+		Cu = (R*_ui);
 		Cxx = Q;
 		Cuu = R;
 		Cux = Eigen::Matrix<double,u_dim,x_dim>::Zero();
