@@ -23,3 +23,5 @@
 	*. Lambda expression is used to encapsulate function and their arguments. Thereafter, pass into finite difference function only a function handle and an argument
 	
 8. Only first order derivative dynamics is considered
+
+9. Second order finite difference has some problem, it is not accurate and doesn't behavior correctly
