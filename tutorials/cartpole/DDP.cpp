@@ -1,6 +1,6 @@
 #include "DDP.h"
 
-DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<double(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR):
+DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR):
 	T(T),
 	Vx(T),
 	Vxx(T),
@@ -54,10 +54,10 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 		K[i].setZero();
 		if (i<T-1)
 		{
-			C[i]=StepCost(x.col(i),u.col(i));
+			C.col(i) = StepCost(x.col(i),u.col(i));
 		}
 	}
-	C[T-1]  = FinalCost(x.col(T-1));
+	C.col(T-1)  = FinalCost(x.col(T-1));
 
 // --------------------------------------------------
 // testing derivative
@@ -220,6 +220,11 @@ bool DDP::backwardpass()
 	else
 	{
 	// use finite difference to compute Vx and Vxx
+//		Cx = FiniteDiff([=](Eigen::VectorXd Var){
+//				return StepDynamics(Var.head(_xi.rows()), Var.tail(_ui.rows()));}, 
+//				(Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui).finished());
+//		Vx[T-1]		= Cx;
+//		Vxx[T-1]	= Cxx;
 	}
 
 	for (int i=T-2;i>=0;i--)
@@ -320,7 +325,7 @@ void DDP::forwardpass()
 			x_new(1,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
 			x_new(2,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity();
 			x_new(3,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
-			C_new[i]=StepCost(x_new.col(i),u_new.col(i));
+			C_new.col(i) = StepCost(x_new.col(i),u_new.col(i));
 
 // --------------------------------------------------
 // debug C_new cost
@@ -332,7 +337,7 @@ void DDP::forwardpass()
 // --------------------------------------------------
 		}
 		u_new.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
-		C_new[T-1]=FinalCost(x_new.col(T-1));
+		C_new.col(T-1) = FinalCost(x_new.col(T-1));
 	}
 }
 

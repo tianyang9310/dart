@@ -2,6 +2,7 @@
 #define CARTPOLEUTILITY_H
 
 #include "dart/dart.h"
+#include "type.h"
 
 namespace CartPoleUtility{
 
@@ -11,9 +12,9 @@ VectorXd CartPoleStepDynamics(const VectorXd xi, const VectorXd ui, double m_c =
 
 VectorXd DartStepDynamics(VectorXd xi, VectorXd ui, dart::simulation::WorldPtr mWorld);
 
-double CartPoleStepCost(const VectorXd xi, const VectorXd ui, const VectorXd xd, const MatrixXd Q, const MatrixXd R);
+Scalar CartPoleStepCost(const VectorXd xi, const VectorXd ui, const VectorXd xd, const MatrixXd Q, const MatrixXd R);
 
-double CartPoleFinalCost(const VectorXd xT, const VectorXd xd, const MatrixXd Qf);
+Scalar CartPoleFinalCost(const VectorXd xT, const VectorXd xd, const MatrixXd Qf);
 
 }
 

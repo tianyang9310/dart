@@ -57,28 +57,22 @@ VectorXd DartStepDynamics(VectorXd xi, VectorXd ui, dart::simulation::WorldPtr m
 	return xi_1;
 }
 
-double CartPoleStepCost(const VectorXd xi, const VectorXd ui, const VectorXd xd, const MatrixXd Q, const MatrixXd R)
+Scalar CartPoleStepCost(const VectorXd xi, const VectorXd ui, const VectorXd xd, const MatrixXd Q, const MatrixXd R)
 {
 // --------------------------------------------------
 //	CartPole Step Cost Function
 //	Computing ci according to xi and ui 
-//	Note:
-//		Matrix multiplication produces matrix<double,1,1>, therefore
-//		use (0) to retrieve the value
 // --------------------------------------------------
-	return (0.5*(xi-xd).transpose()*Q*(xi-xd) + 0.5*ui.transpose()*R*ui)(0);
+	return (0.5*(xi-xd).transpose()*Q*(xi-xd) + 0.5*ui.transpose()*R*ui);
 }
 
-double CartPoleFinalCost(const VectorXd xT, const VectorXd xd, const MatrixXd Qf)
+Scalar CartPoleFinalCost(const VectorXd xT, const VectorXd xd, const MatrixXd Qf)
 {
 // --------------------------------------------------
 //	CartPole Final Cost Function
 //	Computing cT according to xT
-//	Note:
-//		Matrix multiplication produces matrix<double,1,1>, therefore
-//		use (0) to retrieve the value
 // --------------------------------------------------
-	return ( 0.5*(xT-xd).transpose()*Qf*(xT-xd) )(0);
+	return ( 0.5*(xT-xd).transpose()*Qf*(xT-xd) );
 }
 
 }

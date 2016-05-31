@@ -7,6 +7,7 @@
 #include <fstream>
 #include <functional>
 #include "dart/dart.h"
+#include "type.h"
 
 using namespace dart::dynamics;
 using namespace dart::simulation;
@@ -23,7 +24,7 @@ public:
 	bool backwardpass();
 	void forwardpass();
 // --------------------------------------------------
-	DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<double(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR);
+	DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR);
 	void Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui);
 
 	Eigen::MatrixXd TrajGenerator(const Eigen::VectorXd _x0, const Eigen::MatrixXd _u);
@@ -47,8 +48,8 @@ public:
 	}
 
 	std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics;
-	std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost;
-	std::function<double(const Eigen::VectorXd)> FinalCost;
+	std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost;
+	std::function<Scalar(const Eigen::VectorXd)> FinalCost;
 // --------------------------------------------------
 	template<typename dataFormat_std>
 	void write2file_std(dataFormat_std data, const std::string name)
