@@ -13,3 +13,11 @@
 5. prove dynamics and dynamics derivative
 
 6. a major bug in backward pass, that is the last Vx and Vxx are not initiated correctly
+
+7. when using comma initialization, it is required that input all the data. It is not allowed to input one column at each for loop
+
+	*. Because finite difference method is a general funciton. Basically it handles all kinds of functions. So I use function template
+
+	*. StepDynamics, StepCost, FinalCost have different arguments
+
+	*. Lambda expression is used to encapsulate function and their arguments. Thereafter, pass into finite difference function only a function handle and an argument

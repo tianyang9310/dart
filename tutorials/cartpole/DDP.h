@@ -24,17 +24,65 @@ public:
 	void forwardpass();
 // --------------------------------------------------
 	DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<double(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR);
-	void LQRderivative(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i);
+	void Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui);
 
 	Eigen::MatrixXd TrajGenerator(const Eigen::VectorXd _x0, const Eigen::MatrixXd _u);
+
+	template<typename FuncType>
+	Eigen::MatrixXd FiniteDiff(FuncType Func, Eigen::VectorXd Var)
+	{
+		int VarDim = Var.rows();
+		int OutputDim = (Func(Var)).rows();
+		Eigen::MatrixXd J_FD(OutputDim,VarDim);
+
+		Eigen::MatrixXd IndicatorVec(Var.rows(),Var.rows());
+		IndicatorVec.setIdentity();
+
+		for (int i=0; i<VarDim; i++)
+		{
+			J_FD.col(i) =  (Func(Var+h*IndicatorVec.col(i)) - Func(Var-h*IndicatorVec.col(i)))/(2*h);
+		}
+
+		return J_FD;
+	}
+
 	std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics;
 	std::function<double(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost;
 	std::function<double(const Eigen::VectorXd)> FinalCost;
 // --------------------------------------------------
 	template<typename dataFormat_std>
-	void write2file_std(dataFormat_std data, const std::string name);
+	void write2file_std(dataFormat_std data, const std::string name)
+	{
+		std::string name_ext = name;
+		name_ext.append(".out");
+		std::ofstream outFile(name_ext, std::ios::out);
+		if (outFile.fail())
+		{
+			dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
+		}
+		outFile.precision(8);
+		for (size_t i=0; i<data.size(); i++)
+		{
+			outFile<<data[i]<<std::endl;
+		}
+		outFile.close();
+	}
+
 	template<typename dataFormat_eigen>
-	void write2file_eigen(dataFormat_eigen data, const std::string name);
+	void write2file_eigen(dataFormat_eigen data, const std::string name)
+	{
+		std::string name_ext = name;
+		name_ext.append(".out");
+		std::ofstream outFile(name_ext, std::ios::out);
+		if (outFile.fail())
+		{
+			dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
+		}
+		outFile.precision(8);
+		outFile<<data<<std::endl;
+		outFile.close();
+	}
+
 // --------------------------------------------------
 	const int T;
 	static const int x_dim = 4;

@@ -212,12 +212,20 @@ bool DDP::backwardpass()
 		K[i].setZero();
 	}
 
-	Vx[T-1]		= (Qf*(x.col(T-1)-x_f)).transpose();
-	Vxx[T-1]	= Qf;
+	if (isLQR)
+	{
+		Vx[T-1]		= (Qf*(x.col(T-1)-x_f)).transpose();
+		Vxx[T-1]	= Qf;
+	}
+	else
+	{
+	// use finite difference to compute Vx and Vxx
+	}
 
 	for (int i=T-2;i>=0;i--)
 	{
-		LQRderivative(x.col(i),u.col(i));
+		Derivative(x.col(i),u.col(i));
+
 		Eigen::Matrix<double,1,x_dim>	  Qx;	
 		Eigen::Matrix<double,1,u_dim>	  Qu;
 		Eigen::Matrix<double,x_dim,x_dim> Qxx;
@@ -328,106 +336,31 @@ void DDP::forwardpass()
 	}
 }
 
-void DDP::LQRderivative(Eigen::Vector4d x_i, Eigen::Matrix<double,1,1> u_i)
+void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
 {
 // compute fx, fu, Cx, Cu, Cxx, Cuu, Cux according to x_i and u_i
 // Cx, Cu, Cxx, Cuu, Cux are computed according to analytic solution
 // whether has delta_t here, I think it shouldn't. Because all we consider
 // is discreteized system.
-	Cx = (Q*(x_i - x_f)).transpose();
-	Cu = (R*u_i).transpose();
-	Cxx = Q;
-	Cuu = R;
-	Cux = Eigen::Matrix<double,u_dim,x_dim>::Zero();
+	if (isLQR)
+	{
+		Cx = (Q*(_xi - x_f)).transpose();
+		Cu = (R*_ui).transpose();
+		Cxx = Q;
+		Cuu = R;
+		Cux = Eigen::Matrix<double,u_dim,x_dim>::Zero();
+	}
+	else
+	{
+		// use finite difference to compute
+	}
 	
 // fx, fu are computed according to finite difference
-	Eigen::Vector4d f_xt_ut;
-	{
-		WorldPtr DARTderivativeWorld = mDDPWorld->clone();
-		
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(x_i(0));
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(x_i(1));
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(x_i(2));
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(x_i(3));
-
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(u_i(0));	
-		DARTderivativeWorld->step();
-
-		f_xt_ut(0) = DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition();
-		f_xt_ut(1) = DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
-		f_xt_ut(2) = DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity();
-		f_xt_ut(3) = DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
-	}
-	Eigen::Vector4d f_xt_ut_delta;
-	Eigen::Matrix4d errorMatrix = h*Eigen::Matrix4d::Identity();
-	for (int j=0; j<x_dim; j++)
-	{
-		Eigen::Vector4d xt_deltaX = x_i + errorMatrix.col(j);
-		WorldPtr DARTderivativeWorld = mDDPWorld->clone();
-		// restore x_i and u_i
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(xt_deltaX(0));
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(xt_deltaX(1));
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(xt_deltaX(2));
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(xt_deltaX(3));
-
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(u_i(0));	
-		DARTderivativeWorld->step();
-
-		f_xt_ut_delta(0) = DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition();
-		f_xt_ut_delta(1) = DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
-		f_xt_ut_delta(2) = DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity();
-		f_xt_ut_delta(3) = DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
-		fx.col(j) = (f_xt_ut_delta - f_xt_ut)/h;
-	}
-	{
-		double ut_deltaU = u_i(0) + h;
-		WorldPtr DARTderivativeWorld = mDDPWorld->clone();
-		// restore x_i and u_i
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(x_i(0));
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(x_i(1));
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(x_i(2));
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(x_i(3));
-
-		DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(ut_deltaU);	
-		DARTderivativeWorld->step();
-
-		f_xt_ut_delta(0) = DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition();
-		f_xt_ut_delta(1) = DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
-		f_xt_ut_delta(2) = DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity();
-		f_xt_ut_delta(3) = DARTderivativeWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
-		fu.col(0) = (f_xt_ut_delta - f_xt_ut)/h;
-	}
+	Eigen::MatrixXd fxu;
+	fxu = FiniteDiff([=](Eigen::VectorXd Var){
+			return StepDynamics(Var.head(_xi.rows()), Var.tail(_ui.rows()));}, 
+			(Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui).finished());
+	fx  = fxu.leftCols(_xi.rows());
+	fu	= fxu.rightCols(_ui.rows());
 }
 
-template<typename dataFormat_std>
-void DDP::write2file_std(dataFormat_std data, const std::string name)
-{
-	std::string name_ext = name;
-	name_ext.append(".out");
-	std::ofstream outFile(name_ext, std::ios::out);
-	if (outFile.fail())
-	{
-		dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
-	}
-	outFile.precision(8);
-	for (size_t i=0; i<data.size(); i++)
-	{
-		outFile<<data[i]<<std::endl;
-	}
-	outFile.close();
-}
-
-template<typename dataFormat_eigen>
-void DDP::write2file_eigen(dataFormat_eigen data, const std::string name)
-{
-	std::string name_ext = name;
-	name_ext.append(".out");
-	std::ofstream outFile(name_ext, std::ios::out);
-	if (outFile.fail())
-	{
-		dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
-	}
-	outFile.precision(8);
-	outFile<<data<<std::endl;
-	outFile.close();
-}
