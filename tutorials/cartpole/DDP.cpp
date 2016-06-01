@@ -1,4 +1,5 @@
 #include "DDP.h"
+//#define mDebug_DDP
 
 DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR, std::tuple<Eigen::VectorXd, Eigen::VectorXd, int> StateBundle):
 	T(T),
@@ -63,6 +64,7 @@ DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen
 		K[i].setZero();
 	}
 
+#ifdef mDebug_DDP
 // DDP initial data and some variable output
 //	std::cout<<"Initial control sequence is"<<std::endl<<u<<std::endl;
 //	std::cout<<"Initial state   sequence is"<<std::endl<<x.transpose()<<std::endl;
@@ -74,6 +76,7 @@ DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen
 	std::cout<<"Please use python script to plot figures"<<std::endl;
 	std::cout<<"Press any key to continue..."<<std::endl;
 	//std::cin.get();
+#endif
 }
 
 Eigen::MatrixXd DDP::TrajGenerator(const Eigen::VectorXd _x0, const Eigen::MatrixXd _u)
@@ -112,6 +115,7 @@ void DDP::trajopt()
 	}
 	mu = 0;
 // --------------------------------------------------
+#ifdef mDebug_DDP
 //  backward debugging
 		std::cout<<diverge<<std::endl;
 		std::cout<<"Press any key to print k, K, Vx, Vxx to file..."<<std::endl;
@@ -120,6 +124,7 @@ void DDP::trajopt()
 		write2file_std(Vx,"Vx");
 		write2file_std(Vxx,"Vxx");
 		std::cin.get();
+#endif
 // --------------------------------------------------
 
 // forward  pass
@@ -163,6 +168,7 @@ void DDP::trajopt()
 	u = u_new;
 	C = C_new;
 // --------------------------------------------------
+#ifdef mDebug_DDP
 	std::cout<<"Current cost is "<<C.sum()<<std::endl;
 	std::cout<<"Press any key to print x and u to file..."<<std::endl;
 	//std::cin.get();
@@ -171,6 +177,7 @@ void DDP::trajopt()
 	std::cout<<"Please use python script to plot figures"<<std::endl;
 	std::cout<<"Press any key to continue..."<<std::endl;
 	//std::cin.get();
+#endif
 }
 
 bool DDP::backwardpass()
@@ -216,6 +223,7 @@ bool DDP::backwardpass()
 		Qux_reg = Qux;
 // --------------------------------------------------
 //      backward debugging
+#ifdef mDebug_DDP
 		if (i%100 == 0)
 		{
 			dtmsg<<" "<<i<<" step in backward pass"<<std::endl;
@@ -255,6 +263,7 @@ bool DDP::backwardpass()
 			std::cout<<"Break point in backward pass. Press any key to continue"<<std::endl;
 			//std::cin.get();
 		}
+#endif
 // --------------------------------------------------
 		if (Quu_reg(0)<=0)
 		{
