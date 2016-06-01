@@ -24,7 +24,7 @@ public:
 	bool backwardpass();
 	void forwardpass();
 // --------------------------------------------------
-	DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR, std::tuple<Eigen::VectorXd, Eigen::VectorXd> StateBundle);
+	DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR, std::tuple<Eigen::VectorXd, Eigen::VectorXd, int> StateBundle);
 	void Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui);
 
 	Eigen::MatrixXd TrajGenerator(const Eigen::VectorXd _x0, const Eigen::MatrixXd _u);
@@ -34,35 +34,35 @@ public:
 	std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost;
 	std::function<Scalar(const Eigen::VectorXd)> FinalCost;
 // --------------------------------------------------
-	const int T;
-	static const int x_dim = 4;
-	static const int u_dim = 1;
+	int T;
+	int x_dim;
+	int u_dim;
 	Eigen::MatrixXd x;
 	Eigen::MatrixXd u;
 	Eigen::VectorXd C;
 	Eigen::MatrixXd x_new;
 	Eigen::MatrixXd u_new;
 	Eigen::VectorXd C_new;
-	std::vector<Eigen::Matrix<double,x_dim,1>> Vx;
-	std::vector<Eigen::Matrix<double,x_dim,x_dim>> Vxx;
 	Eigen::Vector2d dV;
-	std::vector<Eigen::Matrix<double,u_dim,1>> k;
-	std::vector<Eigen::Matrix<double,u_dim,x_dim>> K;
-	Eigen::Matrix<double,x_dim,x_dim> fx;
-	Eigen::Matrix<double,x_dim,u_dim> fu;
-	Eigen::Matrix<double,x_dim,1>	  Cx;
-	Eigen::Matrix<double,u_dim,1>	  Cu;
-	Eigen::Matrix<double,x_dim,x_dim> Cxx;
-	Eigen::Matrix<double,u_dim,u_dim> Cuu;
-	Eigen::Matrix<double,u_dim,x_dim> Cux;
+	std::vector<Eigen::MatrixXd> Vx;
+	std::vector<Eigen::MatrixXd> Vxx;
+	std::vector<Eigen::MatrixXd> k;
+	std::vector<Eigen::MatrixXd> K;
+	Eigen::MatrixXd fx;
+	Eigen::MatrixXd fu;
+	Eigen::MatrixXd Cx;
+	Eigen::MatrixXd Cu;
+	Eigen::MatrixXd Cxx;
+	Eigen::MatrixXd Cuu;
+	Eigen::MatrixXd Cux;
 	double mu;
 	double alpha;
 // --------------------------------------------------
-	Eigen::Matrix<double,x_dim,x_dim> Qf;
-	Eigen::Matrix<double,x_dim,x_dim> Q;
-	Eigen::Matrix<double,u_dim,u_dim> R;
-	Eigen::Matrix<double,x_dim,1>     xd;
-	Eigen::Matrix<double,x_dim,1>	  x0;
+	Eigen::MatrixXd Qf;
+	Eigen::MatrixXd Q;
+	Eigen::MatrixXd R;
+	Eigen::MatrixXd xd;
+	Eigen::MatrixXd x0;
 // --------------------------------------------------
 	bool isLQR;
 };

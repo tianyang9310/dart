@@ -1,6 +1,6 @@
 #include "DDP.h"
 
-DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR, std::tuple<Eigen::VectorXd, Eigen::VectorXd> StateBundle):
+DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR, std::tuple<Eigen::VectorXd, Eigen::VectorXd, int> StateBundle):
 	T(T),
 	Vx(T),
 	Vxx(T),
@@ -25,6 +25,16 @@ DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen
 	xd = std::get<1>(StateBundle);
 	mu    = 0;
 	alpha = 1;
+// matrix initialization
+	x_dim = x0.rows();
+	u_dim = std::get<2>(StateBundle); 
+	fx.resize(x_dim,x_dim);
+	fu.resize(x_dim,u_dim);
+	Cx.resize(x_dim,1);
+	Cx.resize(u_dim,1);
+	Cxx.resize(x_dim,x_dim);
+	Cuu.resize(u_dim,u_dim);
+	Cux.resize(u_dim,x_dim);
 // memory allocation
 	x	    = Eigen::MatrixXd::Zero(x_dim,T);
 	u	    = Eigen::MatrixXd::Zero(u_dim,T);
@@ -42,16 +52,16 @@ DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen
 	dV.setZero();
 	for (int i=0;i<T;i++)
 	{
+		Vx[i].resize(x_dim,1);
+		Vxx[i].resize(x_dim,x_dim);
+		k[i].resize(u_dim,1);
+		K[i].setZero(u_dim,x_dim);
+
 		Vx[i].setZero();
 		Vxx[i].setZero();
 		k[i].setZero();
 		K[i].setZero();
-		if (i<T-1)
-		{
-			C.row(i) = StepCost(x.col(i),u.col(i));
-		}
 	}
-	C.row(T-1)  = FinalCost(x.col(T-1));
 
 // DDP initial data and some variable output
 //	std::cout<<"Initial control sequence is"<<std::endl<<u<<std::endl;
@@ -80,8 +90,9 @@ Eigen::MatrixXd DDP::TrajGenerator(const Eigen::VectorXd _x0, const Eigen::Matri
 	for (int i=0; i<T-1; i++)
 	{
 		_x.col(i+1) = StepDynamics(_x.col(i), _u.col(i));
+		C.row(i) = StepCost(x.col(i),u.col(i));
 	}
-	
+	C.row(T-1)  = FinalCost(x.col(T-1));
 	return _x;
 }
 
@@ -119,9 +130,6 @@ void DDP::trajopt()
 
 		std::cout<<"One forward iteration finishes..."<<std::endl;
 		std::cout<<"Press any key to continue..."<<std::endl;
-	//	std::cin.get();
-		//std::cout<<C.transpose()<<std::endl;
-		//std::cout<<C_new.transpose()<<std::endl;
 
 		double dCost = C.sum() - C_new.sum();
 		double expected = -alpha*(dV[0]+alpha*dV[1]);
@@ -132,14 +140,12 @@ void DDP::trajopt()
 			std::cout<<"dCost: "<<dCost<<" expected: "<<expected<<std::endl;
 			dtmsg<<"positive expected reduction "<<z<<std::endl;
 			std::cout<<"Press any key to continue..."<<std::endl;
-	//		std::cin.get();
 		}
 		else
 		{
 			z = 2*(dCost > 0)-1;
 			dtmsg<<"non-positive expected reduction "<<z<<std::endl;
 			std::cout<<"Press any key to continue..."<<std::endl;
-	//		std::cin.get();
 		}
 		if (z>0)
 		{
@@ -173,13 +179,6 @@ bool DDP::backwardpass()
 	dtmsg<<"Backward pass starting..."<<std::endl;
 	bool localDiverge = false;
 	dV.setZero();
-	for (int i=0;i<T;i++)
-	{
-		Vx[i].setZero();
-		Vxx[i].setZero();
-		k[i].setZero();
-		K[i].setZero();
-	}
 
 	if (isLQR)
 	{
@@ -198,19 +197,22 @@ bool DDP::backwardpass()
 	{
 		Derivative(x.col(i),u.col(i));
 
-		Eigen::Matrix<double,x_dim,1>	  Qx;	
-		Eigen::Matrix<double,u_dim,1>	  Qu;
-		Eigen::Matrix<double,x_dim,x_dim> Qxx;
-		Eigen::Matrix<double,u_dim,u_dim> Quu;
-		Eigen::Matrix<double,u_dim,x_dim> Qux;
-		Eigen::Matrix<double,u_dim,u_dim> Quu_reg;
-		Eigen::Matrix<double,u_dim,x_dim> Qux_reg;
+		Eigen::MatrixXd Qx(x_dim,1);	
+		Eigen::MatrixXd Qu(u_dim,1);	
+		Eigen::MatrixXd Qxx(x_dim,x_dim);	
+		Eigen::MatrixXd Quu(u_dim,u_dim);	
+		Eigen::MatrixXd Qux(u_dim,x_dim);	
+		Eigen::MatrixXd Quu_reg(u_dim,u_dim);		
+		Eigen::MatrixXd Qux_reg(u_dim,x_dim);		
+
 		Qx		= Cx + fx.transpose()*Vx[i+1];
 		Qu		= Cu + fu.transpose()*Vx[i+1];
 		Qxx		= Cxx + fx.transpose()*Vxx[i+1]*fx;
 		Quu		= Cuu + fu.transpose()*Vxx[i+1]*fu;
 		Qux		= Cux + fu.transpose()*Vxx[i+1]*fx;
-		Quu_reg = Quu + mu*Eigen::Matrix<double,u_dim,u_dim>::Identity();
+		Eigen::MatrixXd uEye(u_dim,u_dim);
+		uEye.setIdentity();
+		Quu_reg = Quu + mu*uEye;
 		Qux_reg = Qux;
 // --------------------------------------------------
 //      backward debugging
@@ -299,7 +301,7 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
 		Cu = (R*_ui);
 		Cxx = Q;
 		Cuu = R;
-		Cux = Eigen::Matrix<double,u_dim,x_dim>::Zero();
+		Cux.setZero();
 		
 // ----------------------------------------
 //		std::cout<<"#########  LQR   #################"<<std::endl;
