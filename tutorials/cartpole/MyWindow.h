@@ -26,7 +26,6 @@ public:
 
 	void mDofStat();
 
-private:
 	std::unique_ptr<Controller> mController;
 	WorldPtr mSnapshot;
 	int mDDP_iter;

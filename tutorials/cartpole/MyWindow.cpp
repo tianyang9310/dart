@@ -56,6 +56,10 @@ void MyWindow::timeStepping()
 		//mDofStat();
 		//mPointer_Debug();
 
+		mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition((mController->x0)(0));
+		mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition((mController->x0)(1));
+		mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity((mController->x0)(2));
+		mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity((mController->x0)(3));
 
 		// pause for user interactive control
 	//	std::cin.get();

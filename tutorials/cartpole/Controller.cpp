@@ -15,11 +15,9 @@ Controller::Controller(WorldPtr mDDPWorld)
 	double g			= -mDDPWorld->getGravity()(2);;
 	double delta_t		= mDDPWorld->getTimeStep();
 
-	Eigen::Vector4d x0;
-	x0(0) =	mDDPWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition();
-	x0(1) =	mDDPWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
-	x0(2) =	mDDPWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity();
-	x0(3) =	mDDPWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
+	x0  = Eigen::Vector4d::Zero();
+	//x0(1)  = 0.6*M_PI;
+
 
 	Eigen::Vector4d	xd	= Eigen::Vector4d::Zero();
 	xd(1)				= M_PI;

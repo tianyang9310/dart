@@ -23,6 +23,7 @@ public:
 	Controller(WorldPtr mDDPWorld);
 //------------------------------------------------------------------------------------------------
 	std::unique_ptr<DDP> mDDP;
+	Eigen::Vector4d x0;
 };
 
 #endif
