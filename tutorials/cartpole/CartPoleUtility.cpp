@@ -75,4 +75,27 @@ Scalar CartPoleFinalCost(const VectorXd xT, const VectorXd xd, const MatrixXd Qf
 	return ( 0.5*(xT-xd).transpose()*Qf*(xT-xd) );
 }
 
+
+Scalar CartPoleStepCostCos(const VectorXd xi, const VectorXd ui, const MatrixXd Q, const MatrixXd R)
+{
+// --------------------------------------------------
+//	CartPole Step Cost Function
+//	Computing ci according to xi and ui 
+// --------------------------------------------------
+	VectorXd xi_aug = xi;
+	xi_aug(1) = 5 + cos(xi(1));
+	return (0.5*xi.transpose()*Q*xi + 0.5*ui.transpose()*R*ui);
+}
+
+Scalar CartPoleFinalCostCos(const VectorXd xT, const MatrixXd Qf)
+{
+// --------------------------------------------------
+//	CartPole Final Cost Function
+//	Computing cT according to xT
+// --------------------------------------------------
+	VectorXd xT_aug = xT;
+	xT_aug(1) = 5 + cos(xT(1));
+	return ( 0.5*xT_aug.transpose()*Qf*xT_aug );
+}
+
 }

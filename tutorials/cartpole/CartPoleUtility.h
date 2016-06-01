@@ -16,6 +16,10 @@ Scalar CartPoleStepCost(const VectorXd xi, const VectorXd ui, const VectorXd xd,
 
 Scalar CartPoleFinalCost(const VectorXd xT, const VectorXd xd, const MatrixXd Qf);
 
+Scalar CartPoleStepCostCos(const VectorXd xi, const VectorXd ui, const MatrixXd Q, const MatrixXd R);
+
+Scalar CartPoleFinalCostCos(const VectorXd xT, const MatrixXd Qf);
+
 }
 
 #endif
