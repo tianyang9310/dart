@@ -27,3 +27,5 @@
 9. Second order finite difference has some problem, it is not accurate and doesn't behavior correctly
 
 10. parallel computing alpha
+
+11. state cost is very important. If I multiply it with a small constant such as delta_t it will converge much fast and stably
