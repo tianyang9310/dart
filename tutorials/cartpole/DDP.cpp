@@ -159,7 +159,7 @@ void DDP::trajopt()
 		}
 		else
 		{
-			alpha *=0.1;
+			alpha *= std::pow(10,-0.3);
 		}
 	}
 	alpha = 1;
