@@ -21,6 +21,14 @@ DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen
 		R		= std::get<1>(LQR[0]);
 		Qf		= std::get<2>(LQR[0]);
 	}
+	if (isLQR)
+	{
+		std::cout<<"Solving LQR problem..."<<std::endl;
+	}
+	else
+	{
+		std::cout<<"Solving non-LQR problem"<<std::endl;
+	}
 
 	x0 = std::get<0>(StateBundle);
 	xd = std::get<1>(StateBundle);
@@ -342,7 +350,7 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
 //
 //		Cxx = Cxxuu_bundle.topLeftCorner(_xi.rows(),_xi.rows());
 //		Cuu = Cxxuu_bundle.bottomRightCorner(_ui.rows(),_ui.rows());
-//		Cux = Cxxuu_bundle.bottomLeftCorner(_ui.rows,_xi.rows());
+//		Cux = Cxxuu_bundle.bottomLeftCorner(_ui.rows(),_xi.rows());
 //
 //		std::cout<<Cx<<std::endl;
 //		std::cout<<Cu<<std::endl;
@@ -352,6 +360,29 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
 	}
 	else
 	{
+		Eigen::MatrixXd Cxu_bundle;
+		Cxu_bundle  = FiniteDiff([=](Eigen::VectorXd Var){
+				  return StepCost(Var.head(_xi.rows()), Var.tail(_ui.rows()));},
+				 (Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui ).finished());
+		Cx = (Cxu_bundle.leftCols(_xi.rows())).transpose();
+		Cu = (Cxu_bundle.rightCols(_ui.rows())).transpose();
+
+		Eigen::MatrixXd Cxxuu_bundle;
+
+		auto Cxu_FD = [=](Eigen::VectorXd __xi, Eigen::VectorXd __ui){
+		return    
+			FiniteDiff([=](Eigen::VectorXd Var){
+				return StepCost(Var.head(__xi.rows()), Var.tail(__ui.rows()));},
+				(Eigen::VectorXd(__xi.rows()+__ui.rows()) << __xi, __ui ).finished())
+		;};
+
+		Cxxuu_bundle = FiniteDiff([=](Eigen::VectorXd Var){
+				return Cxu_FD(Var.head(_xi.rows()),Var.tail(_ui.rows()));},
+				(Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui ).finished());
+
+		Cxx = Cxxuu_bundle.topLeftCorner(_xi.rows(),_xi.rows());
+		Cuu = Cxxuu_bundle.bottomRightCorner(_ui.rows(),_ui.rows());
+		Cux = Cxxuu_bundle.bottomLeftCorner(_ui.rows(),_xi.rows());
 
 	}
 	

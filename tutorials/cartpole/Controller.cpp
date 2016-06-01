@@ -36,7 +36,7 @@ Controller::Controller(WorldPtr mDDPWorld)
 	R			= R*delta_t;
 
 	std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR;
-	LQR.push_back(std::make_tuple(Q,R,Qf));
+	//LQR.push_back(std::make_tuple(Q,R,Qf));
 
 	
 
