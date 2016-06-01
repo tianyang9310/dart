@@ -1,6 +1,6 @@
 #include "DDP.h"
 
-DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR):
+DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR, std::tuple<Eigen::VectorXd, Eigen::VectorXd> StateBundle):
 	T(T),
 	Vx(T),
 	Vxx(T),
@@ -22,12 +22,10 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 		Qf		= std::get<2>(LQR[0]);
 	}
 
-	x_f.setZero();
-	x_f(1)      = M_PI;
-	x_0.setZero();
+	x0 = std::get<0>(StateBundle);
+	xd = std::get<1>(StateBundle);
 	mu    = 0;
 	alpha = 1;
-	h     = 1e-6;
 
 // --------------------------------------------------
 // produce initial trajectory
@@ -37,7 +35,7 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 
 	x	    = Eigen::MatrixXd::Zero(x_dim,T);
 // --------------------------------------------------
-	x		= TrajGenerator(x_0, u);
+	x		= TrajGenerator(x0, u);
 // --------------------------------------------------
 	C		= Eigen::VectorXd::Zero(T);
 // --------------------------------------------------
@@ -189,7 +187,7 @@ bool DDP::backwardpass()
 
 	if (isLQR)
 	{
-		Vx[T-1]		= (Qf*(x.col(T-1)-x_f));
+		Vx[T-1]		= (Qf*(x.col(T-1)-xd));
 		Vxx[T-1]	= Qf;
 	}
 	else
@@ -324,7 +322,7 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
 // is discreteized system.
 	if (isLQR)
 	{
-		Cx = (Q*(_xi - x_f));
+		Cx = (Q*(_xi - xd));
 		Cu = (R*_ui);
 		Cxx = Q;
 		Cuu = R;

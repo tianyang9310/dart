@@ -24,7 +24,7 @@ public:
 	bool backwardpass();
 	void forwardpass();
 // --------------------------------------------------
-	DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR);
+	DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR, std::tuple<Eigen::VectorXd, Eigen::VectorXd> StateBundle);
 	void Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui);
 
 	Eigen::MatrixXd TrajGenerator(const Eigen::VectorXd _x0, const Eigen::MatrixXd _u);
@@ -59,13 +59,12 @@ public:
 	double alpha;
 // --------------------------------------------------
 	WorldPtr mDDPWorld;
-	double h;
 // --------------------------------------------------
 	Eigen::Matrix<double,x_dim,x_dim> Qf;
 	Eigen::Matrix<double,x_dim,x_dim> Q;
 	Eigen::Matrix<double,u_dim,u_dim> R;
-	Eigen::Matrix<double,x_dim,1>     x_f;
-	Eigen::Matrix<double,x_dim,1>	  x_0;
+	Eigen::Matrix<double,x_dim,1>     xd;
+	Eigen::Matrix<double,x_dim,1>	  x0;
 // --------------------------------------------------
 	bool isLQR;
 };
