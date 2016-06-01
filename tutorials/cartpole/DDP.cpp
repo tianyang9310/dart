@@ -1,12 +1,11 @@
 #include "DDP.h"
 
-DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR, std::tuple<Eigen::VectorXd, Eigen::VectorXd> StateBundle):
+DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR, std::tuple<Eigen::VectorXd, Eigen::VectorXd> StateBundle):
 	T(T),
 	Vx(T),
 	Vxx(T),
 	k(T),
 	K(T),
-	mDDPWorld(mDDPWorld),
 	StepDynamics(StepDynamics),
 	StepCost(StepCost),
 	FinalCost(FinalCost)
@@ -26,22 +25,19 @@ DDP::DDP(int T, WorldPtr mDDPWorld, std::function<Eigen::VectorXd(const Eigen::V
 	xd = std::get<1>(StateBundle);
 	mu    = 0;
 	alpha = 1;
-
-// --------------------------------------------------
-// produce initial trajectory
-	u 		= Eigen::MatrixXd::Constant(u_dim,T,0);
-	//u 		= Eigen::MatrixXd::Random(u_dim,T)*150;
-	u.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
-
+// memory allocation
 	x	    = Eigen::MatrixXd::Zero(x_dim,T);
-// --------------------------------------------------
-	x		= TrajGenerator(x0, u);
-// --------------------------------------------------
+	u	    = Eigen::MatrixXd::Zero(u_dim,T);
 	C		= Eigen::VectorXd::Zero(T);
-// --------------------------------------------------
 	x_new   = Eigen::MatrixXd::Zero(x_dim,T);
 	u_new   = Eigen::MatrixXd::Zero(u_dim,T);
 	C_new	= Eigen::VectorXd::Zero(T);
+// --------------------------------------------------
+// produce initial trajectory
+	//u 		= Eigen::MatrixXd::Random(u_dim,T)*150;
+	u.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
+
+	x		= TrajGenerator(x0, u);
 // --------------------------------------------------
 	dV.setZero();
 	for (int i=0;i<T;i++)
@@ -280,38 +276,15 @@ bool DDP::backwardpass()
 void DDP::forwardpass()
 {
 	dtmsg<<"Forward pass starting..."<<std::endl;
-	x_new.setZero();
-	u_new.setZero();
-	C_new.setZero();
-//  x_new initial state shoud be (0,0,0,0).(transpose)
+	x_new.col(0) = x0;
+	for (int i=0; i<T-1; i++)
 	{
-		// reset x to zero
-		// When clone the world, x is automatically reset to 0
-		WorldPtr DARTdynamicsWorld = mDDPWorld->clone();
-		for (int i=0; i<T-1; i++)
-		{
-			u_new.col(i) = u.col(i) + alpha*k[i] + K[i]*(x_new.col(i)-x.col(i));
-			DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(u_new.col(i)[0]);	
-			DARTdynamicsWorld->step();
-
-			x_new(0,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition();
-			x_new(1,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
-			x_new(2,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity();
-			x_new(3,i+1) = DARTdynamicsWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
-			C_new.row(i) = StepCost(x_new.col(i),u_new.col(i));
-
-// --------------------------------------------------
-// debug C_new cost
-//			std::cout<<"x_new: "<<x_new.col(i).transpose()<<" u_new: "<<u_new.col(i)<<std::endl;
-//			std::cout<<cost(x_new.col(i),u_new.col(i))<<std::endl;;
-//			std::cout<<C_new[i]<<std::endl;
-//			std::cout<<"Press any key to continue..."<<std::endl;
-//			std::cin.get();
-// --------------------------------------------------
-		}
-		u_new.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
-		C_new.row(T-1) = FinalCost(x_new.col(T-1));
+		u_new.col(i) = u.col(i) + alpha*k[i] + K[i]*(x_new.col(i)-x.col(i));
+		x_new.col(i+1) = StepDynamics(x_new.col(i), u_new.col(i));
+		C_new.row(i) = StepCost(x_new.col(i),u_new.col(i));
 	}
+	u_new.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
+	C_new.row(T-1) = FinalCost(x_new.col(T-1));
 }
 
 void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
