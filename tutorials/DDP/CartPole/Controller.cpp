@@ -39,13 +39,13 @@ Controller::Controller(WorldPtr mDDPWorld)
 
 // --------------------------------------------------
 //  Linear Quadratic Cost function
-//	LQR.push_back(std::make_tuple(Q,R,Qf));
+	LQR.push_back(std::make_tuple(Q,R,Qf));
 
 //	Dynamics from Equations of Motion
 //	mDDP = std::unique_ptr<DDP>(new DDP(2000, std::bind(CartPoleStepDynamics, std::placeholders::_1, std::placeholders::_2, m_c, m_p, l, g, delta_t), std::bind(CartPoleStepCost, std::placeholders::_1, std::placeholders::_2, xd, Q, R), std::bind(CartPoleFinalCost,std::placeholders::_1, xd, Qf), LQR, std::make_tuple(x0,xd,1)));
 
 //  Dynamics from DART
-//	mDDP = std::unique_ptr<DDP>(new DDP(2000, std::bind(DartStepDynamics, std::placeholders::_1, std::placeholders::_2, mDDPWorld), std::bind(CartPoleStepCost, std::placeholders::_1, std::placeholders::_2, xd, Q, R), std::bind(CartPoleFinalCost,std::placeholders::_1, xd, Qf), LQR, std::make_tuple(x0,xd,1)));
+	mDDP = std::unique_ptr<DDP>(new DDP(2000, std::bind(DartStepDynamics, std::placeholders::_1, std::placeholders::_2, mDDPWorld), std::bind(CartPoleStepCost, std::placeholders::_1, std::placeholders::_2, xd, Q, R), std::bind(CartPoleFinalCost,std::placeholders::_1, xd, Qf), LQR, std::make_tuple(x0,xd,1)));
 
 
 // --------------------------------------------------
@@ -53,7 +53,7 @@ Controller::Controller(WorldPtr mDDPWorld)
 //  x0 determines the final state, swing towards whichever direction
 
 //  Dynamics from DART
-	mDDP = std::unique_ptr<DDP>(new DDP(2000, std::bind(DartStepDynamics, std::placeholders::_1, std::placeholders::_2, mDDPWorld), std::bind(CartPoleStepCostCos, std::placeholders::_1, std::placeholders::_2, Q, R), std::bind(CartPoleFinalCostCos,std::placeholders::_1, Qf), LQR, std::make_tuple(x0,xd,1)));
+//	mDDP = std::unique_ptr<DDP>(new DDP(2000, std::bind(DartStepDynamics, std::placeholders::_1, std::placeholders::_2, mDDPWorld), std::bind(CartPoleStepCostCos, std::placeholders::_1, std::placeholders::_2, Q, R), std::bind(CartPoleFinalCostCos,std::placeholders::_1, Qf), LQR, std::make_tuple(x0,xd,1)));
 
 
 }
