@@ -22,7 +22,6 @@ Controller::Controller(WorldPtr mDDPWorld)
 
 	Eigen::MatrixXd Q(6,6);
 	Q.setZero();
-	Q(0,0)				= 0.01;
 	Q(1,1)				= 5;
 	Q(2,2)				= 5;
 
@@ -30,7 +29,7 @@ Controller::Controller(WorldPtr mDDPWorld)
 	R(0,0)				= 1;
 
 	Eigen::MatrixXd Qf(6,6);
-	Qf.setIdentity();
+	Qf.setZero();
 	Qf(1,1)				= 500;
 	Qf(2,2)				= 500;
 
