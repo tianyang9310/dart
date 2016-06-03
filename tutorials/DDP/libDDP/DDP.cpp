@@ -176,8 +176,8 @@ void DDP::trajopt()
 	u = u_new;
 	C = C_new;
 // --------------------------------------------------
-#ifdef mDebug_DDP
 	std::cout<<"Current cost is "<<C.sum()<<std::endl;
+#ifdef mDebug_DDP
 	std::cout<<"Press any key to print x and u to file..."<<std::endl;
 	//std::cin.get();
 	write2file_eigen(x,"x");
