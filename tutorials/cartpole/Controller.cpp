@@ -50,7 +50,7 @@ Controller::Controller(WorldPtr mDDPWorld)
 
 // --------------------------------------------------
 //  Other General Cost Function
-//  x0 determines the final state, swing towards which direction
+//  x0 determines the final state, swing towards whichever direction
 
 //  Dynamics from DART
 	mDDP = std::unique_ptr<DDP>(new DDP(2000, std::bind(DartStepDynamics, std::placeholders::_1, std::placeholders::_2, mDDPWorld), std::bind(CartPoleStepCostCos, std::placeholders::_1, std::placeholders::_2, Q, R), std::bind(CartPoleFinalCostCos,std::placeholders::_1, Qf), LQR, std::make_tuple(x0,xd,1)));
