@@ -29,12 +29,13 @@ inline void MyWindow::mPointer_Debug()
 inline void MyWindow::mDofStat()
 {
 #ifdef mDOFSTAT
-	for (size_t i = 0; i<mWorld->getSkeleton("mCartPole")->getNumDofs();i++)
+	for (size_t i = 0; i<mWorld->getSkeleton("mDoubleCartPole")->getNumDofs();i++)
 	{
-		std::cout<<mWorld->getSkeleton("mCartPole")->getDof(i)->getName()<<"	position: "<<mWorld->getSkeleton("mCartPole")->getDof(i)->getPosition()<<"		velocity: "<<mWorld->getSkeleton("mCartPole")->getDof(i)->getVelocity()<<"		acceleration: "<<mWorld->getSkeleton("mCartPole")->getDof(i)->getAcceleration()<<std::endl;
+		std::cout<<mWorld->getSkeleton("mDoubleCartPole")->getDof(i)->getName()<<"	position: "<<mWorld->getSkeleton("mDoubleCartPole")->getDof(i)->getPosition()<<"		velocity: "<<mWorld->getSkeleton("mDoubleCartPole")->getDof(i)->getVelocity()<<"		acceleration: "<<mWorld->getSkeleton("mDoubleCartPole")->getDof(i)->getAcceleration()<<std::endl;
 	}
 #endif
 }
+
 
 void MyWindow::timeStepping() 
 {
@@ -56,10 +57,10 @@ void MyWindow::timeStepping()
 		//mDofStat();
 		//mPointer_Debug();
 
-		mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition((mController->x0)(0));
-		mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition((mController->x0)(1));
-		mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity((mController->x0)(2));
-		mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity((mController->x0)(3));
+		mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_hold_cart")->setPosition((mController->x0)(0));
+		mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_cart_pole")->setPosition((mController->x0)(1));
+		mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_hold_cart")->setVelocity((mController->x0)(2));
+		mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_cart_pole")->setVelocity((mController->x0)(3));
 
 		// pause for user interactive control
 	//	std::cin.get();
@@ -70,7 +71,7 @@ void MyWindow::timeStepping()
 #ifdef mDYNAMICS_DEBUG
 	std::cout<<mSimFrameCount<<"th control is "<<mController->mDDP->u.col(mSimFrameCount)<<std::endl;
 #endif
-	mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(mController->mDDP->u.col(mSimFrameCount)[0]); 
+	mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_hold_cart")->setForce(mController->mDDP->u.col(mSimFrameCount)[0]); 
 //------------------------------------------------------------------------------------------------
 	SimWindow::timeStepping();
 //------------------------------------------------------------------------------------------------
@@ -78,14 +79,15 @@ void MyWindow::timeStepping()
 	// bookkeeping x[i+1]
 	mSimFrameCount = mWorld->getSimFrames();
 	std::cout<<mSimFrameCount<<"th step state is"<<std::endl;
-	x_fly(0,mSimFrameCount) = mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition();
-	x_fly(1,mSimFrameCount) = mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
-	x_fly(2,mSimFrameCount) = mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity();
-	x_fly(3,mSimFrameCount) = mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
+	x_fly(0,mSimFrameCount) = mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_hold_cart")->getPosition();
+	x_fly(1,mSimFrameCount) = mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_cart_pole")->getPosition();
+	x_fly(2,mSimFrameCount) = mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_hold_cart")->getVelocity();
+	x_fly(3,mSimFrameCount) = mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_cart_pole")->getVelocity();
 	std::cout<<x_fly.col(mSimFrameCount).transpose()<<std::endl;
 	std::cin.get();
 #endif
 }
+
 
 void MyWindow::drawSkels() 
 {
@@ -98,19 +100,19 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
 	switch(_key)
 	{
 		case 'a':
-		mWorld->getSkeleton("mCartPole")->getDof(0)->setForce(100);
+		mWorld->getSkeleton("mDoubleCartPole")->getDof(0)->setForce(100);
 		break;
 
 		case 'd':
-		mWorld->getSkeleton("mCartPole")->getDof(0)->setForce(-100);
+		mWorld->getSkeleton("mDoubleCartPole")->getDof(0)->setForce(-100);
 		break;
 
 		case 'r':
-		mWorld->getSkeleton("mCartPole")->getDof(0)->setPosition(0);
+		mWorld->getSkeleton("mDoubleCartPole")->getDof(0)->setPosition(0);
 		break;
 
 	//	case 'o':
-	//	std::cout<<mWorld->getSkeleton("mCartPole")->getBodyNode(0)->getTransform().matrix()<<std::endl;
+	//	std::cout<<mWorld->getSkeleton("mDoubleCartPole")->getBodyNode(0)->getTransform().matrix()<<std::endl;
 	//	break;
 
 		default:

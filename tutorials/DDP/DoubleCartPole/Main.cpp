@@ -22,10 +22,12 @@ int main(int argc, char* argv[])
 
 	MyWindow window(mWorld);
 
-	mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition((window.mController->x0)(0));
-	mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition((window.mController->x0)(1));
-	mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity((window.mController->x0)(2));
-	mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity((window.mController->x0)(3));
+	mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_hold_cart")->setPosition((window.mController->x0)(0));
+	mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_cart_pole")->setPosition((window.mController->x0)(1));
+	mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_pole_pole2")->setPosition((window.mController->x0)(2));
+	mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_hold_cart")->setVelocity((window.mController->x0)(3));
+	mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_cart_pole")->setVelocity((window.mController->x0)(4));
+	mWorld->getSkeleton("mDoubleCartPole")->getDof("Joint_pole_pole2")->setVelocity((window.mController->x0)(5));
 #ifdef mSTAT
 	std::cout<<"-----------------------------------------------------------------------------------"<<std::endl;
 	std::cout<<"Gravity is "<<mWorld->getGravity().transpose()<<std::endl;

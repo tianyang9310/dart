@@ -13,6 +13,6 @@ using namespace dart::common;
 using namespace dart::math;
 using namespace dart::gui;
 
-SkeletonPtr addCartPole();
+SkeletonPtr addDoubleCartPole();
 void WorldSetup(WorldPtr mWorld);
 #endif
