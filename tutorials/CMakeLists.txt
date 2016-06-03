@@ -4,7 +4,7 @@ list(SORT tutorials_src)
 message(STATUS "")
 message(STATUS "[ Tutorials ]")
 
-add_subdirectory( cartpole )
+add_subdirectory( DDP )
 
 foreach(tutorial ${tutorials_src})
   get_filename_component(tutorial_base ${tutorial} NAME_WE)
