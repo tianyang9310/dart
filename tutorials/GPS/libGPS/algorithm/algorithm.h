@@ -6,6 +6,7 @@ namespace GPS
 
 class algorithm
 {
+public:
 	algorithm();
 
 };

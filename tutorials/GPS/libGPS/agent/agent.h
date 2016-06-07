@@ -6,6 +6,7 @@ namespace GPS
 
 class agent
 {
+public:
 	agent();
 
 };
