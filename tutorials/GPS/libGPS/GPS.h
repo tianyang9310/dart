@@ -1,7 +1,7 @@
 #ifndef GPS_H
 #define GPS_H
 
-#include "dart/dart.h"
+#include "algorithm/algorithm.h"
 
 namespace GPS
 {
