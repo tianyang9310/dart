@@ -1,13 +1,21 @@
 #ifndef ALGORITHM_H
 #define ALGORITHM_H
 
-namespace GPS
+#include <iostream>
+
+namespace GPS_NSpace
 {
+
+using namespace std;
 
 class algorithm
 {
 public:
 	algorithm();
+	virtual void iteration();
+	
+	// cur
+	// policy_opt.policy()
 
 };
 

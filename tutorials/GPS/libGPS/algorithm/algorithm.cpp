@@ -1,6 +1,6 @@
 #include "algorithm.h"
 
-namespace GPS
+namespace GPS_NSpace
 {
 
 algorithm::algorithm()
@@ -8,7 +8,11 @@ algorithm::algorithm()
 
 }
 
-
+void algorithm::iteration()
+{
+	cout<<"NoImplementationError"<<endl;
+	throw 0;
+}
 
 
 }

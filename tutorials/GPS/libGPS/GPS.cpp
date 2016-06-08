@@ -1,6 +1,6 @@
 #include "GPS.h"
 
-namespace GPS
+namespace GPS_NSpace
 {
 
 GPS::GPS()
@@ -12,8 +12,8 @@ GPS::GPS()
 	num_samples = 5;
 
 	// initialize agent and algorithm
-	mAgent		= unique_ptr<agent>(new agent());
-	mAlgorithm	= unique_ptr<algorithm>(new algorithm());
+	mAgent		= unique_ptr<agent>(new DCPagent());
+	mAlgorithm	= unique_ptr<algorithm>(new algorithm_badmm());
 }
 
 void GPS::run()
@@ -29,7 +29,7 @@ void GPS::run()
 		}
 		for (int cond=0; cond<train_idx; cond++)
 		{
-		   	//traj_sample_lists = mAgent->get_samples(cond, -num_samples);
+		   	//auto traj_sample_lists = mAgent->get_samples(cond, -num_samples);
 		}
 		// take_iteration(itr, traj_sample_lists);
 		// pol_sample_lists = take_policy_samples()
@@ -39,17 +39,27 @@ void GPS::run()
 
 void GPS::take_sample(int iter, int cond, int i)
 {
-
+	// pol = mAlgorithm->cur(cond)->traj_distr;
+	// mAgent->sample(pol,cond,verbose=False);
 }
 
-void GPS::take_iteration()
+void GPS::take_iteration(/*int itr, auto traj_sample_lists*/)
 {
-
+	// mAlgorithm->iteartion(traj_sample_lists);
 }
 
 void GPS::take_policy_samples()
 {
-
+	// int N = verbose_policy_trials;
+	// pol_samples = placeholders, matrix of samples
+	for (int cond=0; cond<test_idx; cond++)
+	{
+		for (int i=0; /*i<N*/; i++)
+		{
+			// pol_samples[cond][i] = mAgent->sample(mAlgorithm->policy_opt.policy, cond)
+		}
+	}
+	// return SampleLists(samples) for samples in pol_samples
 }
 
 

@@ -1,12 +1,19 @@
 #ifndef GPS_H
 #define GPS_H
 
+// system header
 #include <iostream>
 #include <memory>
-#include "agent/agent.h"
-#include "algorithm/algorithm.h"
 
-namespace GPS
+// agent header
+#include "agent/agent.h"
+#include "agent/DoubleCartPole/DCPagent.h"
+
+// algorithm header
+#include "algorithm/algorithm.h"
+#include "algorithm/algorithm_badmm.h"
+
+namespace GPS_NSpace
 {
 
 using namespace std;

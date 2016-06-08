@@ -1,6 +1,6 @@
 #include "agent.h"
 
-namespace GPS
+namespace GPS_NSpace
 {
 
 agent::agent()
@@ -8,7 +8,17 @@ agent::agent()
 
 }
 
+void agent::sample()
+{
+	cout<<"NotImplementationError"<<endl; 
+	throw 0;
+}
 
+void agent::get_samples()
+{
+	cout<<"NotImplementationError"<<endl; 
+	throw 0;
+}
 
 
 }
