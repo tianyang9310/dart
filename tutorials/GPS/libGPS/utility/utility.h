@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <Eigen/Eigen>
 
@@ -64,6 +65,12 @@ public:
 	int verbose_trials;
 	int verbose_policy_trials;
 
+	// -------------------
+	// dynamic variable
+	map<string, int> tupleInt;
+	map<string, string> tupleString;
+	map<string, double> tupleDouble;
+	map<string, bool> tupleBool;
 
 };
 

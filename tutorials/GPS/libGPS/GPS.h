@@ -4,6 +4,7 @@
 // system header
 #include <iostream>
 #include <memory>
+#include <string>
 
 // agent header
 #include "agent/agent.h"
@@ -43,6 +44,7 @@ public:
 //  GPS variable
 	unique_ptr<agent> mAgent;
 	unique_ptr<algorithm> mAlgorithm;
+	hyperparameters mHyperparameters;
 	int _train_idx; // python range
 	int _test_idx;  // python range
 	int _conditions;

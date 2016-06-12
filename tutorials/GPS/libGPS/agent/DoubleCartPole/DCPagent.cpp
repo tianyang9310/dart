@@ -3,11 +3,11 @@
 namespace GPS_NSpace
 {
 
-DCPagent::DCPagent()
+DCPagent::DCPagent(hyperparameters& _mHyperparameters):agent(_mHyperparameters)
 {
 	rendering = true;
-	// update config
-	// agent() // no arugment base construtor will be called before derived class constructor, thus there is no need to called agent() again, except agent accept other arguements
+	mHyperparameters.tupleBool.insert(pair<string,bool>("rendering",rendering));
+
 }
 
 void DCPagent::sample()

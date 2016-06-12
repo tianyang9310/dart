@@ -3,16 +3,27 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
+#include "../utility/utility.h"
 
 namespace GPS_NSpace
 {
 
 using namespace std;
 
+
+class mySample
+{
+public:
+	mySample();
+	int T;
+};
+
+
 class agent
 {
 public:
-	agent();
+	agent(hyperparameters& mHyperparameters);
 	virtual void sample();
 	virtual void get_samples();
 // --------------------------------------------------
@@ -27,7 +38,13 @@ public:
 	float smooth_noise_var;
 	int x0var;
 
+// --------------------------------------------------
+//  Agent member var
+	hyperparameters& mHyperparameters;
+	vector<mySample> _samples;
+
 };
+
 
 
 

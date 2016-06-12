@@ -3,8 +3,12 @@
 namespace GPS_NSpace
 {
 
+mySample::mySample()
+{
+	T = 10;
+}
 
-agent::agent()
+agent::agent(hyperparameters& mHyperparameters):mHyperparameters(mHyperparameters),_samples(mHyperparameters.conditions)
 {
 	cout<<"agent constructor "<<endl;
 
@@ -17,6 +21,11 @@ agent::agent()
 	smooth_noise_renormalizae = true;
 	smooth_noise_var = 2.0;
 	x0var = 0;
+
+	// update hyperparameters with above var
+	mHyperparameters.tupleInt.insert(pair<string,int>("dH",dH));
+	// mHyperparameters.tupleBool.insert(pair<string,bool>("rendering",rendering));
+	// mHyperparameters.tupleBool.insert(pair<string,bool>("rendering",rendering));
 
 }
 
