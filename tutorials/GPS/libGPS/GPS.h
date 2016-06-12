@@ -13,6 +13,9 @@
 #include "algorithm/algorithm.h"
 #include "algorithm/algorithm_badmm.h"
 
+// utility and hyperparameter header
+#include "utility/utility.h"
+
 namespace GPS_NSpace
 {
 

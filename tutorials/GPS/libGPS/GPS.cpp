@@ -5,6 +5,11 @@ namespace GPS_NSpace
 
 GPS::GPS()
 {
+	hyperparameters mHyperparameters;
+	cout<<mHyperparameters.target_state<<endl;
+
+
+
 	_conditions  = 4;
 	_train_idx   = 4; // python range
 	_test_idx    = 4; // python range
