@@ -21,20 +21,28 @@ using namespace std;
 class GPS
 {
 public:
+// --------------------------------------------------
+//  functions
 	GPS();
 	void run();
 	void take_sample(int iter, int cond, int i);
 	void take_iteration();
 	void take_policy_samples();
 // --------------------------------------------------
-	int conditions;
-	int train_idx; // python range
-	int test_idx;  // python range
+//  common config
+// --------------------------------------------------
+//  agent config
+// --------------------------------------------------
+//  algorithm config
 	int iterations;
 	int num_samples;
 // --------------------------------------------------
+//  GPS variable
 	unique_ptr<agent> mAgent;
 	unique_ptr<algorithm> mAlgorithm;
+	int _train_idx; // python range
+	int _test_idx;  // python range
+	int _conditions;
 
 };
 

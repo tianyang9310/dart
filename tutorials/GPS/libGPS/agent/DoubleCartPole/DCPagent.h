@@ -15,6 +15,9 @@ public:
 	DCPagent();
 	void sample();
 	void get_samples();
+// --------------------------------------------------
+//  DCPagent config
+	bool rendering;
 
 };
 

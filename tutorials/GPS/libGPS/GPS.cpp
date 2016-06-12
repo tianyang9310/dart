@@ -5,9 +5,9 @@ namespace GPS_NSpace
 
 GPS::GPS()
 {
-	conditions  = 4;
-	train_idx   = 4; // python range
-	test_idx    = 4; // python range
+	_conditions  = 4;
+	_train_idx   = 4; // python range
+	_test_idx    = 4; // python range
 	iterations  = 10;
 	num_samples = 5;
 
@@ -20,14 +20,14 @@ void GPS::run()
 {
 	for (int iter=0; iter<iterations; iter++)
 	{
-		for (int cond=0; cond<train_idx; cond++)
+		for (int cond=0; cond<_train_idx; cond++)
 		{
 			for (int i=0; i<num_samples; i++)
 			{
 				take_sample(iter, cond, i);
 			}
 		}
-		for (int cond=0; cond<train_idx; cond++)
+		for (int cond=0; cond<_train_idx; cond++)
 		{
 		   	//auto traj_sample_lists = mAgent->get_samples(cond, -num_samples);
 		}
@@ -52,7 +52,7 @@ void GPS::take_policy_samples()
 {
 	// int N = verbose_policy_trials;
 	// pol_samples = placeholders, matrix of samples
-	for (int cond=0; cond<test_idx; cond++)
+	for (int cond=0; cond<_test_idx; cond++)
 	{
 		for (int i=0; /*i<N*/; i++)
 		{
