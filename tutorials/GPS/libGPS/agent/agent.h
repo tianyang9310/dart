@@ -12,18 +12,13 @@ namespace GPS_NSpace
 using namespace std;
 
 
-class mySample
-{
-public:
-	mySample();
-	int T;
-};
-
+class mySample;
 
 class agent
 {
 public:
-	agent(hyperparameters& mHyperparameters);
+	agent();
+	agent(bool placeholders);
 	virtual void sample();
 	virtual void get_samples();
 // --------------------------------------------------
@@ -40,12 +35,18 @@ public:
 
 // --------------------------------------------------
 //  Agent member var
-	hyperparameters& mHyperparameters;
 	vector<mySample> _samples;
 
 };
 
 
+class mySample
+{
+public:
+	mySample();
+	int T;
+	agent mAgent;
+};
 
 
 }

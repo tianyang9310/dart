@@ -2,13 +2,20 @@
 
 namespace GPS_NSpace
 {
+extern hyperparameters mHyperparameters;
 
 mySample::mySample()
 {
 	T = 10;
 }
 
-agent::agent(hyperparameters& mHyperparameters):mHyperparameters(mHyperparameters),_samples(mHyperparameters.conditions)
+agent::agent()
+{
+	// placeholders doing nothing
+	// should be able to remove when add mysample contructor function
+}
+
+agent::agent(bool placeholders):_samples(mHyperparameters.conditions)
 {
 	cout<<"agent constructor "<<endl;
 

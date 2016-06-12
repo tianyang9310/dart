@@ -3,8 +3,11 @@
 namespace GPS_NSpace
 {
 
-GPS::GPS():mHyperparameters()
+hyperparameters mHyperparameters;
+
+GPS::GPS()
 {
+	mHyperparameters = hyperparameters();
 
 	_conditions  = mHyperparameters.conditions;
 	mHyperparameters.tupleInt.insert(pair<string,int>("train_conditions",_conditions));
@@ -12,8 +15,11 @@ GPS::GPS():mHyperparameters()
 	_test_idx    = _train_idx; // python range
 
 	// initialize agent and algorithm
-	mAgent		= unique_ptr<agent>(new DCPagent(mHyperparameters));
+	mAgent		= unique_ptr<agent>(new DCPagent());
 	mAlgorithm	= unique_ptr<algorithm>(new algorithm_badmm());
+
+	//cout<<mHyperparameters.tupleInt["dH"]<<endl;
+	//cout<<mHyperparameters.tupleBool["rendering"]<<endl;
 }
 
 void GPS::run()

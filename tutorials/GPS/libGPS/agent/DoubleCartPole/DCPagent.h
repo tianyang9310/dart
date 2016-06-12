@@ -11,10 +11,11 @@ namespace GPS_NSpace
 
 using namespace std;
 
+
 class DCPagent: public agent
 {
 public:
-	DCPagent(hyperparameters& _mHyperparameters);
+	DCPagent();
 	void sample();
 	void get_samples();
 // --------------------------------------------------

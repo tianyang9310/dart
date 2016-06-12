@@ -22,6 +22,8 @@ namespace GPS_NSpace
 
 using namespace std;
 
+
+
 class GPS
 {
 public:
@@ -44,7 +46,6 @@ public:
 //  GPS variable
 	unique_ptr<agent> mAgent;
 	unique_ptr<algorithm> mAlgorithm;
-	hyperparameters mHyperparameters;
 	int _train_idx; // python range
 	int _test_idx;  // python range
 	int _conditions;

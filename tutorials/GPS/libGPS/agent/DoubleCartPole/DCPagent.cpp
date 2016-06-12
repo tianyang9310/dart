@@ -3,7 +3,9 @@
 namespace GPS_NSpace
 {
 
-DCPagent::DCPagent(hyperparameters& _mHyperparameters):agent(_mHyperparameters)
+extern hyperparameters mHyperparameters;
+
+DCPagent::DCPagent():agent(true)
 {
 	rendering = true;
 	mHyperparameters.tupleBool.insert(pair<string,bool>("rendering",rendering));
@@ -19,6 +21,7 @@ void DCPagent::get_samples()
 {
 	cout<<"DCP_agent get samples"<<endl;
 }
+
 
 
 }
