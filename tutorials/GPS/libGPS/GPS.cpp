@@ -9,6 +9,7 @@ GPS::GPS()
 {
 	mHyperparameters = hyperparameters();
 
+
 	_conditions  = mHyperparameters.conditions;
 	mHyperparameters.tupleInt.insert(pair<string,int>("train_conditions",_conditions));
 	_train_idx   = _conditions; // python range

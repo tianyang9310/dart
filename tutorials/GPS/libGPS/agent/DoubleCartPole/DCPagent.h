@@ -8,11 +8,21 @@
 
 #include "dart/dart.h"
 
+#include "Simulator/WorldSetup.h"
+#include "Simulator/MyWindow.h"
+#include "Simulator/Controller.h"
+
+
 namespace GPS_NSpace
 {
 
 using namespace std;
-
+using namespace dart::dynamics;
+using namespace dart::simulation;
+using namespace dart::utils;
+using namespace dart::common;
+using namespace dart::math;
+using namespace dart::gui;
 
 class DCPagent: public agent
 {

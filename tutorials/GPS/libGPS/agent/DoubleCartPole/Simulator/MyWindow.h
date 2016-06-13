@@ -1,9 +1,9 @@
-#ifndef MYWINDOW_H_
-#define MYWINDOW_H_
+#ifndef MYWINDOW_H
+#define MYWINDOW_H
 
 #include "dart/dart.h"
 #include "Controller.h"
-#include "DoubleCartPoleUtility.h"
+
 
 using namespace dart::dynamics;
 using namespace dart::simulation;

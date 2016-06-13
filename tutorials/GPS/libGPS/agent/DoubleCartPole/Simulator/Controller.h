@@ -2,8 +2,6 @@
 #define CONTROLLER_H 
 
 #include "dart/dart.h"
-#include "../../DDP/libDDP/DDP.h"
-#include "DoubleCartPoleUtility.h"
 #include <functional>
 
 using namespace dart::dynamics;
@@ -13,7 +11,6 @@ using namespace dart::common;
 using namespace dart::math;
 using namespace dart::gui;
 
-using namespace DoubleCartPoleUtility;
 using namespace Eigen;
 using namespace std;
 
@@ -22,8 +19,7 @@ class Controller
 public:
 	Controller(WorldPtr mDDPWorld);
 //------------------------------------------------------------------------------------------------
-	std::unique_ptr<DDP> mDDP;
-	Eigen::VectorXd x0;
+
 };
 
 #endif
