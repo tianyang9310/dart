@@ -15,6 +15,7 @@ using namespace dart::gui;
 class MyWindow : public dart::gui::SimWindow {
 public:
 	MyWindow(WorldPtr world);
+	MyWindow();
 	
 	void timeStepping() override;
 	

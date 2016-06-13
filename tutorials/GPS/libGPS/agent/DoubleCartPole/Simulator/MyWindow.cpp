@@ -7,6 +7,10 @@ MyWindow::MyWindow(WorldPtr world)
 	mController = std::unique_ptr<Controller>(new Controller(world));
 }
 
+MyWindow::MyWindow()
+{
+
+}
 
 
 void MyWindow::timeStepping() 

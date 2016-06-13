@@ -18,6 +18,7 @@ class Controller
 {
 public:
 	Controller(WorldPtr mDDPWorld);
+	Controller();
 //------------------------------------------------------------------------------------------------
 
 };

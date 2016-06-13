@@ -11,3 +11,8 @@ Controller::Controller(WorldPtr mDDPWorld)
 {
 
 }
+
+Controller::Controller()
+{
+
+}

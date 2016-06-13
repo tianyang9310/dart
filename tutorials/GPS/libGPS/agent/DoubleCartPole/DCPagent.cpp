@@ -31,7 +31,7 @@ void DCPagent::_setup_world()
 	WorldPtr mWorld = std::make_shared<World>();
 	WorldSetup(mWorld);
 
-	MyWindow window(mWorld);
+	window = MyWindow(mWorld);
 
 	int argc = 0;
 	char* argv[] = {""};
