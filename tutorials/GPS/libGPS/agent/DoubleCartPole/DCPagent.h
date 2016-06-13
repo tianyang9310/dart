@@ -6,6 +6,8 @@
 #include "../agent.h"
 #include "../../utility/utility.h"
 
+#include "dart/dart.h"
+
 namespace GPS_NSpace
 {
 
@@ -18,6 +20,7 @@ public:
 	DCPagent();
 	void sample();
 	void get_samples();
+	void _setup_world();
 // --------------------------------------------------
 //  DCPagent config
 	bool rendering;

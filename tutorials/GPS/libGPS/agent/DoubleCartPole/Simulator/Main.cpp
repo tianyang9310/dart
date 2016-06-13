@@ -1,30 +1,21 @@
-#include "DCPagent.h"
+#include <iostream>
+#include "dart/dart.h"
+#include "MyWindow.h"
+#include "WorldSetup.h"
+#include "Controller.h"
+#include "DoubleCartPoleUtility.h"
+//#include "../../DDP/libDDP/DDP.h"
 
-namespace GPS_NSpace
-{
 
-extern hyperparameters mHyperparameters;
+using namespace dart::dynamics;
+using namespace dart::simulation;
+using namespace dart::utils;
+using namespace dart::common;
+using namespace dart::math;
+using namespace dart::gui;
 
-DCPagent::DCPagent():agent(true)
-{
-	rendering = true;
-	mHyperparameters.tupleBool.insert(pair<string,bool>("rendering",rendering));
 
-	// setup_conditions, augment some variable to conditions, this method is not necessary since we can setup it in hyperparamters
-	// ('x0', 'x0var', 'pos_body_idx', 'pos_body_offset', 'noisy_body_idx', 'noisy_body_var') populate to vector as vector
-}
-
-void DCPagent::sample()
-{
-	cout<<"DCP_agent sample"<<endl;
-}
-
-void DCPagent::get_samples()
-{
-	cout<<"DCP_agent get samples"<<endl;
-}
-
-void _setup_world()
+int main(int argc, char* argv[])
 {
 	WorldPtr mWorld = std::make_shared<World>();
 	WorldSetup(mWorld);
@@ -47,9 +38,5 @@ void _setup_world()
 	window.initWindow(1024, 768, "Vehicle");
 	glutMainLoop();
 
-
-
-}
-
-
+	return 0;
 }
