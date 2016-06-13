@@ -19,6 +19,7 @@ agent::agent(bool placeholders):_samples(mHyperparameters.conditions)
 {
 	cout<<"agent constructor "<<endl;
 
+// ---------------------------------------
 	dH	= 0;
 	// auto noise_body_idx;
 	// auto noise_body_var;
@@ -33,6 +34,26 @@ agent::agent(bool placeholders):_samples(mHyperparameters.conditions)
 	mHyperparameters.tupleInt.insert(pair<string,int>("dH",dH));
 	// mHyperparameters.tupleBool.insert(pair<string,bool>("rendering",rendering));
 	// mHyperparameters.tupleBool.insert(pair<string,bool>("rendering",rendering));
+	
+// ---------------------------------------
+	T = mHyperparameters.T;
+	// dU sensor dims action
+	// x_data_types state_include
+	// obs_data_types obs_include
+	// meta_data_types meta_include
+	
+
+// ---------------------------------------
+//  list of indices for each data type in stateX
+// ---------------------------------------
+//  list of indices for each data type in obs
+// ---------------------------------------
+//  list of indices for each data type in meta data
+// ---------------------------------------
+//  _x_data_idx
+//  _obs_data_idx
+//  _meta_data_idx
+
 
 }
 

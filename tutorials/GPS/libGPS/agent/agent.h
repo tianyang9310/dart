@@ -36,7 +36,7 @@ public:
 // --------------------------------------------------
 //  Agent member var
 	vector<mySample> _samples;
-
+	int T;
 };
 
 

@@ -10,6 +10,8 @@ DCPagent::DCPagent():agent(true)
 	rendering = true;
 	mHyperparameters.tupleBool.insert(pair<string,bool>("rendering",rendering));
 
+	// setup_conditions
+	// ('x0', 'x0var', 'pos_body_idx', 'pos_body_offset', 'noisy_body_idx', 'noisy_body_var') populate to vector as vector
 }
 
 void DCPagent::sample()
