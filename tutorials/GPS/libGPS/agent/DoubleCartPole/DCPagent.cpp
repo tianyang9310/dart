@@ -6,7 +6,11 @@ namespace GPS_NSpace
 
 extern hyperparameters mHyperparameters;
 
-DCPagent::DCPagent():agent(true)
+DCPagent::DCPagent()
+{
+	// placeholders
+}
+DCPagent::DCPagent(bool placeholders):agent(true)
 {
 	// update mHyperparameters
 	rendering = true;

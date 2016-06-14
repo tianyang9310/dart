@@ -27,6 +27,7 @@ class DCPagent: public agent
 {
 public:
 	DCPagent();
+	DCPagent(bool placeholders);
 	void sample();
 	void get_samples();
 	void _setup_world();
