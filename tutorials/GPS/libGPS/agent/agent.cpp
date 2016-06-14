@@ -38,7 +38,7 @@ agent::agent(bool placeholders):_samples(mHyperparameters.conditions)
 	
 // ---------------------------------------
 	T = mHyperparameters.T;
-	// dU sensor dims action
+	dU = mHyperparameters.SensorDim["action"];
 	// x_data_types state_include
 	// obs_data_types obs_include
 	// meta_data_types meta_include
@@ -46,8 +46,10 @@ agent::agent(bool placeholders):_samples(mHyperparameters.conditions)
 
 // ---------------------------------------
 //  list of indices for each data type in stateX
+	dX = mHyperparameters.SensorDim["state"];
 // ---------------------------------------
 //  list of indices for each data type in obs
+	dU = mHyperparameters.SensorDim["observation"];
 // ---------------------------------------
 //  list of indices for each data type in meta data
 // ---------------------------------------

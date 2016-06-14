@@ -6,6 +6,13 @@ namespace GPS_NSpace
 hyperparameters::hyperparameters()	
 {
 	// -------------------
+	// sensor dim
+	SensorDim["action"]=1;
+	SensorDim["state"]=6;
+	SensorDim["observation"]=6;
+	
+	map<string,int> SensorDim;
+	// -------------------
 	// agent
 	typeAgent = "DoubleCartPole";
 	target_state.resize(6);

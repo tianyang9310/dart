@@ -48,9 +48,9 @@ algorithm::algorithm(bool placeholder)
 	//grab a few value from the agent
 	algorithmAgent = mHyperparameters.hyperparametersAgent;
 	T=algorithmAgent->T;
-	//dU=algorithmAgent->dU;
-	//dX=algorithmAgent->dX;
-	//dO=algorithmAgent->dO;
+	dU=algorithmAgent->dU;
+	dX=algorithmAgent->dX;
+	dO=algorithmAgent->dO;
 }
 
 void algorithm::iteration()

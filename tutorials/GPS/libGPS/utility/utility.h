@@ -19,6 +19,11 @@ class hyperparameters
 public:
 	hyperparameters();
 	// -------------------
+	// sensor dim
+	map<string,int> SensorDim;
+	
+	
+	// -------------------
 	// agent
 	string typeAgent;
 	VectorXd target_state;
