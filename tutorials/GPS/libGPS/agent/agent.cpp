@@ -1,4 +1,5 @@
 #include "agent.h"
+#include "../utility/utility.h"
 
 namespace GPS_NSpace
 {

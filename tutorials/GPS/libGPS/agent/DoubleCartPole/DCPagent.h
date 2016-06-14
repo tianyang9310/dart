@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 #include "../agent.h"
-#include "../../utility/utility.h"
 
 #include "dart/dart.h"
 

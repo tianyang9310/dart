@@ -4,8 +4,10 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 #include <algorithm>
 #include <Eigen/Eigen>
+#include "../agent/agent.h"
 
 namespace GPS_NSpace{
 
@@ -32,6 +34,7 @@ public:
 	// ## sensor_dims
 	// ## state_include
 	// ##obs_include
+	shared_ptr<agent> hyperparametersAgent;
 
 	// -------------------
 	// algorithm

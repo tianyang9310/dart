@@ -16,7 +16,9 @@ GPS::GPS()
 	_test_idx    = _train_idx; // python range
 
 	// initialize agent and algorithm
-	mAgent		= unique_ptr<agent>(new DCPagent());
+	mAgent		= make_shared<agent>(new DCPagent());
+	mHyperparameters.hyperparametersAgent = mAgent;
+
 	mAlgorithm	= unique_ptr<algorithm>(new algorithm_badmm());
 
 	//cout<<mHyperparameters.tupleInt["dH"]<<endl;

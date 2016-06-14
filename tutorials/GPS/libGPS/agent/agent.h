@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "../utility/utility.h"
 
 namespace GPS_NSpace
 {
