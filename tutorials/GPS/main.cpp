@@ -9,9 +9,9 @@ int main()
 	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS());
 
 //	debugging agent class
-	mGPS->mAgent->sample();
-	mGPS->mAgent->get_samples();
-	mGPS->mAlgorithm->iteration();
+//  (dynamic_pointer_cast<DCPagent>(mGPS->mAgent))->sample();
+//	mGPS->mAgent->get_samples();
+//	mGPS->mAlgorithm->iteration();
 
 	return 0;
 }
