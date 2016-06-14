@@ -44,7 +44,7 @@ public:
 	int num_samples;
 // --------------------------------------------------
 //  GPS variable
-	shared_ptr<DCPagent> mAgent;
+    shared_ptr<agent> mAgent;
 	unique_ptr<algorithm> mAlgorithm;
 	int _train_idx; // python range
 	int _test_idx;  // python range
