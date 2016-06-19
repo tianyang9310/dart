@@ -2,11 +2,12 @@
 #define CARTPOLEUTILITY_H
 
 #include "dart/dart.h"
-#include "../libDDP/type.h"
+#include "../../DDP/libDDP/type.h"
 
 namespace CartPoleUtility{
 
 using namespace Eigen;
+using namespace DDP_NSpace;
 
 VectorXd CartPoleStepDynamics(const VectorXd xi, const VectorXd ui, double m_c = 1, double m_p =1, double l = 0.5, double g = 9.81, double delta_t = 0.001);
 
