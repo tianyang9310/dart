@@ -23,14 +23,12 @@ int main(int argc, char* argv[])
 	WorldPtr mWorld = make_shared<World>();
 	WorldSetup(mWorld);
 
-	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS());
+	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS(20,5));
 
 // ---------------------------------------------------------
 // DDP initialization
 	double delta_t = mWorld->getTimeStep();
 	Vector4d x0  = Vector4d::Zero();
-	x0(1)  = 0.1*M_PI;
-
 
 	Vector4d	xd	= Vector4d::Zero();
 	xd(1)				= M_PI;
@@ -53,6 +51,13 @@ int main(int argc, char* argv[])
 	LQR.push_back(make_tuple(Q,R,Qf));
 
 	mGPS->mDDP = unique_ptr<DDP>(new DDP(2000, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(x0,xd,1)));
+
+	for_each(mGPS->x0Bundle.begin(),mGPS->x0Bundle.end(),[=](Vector4d& x0Bundle_sub){x0Bundle_sub=x0;});
+	mGPS->x0Bundle[0](1)=-1/3.0*M_PI;
+	mGPS->x0Bundle[1](1)=-1/6.0*M_PI;
+	mGPS->x0Bundle[2](1)=   0.0*M_PI;
+	mGPS->x0Bundle[3](1)= 1/6.0*M_PI;
+	mGPS->x0Bundle[4](1)= 1/3.0*M_PI;
 
 // ---------------------------------------------------------
 
