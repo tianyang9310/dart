@@ -23,12 +23,13 @@ int main(int argc, char* argv[])
 	WorldPtr mWorld = make_shared<World>();
 	WorldSetup(mWorld);
 
-	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS(20,5));
+	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS(1,5));
 
 // ---------------------------------------------------------
 // DDP initialization
-	double delta_t = mWorld->getTimeStep();
-	Vector4d x0  = Vector4d::Zero();
+	int T				= 2000;
+	double delta_t		= mWorld->getTimeStep();
+	Vector4d x0			= Vector4d::Zero();
 
 	Vector4d	xd	= Vector4d::Zero();
 	xd(1)				= M_PI;
@@ -50,14 +51,19 @@ int main(int argc, char* argv[])
 
 	LQR.push_back(make_tuple(Q,R,Qf));
 
-	mGPS->mDDP = unique_ptr<DDP>(new DDP(2000, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(x0,xd,1)));
-
 	for_each(mGPS->x0Bundle.begin(),mGPS->x0Bundle.end(),[=](Vector4d& x0Bundle_sub){x0Bundle_sub=x0;});
 	mGPS->x0Bundle[0](1)=-1/3.0*M_PI;
 	mGPS->x0Bundle[1](1)=-1/6.0*M_PI;
 	mGPS->x0Bundle[2](1)=   0.0*M_PI;
 	mGPS->x0Bundle[3](1)= 1/6.0*M_PI;
 	mGPS->x0Bundle[4](1)= 1/3.0*M_PI;
+
+	mGPS->DDPBundle[0] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[0],xd,1)));
+	mGPS->DDPBundle[1] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[1],xd,1)));
+	mGPS->DDPBundle[2] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[2],xd,1)));
+	mGPS->DDPBundle[3] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[3],xd,1)));
+	mGPS->DDPBundle[4] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[4],xd,1)));
+	mGPS->mDDP = mGPS->DDPBundle[4];
 
 // ---------------------------------------------------------
 

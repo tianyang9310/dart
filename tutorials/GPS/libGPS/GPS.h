@@ -18,11 +18,12 @@ public:
 	void run();
 
 // --------------------
-	std::unique_ptr<DDP> mDDP;
+	std::shared_ptr<DDP> mDDP;
 	int numDDPIters;
 	int DDPIter;
 	int conditions;
 	vector<Vector4d> x0Bundle;
+	vector<shared_ptr<DDP>> DDPBundle;
 
 };
 
