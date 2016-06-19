@@ -1,6 +1,9 @@
 #include "DDP.h"
 //#define mDebug_DDP
 
+namespace DDP_NSpace
+{
+
 DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR, std::tuple<Eigen::VectorXd, Eigen::VectorXd, int> StateBundle):
 	T(T),
 	Vx(T),
@@ -393,4 +396,7 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
 			(Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui).finished());
 	fx  = fxu_bundle.leftCols(_xi.rows());
 	fu	= fxu_bundle.rightCols(_ui.rows());
+}
+
+
 }

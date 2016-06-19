@@ -17,6 +17,9 @@ using namespace dart::math;
 using namespace dart::gui;
 
 
+namespace DDP_NSpace
+{
+
 class DDP
 {
 public:
@@ -149,6 +152,8 @@ void write2file_eigen(dataFormat_eigen data, const std::string name)
 	outFile.precision(8);
 	outFile<<data<<std::endl;
 	outFile.close();
+}
+
 }
 
 
