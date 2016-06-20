@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <functional>
+#include "utility.h"
 #include "../../DDP/libDDP/DDP.h"
 
 namespace GPS_NSpace

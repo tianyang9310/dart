@@ -14,6 +14,7 @@ GPS::GPS(int _numDDPIters, int _conditions):
 
 void GPS::run()
 {
+
 	for(int i=0; i<numDDPIters; i++)
 	{
 		mDDP->trajopt();
