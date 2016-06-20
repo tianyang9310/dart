@@ -37,7 +37,7 @@ DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen
 
 	x0 = std::get<0>(StateBundle);
 	xd = std::get<1>(StateBundle);
-	mu    = 0;
+	mu    = 0.1;
 	alpha = 1;
 // matrix initialization
 	x_dim = x0.rows();
@@ -128,7 +128,7 @@ void DDP::trajopt()
 			mu +=5;
 		}
 	}
-	mu = 0;
+	mu = 0.1;
 // --------------------------------------------------
 #ifdef mDebug_DDP
 //  backward debugging
