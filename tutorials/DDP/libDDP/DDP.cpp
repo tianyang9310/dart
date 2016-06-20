@@ -13,7 +13,7 @@ DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen
 	Vxx(T),
 	k(T),
 	K(T),
-	Quu_neg_inv(T),
+	Quu_inv(T),
 	gx(T)
 {
 // --------------------------------------------------
@@ -70,13 +70,13 @@ DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen
 		Vxx[i].resize(x_dim,x_dim);
 		k[i].resize(u_dim,1);
 		K[i].resize(u_dim,x_dim);
-		Quu_neg_inv[i].resize(u_dim,u_dim);
+		Quu_inv[i].resize(u_dim,u_dim);
 
 		Vx[i].setZero();
 		Vxx[i].setZero();
 		k[i].setZero();
 		K[i].setZero();
-		Quu_neg_inv[i].setZero();
+		Quu_inv[i].setZero();
 	}
 
 #ifdef mDebug_DDP
@@ -290,8 +290,8 @@ bool DDP::backwardpass()
 		//K[i]	= -Qux_reg/Quu_reg(0);
 		k[i]	= Quu_reg.ldlt().solve(-Qu);
 		K[i]	= Quu_reg.ldlt().solve(-Qux_reg);
-		Quu_neg_inv[i]
-				= -Quu_reg.inverse();
+		Quu_inv[i]
+				= Quu_reg.inverse();
 
 		dV	   += (Eigen::Vector2d() << k[i].transpose()*Qu, 0.5*k[i].transpose()*Quu*k[i]).finished();
 		Vx[i]   = Qx+K[i].transpose()*Quu*k[i]+K[i].transpose()*Qu+Qux.transpose()*k[i];
