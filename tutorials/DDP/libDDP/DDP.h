@@ -51,6 +51,8 @@ public:
 	std::vector<Eigen::MatrixXd> Vxx;
 	std::vector<Eigen::MatrixXd> k;
 	std::vector<Eigen::MatrixXd> K;
+	std::vector<Eigen::MatrixXd> Quu_neg_inv;
+	std::vector<std::function<Eigen::VectorXd(Eigen::VectorXd)>> gx;
 	Eigen::MatrixXd fx;
 	Eigen::MatrixXd fu;
 	Eigen::MatrixXd Cx;
