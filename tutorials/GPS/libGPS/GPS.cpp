@@ -7,14 +7,16 @@ GPS::GPS(int _numDDPIters, int _conditions):
 	numDDPIters(_numDDPIters),
 	conditions(_conditions),
 	x0Bundle(_conditions),
-	DDPBundle(_conditions)
+	DDPBundle(_conditions),
+	DDPPolicyBundle(_conditions)
 {
 	DDPIter		= 0;
 }
 
 void GPS::run()
 {
-	GaussianSamplerDebug();
+	// GaussianSamplerDebug();
+
 	initialDDPPolicy();
 }
 
@@ -31,9 +33,11 @@ void GPS::initialDDPPolicy()
 			cout<<"########################################"<<endl;
 		}
 
+		DDPPolicyBundle[_cond]=make_pair(DDPBundle[_cond]->gx, DDPBundle[_cond]->Quu_neg_inv);
 	}
 }
 
+// -----------------------------------------
 inline void GPS::GaussianSamplerDebug()
 {
 	const int nrolls=10000;
