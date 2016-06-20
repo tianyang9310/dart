@@ -3,10 +3,11 @@
 namespace GPS_NSpace
 {
 
-GPS::GPS(int _numDDPIters, int _conditions, int T):
-	T(T),
+GPS::GPS(int _T, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics):
+	T(_T),
 	numDDPIters(_numDDPIters),
 	conditions(_conditions),
+	StepDynamics(_StepDynamics),
 	x0Bundle(_conditions),
 	DDPBundle(_conditions),
 	DDPPolicyBundle(_conditions)
@@ -18,7 +19,8 @@ void GPS::run()
 {
 	// GaussianSamplerDebug();
 
-	initialDDPPolicy();
+    initialDDPPolicy();
+	initialNNPolicy();
 }
 
 void GPS::initialDDPPolicy()
@@ -34,8 +36,38 @@ void GPS::initialDDPPolicy()
 			cout<<"########################################"<<endl;
 		}
 
-		DDPPolicyBundle[_cond]=make_pair(DDPBundle[_cond]->gx, DDPBundle[_cond]->Quu_neg_inv);
+		DDPPolicyBundle[_cond]=make_pair(DDPBundle[_cond]->gx, DDPBundle[_cond]->Quu_inv);
 	}
+}
+
+void GPS::initialNNPolicy()
+{
+//  generate traj samples from mixture of DDP policies
+
+	auto result = trajSampleGenerator(x0Bundle[0],DDPPolicyBundle[0].first,DDPPolicyBundle[0].second);
+	cout<<result->x<<endl;
+	cin.get();
+//  initilization of theta_star
+
+}
+
+unique_ptr<sample> GPS::trajSampleGenerator(VectorXd _x0, vector<function<VectorXd(VectorXd)>> _gx, vector<MatrixXd> _Quu_inv)
+{
+	unique_ptr<sample> sample_ptr = unique_ptr<sample>(new sample());	
+
+	sample_ptr->x.resize(_x0.rows(),T);
+	sample_ptr->u.resize(_Quu_inv[0].rows(),T);
+
+	sample_ptr->x.col(0)=_x0;
+	for (int i=0; i<T-1; i++)
+	{
+		sample_ptr->u.col(i) = GaussianSampler(_gx[i](sample_ptr->x.col(i)), _Quu_inv[i]);
+		sample_ptr->x.col(i+1) = StepDynamics(sample_ptr->x.col(i),sample_ptr->u.col(i));
+	}
+
+	sample_ptr->u.col(T-1) = VectorXd::Constant(sample_ptr->u.col(0).size(),std::nan("0"));
+
+	return sample_ptr;
 }
 
 // -----------------------------------------

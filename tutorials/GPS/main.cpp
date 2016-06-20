@@ -50,10 +50,14 @@ int main(int argc, char* argv[])
 
 	LQR.push_back(make_tuple(Q,R,Qf));
 
-// ---------------------------------------------------------
-	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS(3,5,T));
+	int numDDPIters		 = 3;
+	int conditions  	 = 5;
+	int numSamplePerCond = 10*conditions;
 
-	for_each(mGPS->x0Bundle.begin(),mGPS->x0Bundle.end(),[=](Vector4d& x0Bundle_sub){x0Bundle_sub=x0;});
+// ---------------------------------------------------------
+	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS(T,numDDPIters,conditions,numSamplePerCond,bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone())));
+
+	for_each(mGPS->x0Bundle.begin(),mGPS->x0Bundle.end(),[=](VectorXd& x0Bundle_sub){x0Bundle_sub=x0;});
 	mGPS->x0Bundle[0](1)=-1/3.0*M_PI;
 	mGPS->x0Bundle[1](1)=-1/6.0*M_PI;
 	mGPS->x0Bundle[2](1)=   0.0*M_PI;
@@ -65,7 +69,7 @@ int main(int argc, char* argv[])
 	mGPS->DDPBundle[2] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[2],xd,1)));
 	mGPS->DDPBundle[3] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[3],xd,1)));
 	mGPS->DDPBundle[4] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[4],xd,1)));
-	mGPS->mDDP = mGPS->DDPBundle[4];
+	mGPS->mDDP = mGPS->DDPBundle[0];
 
 // ---------------------------------------------------------
 
