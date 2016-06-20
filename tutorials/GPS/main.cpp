@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 	WorldPtr mWorld = make_shared<World>();
 	WorldSetup(mWorld);
 
-	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS(1,5));
+	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS(3,5));
 
 // ---------------------------------------------------------
 // DDP initialization

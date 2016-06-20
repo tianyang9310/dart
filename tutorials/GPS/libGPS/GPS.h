@@ -17,14 +17,18 @@ class GPS
 public:
 	GPS(int _numDDPIters, int _conditions);
 	void run();
-
+	void initialDDPPolicy();
 // --------------------
-	std::shared_ptr<DDP> mDDP;
+//	built-in function for debugging
+	void GaussianSamplerDebug();
+// --------------------
+	shared_ptr<DDP> mDDP;
 	int numDDPIters;
 	int DDPIter;
 	int conditions;
 	vector<Vector4d> x0Bundle;
 	vector<shared_ptr<DDP>> DDPBundle;
+	vector<pair<function<VectorXd(VectorXd)>,MatrixXd>> DDPPolicyBundle;
 
 };
 

@@ -14,14 +14,51 @@ GPS::GPS(int _numDDPIters, int _conditions):
 
 void GPS::run()
 {
+	GaussianSamplerDebug();
+	initialDDPPolicy();
+}
 
-	for(int i=0; i<numDDPIters; i++)
+void GPS::initialDDPPolicy()
+{
+	for (int _cond=0; _cond<conditions; _cond++)
 	{
-		mDDP->trajopt();
-		std::cout<<"########################################"<<std::endl;
-		std::cout<<" Finish "<<++DDPIter<<"th DDP iteration"<<std::endl;
-		std::cout<<"########################################"<<std::endl;
+		for(int i=0; i<numDDPIters; i++)
+		{
+			DDPBundle[_cond]->trajopt();
+			cout<<"########################################"<<endl;
+			cout<<"  "<<_cond<<" DDP finish "<<(DDPIter)%numDDPIters+1+numDDPIters*(DDPIter/(numDDPIters*conditions))<<"th iteration"<<endl;
+			DDPIter++;
+			cout<<"########################################"<<endl;
+		}
+
 	}
+}
+
+inline void GPS::GaussianSamplerDebug()
+{
+	const int nrolls=10000;
+	const int nstars=100;   	
+	int p[10]={};
+
+	VectorXd numberlog;
+	numberlog.resize(nrolls);
+	for (int i=0; i<nrolls; ++i) {
+	double number;
+	auto tmp = GaussianSampler((VectorXd(1)<<5).finished(),(MatrixXd(1,1)<<10).finished());
+	number = tmp(0);
+	numberlog(i)=number;
+	if ((number>=0.0)&&(number<10.0)) ++p[int(number)];
+	}
+
+	for (int i=0; i<10; ++i) {
+	cout << i << "-" << (i+1) << ": ";
+	cout << string(p[i]*nstars/nrolls,'*') << endl;
+	}
+
+	double mean = numberlog.mean();
+	cout<<"Mean is "<<mean<<endl;
+	cout<<"Variance is "<< (numberlog.array()-mean).square().sum()/double(nrolls)<<endl;
+	cin.get();
 }
 
 }

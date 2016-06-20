@@ -1,14 +1,13 @@
 #ifndef UTILITY_H
 #define UTILITY_H
 
-#include <random>
-#include <chrono>
+#include "eigenmvn.h"
 
 namespace GPS_NSpace{
 
-using namespace std;
+using namespace Eigen;
 
-double GaussianSampler(double mu, double sigma);
+VectorXd GaussianSampler(VectorXd mu, MatrixXd conv);
 
 }
 

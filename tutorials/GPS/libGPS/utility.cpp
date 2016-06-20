@@ -3,17 +3,13 @@
 namespace GPS_NSpace
 {
 
-double GaussianSampler(double mu, double sigma)
+VectorXd GaussianSampler(VectorXd mu, MatrixXd cov)
 {
 //  mu is mean
-//  sigma is standard deviation
+//  cov is the covariance
 
-	unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-	default_random_engine generator(seed);
-
-	normal_distribution<double> distribution(mu, sigma);
-
-	return distribution(generator);
+	EigenMultivariateNormal<double> normX_solver(mu, cov);
+	return normX_solver.samples(1);
 }
 
 }
