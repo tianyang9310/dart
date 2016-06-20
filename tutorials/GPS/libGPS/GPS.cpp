@@ -3,7 +3,8 @@
 namespace GPS_NSpace
 {
 
-GPS::GPS(int _numDDPIters, int _conditions):
+GPS::GPS(int _numDDPIters, int _conditions, int T):
+	T(T),
 	numDDPIters(_numDDPIters),
 	conditions(_conditions),
 	x0Bundle(_conditions),

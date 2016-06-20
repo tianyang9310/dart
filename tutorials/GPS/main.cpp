@@ -23,10 +23,9 @@ int main(int argc, char* argv[])
 	WorldPtr mWorld = make_shared<World>();
 	WorldSetup(mWorld);
 
-	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS(3,5));
 
 // ---------------------------------------------------------
-// DDP initialization
+// hyperparameter initialization
 	int T				= 2000;
 	double delta_t		= mWorld->getTimeStep();
 	Vector4d x0			= Vector4d::Zero();
@@ -50,6 +49,9 @@ int main(int argc, char* argv[])
 	vector<tuple<MatrixXd, MatrixXd, MatrixXd>> LQR;
 
 	LQR.push_back(make_tuple(Q,R,Qf));
+
+// ---------------------------------------------------------
+	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS(3,5,T));
 
 	for_each(mGPS->x0Bundle.begin(),mGPS->x0Bundle.end(),[=](Vector4d& x0Bundle_sub){x0Bundle_sub=x0;});
 	mGPS->x0Bundle[0](1)=-1/3.0*M_PI;

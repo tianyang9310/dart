@@ -8,7 +8,7 @@ MyWindow::MyWindow(WorldPtr world, unique_ptr<GPS> _mGPS):mGPS(std::move(_mGPS))
 
 void MyWindow::timeStepping() 
 {
-	if (mWorld->getSimFrames() == mGPS->mDDP->T-1)
+	if (mWorld->getSimFrames() == mGPS->T-1)
 	{
 		mGPS->run();
 		setWorld(mSnapShot->clone());

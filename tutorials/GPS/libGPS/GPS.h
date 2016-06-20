@@ -15,7 +15,7 @@ using namespace DDP_NSpace;
 class GPS
 {
 public:
-	GPS(int _numDDPIters, int _conditions);
+	GPS(int _numDDPIters, int _conditions, int T);
 	void run();
 	void initialDDPPolicy();
 	
@@ -26,7 +26,7 @@ public:
 	void GaussianSamplerDebug();
 // --------------------
 
-
+	int T;
 	shared_ptr<DDP> mDDP;
 	int numDDPIters;
 	int DDPIter;
