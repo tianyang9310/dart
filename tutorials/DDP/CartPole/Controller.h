@@ -16,6 +16,7 @@ using namespace dart::gui;
 using namespace CartPoleUtility;
 using namespace Eigen;
 using namespace std;
+using namespace DDP_NSpace;
 
 class Controller
 {

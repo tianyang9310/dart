@@ -7,6 +7,7 @@
 namespace DoubleCartPoleUtility{
 
 using namespace Eigen;
+using namespace DDP_NSpace;
 
 
 VectorXd DartStepDynamics(VectorXd xi, VectorXd ui, dart::simulation::WorldPtr mWorld);

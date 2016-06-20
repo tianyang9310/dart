@@ -1,15 +1,20 @@
 #include "DDP.h"
 //#define mDebug_DDP
 
+namespace DDP_NSpace
+{
+
 DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR, std::tuple<Eigen::VectorXd, Eigen::VectorXd, int> StateBundle):
+	StepDynamics(StepDynamics),
+	StepCost(StepCost),
+	FinalCost(FinalCost),
 	T(T),
 	Vx(T),
 	Vxx(T),
 	k(T),
 	K(T),
-	StepDynamics(StepDynamics),
-	StepCost(StepCost),
-	FinalCost(FinalCost)
+	Quu_neg_inv(T),
+	gx(T)
 {
 // --------------------------------------------------
 // constant initialization
@@ -64,12 +69,14 @@ DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen
 		Vx[i].resize(x_dim,1);
 		Vxx[i].resize(x_dim,x_dim);
 		k[i].resize(u_dim,1);
-		K[i].setZero(u_dim,x_dim);
+		K[i].resize(u_dim,x_dim);
+		Quu_neg_inv[i].resize(u_dim,u_dim);
 
 		Vx[i].setZero();
 		Vxx[i].setZero();
 		k[i].setZero();
 		K[i].setZero();
+		Quu_neg_inv[i].setZero();
 	}
 
 #ifdef mDebug_DDP
@@ -283,6 +290,8 @@ bool DDP::backwardpass()
 		//K[i]	= -Qux_reg/Quu_reg(0);
 		k[i]	= Quu_reg.ldlt().solve(-Qu);
 		K[i]	= Quu_reg.ldlt().solve(-Qux_reg);
+		Quu_neg_inv[i]
+				= -Quu_reg.inverse();
 
 		dV	   += (Eigen::Vector2d() << k[i].transpose()*Qu, 0.5*k[i].transpose()*Quu*k[i]).finished();
 		Vx[i]   = Qx+K[i].transpose()*Quu*k[i]+K[i].transpose()*Qu+Qux.transpose()*k[i];
@@ -301,6 +310,17 @@ void DDP::forwardpass()
 		u_new.col(i) = u.col(i) + alpha*k[i] + K[i]*(x_new.col(i)-x.col(i));
 		x_new.col(i+1) = StepDynamics(x_new.col(i), u_new.col(i));
 		C_new.row(i) = StepCost(x_new.col(i),u_new.col(i));
+
+		gx[i] = [=](Eigen::VectorXd xt)
+					{
+						return u.col(i) + alpha*k[i] + K[i]*(xt - x.col(i));
+					};
+
+		// debug gx
+		// std::cout<<"u_new is "<<u_new.col(i).transpose()<<std::endl;
+		// std::cout<<"gx is "<<gx[i](x_new.col(i)).transpose()<<std::endl;
+		// std::cout<<"press any key to continue...";
+		// std::cin.get();
 	}
 	u_new.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
 	C_new.row(T-1) = FinalCost(x_new.col(T-1));
@@ -393,4 +413,7 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
 			(Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui).finished());
 	fx  = fxu_bundle.leftCols(_xi.rows());
 	fu	= fxu_bundle.rightCols(_ui.rows());
+}
+
+
 }
