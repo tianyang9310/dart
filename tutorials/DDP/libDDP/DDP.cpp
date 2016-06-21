@@ -280,6 +280,8 @@ bool DDP::backwardpass()
 		}
 #endif
 // --------------------------------------------------
+//		TODO: change the analyze to cholesky decomposition
+//			  to find out whether Quu is PD
 		if (Quu_reg(0)<=0)
 		{
 			localDiverge = true;
