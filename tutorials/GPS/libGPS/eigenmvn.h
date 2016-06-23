@@ -49,14 +49,14 @@ namespace Eigen {
     template<typename Scalar>
       struct scalar_normal_dist_op
       {
-	static std::mt19937 rng;                        // The uniform pseudo-random algorithm
-	mutable std::normal_distribution<Scalar> norm; // gaussian combinator
-	
-	EIGEN_EMPTY_STRUCT_CTOR(scalar_normal_dist_op)
+    static std::mt19937 rng;                        // The uniform pseudo-random algorithm
+    mutable std::normal_distribution<Scalar> norm; // gaussian combinator
+    
+    EIGEN_EMPTY_STRUCT_CTOR(scalar_normal_dist_op)
 
-	template<typename Index>
-	inline const Scalar operator() (Index, Index = 0) const { return norm(rng); }
-	inline void seed(const uint64_t &s) { rng.seed(s); }
+    template<typename Index>
+    inline const Scalar operator() (Index, Index = 0) const { return norm(rng); }
+    inline void seed(const uint64_t &s) { rng.seed(s); }
       };
 
     template<typename Scalar>
@@ -84,12 +84,12 @@ namespace Eigen {
     
   public:
   EigenMultivariateNormal(const Matrix<Scalar,Dynamic,1>& mean,const Matrix<Scalar,Dynamic,Dynamic>& covar,
-			  const bool use_cholesky=false,const uint64_t &seed=std::chrono::system_clock::now().time_since_epoch().count())
+              const bool use_cholesky=false,const uint64_t &seed=std::chrono::system_clock::now().time_since_epoch().count())
       :_use_cholesky(use_cholesky)
      {
         randN.seed(seed);
-	setMean(mean);
-	setCovar(covar);
+    setMean(mean);
+    setCovar(covar);
       }
 
     void setMean(const Matrix<Scalar,Dynamic,1>& mean) { _mean = mean; }
@@ -102,34 +102,34 @@ namespace Eigen {
       // be applied to unit-variance independent normals
       
       if (_use_cholesky)
-	{
-	  Eigen::LLT<Eigen::Matrix<Scalar,Dynamic,Dynamic> > cholSolver(_covar);
-	  // We can only use the cholesky decomposition if 
-	  // the covariance matrix is symmetric, pos-definite.
-	  // But a covariance matrix might be pos-semi-definite.
-	  // In that case, we'll go to an EigenSolver
-	  if (cholSolver.info()==Eigen::Success)
-	    {
-	      // Use cholesky solver
-	      _transform = cholSolver.matrixL();
-	    }
-	  else
-	    {
-	      throw std::runtime_error("Failed computing the Cholesky decomposition. Use solver instead");
-	    }
-	}
+    {
+      Eigen::LLT<Eigen::Matrix<Scalar,Dynamic,Dynamic> > cholSolver(_covar);
+      // We can only use the cholesky decomposition if 
+      // the covariance matrix is symmetric, pos-definite.
+      // But a covariance matrix might be pos-semi-definite.
+      // In that case, we'll go to an EigenSolver
+      if (cholSolver.info()==Eigen::Success)
+        {
+          // Use cholesky solver
+          _transform = cholSolver.matrixL();
+        }
       else
-	{
-	  _eigenSolver = SelfAdjointEigenSolver<Matrix<Scalar,Dynamic,Dynamic> >(_covar);
-	  _transform = _eigenSolver.eigenvectors()*_eigenSolver.eigenvalues().cwiseMax(0).cwiseSqrt().asDiagonal();
-	}
+        {
+          throw std::runtime_error("Failed computing the Cholesky decomposition. Use solver instead");
+        }
+    }
+      else
+    {
+      _eigenSolver = SelfAdjointEigenSolver<Matrix<Scalar,Dynamic,Dynamic> >(_covar);
+      _transform = _eigenSolver.eigenvectors()*_eigenSolver.eigenvalues().cwiseMax(0).cwiseSqrt().asDiagonal();
+    }
     }
 
     /// Draw nn samples from the gaussian and return them
     /// as columns in a Dynamic by nn matrix
     Matrix<Scalar,Dynamic,-1> samples(int nn)
       {
-	return (_transform * Matrix<Scalar,Dynamic,-1>::NullaryExpr(_covar.rows(),nn,randN)).colwise() + _mean;
+    return (_transform * Matrix<Scalar,Dynamic,-1>::NullaryExpr(_covar.rows(),nn,randN)).colwise() + _mean;
       }
   }; // end class EigenMultivariateNormal
 } // end namespace Eigen
