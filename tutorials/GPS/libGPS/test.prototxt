@@ -1,0 +1,50 @@
+layer {
+  name: "Python1"
+  type: "Python"
+  top: "Python1"
+  python_param {
+    module: "NNBuilder"
+    layer: "PolicyDataLayer"
+    param_str: "{\"shape\": [{\"dim\": [25, 7]}]}"
+  }
+}
+layer {
+  name: "InnerProduct1"
+  type: "InnerProduct"
+  bottom: "Python1"
+  top: "InnerProduct1"
+  inner_product_param {
+    num_output: 50
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "ReLU1"
+  type: "ReLU"
+  bottom: "InnerProduct1"
+  top: "InnerProduct1"
+}
+layer {
+  name: "InnerProduct2"
+  type: "InnerProduct"
+  bottom: "InnerProduct1"
+  top: "InnerProduct2"
+  inner_product_param {
+    num_output: 2
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
