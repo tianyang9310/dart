@@ -3,10 +3,13 @@
 namespace GPS_NSpace
 {
 
-GPS::GPS(int _T, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics):
+GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics):
     T(_T),
+    x_dim(_x_dim),
+    u_dim(_u_dim),
     numDDPIters(_numDDPIters),
     conditions(_conditions),
+    numSamplesPerCond(_numSamplesPerCond),
     StepDynamics(_StepDynamics),
     x0Bundle(_conditions),
     DDPBundle(_conditions),
@@ -42,32 +45,47 @@ void GPS::initialDDPPolicy()
 
 void GPS::initialNNPolicy()
 {
-//  generate traj samples from mixture of DDP policies
+    int m = numSamplesPerCond * conditions;
 
-    auto result = trajSampleGenerator(x0Bundle[0],DDPPolicyBundle[0].first,DDPPolicyBundle[0].second);
-    cout<<result->x<<endl;
-    cin.get();
+//  generate traj samples from mixture of DDP policies
+//  Linear combination of mutually independent normal random vectors
+    vector<unique_ptr<sample>> trajSamples4NNpretrain(m);
+    trajSamples4NNpretrain = trajSampleGeneratorFromDDP(m);
+
 //  initilization of theta_star
 
 }
 
-unique_ptr<sample> GPS::trajSampleGenerator(VectorXd _x0, vector<function<VectorXd(VectorXd)>> _gx, vector<MatrixXd> _Quu_inv)
+vector<unique_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples)
 {
-    unique_ptr<sample> sample_ptr = unique_ptr<sample>(new sample());   
-
-    sample_ptr->x.resize(_x0.rows(),T);
-    sample_ptr->u.resize(_Quu_inv[0].rows(),T);
-
-    sample_ptr->x.col(0)=_x0;
-    for (int i=0; i<T-1; i++)
-    {
-        sample_ptr->u.col(i) = GaussianSampler(_gx[i](sample_ptr->x.col(i)), _Quu_inv[i]);
-        sample_ptr->x.col(i+1) = StepDynamics(sample_ptr->x.col(i),sample_ptr->u.col(i));
-    }
-
-    sample_ptr->u.col(T-1) = VectorXd::Constant(sample_ptr->u.col(0).size(),std::nan("0"));
-
-    return sample_ptr;
+    vector<unique_ptr<sample>> sampleLists(numSamples);
+    for_each(sampleLists.begin(),sampleLists.end(),
+            [this](unique_ptr<sample> &SampleEntry)
+            {
+                SampleEntry = unique_ptr<sample>(new sample());
+                 
+                SampleEntry->x.resize(_x0.rows(),T);
+                SampleEntry->u.resize(_Quu_inv[0].rows(),T);
+                
+                SampleEntry->x.col(0)=_x0;
+                for (int i=0; i<T-1; i++)
+                {
+                    VectorXd __ut = VectorXd::Zero(u_dim);
+                    MatrixXd __Quu_inv = MatrixXd::Zero(u_dim,u_dim);
+                    for (int _cond=0; _cond<this->conditions; _cond++)
+                    {
+                        __ut = __ut + (this->DDPPolicyBundle[_cond].first)[i](SampleEntry->x.col(i));
+                        __Quu_inv = __Quu_inv + (1 / double(conditions) * Matrix(double, u_dim, u_dim)::Identity()) * 
+                                                ((this->DDPPolicyBundle[_cond].second)[i]) * 
+                                                (1 / double(conditions) * Matrix(double, u_dim, u_dim)::Identity()).transpose();
+                    }
+                    __ut = 1 / double(conditions) * Matrix(double, u_dim, u_dim)::Identity() * __ut;
+                    SampleEntry->u.col(i) = GaussianSampler(_gx[i](__ut, __Quu_inv);
+                    SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
+                }
+                SampleEntry->u.col(T-1) = VectorXd::Constant(SampleEntry->u.col(0).size(),std::nan("0"));
+            });
+    return sampleLists;
 }
 
 // -----------------------------------------

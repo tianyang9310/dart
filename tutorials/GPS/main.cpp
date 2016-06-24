@@ -27,6 +27,12 @@ int main(int argc, char* argv[])
 // ---------------------------------------------------------
 // hyperparameter initialization
 	int T				= 2000;
+    int x_dim           = 4;
+    int u_dim           = 1;
+	int numDDPIters		= 3;
+	int conditions  	= 5;
+	int numSamplePerCond= 2;
+
 	double delta_t		= mWorld->getTimeStep();
 	Vector4d x0			= Vector4d::Zero();
 
@@ -50,12 +56,8 @@ int main(int argc, char* argv[])
 
 	LQR.push_back(make_tuple(Q,R,Qf));
 
-	int numDDPIters		 = 3;
-	int conditions  	 = 5;
-	int numSamplePerCond = 10*conditions;
-
 // ---------------------------------------------------------
-	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS(T,numDDPIters,conditions,numSamplePerCond,bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone())));
+	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS(T,x_dim,u_dim,numDDPIters,conditions,numSamplePerCond,bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone())));
 
 	for_each(mGPS->x0Bundle.begin(),mGPS->x0Bundle.end(),[=](VectorXd& x0Bundle_sub){x0Bundle_sub=x0;});
 	mGPS->x0Bundle[0](1)=-1/3.0*M_PI;

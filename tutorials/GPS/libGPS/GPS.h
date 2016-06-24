@@ -18,11 +18,12 @@ using namespace DDP_NSpace;
 class GPS
 {
 public:
-	GPS(int _T, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics);
+	GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics);
 	void run();
 	void initialDDPPolicy();
 	void initialNNPolicy();
-	unique_ptr<sample> trajSampleGenerator(VectorXd _x0, vector<function<VectorXd(VectorXd)>> _gx, vector<MatrixXd> _Quu_inv);
+	vector<unique_ptr<sample>> trajSampleGeneratorFromDDP(int numSamples);
+    unique_ptr<sample> trajSampleGeneratorFromNN();
 	
 
 
@@ -32,6 +33,8 @@ public:
 // --------------------
 
 	int T;
+    const int x_dim;
+    const int u_dim;
 	shared_ptr<DDP> mDDP;
 	int numDDPIters;
 	int DDPIter;
