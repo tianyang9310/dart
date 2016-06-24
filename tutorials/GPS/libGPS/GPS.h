@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <functional>
+#include <random>
 #include "utility.h"
 #include "sample.h"
 #include "../../DDP/libDDP/DDP.h"
