@@ -73,18 +73,17 @@ void GPS::initialNNPolicy()
 
 vector<unique_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples)
 {
-//  randomly settle down x0 by uniform distribution
-    VectorXd _x0;
-    default_random_engine generator;
-    uniform_int_distribution<int> distribution(0,conditions-1);
-
-    _x0 = x0Bundle[distribution(generator)];
-
     vector<unique_ptr<sample>> sampleLists(numSamples);
 
     for_each(sampleLists.begin(),sampleLists.end(),
             [=](unique_ptr<sample> &SampleEntry)
             {
+//  randomly settle down x0 by uniform distribution
+                unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+                default_random_engine generator(seed);
+                uniform_int_distribution<int> distribution(0,conditions-1);
+                VectorXd _x0;
+                _x0 = x0Bundle[distribution(generator)];
                 SampleEntry = unique_ptr<sample>(new sample());
                  
                 SampleEntry->x.resize(x_dim,T);
