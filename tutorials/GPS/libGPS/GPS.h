@@ -52,6 +52,7 @@ public:
 
 // --------------------
     PyObject *PyInstancePolicyOptCaffe;
+    PyObject *PyInstanceCaffePolicy;
     void InitPolicyOptCaffe();
 };
 

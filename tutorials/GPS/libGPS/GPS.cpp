@@ -47,6 +47,24 @@ void GPS::InitPolicyOptCaffe()
     PyTuple_SetItem(pArgs,0, PyInt_FromLong(x_dim));
     PyTuple_SetItem(pArgs,1, PyInt_FromLong(u_dim));
     PyInstancePolicyOptCaffe = PyInstance_New(PyClassPolicyOptCaffe,pArgs,NULL);
+    PyInstanceCaffePolicy    = PyObject_GetAttrString(PyInstancePolicyOptCaffe,"policy");
+
+    // testing whether reference and how to call method of class
+    auto foo_before = PyObject_GetAttrString(PyInstanceCaffePolicy, "foo"); 
+    auto foo_before_c = PyInt_AsLong(foo_before);
+    cout<<"before is "<<foo_before_c<<endl;
+    PyObject_CallMethod(PyInstancePolicyOptCaffe,"setFoo",NULL);
+    auto foo_after = PyObject_GetAttrString(PyInstanceCaffePolicy, "foo"); 
+    auto foo_after_c = PyInt_AsLong(foo_after);
+    cout<<"after is "<<foo_after_c<<endl;
+    // -------------------------
+
+    // free pointer
+    Py_DECREF(pModule);
+    Py_DECREF(pDict);
+    Py_DECREF(PyClassPolicyOptCaffe);
+    Py_DECREF(pArgs);
+
 }
 
 GPS::~GPS()
