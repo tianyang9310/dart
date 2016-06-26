@@ -1,5 +1,6 @@
 from NNBuilder import NNConstructor
 
+# the batch_size should be consistent with the setting of PolicyOptCaffe
 batch_size = 25
 
 with open('train.prototxt','w') as f:
