@@ -3,6 +3,7 @@
 namespace GPS_NSpace
 {
 void printDict(PyObject* obj);   
+void write4numpy_X(vector<shared_ptr<sample>> data, const std::string name);
 
 GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics):
     T(_T),
@@ -39,30 +40,30 @@ void GPS::InitPolicyOptCaffe()
         cout<<"Cant find dictionary!!!"<<endl;  
     }  
     printDict(pDict); 
-    PyObject *PyClassPolicyOptCaffe = PyDict_GetItemString(pDict, "PolicyOptCaffe");
-    if (!PyClassPolicyOptCaffe) {  
+    PyObject *pClassPolicyOptCaffe = PyDict_GetItemString(pDict, "PolicyOptCaffe");
+    if (!pClassPolicyOptCaffe) {  
         cout<<"Cant find PolicyOptCaffe class!!!"<<endl;  
     }  
     PyObject* pArgs = PyTuple_New(2);
     PyTuple_SetItem(pArgs,0, PyInt_FromLong(x_dim));
     PyTuple_SetItem(pArgs,1, PyInt_FromLong(u_dim));
-    PyInstancePolicyOptCaffe = PyInstance_New(PyClassPolicyOptCaffe,pArgs,NULL);
-    PyInstanceCaffePolicy    = PyObject_GetAttrString(PyInstancePolicyOptCaffe,"policy");
+    pInstancePolicyOptCaffe = PyInstance_New(pClassPolicyOptCaffe,pArgs,NULL);
+    pInstanceCaffePolicy    = PyObject_GetAttrString(pInstancePolicyOptCaffe,"policy");
 
     // testing whether reference and how to call method of class
-    auto foo_before = PyObject_GetAttrString(PyInstanceCaffePolicy, "foo"); 
-    auto foo_before_c = PyInt_AsLong(foo_before);
-    cout<<"before is "<<foo_before_c<<endl;
-    PyObject_CallMethod(PyInstancePolicyOptCaffe,"setFoo",NULL);
-    auto foo_after = PyObject_GetAttrString(PyInstanceCaffePolicy, "foo"); 
-    auto foo_after_c = PyInt_AsLong(foo_after);
-    cout<<"after is "<<foo_after_c<<endl;
+//    auto foo_before = PyObject_GetAttrString(pInstanceCaffePolicy, "foo"); 
+//    auto foo_before_c = PyInt_AsLong(foo_before);
+//    cout<<"before is "<<foo_before_c<<endl;
+//    PyObject_CallMethod(pInstancePolicyOptCaffe,"setFoo",NULL);
+//    auto foo_after = PyObject_GetAttrString(pInstanceCaffePolicy, "foo"); 
+//    auto foo_after_c = PyInt_AsLong(foo_after);
+//    cout<<"after is "<<foo_after_c<<endl;
     // -------------------------
 
     // free pointer
     Py_DECREF(pModule);
     Py_DECREF(pDict);
-    Py_DECREF(PyClassPolicyOptCaffe);
+    Py_DECREF(pClassPolicyOptCaffe);
     Py_DECREF(pArgs);
 
 }
@@ -103,34 +104,44 @@ void GPS::InitNNPolicy()
 
 //  generate traj samples from mixture of DDP policies
 //  Linear combination of mutually independent normal random vectors
-    vector<unique_ptr<sample>> trajSamples4NNpretrain;
+    vector<shared_ptr<sample>> trajSamples4NNpretrain;
     trajSamples4NNpretrain = trajSampleGeneratorFromDDP(m);
 
-//  output x and u for visualization and debugging;
-    write2file_eigen(trajSamples4NNpretrain[0]->x, "x0");       
-    write2file_eigen(trajSamples4NNpretrain[0]->u, "u0");       
-    write2file_eigen(trajSamples4NNpretrain[1]->x, "x1");       
-    write2file_eigen(trajSamples4NNpretrain[1]->u, "u1");       
-    write2file_eigen(trajSamples4NNpretrain[2]->x, "x2");       
-    write2file_eigen(trajSamples4NNpretrain[2]->u, "u2");       
-    write2file_eigen(trajSamples4NNpretrain[3]->x, "x3");       
-    write2file_eigen(trajSamples4NNpretrain[3]->u, "u3");       
+//  transform from c++ vector to python numpy
+    write4numpy_X(trajSamples4NNpretrain, "X");
+    if (!Py_IsInitialized())  
+    {
+        cout<<"Python Interpreter not Initialized!!!"<<endl;
+    }
+    PyRun_SimpleString("import sys");  
+    PyRun_SimpleString("sys.path.append('../../../tutorials/GPS/libGPS/')");  
+    PyObject* pModule = PyImport_Import(PyString_FromString("file2numpy"));
+    if (!pModule) {  
+        cout<<"Cant open python file!"<<endl;  
+    }  
+    PyObject* pArgs = PyString_FromString("X.numpyout");
+    PyObject* pFunc = PyObject_GetAttrString(pModule,"file2numpy");
+    PyObject* pValue = PyObject_CallObject(pFunc, pArgs);
+    PyObject_CallMethodObjArgs(pInstancePolicyOptCaffe,PyString_FromString("printFoo"),pInstancePolicyOptCaffe,pValue);
+
+    // free pointer
+    Py_DECREF(pModule);
+    Py_DECREF(pFunc);
+    Py_DECREF(pArgs);
+    
     cin.get();
-//    for (int i=0; i<1; i++)
-//    {
-//
-//    }
 
 //  initilization of theta_star
 
 }
 
-vector<unique_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples)
+
+vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples)
 {
-    vector<unique_ptr<sample>> sampleLists(numSamples);
+    vector<shared_ptr<sample>> sampleLists(numSamples);
 
     for_each(sampleLists.begin(),sampleLists.end(),
-            [=](unique_ptr<sample> &SampleEntry)
+            [=](shared_ptr<sample> &SampleEntry)
             {
 //  randomly settle down x0 by uniform distribution
                 unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -138,7 +149,7 @@ vector<unique_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples)
                 uniform_int_distribution<int> distribution(0,conditions-1);
                 VectorXd _x0;
                 _x0 = x0Bundle[distribution(generator)];
-                SampleEntry = unique_ptr<sample>(new sample());
+                SampleEntry = shared_ptr<sample>(new sample());
                  
                 SampleEntry->x.resize(x_dim,T);
                 SampleEntry->u.resize(u_dim,T);
@@ -208,5 +219,23 @@ void printDict(PyObject* obj) {
         // printf("%s/n", c_name);  
     }  
 }  
+
+void write4numpy_X(vector<shared_ptr<sample>> data, const std::string name)
+{
+    std::string name_ext = name;
+    name_ext.append(".numpyout");
+    std::ofstream outFile(name_ext, std::ios::out);
+    if (outFile.fail())
+    {
+        dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
+    }
+    outFile.precision(8);
+    for (int i =0; i<data.size(); i++)
+    {
+        outFile<<data[i]->x<<std::endl; 
+    }
+    outFile.close();
+}
+
 
 }

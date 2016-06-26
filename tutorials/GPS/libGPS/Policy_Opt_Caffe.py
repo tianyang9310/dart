@@ -39,5 +39,8 @@ class PolicyOptCaffe():
         
         self.solver=caffe.get_solver(f.name)
 
+    def printFoo(self,x):
+        x
+
     def setFoo(self):
         self.policy.foo = 100

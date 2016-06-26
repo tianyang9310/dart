@@ -27,8 +27,8 @@ public:
 	void run();
 	void InitDDPPolicy();
 	void InitNNPolicy();
-	vector<unique_ptr<sample>> trajSampleGeneratorFromDDP(int numSamples);
-    unique_ptr<sample> trajSampleGeneratorFromNN();
+	vector<shared_ptr<sample>> trajSampleGeneratorFromDDP(int numSamples);
+    // shared_ptr<sample> trajSampleGeneratorFromNN();
 	
 
 
@@ -51,8 +51,9 @@ public:
 	vector<pair<vector<function<VectorXd(VectorXd)>>,vector<MatrixXd>>> DDPPolicyBundle;
 
 // --------------------
-    PyObject *PyInstancePolicyOptCaffe;
-    PyObject *PyInstanceCaffePolicy;
+//  python wrapper
+    PyObject *pInstancePolicyOptCaffe;
+    PyObject *pInstanceCaffePolicy;
     void InitPolicyOptCaffe();
 };
 
