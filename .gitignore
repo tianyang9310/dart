@@ -2,6 +2,7 @@
 build/
 build_6.1/
 build_debug/
+build_Qt/
 syntax: glob
 *.swp
 *.swo
