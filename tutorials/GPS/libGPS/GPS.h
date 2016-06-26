@@ -5,6 +5,8 @@
 #include <functional>
 #include <random>
 #include <chrono>
+#include <Python.h>
+#include <string>
 #include "utility.h"
 #include "sample.h"
 #include "../../DDP/libDDP/DDP.h"
@@ -21,9 +23,10 @@ class GPS
 {
 public:
 	GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics);
+    ~GPS();
 	void run();
-	void initialDDPPolicy();
-	void initialNNPolicy();
+	void InitDDPPolicy();
+	void InitNNPolicy();
 	vector<unique_ptr<sample>> trajSampleGeneratorFromDDP(int numSamples);
     unique_ptr<sample> trajSampleGeneratorFromNN();
 	
@@ -47,6 +50,9 @@ public:
 	vector<shared_ptr<DDP>> DDPBundle;
 	vector<pair<vector<function<VectorXd(VectorXd)>>,vector<MatrixXd>>> DDPPolicyBundle;
 
+// --------------------
+    PyObject *PyInstancePolicyOptCaffe;
+    void InitPolicyOptCaffe();
 };
 
 }

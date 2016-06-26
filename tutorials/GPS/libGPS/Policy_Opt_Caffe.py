@@ -2,7 +2,7 @@ import numpy as np
 import caffe
 from caffe.proto.caffe_pb2 import SolverParameter,TRAIN, TEST
 from google.protobuf.text_format import MessageToString
-from NN.NNBuilder import NNConstructor
+from NNBuilder import NNConstructor
 
 class PolicyOptCaffe():
     def __init__(self, x_dim, u_dim):
@@ -33,7 +33,7 @@ class PolicyOptCaffe():
         solver_param.test_iter.append(1)
         solver_param.test_interval = 1000000
         
-        with open('NN/NeuralNetworks.prototxt','w') as f:
+        with open('NeuralNetworks.prototxt','w') as f:
             f.write(MessageToString(solver_param))
         
         self.solver=caffe.get_solver(f.name)

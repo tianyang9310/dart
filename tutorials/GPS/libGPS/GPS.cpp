@@ -2,6 +2,7 @@
 
 namespace GPS_NSpace
 {
+void printDict(PyObject* obj);   
 
 GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics):
     T(_T),
@@ -16,17 +17,52 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int 
     DDPPolicyBundle(_conditions)
 {
     DDPIter     = 0;
+    Py_Initialize();
+    InitPolicyOptCaffe();
+}
+
+void GPS::InitPolicyOptCaffe()
+{
+    if (!Py_IsInitialized())  
+    {
+        cout<<"Python Interpreter not Initialized!!!"<<endl;
+    }
+    PyRun_SimpleString("import sys");  
+    PyRun_SimpleString("sys.path.append('../../../tutorials/GPS/libGPS/')");  
+    // PyRun_SimpleString("print sys.path");
+    PyObject* pModule = PyImport_Import(PyString_FromString("Policy_Opt_Caffe"));
+    if (!pModule) {  
+        cout<<"Cant open python file!"<<endl;  
+    }  
+    PyObject* pDict = PyModule_GetDict(pModule);  
+    if (!pDict) {  
+        cout<<"Cant find dictionary!!!"<<endl;  
+    }  
+    printDict(pDict); 
+    PyObject *PyClassPolicyOptCaffe = PyDict_GetItemString(pDict, "PolicyOptCaffe");
+    if (!PyClassPolicyOptCaffe) {  
+        cout<<"Cant find PolicyOptCaffe class!!!"<<endl;  
+    }  
+    PyObject* pArgs = PyTuple_New(2);
+    PyTuple_SetItem(pArgs,0, PyInt_FromLong(x_dim));
+    PyTuple_SetItem(pArgs,1, PyInt_FromLong(u_dim));
+    PyInstancePolicyOptCaffe = PyInstance_New(PyClassPolicyOptCaffe,pArgs,NULL);
+}
+
+GPS::~GPS()
+{
+    Py_Finalize();
 }
 
 void GPS::run()
 {
     // GaussianSamplerDebug();
 
-    initialDDPPolicy();
-    initialNNPolicy();
+    InitDDPPolicy();
+    InitNNPolicy();
 }
 
-void GPS::initialDDPPolicy()
+void GPS::InitDDPPolicy()
 {
     for (int _cond=0; _cond<conditions; _cond++)
     {
@@ -43,7 +79,7 @@ void GPS::initialDDPPolicy()
     }
 }
 
-void GPS::initialNNPolicy()
+void GPS::InitNNPolicy()
 {
     int m = numSamplesPerCond * conditions;
 
@@ -141,5 +177,18 @@ inline void GPS::GaussianSamplerDebug()
     cout<<"Variance is "<< (numberlog.array()-mean).square().sum()/double(nrolls)<<endl;
     cin.get();
 }
+
+void printDict(PyObject* obj) {  
+    if (!PyDict_Check(obj))  
+        return;  
+    PyObject *k, *keys;  
+    keys = PyDict_Keys(obj);  
+    for (int i = 0; i < PyList_GET_SIZE(keys); i++) {  
+        k = PyList_GET_ITEM(keys, i);  
+        char* c_name = PyString_AsString(k);  
+        cout<<c_name<<endl;
+        // printf("%s/n", c_name);  
+    }  
+}  
 
 }
