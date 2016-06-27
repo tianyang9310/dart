@@ -18,8 +18,8 @@ class PolicyOptCaffe():
         self.caffe_iterations =5000
         
         self.init_solver()
-        self.var = 0.1 * np.ones(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
-        self.policy = CaffePolicy(self.solver.test_nets[0], self.var)
+        # self.var = 0.1 * np.ones(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
+        self.policy = CaffePolicy(self.solver.test_nets[0])
 
     def init_solver(self):
         solver_param = SolverParameter()
@@ -44,6 +44,7 @@ class PolicyOptCaffe():
 
     def pretrain(self):
     # def pretrain(self""", itr, inner_itr"""):
+        # vars of both class are initialized here
         self.var = np.mean(self.Quu_inv,axis=0)
         self.policy.var = self.var
         
