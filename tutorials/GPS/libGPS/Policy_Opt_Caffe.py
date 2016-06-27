@@ -40,7 +40,7 @@ class PolicyOptCaffe():
         self.solver=caffe.get_solver(f.name)
 
     def printFoo(self,x):
-        x
+        print x
 
     def setFoo(self):
         self.policy.foo = 100

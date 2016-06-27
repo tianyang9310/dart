@@ -123,6 +123,9 @@ void GPS::InitNNPolicy()
     PyObject* pFunc = PyObject_GetAttrString(pModule,"file2numpy");
     PyObject* pValue = PyObject_CallObject(pFunc, pArgs);
     PyObject_CallMethodObjArgs(pInstancePolicyOptCaffe,PyString_FromString("printFoo"),pInstancePolicyOptCaffe,pValue);
+    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
+    cout<<"@@@ call print foo @@@@@@@"<<endl;
+    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
 
     // free pointer
     Py_DECREF(pModule);
