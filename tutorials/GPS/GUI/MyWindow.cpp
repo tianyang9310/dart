@@ -23,10 +23,33 @@ void MyWindow::timeStepping()
         mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(mGPS->x0Bundle[0](2));
         mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(mGPS->x0Bundle[0](3));
     }
-    int mSimFrameCount = mWorld->getSimFrames();
+    // int mSimFrameCount = mWorld->getSimFrames();
     // mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(mGPS->mDDP->u.col(mSimFrameCount)[0]);
-    cout<<"Need Controller..."<<endl;
-    cin.get();
+
+    if (!Py_IsInitialized())  
+    {
+        cout<<"Python Interpreter not Initialized!!!"<<endl;
+    }
+    PyObject* pArgs = PyTuple_New(4);
+    PyTuple_SetItem(pArgs,0, PyFloat_FromDouble(mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition()));
+    PyTuple_SetItem(pArgs,1, PyFloat_FromDouble(mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition()));
+    PyTuple_SetItem(pArgs,2, PyFloat_FromDouble(mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity()));
+    PyTuple_SetItem(pArgs,3, PyFloat_FromDouble(mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity()));
+    PyObject* pResult =  PyObject_CallMethodObjArgs(mGPS->pInstanceCaffePolicy,PyString_FromString("act"), pArgs, NULL);
+    if (! pResult)
+    {
+        cout<<"Failing to CALL act method of Caffe Policy"<<endl;
+    }
+    double u_Policy;
+    if (! PyArg_ParseTuple(pResult, "d", &u_Policy))
+    {
+        cout<<"Failing to PARSE data from act method"<<endl;
+    }
+
+    Py_DECREF(pArgs);
+    Py_DECREF(pResult);
+
+    mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(u_Policy);
 
     SimWindow::timeStepping();
 }

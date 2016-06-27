@@ -1,6 +1,7 @@
 #ifndef MYWINDOW_H
 #define MYWINDOW_H
 
+#include <Python.h>
 #include "dart/dart.h"
 #include "../libGPS/GPS.h"
 
