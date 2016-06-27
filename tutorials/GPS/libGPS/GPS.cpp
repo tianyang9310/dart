@@ -3,8 +3,6 @@
 namespace GPS_NSpace
 {
 void printDict(PyObject* obj);   
-void write4numpy_X(vector<shared_ptr<sample>> data, const std::string name);
-void write4numpy_U(vector<shared_ptr<sample>> data, const std::string name);
 
 GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics):
     T(_T),
@@ -48,9 +46,12 @@ void GPS::InitPolicyOptCaffe()
     if (!pClassPolicyOptCaffe) {  
         cout<<"Cant find PolicyOptCaffe class!!!"<<endl;  
     }  
-    PyObject* pArgs = PyTuple_New(2);
+    PyObject* pArgs = PyTuple_New(4);
     PyTuple_SetItem(pArgs,0, PyInt_FromLong(x_dim));
     PyTuple_SetItem(pArgs,1, PyInt_FromLong(u_dim));
+    PyTuple_SetItem(pArgs,2, PyInt_FromLong(T));
+    int m = numSamplesPerCond * conditions;
+    PyTuple_SetItem(pArgs,3, PyInt_FromLong(m));
     pInstancePolicyOptCaffe = PyInstance_New(pClassPolicyOptCaffe,pArgs,NULL);
     pInstanceCaffePolicy    = PyObject_GetAttrString(pInstancePolicyOptCaffe,"policy");
 
@@ -220,7 +221,7 @@ void printDict(PyObject* obj) {
     }  
 }  
 
-void write4numpy_X(vector<shared_ptr<sample>> data, const std::string name)
+void GPS::write4numpy_X(vector<shared_ptr<sample>> data, const std::string name)
 {
     std::string name_ext = name;
     name_ext.append(".numpyout");
@@ -232,12 +233,12 @@ void write4numpy_X(vector<shared_ptr<sample>> data, const std::string name)
     outFile.precision(8);
     for (int i =0; i<data.size(); i++)
     {
-        outFile<<data[i]->x.transpose()<<std::endl; 
+        outFile<<data[i]->x.leftCols(T-1).transpose()<<std::endl; 
     }
     outFile.close();
 }
 
-void write4numpy_U(vector<shared_ptr<sample>> data, const std::string name)
+void GPS::write4numpy_U(vector<shared_ptr<sample>> data, const std::string name)
 {
     std::string name_ext = name;
     name_ext.append(".numpyout");
@@ -249,7 +250,7 @@ void write4numpy_U(vector<shared_ptr<sample>> data, const std::string name)
     outFile.precision(8);
     for (int i =0; i<data.size(); i++)
     {
-        outFile<<data[i]->u.transpose()<<std::endl; 
+        outFile<<data[i]->u.leftCols(T-1).transpose()<<std::endl; 
     }
     outFile.close();
 }

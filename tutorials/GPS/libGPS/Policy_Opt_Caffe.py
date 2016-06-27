@@ -7,11 +7,13 @@ from Policy_Caffe import CaffePolicy
 from file2numpy import file2numpy
 
 class PolicyOptCaffe():
-    def __init__(self, x_dim, u_dim):
+    def __init__(self, x_dim, u_dim, T, N):
         caffe.set_mode_cpu()
         self.batch_size = 25
         self.x_dim = x_dim
         self.u_dim = u_dim
+        self.T     = T
+        self.N     = N
         self.hidden_dim = 50
         
         self.init_solver()
