@@ -15,9 +15,9 @@ class PolicyOptCaffe():
         self.T     = T
         self.N     = N
         self.hidden_dim = 50
+        self.caffe_iterations =5000
         
         self.init_solver()
-        self.caffe_iter = 0
         self.var = 0.1 * np.ones(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
         self.policy = CaffePolicy(self.solver.test_nets[0], np.zeros(self.u_dim))
 
@@ -65,25 +65,25 @@ class PolicyOptCaffe():
         blob_names = self.solver.net.blobs.keys()
         
         # Assuming that N*T >= self.batch_size.
-        batches_per_epoch = np.floor(N*T / self.batch_size)
-        idx = range(N*T)
+        batches_per_epoch = np.floor(self.N*self.T / self.batch_size)
+        idx = range(self.N*self.T)
         cumulative_loss = 0
         np.random.shuffle(idx)
-        for i in range(self.caffe_iteration):
+        for i in range(self.caffe_iterations):
             # Load in data for this batch.
             start_idx = int(i * self.batch_size %
                             (batches_per_epoch * self.batch_size))
             idx_i = idx[start_idx:start_idx+self.batch_size]
             self.solver.net.blobs[blob_names[0]].data[:] = self.x[idx_i]
             self.solver.net.blobs[blob_names[1]].data[:] = self.u[idx_i]
-            self.solver.net.blobs[blob_names[2]].data[:] = self.var
+            self.solver.net.blobs[blob_names[2]].data[:] = np.linalg.inv(self.var)
         
             self.solver.step(1)
         
             # To get the training loss:
             train_loss = self.solver.net.blobs[blob_names[-1]].data
             cumulative_loss += train_loss
-        
+
         self.policy.net.share_with(self.solver.net)        
 
     def ReadX(self):
@@ -103,3 +103,7 @@ class PolicyOptCaffe():
 
     def setFoo(self):
         self.policy.foo = 100
+
+    def printFoo(self):
+        params_names = self.solver.net.params.keys()
+        print self.solver.net.params[params_names[0]][0].data

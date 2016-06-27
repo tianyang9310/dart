@@ -127,8 +127,12 @@ void GPS::InitNNPolicy()
     write4numpy_Quu_inv(trajSamples4NNpretrain, "Quu_inv");
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadQuu_inv",NULL);
 
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"pretrain",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo",NULL);
+
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
-    cout<<"@@@ call print foo @@@@@@@"<<endl;
+    cout<<"@@@ train Neural Nets @@@@"<<endl;
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
 
     // free pointer
