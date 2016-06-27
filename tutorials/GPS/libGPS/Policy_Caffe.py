@@ -11,6 +11,8 @@ class CaffePolicy():
         noise: is not required, which can be generated in this function
         return noised action according to x
         '''
+        # casting whatever to np.array
+        x = np.asarray(x)
         self.net.blobs[self.net.blobs.keys()[0]].data[:]=x
         u_mean = self.net.forward().values()[0][0]
         # If seed is None, then RandomState will try to read data from /dev/urandom (or the Windows analogue) if available or seed from the clock otherwise 

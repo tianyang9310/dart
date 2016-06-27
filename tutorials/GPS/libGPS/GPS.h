@@ -40,7 +40,6 @@ public:
 	int T;
     const int x_dim;
     const int u_dim;
-	shared_ptr<DDP> mDDP;
 	int numDDPIters;
 	int DDPIter;
 	int conditions;
