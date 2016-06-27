@@ -19,7 +19,7 @@ class PolicyOptCaffe():
         
         self.init_solver()
         self.var = 0.1 * np.ones(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
-        self.policy = CaffePolicy(self.solver.test_nets[0], np.zeros(self.u_dim))
+        self.policy = CaffePolicy(self.solver.test_nets[0], self.var)
 
     def init_solver(self):
         solver_param = SolverParameter()
@@ -83,7 +83,7 @@ class PolicyOptCaffe():
             # To get the training loss:
             train_loss = self.solver.net.blobs[blob_names[-1]].data
             cumulative_loss += train_loss
-
+        
         self.policy.net.share_with(self.solver.net)        
 
     def ReadX(self):
