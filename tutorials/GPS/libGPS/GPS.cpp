@@ -49,7 +49,7 @@ void GPS::InitPolicyOptCaffe()
     PyObject* pArgs = PyTuple_New(4);
     PyTuple_SetItem(pArgs,0, PyInt_FromLong(x_dim));
     PyTuple_SetItem(pArgs,1, PyInt_FromLong(u_dim));
-    PyTuple_SetItem(pArgs,2, PyInt_FromLong(T));
+    PyTuple_SetItem(pArgs,2, PyInt_FromLong(T-1));
     int m = numSamplesPerCond * conditions;
     PyTuple_SetItem(pArgs,3, PyInt_FromLong(m));
     pInstancePolicyOptCaffe = PyInstance_New(pClassPolicyOptCaffe,pArgs,NULL);
