@@ -15,6 +15,7 @@ class sample
 public:
 	MatrixXd x;
 	MatrixXd u;
+    vector<MatrixXd> Quu_inv;
 };
 
 

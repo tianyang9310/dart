@@ -124,6 +124,9 @@ void GPS::InitNNPolicy()
     write4numpy_U(trajSamples4NNpretrain, "U");
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadU",NULL);
 
+    write4numpy_Quu_inv(trajSamples4NNpretrain, "Quu_inv");
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadQuu_inv",NULL);
+
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
     cout<<"@@@ call print foo @@@@@@@"<<endl;
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
@@ -154,6 +157,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples)
                  
                 SampleEntry->x.resize(x_dim,T);
                 SampleEntry->u.resize(u_dim,T);
+                SampleEntry->Quu_inv.resize(T);
                 
                 SampleEntry->x.col(0)=_x0;
                 for (int i=0; i<T-1; i++)
@@ -174,6 +178,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples)
                     __ut = 1 / double(conditions) * uEye * __ut;
                     SampleEntry->u.col(i) = GaussianSampler(__ut, __Quu_inv);
                     SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
+                    SampleEntry->Quu_inv[i] = __Quu_inv;
                 }
                 SampleEntry->u.col(T-1) = VectorXd::Constant(SampleEntry->u.col(0).size(),std::nan("0"));
             });
@@ -251,6 +256,26 @@ void GPS::write4numpy_U(vector<shared_ptr<sample>> data, const std::string name)
     for (int i =0; i<data.size(); i++)
     {
         outFile<<data[i]->u.leftCols(T-1).transpose()<<std::endl; 
+    }
+    outFile.close();
+}
+
+void GPS::write4numpy_Quu_inv(vector<shared_ptr<sample>> data, const std::string name)
+{
+    std::string name_ext = name;
+    name_ext.append(".numpyout");
+    std::ofstream outFile(name_ext, std::ios::out);
+    if (outFile.fail())
+    {
+        dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
+    }
+    outFile.precision(8);
+    for (int i =0; i<data.size(); i++)
+    {
+        for (int j=0; j<data[i]->Quu_inv.size()-1; j++)
+        {
+            outFile<<data[i]->Quu_inv[j]<<std::endl; 
+        }
     }
     outFile.close();
 }

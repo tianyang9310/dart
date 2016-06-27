@@ -137,8 +137,15 @@ class PolicyOptCaffe():
         print self.x
 
     def ReadU(self):
+        # Supposing u_dim is 1, s.t. each row is an instance
         self.u = file2numpy('U.numpyout')
         print self.u
+
+    def ReadQuu_inv(self):
+        # Supposing u_dim is 1, s.t. each row is an instance
+        self.Quu_inv = file2numpy('Quu_inv.numpyout')
+        np.reshape(self.Quu_inv,(-1,self.u_dim,self.u_dim))
+        print self.Quu_inv
 
     def setFoo(self):
         self.policy.foo = 100

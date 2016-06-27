@@ -2,7 +2,7 @@ import numpy as np
 
 class CaffePolicy():
     def __init__(self, test_net, var):
-        # self.chol_pol_covar
+        self.chol_pol_covar = np.diag(np.sqrt(var))
         self.net = test_net
         
         self.foo = 500
