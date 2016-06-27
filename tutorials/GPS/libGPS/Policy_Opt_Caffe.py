@@ -4,6 +4,7 @@ from caffe.proto.caffe_pb2 import SolverParameter,TRAIN, TEST
 from google.protobuf.text_format import MessageToString
 from NNBuilder import NNConstructor
 from Policy_Caffe import CaffePolicy
+from file2numpy import file2numpy
 
 class PolicyOptCaffe():
     def __init__(self, x_dim, u_dim):
@@ -39,8 +40,13 @@ class PolicyOptCaffe():
         
         self.solver=caffe.get_solver(f.name)
 
-    def printFoo(self,x):
-        print x
+    def ReadX(self):
+        self.x = file2numpy('X.numpyout')
+        print self.x
+
+    def ReadU(self):
+        self.u = file2numpy('U.numpyout')
+        print self.u
 
     def setFoo(self):
         self.policy.foo = 100

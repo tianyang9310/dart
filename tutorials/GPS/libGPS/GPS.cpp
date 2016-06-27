@@ -18,7 +18,13 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int 
     DDPPolicyBundle(_conditions)
 {
     DDPIter     = 0;
+
     Py_Initialize();
+    PyRun_SimpleString("import sys");  
+    // add src path of libgps
+    PyRun_SimpleString("sys.path.append('../../../tutorials/GPS/libGPS/')");  
+    // PyRun_SimpleString("print sys.path");
+
     InitPolicyOptCaffe();
 }
 
@@ -28,9 +34,6 @@ void GPS::InitPolicyOptCaffe()
     {
         cout<<"Python Interpreter not Initialized!!!"<<endl;
     }
-    PyRun_SimpleString("import sys");  
-    PyRun_SimpleString("sys.path.append('../../../tutorials/GPS/libGPS/')");  
-    // PyRun_SimpleString("print sys.path");
     PyObject* pModule = PyImport_Import(PyString_FromString("Policy_Opt_Caffe"));
     if (!pModule) {  
         cout<<"Cant open python file!"<<endl;  
@@ -109,28 +112,19 @@ void GPS::InitNNPolicy()
 
 //  transform from c++ vector to python numpy
     write4numpy_X(trajSamples4NNpretrain, "X");
+
     if (!Py_IsInitialized())  
     {
         cout<<"Python Interpreter not Initialized!!!"<<endl;
     }
-    PyRun_SimpleString("import sys");  
-    PyRun_SimpleString("sys.path.append('../../../tutorials/GPS/libGPS/')");  
-    PyObject* pModule = PyImport_Import(PyString_FromString("file2numpy"));
-    if (!pModule) {  
-        cout<<"Cant open python file!"<<endl;  
-    }  
-    PyObject* pArgs = PyString_FromString("X.numpyout");
-    PyObject* pFunc = PyObject_GetAttrString(pModule,"file2numpy");
-    PyObject* pValue = PyObject_CallObject(pFunc, pArgs);
-    PyObject_CallMethodObjArgs(pInstancePolicyOptCaffe,PyString_FromString("printFoo"),pInstancePolicyOptCaffe,pValue);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadX",NULL);
+    
+
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
     cout<<"@@@ call print foo @@@@@@@"<<endl;
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
 
     // free pointer
-    Py_DECREF(pModule);
-    Py_DECREF(pFunc);
-    Py_DECREF(pArgs);
     
     cin.get();
 
