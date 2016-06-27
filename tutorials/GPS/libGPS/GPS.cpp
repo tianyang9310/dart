@@ -132,7 +132,7 @@ void GPS::InitNNPolicy()
     PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo",NULL);
 
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
-    cout<<"@@@ train Neural Nets @@@@"<<endl;
+    cout<<"@ Initialize Neural Net @@"<<endl;
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
 
     // free pointer
@@ -240,7 +240,7 @@ void GPS::write4numpy_X(vector<shared_ptr<sample>> data, const std::string name)
         dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
     }
     outFile.precision(8);
-    for (int i =0; i<data.size(); i++)
+    for (size_t i =0; i<data.size(); i++)
     {
         outFile<<data[i]->x.leftCols(T-1).transpose()<<std::endl; 
     }
@@ -257,7 +257,7 @@ void GPS::write4numpy_U(vector<shared_ptr<sample>> data, const std::string name)
         dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
     }
     outFile.precision(8);
-    for (int i =0; i<data.size(); i++)
+    for (size_t i =0; i<data.size(); i++)
     {
         outFile<<data[i]->u.leftCols(T-1).transpose()<<std::endl; 
     }
@@ -274,9 +274,9 @@ void GPS::write4numpy_Quu_inv(vector<shared_ptr<sample>> data, const std::string
         dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
     }
     outFile.precision(8);
-    for (int i =0; i<data.size(); i++)
+    for (size_t i =0; i<data.size(); i++)
     {
-        for (int j=0; j<data[i]->Quu_inv.size()-1; j++)
+        for (size_t j=0; j<data[i]->Quu_inv.size()-1; j++)
         {
             outFile<<data[i]->Quu_inv[j]<<std::endl; 
         }
