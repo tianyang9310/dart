@@ -110,7 +110,7 @@ void GPS::InitNNPolicy()
 //  generate traj samples from mixture of DDP policies
 //  Linear combination of mutually independent normal random vectors
     vector<shared_ptr<sample>> trajSamples4NNpretrain;
-    trajSamples4NNpretrain = trajSampleGeneratorFromDDP(m);
+    trajSamples4NNpretrain = trajSampleGeneratorFromDDPMix(m);
 
 //  transform from c++ vector to python numpy
     if (!Py_IsInitialized())  
@@ -143,12 +143,16 @@ void GPS::InitNNPolicy()
 
 }
 
-
-vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples)
+void GPS::BuildInitSamples()
 {
-    vector<shared_ptr<sample>> sampleLists(numSamples);
 
-    for_each(sampleLists.begin(),sampleLists.end(),
+}
+
+vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
+{
+    vector<shared_ptr<sample>> MixSampleLists(numSamples);
+
+    for_each(MixSampleLists.begin(),MixSampleLists.end(),
             [=](shared_ptr<sample> &SampleEntry)
             {
 //  randomly settle down x0 by uniform distribution
@@ -186,7 +190,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples)
                 }
                 SampleEntry->u.col(T-1) = VectorXd::Constant(SampleEntry->u.col(0).size(),std::nan("0"));
             });
-    return sampleLists;
+    return MixSampleLists;
 }
 
 // -----------------------------------------
