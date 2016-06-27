@@ -4,6 +4,7 @@ namespace GPS_NSpace
 {
 void printDict(PyObject* obj);   
 void write4numpy_X(vector<shared_ptr<sample>> data, const std::string name);
+void write4numpy_U(vector<shared_ptr<sample>> data, const std::string name);
 
 GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics):
     T(_T),
@@ -111,14 +112,16 @@ void GPS::InitNNPolicy()
     trajSamples4NNpretrain = trajSampleGeneratorFromDDP(m);
 
 //  transform from c++ vector to python numpy
-    write4numpy_X(trajSamples4NNpretrain, "X");
-
     if (!Py_IsInitialized())  
     {
         cout<<"Python Interpreter not Initialized!!!"<<endl;
     }
+
+    write4numpy_X(trajSamples4NNpretrain, "X");
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadX",NULL);
     
+    write4numpy_U(trajSamples4NNpretrain, "U");
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadU",NULL);
 
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
     cout<<"@@@ call print foo @@@@@@@"<<endl;
@@ -229,7 +232,24 @@ void write4numpy_X(vector<shared_ptr<sample>> data, const std::string name)
     outFile.precision(8);
     for (int i =0; i<data.size(); i++)
     {
-        outFile<<data[i]->x<<std::endl; 
+        outFile<<data[i]->x.transpose()<<std::endl; 
+    }
+    outFile.close();
+}
+
+void write4numpy_U(vector<shared_ptr<sample>> data, const std::string name)
+{
+    std::string name_ext = name;
+    name_ext.append(".numpyout");
+    std::ofstream outFile(name_ext, std::ios::out);
+    if (outFile.fail())
+    {
+        dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
+    }
+    outFile.precision(8);
+    for (int i =0; i<data.size(); i++)
+    {
+        outFile<<data[i]->u.transpose()<<std::endl; 
     }
     outFile.close();
 }
