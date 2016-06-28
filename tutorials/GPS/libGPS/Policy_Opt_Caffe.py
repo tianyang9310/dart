@@ -109,5 +109,11 @@ class PolicyOptCaffe():
         self.policy.foo = 100
 
     def printFoo(self):
+        print "~~~~~~~~~~~~~~~~~~~~~ Train Net Parameters ~~~~~~~~~~~~~~~~~~~~~"
         params_names = self.solver.net.params.keys()
+        print params_names
         print self.solver.net.params[params_names[0]][0].data
+        print "~~~~~~~~~~~~~~~~~~~~~ Test Net Parameters ~~~~~~~~~~~~~~~~~~~~~"
+        params_names = self.policy.net.params.keys()
+        print params_names
+        print self.policy.net.params[params_names[0]][0].data
