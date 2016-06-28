@@ -9,14 +9,14 @@ from file2numpy import file2numpy
 class PolicyOptCaffe():
     def __init__(self, x_dim, u_dim, T, N, mPhi):
         caffe.set_mode_cpu()
-        self.batch_size = 25
+        self.batch_size = T
         self.x_dim = x_dim
         self.u_dim = u_dim
         self.T     = T
         self.N     = N
         self.mPhi  = mPhi
         self.hidden_dim = 50
-        self.caffe_iterations =5000
+        self.caffe_iterations =50
         
         self.init_solver()
         # self.var = 0.1 * np.ones(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.

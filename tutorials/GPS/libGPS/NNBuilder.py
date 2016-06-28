@@ -33,7 +33,10 @@ def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase, mPhi=0):
                       ]})
         net_input = L.Python(ntop=1, python_param=dict(module='NNBuilder', param_str=data_layer_info, layer='PolicyDataLayer'))
     elif phase == "ISLOSS":
-        pass
+        data_layer_info = json.dumps({
+            'shape': [{'dim': (mPhi*batch_size, dim_input)}
+                      ]})
+        net_input = L.Python(ntop=1, python_param=dict(module='NNBuilder', param_str=data_layer_info, layer='PolicyDataLayer'))
     else:
         raise Exception('Unknown Network Phase')
 
@@ -46,8 +49,9 @@ def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase, mPhi=0):
         out = L.Python(cur_top, action, precision, loss_weight=1.0, python_param=dict(module='NNBuilder', layer='SumLogProbLoss'))
     elif phase == TEST:
         out = cur_top
-    else:
-        phase == "ISLOSS"
+    elif phase == "ISLOSS":
+        out = cur_top
+
 
     return out.to_proto()
 
