@@ -7,13 +7,14 @@ from Policy_Caffe import CaffePolicy
 from file2numpy import file2numpy
 
 class PolicyOptCaffe():
-    def __init__(self, x_dim, u_dim, T, N):
+    def __init__(self, x_dim, u_dim, T, N, mPhi):
         caffe.set_mode_cpu()
         self.batch_size = 25
         self.x_dim = x_dim
         self.u_dim = u_dim
         self.T     = T
         self.N     = N
+        self.mPhi  = mPhi
         self.hidden_dim = 50
         self.caffe_iterations =5000
         
@@ -33,7 +34,9 @@ class PolicyOptCaffe():
          
         solver_param.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.batch_size,TRAIN))
         solver_param.test_net_param.add().CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,1,TEST))
+        solver_param.test_net_param.add().CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
         
+        solver_param.test_iter.append(1)
         solver_param.test_iter.append(1)
         solver_param.test_interval = 1000000
         

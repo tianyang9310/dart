@@ -11,7 +11,7 @@ from caffe import layers as L, params as P
 
 from caffe.proto.caffe_pb2 import TRAIN, TEST
 
-def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase):
+def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase, mPhi=0):
     '''
     dim_input  ---   x_dim
     dim_output ---   u_dim
@@ -32,6 +32,8 @@ def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase):
             'shape': [{'dim': (batch_size, dim_input)}
                       ]})
         net_input = L.Python(ntop=1, python_param=dict(module='NNBuilder', param_str=data_layer_info, layer='PolicyDataLayer'))
+    elif phase == "ISLOSS":
+        pass
     else:
         raise Exception('Unknown Network Phase')
 
@@ -42,8 +44,10 @@ def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase):
 
     if phase == TRAIN:
         out = L.Python(cur_top, action, precision, loss_weight=1.0, python_param=dict(module='NNBuilder', layer='SumLogProbLoss'))
-    else:
+    elif phase == TEST:
         out = cur_top
+    else:
+        phase == "ISLOSS"
 
     return out.to_proto()
 
@@ -93,7 +97,7 @@ class PhiLoss(caffe.Layer):
         pass
 
     def reshape(self, bottom, top):
-        pass
+        top[0].reshape(1)
 
     def forward(self, bottom, top):
         pass

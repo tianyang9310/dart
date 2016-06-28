@@ -17,6 +17,7 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int 
     DDPPolicyBundle(_conditions)
 {
     DDPIter     = 0;
+    mPhi        = 20;
 
     Py_Initialize();
     PyRun_SimpleString("import sys");  
@@ -46,12 +47,13 @@ void GPS::InitPolicyOptCaffe()
     if (!pClassPolicyOptCaffe) {  
         cout<<"Cant find PolicyOptCaffe class!!!"<<endl;  
     }  
-    PyObject* pArgs = PyTuple_New(4);
+    PyObject* pArgs = PyTuple_New(5);
     PyTuple_SetItem(pArgs,0, PyInt_FromLong(x_dim));
     PyTuple_SetItem(pArgs,1, PyInt_FromLong(u_dim));
     PyTuple_SetItem(pArgs,2, PyInt_FromLong(T-1));
     int m = numSamplesPerCond * conditions;
     PyTuple_SetItem(pArgs,3, PyInt_FromLong(m));
+    PyTuple_SetItem(pArgs,4, PyInt_FromLong(mPhi));
     pInstancePolicyOptCaffe = PyInstance_New(pClassPolicyOptCaffe,pArgs,NULL);
     pInstanceCaffePolicy    = PyObject_GetAttrString(pInstancePolicyOptCaffe,"policy");
 
