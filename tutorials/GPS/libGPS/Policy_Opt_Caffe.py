@@ -8,6 +8,17 @@ from file2numpy import file2numpy
 
 class PolicyOptCaffe():
     def __init__(self, x_dim, u_dim, T, N, mPhi):
+        """
+        x_dim:
+        u_dim:
+        T:     time horizon of one episode (normally T-1, since no control at the very end step)
+        N:     used in pretrain method. 
+               pretrain is called after ReadX, ReadU and ReadQuu_inv. Therefore the total number of data pairs is self.T * N
+               now N is the number of batches per epoch. Considering caffe_iterations is 50, so the total epochs should be 50/N
+        mPhi:  used in finetrain method.
+               mPhi is the total number of samples in optimizing Phi
+        batch_size: change from 25 to T-1
+        """
         caffe.set_mode_cpu()
         self.batch_size = T
         self.x_dim = x_dim
@@ -19,6 +30,7 @@ class PolicyOptCaffe():
         self.caffe_iterations =50
         
         self.init_solver()
+        self.init_solver2()
         # self.var = 0.1 * np.ones(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
         self.policy = CaffePolicy(self.solver.test_nets[0])
 
@@ -34,9 +46,7 @@ class PolicyOptCaffe():
          
         solver_param.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.batch_size,TRAIN))
         solver_param.test_net_param.add().CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,1,TEST))
-        solver_param.test_net_param.add().CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
         
-        solver_param.test_iter.append(1)
         solver_param.test_iter.append(1)
         solver_param.test_interval = 1000000
         
@@ -44,6 +54,23 @@ class PolicyOptCaffe():
             f.write(MessageToString(solver_param))
         
         self.solver=caffe.get_solver(f.name)
+
+    def init_solver2(self):
+        solver_param2 = SolverParameter()
+        solver_param2.display = 0  # Don't display anything.
+        solver_param2.base_lr = 0.001
+        solver_param2.lr_policy = 'fixed'
+        solver_param2.momentum = 0.9
+        solver_param2.weight_decay = 0.005
+        solver_param2.type = 'Adam'
+        solver_param2.random_seed = 1
+         
+        solver_param2.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
+        
+        with open('NeuralNetworks2.prototxt','w') as f:
+            f.write(MessageToString(solver_param2))
+        
+        self.solver2=caffe.get_solver(f.name)
 
     def pretrain(self):
     # def pretrain(self""", itr, inner_itr"""):

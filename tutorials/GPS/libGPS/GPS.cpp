@@ -17,7 +17,7 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int 
     DDPPolicyBundle(_conditions)
 {
     DDPIter     = 0;
-    mPhi        = 20;
+    mPhi        = (conditions+1)*4;
 
     Py_Initialize();
     PyRun_SimpleString("import sys");  
@@ -155,8 +155,7 @@ void GPS::InitNNPolicy()
 
 void GPS::BuildInitSamples()
 {
-//  Here m is hard-coded, basically m is related to numSamplesPerCond
-    int m = 5 * numSamplesPerCond;
+    int m = mPhi/(conditions+1);
     GPSSampleLists = trajSampleGeneratorFromNN(m);
     for (int _cond=0; _cond<conditions; _cond++)
     {

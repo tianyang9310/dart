@@ -16,7 +16,7 @@ train_net_param {
     python_param {
       module: "NNBuilder"
       layer: "PolicyDataLayer"
-      param_str: "{\"shape\": [{\"dim\": [25, 4]}, {\"dim\": [25, 1]}, {\"dim\": [25, 1, 1]}]}"
+      param_str: "{\"shape\": [{\"dim\": [1999, 4]}, {\"dim\": [1999, 1]}, {\"dim\": [1999, 1, 1]}]}"
     }
   }
   layer {
