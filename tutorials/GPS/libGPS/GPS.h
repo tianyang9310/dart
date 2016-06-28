@@ -44,6 +44,7 @@ public:
 	int DDPIter;
 	int conditions;
 	int numSamplesPerCond;
+    int GPS_iterations;
 	function<VectorXd(const VectorXd, const VectorXd)> StepDynamics;
 	vector<VectorXd> x0Bundle;
 	vector<shared_ptr<DDP>> DDPBundle;

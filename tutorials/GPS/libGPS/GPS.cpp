@@ -17,6 +17,7 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int 
     DDPPolicyBundle(_conditions)
 {
     DDPIter     = 0;
+    GPS_iterations = 10;
 
     Py_Initialize();
     PyRun_SimpleString("import sys");  
@@ -102,6 +103,16 @@ void GPS::run()
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl<<endl;
     cout<<"Press any key to continue..."<<endl;
     cin.get();
+
+    for (int _GPS_iter=0; _GPS_iter<GPS_iterations; _GPS_iter++)
+    {
+        // shuffle and choose sub sample sets Sk
+        // Optimize theta_k w.r.t. Phi
+        // generate samples from theta_k
+        // Optionally generate adaptive guiding samples
+        // Evaluate eq(2) to see whether replace theta_k or increase wr
+        // return the best policy
+    }
 }
 
 void GPS::InitDDPPolicy()
