@@ -148,6 +148,48 @@ void GPS::BuildInitSamples()
 
 }
 
+vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromNN(int numSamples)
+{
+    vector<shared_ptr<sample>> IndSampleLists(numSamples);
+    for_each(IndSampleLists.begin(),IndSampleLists.end(),
+            {
+                
+            });
+}
+
+vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples, int DDPIdx)
+{
+    vector<shared_ptr<sample>> IndSampleLists(numSamples);
+
+    for_each(IndSampleLists.begin(),IndSampleLists.end(),
+            [=](shared_ptr<sample> &SampleEntry)
+            {
+                VectorXd _x0;
+                _x0 = x0Bundle[DDPIdx];
+                SampleEntry = shared_ptr<sample>(new sample());
+                 
+                SampleEntry->x.resize(x_dim,T);
+                SampleEntry->u.resize(u_dim,T);
+                SampleEntry->Quu_inv.resize(T);
+                
+                SampleEntry->x.col(0)=_x0;
+                for (int i=0; i<T-1; i++)
+                {
+                    VectorXd __ut;
+                    MatrixXd __Quu_inv;
+                    __ut.setZero(u_dim);
+                    __Quu_inv.setZero(u_dim,u_dim);
+                    __ut = (DDPPolicyBundle[DDPIdx].first)[i](SampleEntry->x.col(i));
+                    __Quu_inv = (DDPPolicyBundle[DDPIdx].second)[i];
+                    SampleEntry->u.col(i) = GaussianSampler(__ut, __Quu_inv);
+                    SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
+                    SampleEntry->Quu_inv[i] = __Quu_inv;
+                }
+                SampleEntry->u.col(T-1) = VectorXd::Constant(SampleEntry->u.col(0).size(),std::nan("0"));
+            });
+    return IndSampleLists;
+}
+
 vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
 {
     vector<shared_ptr<sample>> MixSampleLists(numSamples);
