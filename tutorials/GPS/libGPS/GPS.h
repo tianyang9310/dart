@@ -22,6 +22,8 @@ using namespace DDP_NSpace;
 class GPS
 {
 public:
+// --------------------
+//  member function
 	GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics);
     ~GPS();
 	void run();
@@ -31,14 +33,10 @@ public:
     vector<shared_ptr<sample>> trajSampleGeneratorFromDDP(int numSamples, int DDPIdx);
 	vector<shared_ptr<sample>> trajSampleGeneratorFromDDPMix(int numSamples);
     vector<shared_ptr<sample>> trajSampleGeneratorFromNN(int numSamples);
-	
-
-
-// --------------------
-//	built-in function for debugging
-	void GaussianSamplerDebug();
 // --------------------
 
+// --------------------
+//  member variable
 	int T;
     const int x_dim;
     const int u_dim;
@@ -50,6 +48,13 @@ public:
 	vector<VectorXd> x0Bundle;
 	vector<shared_ptr<DDP>> DDPBundle;
 	vector<pair<vector<function<VectorXd(VectorXd)>>,vector<MatrixXd>>> DDPPolicyBundle;
+    vector<shared_ptr<sample>> GPSSampleLists;
+// --------------------
+
+// --------------------
+//	built-in function for debugging
+	void GaussianSamplerDebug();
+// --------------------
 
 // --------------------
 //  python wrapper
@@ -60,6 +65,7 @@ public:
     void write4numpy_X(vector<shared_ptr<sample>> data, const std::string name);
     void write4numpy_U(vector<shared_ptr<sample>> data, const std::string name);
     void write4numpy_Quu_inv(vector<shared_ptr<sample>> data, const std::string name);
+// --------------------
 };
 
 }
