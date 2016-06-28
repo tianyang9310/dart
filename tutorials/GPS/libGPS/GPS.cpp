@@ -166,6 +166,12 @@ void GPS::BuildInitSamples()
     write4numpy_U(GPSSampleLists, "SampleSets_U");
 }
 
+void GPS::EvalProb_q()
+{
+//  this function computes the evaluation of trajectories in terms of mixture of probabilities.
+
+}
+
 vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromNN(int numSamples)
 {
     if (!Py_IsInitialized())  

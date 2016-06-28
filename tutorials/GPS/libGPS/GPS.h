@@ -62,6 +62,7 @@ public:
     PyObject *pInstancePolicyOptCaffe;
     PyObject *pInstanceCaffePolicy;
     void InitPolicyOptCaffe();
+    void EvalProb_q();
 
     void write4numpy_X(vector<shared_ptr<sample>> data, const std::string name);
     void write4numpy_U(vector<shared_ptr<sample>> data, const std::string name);
