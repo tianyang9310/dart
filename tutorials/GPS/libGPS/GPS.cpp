@@ -3,6 +3,8 @@
 namespace GPS_NSpace
 {
 void printDict(PyObject* obj);   
+double GaussianEvaluator(VectorXd mean, MatrixXd covariance, VectorXd testX);
+double GaussianEvaluator(double mean, double covariance, double testX);
 
 GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics):
     T(_T),
@@ -17,6 +19,7 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int 
     DDPPolicyBundle(_conditions)
 {
     DDPIter     = 0;
+    // m is a misc variable and mPhi is a unique meaningful variable
     mPhi        = (conditions+1)*4;
     GPS_iterations = 10;
 
@@ -180,7 +183,18 @@ void GPS::BuildInitSamples()
 void GPS::EvalProb_q()
 {
 //  this function computes the evaluation of trajectories in terms of mixture of probabilities.
+    int m = GPSSampleLists.size();
+    for (int _sampleIdx=0; _sampleIdx<m; _sampleIdx++)
+    {
+        // dealing with one sample entry    
+        auto SampleEntry = GPSSampleLists[_sampleIdx];
+        SampleEntry->q.setZero(T);
+        for (int i=0; i<T-1; i++)
+        {
+            double cumulative_prob=0; 
 
+        }
+    }
 }
 
 vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromNN(int numSamples)
@@ -363,6 +377,20 @@ void printDict(PyObject* obj) {
         // printf("%s/n", c_name);  
     }  
 }  
+
+inline double GaussianEvaluator(VectorXd mean, MatrixXd covariance, VectorXd testX)
+{
+//  This function should be able to handle multivariate case
+    double probability = 0;
+    return probability;
+}
+
+inline double GaussianEvaluator(double mean, double covariance, double testX)
+{
+//  This function is a specific one to compute probability for univariate case
+    double probability = 0;
+    return probability;
+}
 
 void GPS::write4numpy_X(vector<shared_ptr<sample>> data, const std::string name)
 {
