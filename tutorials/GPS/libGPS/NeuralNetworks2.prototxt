@@ -9,10 +9,14 @@ train_net_param {
     name: "Python1"
     type: "Python"
     top: "Python1"
+    top: "Python2"
+    top: "Python3"
+    top: "Python4"
+    top: "Python5"
     python_param {
       module: "NNBuilder"
       layer: "PolicyDataLayer"
-      param_str: "{\"shape\": [{\"dim\": [39980, 4]}]}"
+      param_str: "{\"shape\": [{\"dim\": [39980, 4]}, {\"dim\": [39980, 1]}, {\"dim\": [39980, 1, 1]}, {\"dim\": [39980, 1]}, {\"dim\": [1, 1]}]}"
     }
   }
   layer {
@@ -53,6 +57,22 @@ train_net_param {
         type: "constant"
         value: 0
       }
+    }
+  }
+  layer {
+    name: "Python6"
+    type: "Python"
+    bottom: "InnerProduct2"
+    bottom: "Python2"
+    bottom: "Python3"
+    bottom: "Python4"
+    bottom: "Python5"
+    top: "Python6"
+    loss_weight: 1.0
+    python_param {
+      module: "NNBuilder"
+      layer: "PhiLoss"
+      param_str: "{\"mPhi\": 20, \"batch_size\": 1999}"
     }
   }
 }

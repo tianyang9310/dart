@@ -34,9 +34,13 @@ def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase, mPhi=0):
         net_input = L.Python(ntop=1, python_param=dict(module='NNBuilder', param_str=data_layer_info, layer='PolicyDataLayer'))
     elif phase == "ISLOSS":
         data_layer_info = json.dumps({
-            'shape': [{'dim': (mPhi*batch_size, dim_input)}
+            'shape': [{'dim': (mPhi*batch_size, dim_input)},
+                      {'dim': (mPhi*batch_size, dim_output)},
+                      {'dim': (mPhi*batch_size, dim_output, dim_output)},
+                      {'dim': (mPhi*batch_size, 1)},
+                      {'dim': (1, 1)}
                       ]})
-        net_input = L.Python(ntop=1, python_param=dict(module='NNBuilder', param_str=data_layer_info, layer='PolicyDataLayer'))
+        [net_input, action, precision, Logq, wr] = L.Python(ntop=5, python_param=dict(module='NNBuilder', param_str=data_layer_info, layer='PolicyDataLayer'))
     else:
         raise Exception('Unknown Network Phase')
 
@@ -50,8 +54,11 @@ def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase, mPhi=0):
     elif phase == TEST:
         out = cur_top
     elif phase == "ISLOSS":
-        out = cur_top
-
+        PhiLoss_layer_info = json.dumps({
+            'mPhi': mPhi,
+            'batch_size': batch_size
+            })
+        out = L.Python(cur_top, action, precision, Logq, wr, loss_weight=1.0, python_param=dict(module='NNBuilder', param_str=PhiLoss_layer_info, layer='PhiLoss'))
 
     return out.to_proto()
 
@@ -98,12 +105,20 @@ class SumLogProbLoss(caffe.Layer):
 
 class PhiLoss(caffe.Layer):
     def setup(self, bottom, top):
+        info = json.loads(self.param_str)
+        self.mPhi = info['mPhi']
+        self.batch_size = info['batch_size']
         pass
 
     def reshape(self, bottom, top):
         top[0].reshape(1)
 
     def forward(self, bottom, top):
+        # bottom[0] mPhi*batch_size  x
+        # bottom[1] mPhi*batch_size  u
+        # bottom[2] mPhi*batch_size  precision
+        # bottom[3] mPhi*batch_size  Logq
+        # bottom[4] mPhi*batch_size  wr
         pass
 
     def backward(self, top, propagate_down, bottom):

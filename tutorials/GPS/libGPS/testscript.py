@@ -1,6 +1,6 @@
 from Policy_Opt_Caffe import PolicyOptCaffe
 import numpy as np
-tt=PolicyOptCaffe(4,1,1999,10)
+tt=PolicyOptCaffe(4,1,1999,10,20)
 
 tt.ReadX()
 tt.ReadU()
