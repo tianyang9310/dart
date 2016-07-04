@@ -2,6 +2,9 @@
 caffe_root = '/opt/caffe/'
 
 import json
+import numpy as np
+from scipy.stats import norm
+import math
 import sys
 sys.path.insert(0, caffe_root+'python')
 #print sys.path
@@ -35,12 +38,13 @@ def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase, mPhi=0):
     elif phase == "ISLOSS":
         data_layer_info = json.dumps({
             'shape': [{'dim': (mPhi*batch_size, dim_input)},
+                      {'dim': (mPhi*batch_size, dim_input)},
                       {'dim': (mPhi*batch_size, dim_output)},
                       {'dim': (mPhi*batch_size, dim_output, dim_output)},
                       {'dim': (mPhi*batch_size, 1)},
                       {'dim': (1, 1)}
                       ]})
-        [net_input, action, precision, Logq, wr] = L.Python(ntop=5, python_param=dict(module='NNBuilder', param_str=data_layer_info, layer='PolicyDataLayer'))
+        [net_input, net_input2, action, precision, Logq, wr] = L.Python(ntop=6, python_param=dict(module='NNBuilder', param_str=data_layer_info, layer='PolicyDataLayer'))
     else:
         raise Exception('Unknown Network Phase')
 
@@ -58,7 +62,7 @@ def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase, mPhi=0):
             'mPhi': mPhi,
             'batch_size': batch_size
             })
-        out = L.Python(cur_top, action, precision, Logq, wr, loss_weight=1.0, python_param=dict(module='NNBuilder', param_str=PhiLoss_layer_info, layer='PhiLoss'))
+        out = L.Python(cur_top, net_input2, action, precision, Logq, wr, loss_weight=1.0, python_param=dict(module='NNBuilder', param_str=PhiLoss_layer_info, layer='PhiLoss'))
 
     return out.to_proto()
 
@@ -114,12 +118,41 @@ class PhiLoss(caffe.Layer):
         top[0].reshape(1)
 
     def forward(self, bottom, top):
-        # bottom[0] mPhi*batch_size  x
-        # bottom[1] mPhi*batch_size  u
-        # bottom[2] mPhi*batch_size  precision
-        # bottom[3] mPhi*batch_size  Logq
-        # bottom[4] mPhi*batch_size  wr
-        pass
+        # bottom[0] mPhi*batch_size  u given x
+        # bottom[1] mPhi*batch_size  x
+        # bottom[2] mPhi*batch_size  u of sample
+        # bottom[3] mPhi*batch_size  precision
+        # bottom[4] mPhi*batch_size  Logq
+        # bottom[5] mPhi*batch_size  wr
+        loss = 0.0
+        Log_Pi_theta = np.zeros(self.mPhi)
+        self.Log_Pi_theta_List = np.zeros((self.batch_size, self.mPhi))
+
+        for t_idx in range(self.batch_size): # t=0~T-2
+            inner_sum = 0
+            Zt        = 0
+            for m_idx in range(self.mPhi):
+                cur_idx = t_idx*self.batch_size + m_idx
+                Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + norm(self.bottom[0].data[cur_idx][0], np.linalg.inv(self.bottom[3].data[cur_idx][0])).pdf(self.bottom[2].data[cur_idx][0])
+                inner_sum = inner_sum + Log_Pi_theta[m_idx]/self.bottom[4].data[cur_idx] * StepCost(self.bottom[1].data[cur_idx], self.bottom[2].data[cur_idx])
+                Zt        = Zt + Log_Pi_theta[m_idx]/self.bottom[4].data[cur_idx]
+                
+            self.Log_Pi_theta_List[t_idx] = Log_Pi_theta
+            loss = loss + 1/Zt*inner_sum + self.bottom[5].data[0]*np.log(Zt)
+        top[0].data[...] = loss
 
     def backward(self, top, propagate_down, bottom):
         pass
+
+    def StepCost(_x,_u):
+        xd = np.array([0, math.pi, 0, 0])
+        Q  = np.array([[0.01,0,0,0],
+                       [0   ,5,0,0],
+                       [0   ,0,0,0],
+                       [0   ,0,0,0]])
+        R  = np.array([1])
+        # Matrix4d Qf = Matrix4d::Identity()
+        # Qf(1,1)				= 500
+        Q = Q*0.001
+        R = R*0.001
+        return (0.5*(_x-xd).dot(Q.dot(_x-xd)) + 0.5*_u.dot(R.dot(_u)))
