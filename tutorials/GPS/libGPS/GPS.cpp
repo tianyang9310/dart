@@ -120,7 +120,7 @@ void GPS::run()
     }
 }
 
-void GPS::InitDDPPolicy()
+void GPS::DDPdemonstration()
 {
     for (int _cond=0; _cond<conditions; _cond++)
     {
@@ -132,6 +132,16 @@ void GPS::InitDDPPolicy()
             DDPIter++;
             cout<<"########################################"<<endl;
         }
+        DDPBundle[_cond]->setMu();
+    }
+}
+
+void GPS::InitDDPPolicy()
+{
+    DDPdemonstration();
+    for (int _cond=0; _cond<conditions; _cond++)
+    {
+        DDPBundle[_cond]->trajopt();
 
         DDPPolicyBundle[_cond]=make_pair(DDPBundle[_cond]->gx, DDPBundle[_cond]->Quu_inv);
     }

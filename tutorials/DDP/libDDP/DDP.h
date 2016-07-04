@@ -60,7 +60,11 @@ public:
     Eigen::MatrixXd Cxx;
     Eigen::MatrixXd Cuu;
     Eigen::MatrixXd Cux;
+// --------------------------------------------------
+    void setMu();
     double mu;
+    double mu_default;
+// --------------------------------------------------
     double alpha;
 // --------------------------------------------------
     Eigen::MatrixXd Qf;

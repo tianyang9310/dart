@@ -37,7 +37,8 @@ DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen
 
     x0 = std::get<0>(StateBundle);
     xd = std::get<1>(StateBundle);
-    mu    = 1;
+    mu_default = 0;    
+    mu    = mu_default;
     alpha = 1;
 // matrix initialization
     x_dim = x0.rows();
@@ -128,7 +129,7 @@ void DDP::trajopt()
             mu +=5;
         }
     }
-    mu = 1;
+    mu = mu_default;
 // --------------------------------------------------
 #ifdef mDebug_DDP
 //  backward debugging
@@ -417,5 +418,9 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
     fu  = fxu_bundle.rightCols(_ui.rows());
 }
 
+void DDP::setMu()
+{
+    mu_default = 1;
+}
 
 }
