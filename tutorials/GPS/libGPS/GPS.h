@@ -53,13 +53,6 @@ public:
 	vector<pair<vector<function<VectorXd(VectorXd)>>,vector<MatrixXd>>> DDPPolicyBundle;
     vector<shared_ptr<sample>> GPSSampleLists;
 // --------------------
-
-// --------------------
-//	built-in function for debugging
-	void GaussianSamplerDebug();
-// --------------------
-
-// --------------------
 //  python wrapper
     PyObject *pInstancePolicyOptCaffe;
     PyObject *pInstanceCaffePolicy;

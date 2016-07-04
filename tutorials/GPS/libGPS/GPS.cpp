@@ -3,8 +3,8 @@
 namespace GPS_NSpace
 {
 void printDict(PyObject* obj);   
-double GaussianEvaluator(VectorXd mean, MatrixXd covariance, VectorXd testX);
-double GaussianEvaluator(double mean, double covariance, double testX);
+void GaussianSamplerDebug();
+void GaussianEvaluatorDebug();
 
 GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics):
     T(_T),
@@ -97,7 +97,8 @@ GPS::~GPS()
 
 void GPS::run()
 {
-    // GaussianSamplerDebug();
+    GaussianSamplerDebug();
+    GaussianEvaluatorDebug();
 
     InitDDPPolicy();
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
@@ -352,7 +353,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
 }
 
 // -----------------------------------------
-inline void GPS::GaussianSamplerDebug()
+inline void GaussianSamplerDebug()
 {
     const int nrolls=10000;
     const int nstars=100;       
@@ -379,6 +380,14 @@ inline void GPS::GaussianSamplerDebug()
     cin.get();
 }
 
+inline void GaussianEvaluatorDebug()
+{
+    cout<<"The probability of 5 in N(5,1) is "<<GaussianEvaluator(5,1,5)<<endl;
+    cout<<"The probability of 4 in N(5,1) is "<<GaussianEvaluator(5,1,4)<<endl;
+    cout<<"The probability of 3 in N(5,1) is "<<GaussianEvaluator(5,1,3)<<endl;
+    cin.get();
+}
+
 void printDict(PyObject* obj) {  
     if (!PyDict_Check(obj))  
         return;  
@@ -391,20 +400,6 @@ void printDict(PyObject* obj) {
         // printf("%s/n", c_name);  
     }  
 }  
-
-inline double GaussianEvaluator(VectorXd mean, MatrixXd covariance, VectorXd testX)
-{
-//  This function should be able to handle multivariate case
-    double probability = 0;
-    return probability;
-}
-
-inline double GaussianEvaluator(double mean, double covariance, double testX)
-{
-//  This function is a specific one to compute probability for univariate case
-    double probability = 0;
-    return probability;
-}
 
 void GPS::write4numpy_X(vector<shared_ptr<sample>> data, const std::string name)
 {
