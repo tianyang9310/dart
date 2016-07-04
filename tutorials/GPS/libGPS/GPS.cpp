@@ -316,18 +316,11 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
                 {
                     VectorXd __ut;
                     __ut.setZero(u_dim);
+                    __ut = (DDPPolicyBundle[distribution(generator)].first)[i](SampleEntry->x.col(i));
                     MatrixXd __Quu_inv;
                     __Quu_inv.setZero(u_dim,u_dim);
-                    MatrixXd uEye;
-                    uEye.setIdentity(u_dim,u_dim);
-                    for (int _cond=0; _cond<conditions; _cond++)
-                    {
-                        __ut = __ut + (DDPPolicyBundle[_cond].first)[i](SampleEntry->x.col(i));
-                        __Quu_inv = __Quu_inv + (1 / double(conditions) * uEye) * 
-                                                ((DDPPolicyBundle[_cond].second)[i]) * 
-                                                (1 / double(conditions) * uEye).transpose();
-                    }
-                    __ut = 1 / double(conditions) * uEye * __ut;
+                    __Quu_inv = (DDPPolicyBundle[distribution(generator)].second)[i];
+
                     SampleEntry->u.col(i) = GaussianSampler(__ut, __Quu_inv);
                     SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
                     SampleEntry->Quu_inv[i] = __Quu_inv;
