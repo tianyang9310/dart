@@ -51,6 +51,17 @@ void GPS::InitPolicyOptCaffe()
     if (!pClassPolicyOptCaffe) {  
         cout<<"Cant find PolicyOptCaffe class!!!"<<endl;  
     }  
+    /*
+        x_dim:
+        u_dim:
+        T:     time horizon of one episode (normally T-1, since no control at the very end step)
+        N:     used in pretrain method. 
+               pretrain is called after ReadX, ReadU and ReadQuu_inv. Therefore the total number of data pairs is self.T * N
+               now N is the number of batches per epoch. Considering caffe_iterations is 50, so the total epochs should be 50/N
+        mPhi:  used in finetrain method.
+               mPhi is the total number of samples in optimizing Phi
+        batch_size: change from 25 to T-1
+    */
     PyObject* pArgs = PyTuple_New(5);
     PyTuple_SetItem(pArgs,0, PyInt_FromLong(x_dim));
     PyTuple_SetItem(pArgs,1, PyInt_FromLong(u_dim));
@@ -397,6 +408,8 @@ inline double GaussianEvaluator(double mean, double covariance, double testX)
 
 void GPS::write4numpy_X(vector<shared_ptr<sample>> data, const std::string name)
 {
+//  remove last state, since no control in last step.
+//  later may resume since loss function requires last step
     std::string name_ext = name;
     name_ext.append(".numpyout");
     std::ofstream outFile(name_ext, std::ios::out);
@@ -414,6 +427,8 @@ void GPS::write4numpy_X(vector<shared_ptr<sample>> data, const std::string name)
 
 void GPS::write4numpy_U(vector<shared_ptr<sample>> data, const std::string name)
 {
+//  remove last state, since no control in last step.
+//  later may resume since loss function requires last step
     std::string name_ext = name;
     name_ext.append(".numpyout");
     std::ofstream outFile(name_ext, std::ios::out);
@@ -431,6 +446,8 @@ void GPS::write4numpy_U(vector<shared_ptr<sample>> data, const std::string name)
 
 void GPS::write4numpy_Quu_inv(vector<shared_ptr<sample>> data, const std::string name)
 {
+//  remove last state, since no control in last step.
+//  later may resume since loss function requires last step
     std::string name_ext = name;
     name_ext.append(".numpyout");
     std::ofstream outFile(name_ext, std::ios::out);
