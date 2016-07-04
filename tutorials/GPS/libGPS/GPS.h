@@ -25,7 +25,7 @@ public:
 // --------------------
 //  member function
 	GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics);
-    ~GPS();
+    virtual ~GPS();
 	void run();
     void DDPdemonstration();
 	void InitDDPPolicy();

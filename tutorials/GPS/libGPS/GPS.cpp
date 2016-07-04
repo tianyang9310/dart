@@ -97,8 +97,8 @@ GPS::~GPS()
 
 void GPS::run()
 {
-    GaussianSamplerDebug();
-    GaussianEvaluatorDebug();
+    // GaussianSamplerDebug();
+    // GaussianEvaluatorDebug();
 
     InitDDPPolicy();
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
@@ -144,7 +144,11 @@ void GPS::DDPdemonstration()
             DDPIter++;
             cout<<"########################################"<<endl;
         }
+        
+        cout<<"[BEFORE] "<<_cond<<" DDP mu is "<<DDPBundle[_cond]->mu<<endl;
         DDPBundle[_cond]->setMu();
+        cout<<"[AFTER]"<<_cond<<" DDP mu is "<<DDPBundle[_cond]->mu<<endl;
+
     }
 }
 
