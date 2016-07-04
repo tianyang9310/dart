@@ -195,6 +195,7 @@ void GPS::InitNNPolicy()
 
 void GPS::BuildInitSamples()
 {
+    // here no casting because mPhi is designed to be dividible
     int m = mPhi/(conditions+1);
     GPSSampleLists = trajSampleGeneratorFromNN(m);
     for (int _cond=0; _cond<conditions; _cond++)
@@ -204,23 +205,35 @@ void GPS::BuildInitSamples()
     }
     write4numpy_X(GPSSampleLists, "SampleSets_X");
     write4numpy_U(GPSSampleLists, "SampleSets_U");
+    EvalProb_Logq();
+    write4numpy_Logq(GPSSampleLists, "SampleSets_Logq");
 }
 
-void GPS::EvalProb_q()
+void GPS::EvalProb_Logq()
 {
 //  this function computes the evaluation of trajectories in terms of mixture of probabilities.
-    int m = GPSSampleLists.size();
-    for (int _sampleIdx=0; _sampleIdx<m; _sampleIdx++)
-    {
-        // dealing with one sample entry    
-        auto SampleEntry = GPSSampleLists[_sampleIdx];
-        SampleEntry->q.setZero(T);
-        for (int i=0; i<T-1; i++)
-        {
-            double cumulative_prob=0; 
-
-        }
-    }
+    for_each(GPSSampleLists.begin(), GPSSampleLists.end(), 
+            [=](shared_ptr<sample> &SampleEntry)
+            {
+                SampleEntry->Logq.setZero(T);
+                for (int i=0; i<T-1; i++)
+                {
+                    double tmpq    = 0;
+                    // condition+1
+                    for (int _cond=0; _cond<conditions; _cond++)
+                    {
+                        tmpq += GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](SampleEntry->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), SampleEntry->u.col(i)(0));
+                    }
+                    tmpq = tmpq/double(conditions);
+                    if (i==0)
+                    {
+                        SampleEntry->Logq(i) = log(tmpq);
+                    }
+                    {
+                        SampleEntry->Logq(i) = SampleEntry->Logq(i-1) + log(tmpq);
+                    }
+                }
+            });
 }
 
 vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromNN(int numSamples)
@@ -465,5 +478,23 @@ void GPS::write4numpy_Quu_inv(vector<shared_ptr<sample>> data, const std::string
     outFile.close();
 }
 
+void GPS::write4numpy_Logq(vector<shared_ptr<sample>> data, const std::string name)
+{
+//  remove last state, since no control in last step.
+//  later may resume since loss function requires last step
+    std::string name_ext = name;
+    name_ext.append(".numpyout");
+    std::ofstream outFile(name_ext, std::ios::out);
+    if (outFile.fail())
+    {
+        dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
+    }
+    outFile.precision(8);
+    for (size_t i =0; i<data.size(); i++)
+    {
+        outFile<<data[i]->Logq.head(T-1)<<std::endl; 
+    }
+    outFile.close();
+}
 
 }

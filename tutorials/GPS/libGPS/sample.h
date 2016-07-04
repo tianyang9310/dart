@@ -16,7 +16,7 @@ public:
 	MatrixXd x;
 	MatrixXd u;
     vector<MatrixXd> Quu_inv;
-    VectorXd q;
+    VectorXd Logq;
 };
 
 

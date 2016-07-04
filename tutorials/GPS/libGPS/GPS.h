@@ -7,6 +7,7 @@
 #include <chrono>
 #include <Python.h>
 #include <string>
+#include <math.h>
 #include "utility.h"
 #include "sample.h"
 #include "../../DDP/libDDP/DDP.h"
@@ -57,11 +58,12 @@ public:
     PyObject *pInstancePolicyOptCaffe;
     PyObject *pInstanceCaffePolicy;
     void InitPolicyOptCaffe();
-    void EvalProb_q();
+    void EvalProb_Logq();
 
     void write4numpy_X(vector<shared_ptr<sample>> data, const std::string name);
     void write4numpy_U(vector<shared_ptr<sample>> data, const std::string name);
     void write4numpy_Quu_inv(vector<shared_ptr<sample>> data, const std::string name);
+    void write4numpy_Logq(vector<shared_ptr<sample>> data, const std::string name);
 // --------------------
 };
 
