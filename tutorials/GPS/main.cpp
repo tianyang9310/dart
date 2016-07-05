@@ -23,10 +23,12 @@ int main(int argc, char* argv[])
 	WorldPtr mWorld = make_shared<World>();
 	WorldSetup(mWorld);
 
+    mWorld->setTimeStep(0.02);
+
 
 // ---------------------------------------------------------
 // hyperparameter initialization
-	int T				= 2000;
+	int T				= 100;
     int x_dim           = 4;
     int u_dim           = 1;
 	int numDDPIters		= 3;
