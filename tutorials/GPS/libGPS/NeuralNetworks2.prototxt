@@ -17,7 +17,7 @@ train_net_param {
     python_param {
       module: "NNBuilder"
       layer: "PolicyDataLayer"
-      param_str: "{\"shape\": [{\"dim\": [47976, 4]}, {\"dim\": [47976, 4]}, {\"dim\": [47976, 1]}, {\"dim\": [47976, 1, 1]}, {\"dim\": [47976, 1]}, {\"dim\": [1, 1]}]}"
+      param_str: "{\"shape\": [{\"dim\": [2376, 4]}, {\"dim\": [2376, 4]}, {\"dim\": [2376, 1]}, {\"dim\": [2376, 1, 1]}, {\"dim\": [2376, 1]}, {\"dim\": [1, 1]}]}"
     }
   }
   layer {
@@ -74,7 +74,7 @@ train_net_param {
     python_param {
       module: "NNBuilder"
       layer: "PhiLoss"
-      param_str: "{\"mPhi\": 24, \"batch_size\": 1999}"
+      param_str: "{\"mPhi\": 24, \"batch_size\": 99}"
     }
   }
 }

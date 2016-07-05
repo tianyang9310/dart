@@ -141,20 +141,33 @@ class PhiLoss(caffe.Layer):
                 # b=bottom[1].data[cur_idx]   # ndarray 1d
                 # c=bottom[2].data[cur_idx]   # ndarray 1d
                 # d=bottom[3].data[cur_idx]   # ndarray 2d
-                e=bottom[4].data[cur_idx]   # ndarray 1d
+                # e=bottom[4].data[cur_idx]   # ndarray 1d
                 # f=bottom[5].data[0]   # ndarray 1d
-                g=self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx]) # float number
-                error = Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0]
+                # g=self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx]) # float number
+                # error = Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0]
 
                 inner_sum = inner_sum + np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0])* self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx])
                 Zt        = Zt + np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0])
                 
             self.Log_Pi_theta_List[t_idx] = Log_Pi_theta
-            loss = loss + float(1)/Zt*inner_sum + bottom[5].data[0][0]*np.log(Zt)
+
+            # TODO remove regularizer
+            tmpLoss = loss
+            loss = loss + float(1)/Zt*inner_sum # + bottom[5].data[0][0]*np.log(Zt)
+            if tmpLoss>loss:
+                raise Exception('Loss is not increasing')
+
             self.J_tilt_List[t_idx] = float(1)/Zt*inner_sum
         top[0].data[...] = loss
 
     def backward(self, top, propagate_down, bottom):
+        # bottom[0] mPhi*batch_size*dim_output u given x
+        # bottom[1] mPhi*batch_size*dim_input  x
+        # bottom[2] mPhi*batch_size*dim_output  u of sample
+        # bottom[3] 1*dim_output*dim_output  precision
+        # bottom[4] mPhi*batch_size*1  Logq
+        # bottom[5] 1*1  wr
+
         for t_idx in range(self.batch_size):
             for m_idx in range(self.mPhi):
                 cur_idx = m_idx*self.batch_size + t_idx
@@ -163,11 +176,15 @@ class PhiLoss(caffe.Layer):
                 for t_p_idx in range(t_idx, self.batch_size):
                     cur_p_idx = np.arange(self.mPhi)*self.batch_size + t_p_idx
                     # compute zt_p  xi_t_p
-                    zt_p = np.sum(np.exp((self.Log_Pi_theta_List[t_p_idx]-bottom[4].data[cur_p_idx])))
-                    J_tilt = self.J_tilt_List[t_idx]
-                    xi_t_p = self.StepCost(bottom[1].data[m_idx*self.batch_size+t_p_idx], bottom[2].data[m_idx*self.batch_size+t_p_idx]) - J_tilt + bottom[5].data[0]
+
+                    zt_p = np.sum(np.exp((self.Log_Pi_theta_List[t_p_idx]-np.reshape(bottom[4].data[cur_p_idx],self.mPhi))))
+                    J_tilt = self.J_tilt_List[t_p_idx]
+
+                    # TODO remove regularizer
+                    xi_t_p = self.StepCost(bottom[1].data[m_idx*self.batch_size+t_p_idx], bottom[2].data[m_idx*self.batch_size+t_p_idx]) - J_tilt # + bottom[5].data[0]
+
                     
-                    inner_sum_t_p = inner_sum_t_p + 1/zt_p*np.exp(self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[cur_idx])*xi_t_p
+                    inner_sum_t_p = inner_sum_t_p + float(1)/zt_p*np.exp(self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx])*xi_t_p
                 gradient = gradient * inner_sum_t_p
                 bottom[0].diff[cur_idx] = gradient 
 
