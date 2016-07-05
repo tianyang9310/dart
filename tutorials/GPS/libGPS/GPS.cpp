@@ -225,6 +225,63 @@ void GPS::EvalProb_Logq()
                     {
                         tmpq += GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](SampleEntry->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), SampleEntry->u.col(i)(0));
                     }
+
+                    PyObject* pArgs = PyTuple_New(4);
+                    PyTuple_SetItem(pArgs,0, PyFloat_FromDouble(SampleEntry->x.col(i)[0]));
+                    PyTuple_SetItem(pArgs,1, PyFloat_FromDouble(SampleEntry->x.col(i)[1]));
+                    PyTuple_SetItem(pArgs,2, PyFloat_FromDouble(SampleEntry->x.col(i)[2]));
+                    PyTuple_SetItem(pArgs,3, PyFloat_FromDouble(SampleEntry->x.col(i)[3]));
+                    PyObject* pResult =  PyObject_CallMethodObjArgs(pInstanceCaffePolicy,PyString_FromString("act"), pArgs, NULL);
+                    if (! pResult)
+                    {
+                        cout<<"Failing to CALL act method of Caffe Policy"<<endl;
+                    }
+                    VectorXd __ut;
+                    __ut.setZero(u_dim);
+                    double u_Policy;
+                    if (! PyArg_ParseTuple(pResult, "d", &u_Policy))
+                    {
+                        cout<<"Failing to PARSE data from act method"<<endl;
+                    }
+                    __ut<<u_Policy;
+                    
+                    MatrixXd __Quu_inv;
+                    __Quu_inv.setZero(u_dim,u_dim);
+                    double Quu_inv_Policy;
+                    Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pInstanceCaffePolicy,"var"));
+                    __Quu_inv<<Quu_inv_Policy;
+                    Py_DECREF(pArgs);
+                    Py_DECREF(pResult);
+                    tmpq += GaussianEvaluator(__ut(0), __Quu_inv(0), SampleEntry->u.col(i)(0));
+
+                    tmpq = tmpq/double(conditions+1);
+                    if (i==0)
+                    {
+                        SampleEntry->Logq(i) = log(tmpq);
+                    }
+                    {
+                        SampleEntry->Logq(i) = SampleEntry->Logq(i-1) + log(tmpq);
+                    }
+                }
+            });
+}
+
+void GPS::EvalConditionalProb_Logq()
+{
+//  this function computes the evaluation of trajectories in terms of mixture of probabilities.
+/*
+    for_each(GPSSampleLists.begin(), GPSSampleLists.end(), 
+            [=](shared_ptr<sample> &SampleEntry)
+            {
+                SampleEntry->Logq.setZero(T);
+                for (int i=0; i<T-1; i++)
+                {
+                    double tmpq    = 0;
+                    // condition+1
+                    for (int _cond=0; _cond<conditions; _cond++)
+                    {
+                        tmpq += GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](SampleEntry->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), SampleEntry->u.col(i)(0));
+                    }
                     tmpq = tmpq/double(conditions);
                     if (i==0)
                     {
@@ -235,6 +292,7 @@ void GPS::EvalProb_Logq()
                     }
                 }
             });
+*/
 }
 
 vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromNN(int numSamples)

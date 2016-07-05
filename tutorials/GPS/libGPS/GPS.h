@@ -59,6 +59,7 @@ public:
     PyObject *pInstanceCaffePolicy;
     void InitPolicyOptCaffe();
     void EvalProb_Logq();
+    void EvalConditionalProb_Logq();
 
     void write4numpy_X(vector<shared_ptr<sample>> data, const std::string name);
     void write4numpy_U(vector<shared_ptr<sample>> data, const std::string name);
