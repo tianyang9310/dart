@@ -156,7 +156,7 @@ class PolicyOptCaffe():
             
             self.solver2.step(1)
             # To get the training loss:
-            train_loss = self.solver.net.blobs[blob_names[-1]].data
+            train_loss = self.solver2.net.blobs[blob_names[-1]].data
             cumulative_loss += train_loss
         self.policy.net.share_with(self.solver2.net)
 
