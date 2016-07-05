@@ -134,7 +134,7 @@ class PhiLoss(caffe.Layer):
             Zt        = 0.0
             for m_idx in range(self.mPhi):
                 cur_idx = m_idx*self.batch_size + t_idx
-                Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + np.log(norm(bottom[0].data[cur_idx][0], np.linalg.inv(bottom[3].data[cur_idx])[0,0]).pdf(bottom[2].data[cur_idx][0]))
+                Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + np.log(np.finfo(float).eps+norm(bottom[0].data[cur_idx][0], np.linalg.inv(bottom[3].data[cur_idx])[0,0]).pdf(bottom[2].data[cur_idx][0]))
 
                 # h=Log_Pi_theta[m_idx]       # float number
                 # a=bottom[0].data[cur_idx]   # ndarray 1d
