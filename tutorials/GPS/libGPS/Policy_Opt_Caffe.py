@@ -28,6 +28,7 @@ class PolicyOptCaffe():
         self.mPhi  = mPhi
         self.hidden_dim = 50
         self.caffe_iterations =50
+        self.caffe_finetune_iterations = 2
         
         self.init_solver()
         self.init_solver2()
@@ -146,7 +147,8 @@ class PolicyOptCaffe():
         
         blob_names = self.solver2.net.blobs.keys()
         cumulative_loss = 0.0
-        for i in range(self.caffe_iterations):
+        for i in range(self.caffe_finetune_iterations):
+            print str(i)+' th iteration of finetune'
             self.solver2.net.blobs[blob_names[0]].data[:]=self.samplesets_x
             self.solver2.net.blobs[blob_names[1]].data[:]=self.samplesets_x
             self.solver2.net.blobs[blob_names[2]].data[:]=self.samplesets_u
