@@ -98,7 +98,7 @@ class PolicyOptCaffe():
         # Assuming that N*T >= self.batch_size.
         batches_per_epoch = np.floor(self.N*self.T / self.batch_size)
         idx = range(self.N*self.T)
-        cumulative_loss = 0
+        cumulative_loss = 0.0
         np.random.shuffle(idx)
         for i in range(self.caffe_iterations):
             # Load in data for this batch.
@@ -116,6 +116,7 @@ class PolicyOptCaffe():
             cumulative_loss += train_loss
         
         self.policy.net.share_with(self.solver.net)        
+        self.solver2.net.share_with(self.solver.net)        
 
     def ReadX(self):
         self.x = file2numpy('X.numpyout')
@@ -131,6 +132,55 @@ class PolicyOptCaffe():
         self.Quu_inv = file2numpy('Quu_inv.numpyout')
         self.Quu_inv = np.reshape(self.Quu_inv,(-1,self.u_dim,self.u_dim))
         print self.Quu_inv
+
+    def finetune(self):
+        # initialize var
+        # self.var = 
+        # self.policy.var = 
+
+        # need to call setWr() before calling finetune
+        
+        print '*********************************************************'
+        print '************* Finetune the neural networks **************'
+        print '*********************************************************'
+        
+        blob_names = self.solver2.net.blobs.keys()
+        cumulative_loss = 0.0
+        for i in range(self.caffe_iterations):
+            self.solver2.net.blobs[blob_names[0]].data[:]=self.samplesets_x
+            self.solver2.net.blobs[blob_names[1]].data[:]=self.samplesets_x
+            self.solver2.net.blobs[blob_names[2]].data[:]=self.samplesets_u
+            self.solver2.net.blobs[blob_names[3]].data[:]=np.linalg.inv(self.var)
+            self.solver2.net.blobs[blob_names[4]].data[:]=self.samplesets_Logq
+            self.solver2.net.blobs[blob_names[5]].data[:]=self.wr
+            
+            self.solver2.step(1)
+            # To get the training loss:
+            train_loss = self.solver.net.blobs[blob_names[-1]].data
+            cumulative_loss += train_loss
+        self.policy.net.share_with(self.solver2.net)
+
+    def ReadSampleSets_X(self):
+        self.samplesets_x = file2numpy('SampleSets_X.numpyout')
+        print self.samplesets_x
+
+    def ReadSampleSets_U(self):
+        # Supposing u_dim is 1, s.t. each row is an instance
+        self.samplesets_u = file2numpy('SampleSets_U.numpyout')
+        print self.samplesets_u
+
+    def ReadSampleSets_Quu_inv(self):
+        # Supposing u_dim is 1, s.t. each row is an instance
+        self.samplesets_Quu_inv = file2numpy('SampleSets_Quu_inv.numpyout')
+        self.samplesets_Quu_inv = np.reshape(self.samplesets_Quu_inv,(-1,self.u_dim,self.u_dim))
+        print self.samplesets_Quu_inv
+
+    def ReadSampleSets_Logq(self):
+        self.samplesets_Logq = file2numpy('SampleSets_Logq.numpyout')
+        print self.samplesets_Logq
+
+    def setWr(self, _wr=1e-2):
+        self.wr = _wr
 
     def setFoo(self):
         self.policy.foo = 100

@@ -205,6 +205,7 @@ void GPS::BuildInitSamples()
     }
     write4numpy_X(GPSSampleLists, "SampleSets_X");
     write4numpy_U(GPSSampleLists, "SampleSets_U");
+    write4numpy_Quu_inv(GPSSampleLists, "SampleSets_Quu_inv");
     EvalProb_Logq();
     write4numpy_Logq(GPSSampleLists, "SampleSets_Logq");
 }
@@ -285,10 +286,12 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromNN(int numSamples)
                     SampleEntry->u.col(i) = __ut;
                     SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
                     
-                    // MatrixXd __Quu_inv;
-                    // __Quu_inv.setZero(u_dim,u_dim);
-                    // __Quu_inv = (DDPPolicyBundle[DDPIdx].second)[i];
-                    // SampleEntry->Quu_inv[i] = __Quu_inv;
+                    MatrixXd __Quu_inv;
+                    __Quu_inv.setZero(u_dim,u_dim);
+                    double Quu_inv_Policy;
+                    Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pInstanceCaffePolicy,"var"));
+                    __Quu_inv<<Quu_inv_Policy;
+                    SampleEntry->Quu_inv[i] = __Quu_inv;
 
                     Py_DECREF(pArgs);
                     Py_DECREF(pResult);
