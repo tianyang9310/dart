@@ -196,3 +196,14 @@ class PolicyOptCaffe():
         params_names = self.policy.net.params.keys()
         print params_names
         print self.policy.net.params[params_names[0]][0].data
+
+    def printFoo2(self):
+        print "~~~~~~~~~~~~~~~~~~~~~ Train Net Parameters ~~~~~~~~~~~~~~~~~~~~~"
+        params_names = self.solver2.net.params.keys()
+        print params_names
+        print self.solver2.net.params[params_names[0]][0].data
+        print "~~~~~~~~~~~~~~~~~~~~~ Test Net Parameters ~~~~~~~~~~~~~~~~~~~~~"
+        params_names = self.policy.net.params.keys()
+        print params_names
+        print self.policy.net.params[params_names[0]][0].data
+

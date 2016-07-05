@@ -32,6 +32,7 @@ public:
 	void InitDDPPolicy();
 	void InitNNPolicy();
     void BuildInitSamples();
+    void FineTunePolicy();
     vector<shared_ptr<sample>> trajSampleGeneratorFromDDP(int numSamples, int DDPIdx);
 	vector<shared_ptr<sample>> trajSampleGeneratorFromDDPMix(int numSamples);
     vector<shared_ptr<sample>> trajSampleGeneratorFromNN(int numSamples);

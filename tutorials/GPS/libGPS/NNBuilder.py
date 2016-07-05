@@ -183,8 +183,11 @@ class PhiLoss(caffe.Layer):
                     # TODO remove regularizer
                     xi_t_p = self.StepCost(bottom[1].data[m_idx*self.batch_size+t_p_idx], bottom[2].data[m_idx*self.batch_size+t_p_idx]) - J_tilt # + bottom[5].data[0]
 
-                    
-                    inner_sum_t_p = inner_sum_t_p + float(1)/zt_p*np.exp(self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx])*xi_t_p
+                    # a= self.Log_Pi_theta_List[t_p_idx,m_idx]
+                    # b= bottom[4].data[m_idx*self.batch_size+t_p_idx]
+                    # c= self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx]
+
+                    inner_sum_t_p = inner_sum_t_p + float(1)*np.exp(-np.log(zt_p) +self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx])*xi_t_p
                 gradient = gradient * inner_sum_t_p
                 bottom[0].diff[cur_idx] = gradient 
 

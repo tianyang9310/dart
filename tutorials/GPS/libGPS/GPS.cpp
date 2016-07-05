@@ -21,7 +21,7 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int 
     DDPIter     = 0;
     // m is a misc variable and mPhi is a unique meaningful variable
     mPhi        = (conditions+1)*4;
-    GPS_iterations = 10;
+    GPS_iterations = 1;
 
     Py_Initialize();
     PyRun_SimpleString("import sys");  
@@ -124,7 +124,10 @@ void GPS::run()
     for (int _GPS_iter=0; _GPS_iter<GPS_iterations; _GPS_iter++)
     {
         // shuffle and choose sub sample sets Sk
+
         // Optimize theta_k w.r.t. Phi
+        FineTunePolicy();
+
         // generate samples from theta_k
         // Optionally generate adaptive guiding samples
         // Evaluate eq(2) to see whether replace theta_k or increase wr
@@ -208,6 +211,26 @@ void GPS::BuildInitSamples()
     write4numpy_Quu_inv(GPSSampleLists, "SampleSets_Quu_inv");
     EvalProb_Logq();
     write4numpy_Logq(GPSSampleLists, "SampleSets_Logq");
+}
+
+void GPS::FineTunePolicy()
+{
+//  transform from c++ vector to python numpy
+    if (!Py_IsInitialized())  
+    {
+        cout<<"Python Interpreter not Initialized!!!"<<endl;
+    }
+
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_X",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_U",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Quu_inv",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Logq",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"setWr",NULL);
+
+//  initialization of theta_star
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo2",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"finetune",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo2",NULL);
 }
 
 void GPS::EvalProb_Logq()
