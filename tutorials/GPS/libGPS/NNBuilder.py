@@ -126,22 +126,38 @@ class PhiLoss(caffe.Layer):
         loss = 0.0
         Log_Pi_theta = np.zeros(self.mPhi)
         self.Log_Pi_theta_List = np.zeros((self.batch_size, self.mPhi))
+        self.J_tilt_List = np.zeros(self.batch_size)
 
         for t_idx in range(self.batch_size): # t=0~T-2
             inner_sum = 0.0
             Zt        = 0.0
             for m_idx in range(self.mPhi):
                 cur_idx = m_idx*self.batch_size + t_idx
-                Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + np.log(norm(self.bottom[0].data[cur_idx][0], np.linalg.inv(self.bottom[3].data[cur_idx][0])).pdf(self.bottom[2].data[cur_idx][0]))
-                inner_sum = inner_sum + np.exp(Log_Pi_theta[m_idx] - self.bottom[4].data[cur_idx])* StepCost(self.bottom[1].data[cur_idx], self.bottom[2].data[cur_idx])
-                Zt        = Zt + np.exp(Log_Pi_theta[m_idx] - self.bottom[4].data[cur_idx])
+                Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + np.log(norm(bottom[0].data[cur_idx][0], np.linalg.inv(bottom[3].data[cur_idx][0])).pdf(bottom[2].data[cur_idx][0]))
+                inner_sum = inner_sum + np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx])* StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx])
+                Zt        = Zt + np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx])
                 
             self.Log_Pi_theta_List[t_idx] = Log_Pi_theta
-            loss = loss + 1/Zt*inner_sum + self.bottom[5].data[0]*np.log(Zt)
+            loss = loss + 1/Zt*inner_sum + bottom[5].data[0]*np.log(Zt)
+            self.J_tilt_List[t_idx] = 1/Zt*inner_sum
         top[0].data[...] = loss
 
     def backward(self, top, propagate_down, bottom):
-        pass
+        for t_idx in range(self.batch_size):
+            for m_idx in range(self.mPhi):
+                cur_idx = m_idx*self.batch_size + t_idx
+                gradient = (bottom[2].data[cur_idx] - bottom[0].data[cur_idx]).dot(bottom[3].data[cur_idx])
+                inner_sum_t_p = 0.0
+                for t_p_idx in range(t_idx, self.batch_size):
+                    cur_p_idx = np.arange(self.mPhi)*self.batch_size + t_p_idx
+                    # compute zt_p  xi_t_p
+                    zt_p = np.sum(np.exp((self.Log_Pi_theta_List[t_p_idx]-bottom[4].data[cur_p_idx])))
+                    J_tilt = self.J_tilt_List[t_idx]
+                    xi_t_p = StepCost(bottom[1].data[m_idx*self.batch_size+t_p_idx], bottom[2].data[m_idx*self.batch_size+t_p_idx]) - J_tilt + bottom[5].data[0]
+                    
+                    inner_sum_t_p = inner_sum_t_p + 1/zt_p*np.exp(self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[cur_idx])*xi_t_p
+                gradient = gradient * inner_sum_t_p
+                bottom[0].diff[cur_idx] = gradient 
 
     def StepCost(_x,_u):
         xd = np.array([0, math.pi, 0, 0])
