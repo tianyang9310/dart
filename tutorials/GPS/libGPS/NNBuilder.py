@@ -112,7 +112,6 @@ class PhiLoss(caffe.Layer):
         info = json.loads(self.param_str)
         self.mPhi = info['mPhi']
         self.batch_size = info['batch_size']
-        pass
 
     def reshape(self, bottom, top):
         top[0].reshape(1)
@@ -129,13 +128,13 @@ class PhiLoss(caffe.Layer):
         self.Log_Pi_theta_List = np.zeros((self.batch_size, self.mPhi))
 
         for t_idx in range(self.batch_size): # t=0~T-2
-            inner_sum = 0
-            Zt        = 0
+            inner_sum = 0.0
+            Zt        = 0.0
             for m_idx in range(self.mPhi):
-                cur_idx = t_idx*self.batch_size + m_idx
-                Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + norm(self.bottom[0].data[cur_idx][0], np.linalg.inv(self.bottom[3].data[cur_idx][0])).pdf(self.bottom[2].data[cur_idx][0])
-                inner_sum = inner_sum + Log_Pi_theta[m_idx]/self.bottom[4].data[cur_idx] * StepCost(self.bottom[1].data[cur_idx], self.bottom[2].data[cur_idx])
-                Zt        = Zt + Log_Pi_theta[m_idx]/self.bottom[4].data[cur_idx]
+                cur_idx = m_idx*self.batch_size + t_idx
+                Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + np.log(norm(self.bottom[0].data[cur_idx][0], np.linalg.inv(self.bottom[3].data[cur_idx][0])).pdf(self.bottom[2].data[cur_idx][0]))
+                inner_sum = inner_sum + np.exp(Log_Pi_theta[m_idx] - self.bottom[4].data[cur_idx])* StepCost(self.bottom[1].data[cur_idx], self.bottom[2].data[cur_idx])
+                Zt        = Zt + np.exp(Log_Pi_theta[m_idx] - self.bottom[4].data[cur_idx])
                 
             self.Log_Pi_theta_List[t_idx] = Log_Pi_theta
             loss = loss + 1/Zt*inner_sum + self.bottom[5].data[0]*np.log(Zt)
