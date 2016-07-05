@@ -117,12 +117,13 @@ class PhiLoss(caffe.Layer):
         top[0].reshape(1)
 
     def forward(self, bottom, top):
-        # bottom[0] mPhi*batch_size  u given x
-        # bottom[1] mPhi*batch_size  x
-        # bottom[2] mPhi*batch_size  u of sample
-        # bottom[3] mPhi*batch_size  precision
-        # bottom[4] mPhi*batch_size  Logq
-        # bottom[5] mPhi*batch_size  wr
+        # bottom[0] mPhi*batch_size*dim_output  u given x
+        # bottom[1] mPhi*batch_size*dim_input  x
+        # bottom[2] mPhi*batch_size*dim_output  u of sample
+        # bottom[3] 1*dim_output*dim_output  precision
+        # bottom[4] mPhi*batch_size*1  Logq
+        # bottom[5] 1*1  wr
+
         loss = 0.0
         Log_Pi_theta = np.zeros(self.mPhi)
         self.Log_Pi_theta_List = np.zeros((self.batch_size, self.mPhi))
@@ -133,13 +134,24 @@ class PhiLoss(caffe.Layer):
             Zt        = 0.0
             for m_idx in range(self.mPhi):
                 cur_idx = m_idx*self.batch_size + t_idx
-                Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + np.log(norm(bottom[0].data[cur_idx][0], np.linalg.inv(bottom[3].data[cur_idx][0])).pdf(bottom[2].data[cur_idx][0]))
-                inner_sum = inner_sum + np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx])* StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx])
-                Zt        = Zt + np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx])
+                Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + np.log(norm(bottom[0].data[cur_idx][0], np.linalg.inv(bottom[3].data[cur_idx])[0,0]).pdf(bottom[2].data[cur_idx][0]))
+
+                # h=Log_Pi_theta[m_idx]       # float number
+                # a=bottom[0].data[cur_idx]   # ndarray 1d
+                # b=bottom[1].data[cur_idx]   # ndarray 1d
+                # c=bottom[2].data[cur_idx]   # ndarray 1d
+                # d=bottom[3].data[cur_idx]   # ndarray 2d
+                e=bottom[4].data[cur_idx]   # ndarray 1d
+                # f=bottom[5].data[0]   # ndarray 1d
+                g=self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx]) # float number
+                error = Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0]
+
+                inner_sum = inner_sum + np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0])* self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx])
+                Zt        = Zt + np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0])
                 
             self.Log_Pi_theta_List[t_idx] = Log_Pi_theta
-            loss = loss + 1/Zt*inner_sum + bottom[5].data[0]*np.log(Zt)
-            self.J_tilt_List[t_idx] = 1/Zt*inner_sum
+            loss = loss + float(1)/Zt*inner_sum + bottom[5].data[0][0]*np.log(Zt)
+            self.J_tilt_List[t_idx] = float(1)/Zt*inner_sum
         top[0].data[...] = loss
 
     def backward(self, top, propagate_down, bottom):
@@ -153,13 +165,18 @@ class PhiLoss(caffe.Layer):
                     # compute zt_p  xi_t_p
                     zt_p = np.sum(np.exp((self.Log_Pi_theta_List[t_p_idx]-bottom[4].data[cur_p_idx])))
                     J_tilt = self.J_tilt_List[t_idx]
-                    xi_t_p = StepCost(bottom[1].data[m_idx*self.batch_size+t_p_idx], bottom[2].data[m_idx*self.batch_size+t_p_idx]) - J_tilt + bottom[5].data[0]
+                    xi_t_p = self.StepCost(bottom[1].data[m_idx*self.batch_size+t_p_idx], bottom[2].data[m_idx*self.batch_size+t_p_idx]) - J_tilt + bottom[5].data[0]
                     
                     inner_sum_t_p = inner_sum_t_p + 1/zt_p*np.exp(self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[cur_idx])*xi_t_p
                 gradient = gradient * inner_sum_t_p
                 bottom[0].diff[cur_idx] = gradient 
 
-    def StepCost(_x,_u):
+    def StepCost(self,_x,_u):
+        '''
+        _x: dim_intput ndarray
+        _u: dim_output ndarray
+        return: float number (not a ndarray)
+        '''
         xd = np.array([0, math.pi, 0, 0])
         Q  = np.array([[0.01,0,0,0],
                        [0   ,5,0,0],
@@ -170,4 +187,4 @@ class PhiLoss(caffe.Layer):
         # Qf(1,1)				= 500
         Q = Q*0.001
         R = R*0.001
-        return (0.5*(_x-xd).dot(Q.dot(_x-xd)) + 0.5*_u.dot(R.dot(_u)))
+        return (0.5*(_x-xd).dot(Q.dot(_x-xd)) + 0.5*_u.dot(R.dot(_u)))[0]
