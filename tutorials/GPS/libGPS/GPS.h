@@ -33,6 +33,7 @@ public:
 	void InitNNPolicy();
     void BuildInitSamples();
     void FineTunePolicy();
+    void RetrieveLoss_wo(bool previous);
     vector<shared_ptr<sample>> trajSampleGeneratorFromDDP(int numSamples, int DDPIdx);
 	vector<shared_ptr<sample>> trajSampleGeneratorFromDDPMix(int numSamples);
     vector<shared_ptr<sample>> trajSampleGeneratorFromNN(int numSamples);
@@ -49,6 +50,8 @@ public:
 	int numSamplesPerCond;
     int mPhi;
     int GPS_iterations;
+    double previous_lossvalue_wo;
+    double current_lossvalue_wo;
 	function<VectorXd(const VectorXd, const VectorXd)> StepDynamics;
 	vector<VectorXd> x0Bundle;
 	vector<shared_ptr<DDP>> DDPBundle;

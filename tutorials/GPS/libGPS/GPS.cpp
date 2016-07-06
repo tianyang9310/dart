@@ -22,6 +22,8 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int 
     // m is a misc variable and mPhi is a unique meaningful variable
     mPhi        = (conditions+1)*4;
     GPS_iterations = 1;
+    previous_lossvalue_wo = 0;
+    current_lossvalue_wo = 0;
 
     Py_Initialize();
     PyRun_SimpleString("import sys");  
@@ -130,8 +132,17 @@ void GPS::run()
 
         // generate samples from theta_k
         // Optionally generate adaptive guiding samples
+        //
         // Evaluate eq(2) to see whether replace theta_k or increase wr
+        // Here this evaluation can be retrieved directly from python scripts
+        //
         // return the best policy
+        
+        cout<<"& & & & & & & & & & & & & & &"<<endl;
+        cout<<"& & One iteration of Run  & &"<<endl;
+        cout<<"& Press any key to continue &"<<endl;
+        cout<<"& & & & & & & & & & & & & & &"<<endl;
+        cin.get();
     }
 }
 
@@ -213,6 +224,7 @@ void GPS::BuildInitSamples()
     write4numpy_Logq(GPSSampleLists, "SampleSets_Logq");
 }
 
+
 void GPS::FineTunePolicy()
 {
 //  transform from c++ vector to python numpy
@@ -231,6 +243,33 @@ void GPS::FineTunePolicy()
     PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo2",NULL);
     PyObject_CallMethod(pInstancePolicyOptCaffe,"finetune",NULL);
     PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo2",NULL);
+}
+
+
+void GPS::RetrieveLoss_wo(bool previous)
+{
+    if (!Py_IsInitialized())  
+    {
+        cout<<"Python Interpreter not Initialized!!!"<<endl;
+    }
+
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_X",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_U",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Quu_inv",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Logq",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"setWr",NULL);
+
+    // TODO retrieve member value of pInstancePolicyOptCaffe
+    if (previous)
+    {
+        PyObject_CallMethod(pInstancePolicyOptCaffe,"trainnet2forward",NULL);
+        previous_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,'cur_lossvalue_wo'));
+    }
+    else
+    {
+        PyObject_CallMethod(pInstancePolicyOptCaffe,"trainnet2forward",NULL);
+        current_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,'cur_lossvalue_wo'));
+    }
 }
 
 void GPS::EvalProb_Logq()

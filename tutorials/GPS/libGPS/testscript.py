@@ -29,7 +29,12 @@ tt.ReadSampleSets_U()
 tt.ReadSampleSets_Quu_inv()
 tt.ReadSampleSets_Logq()
 tt.setWr()
+
+tt.trainnet2forward()
+print tt.cur_lossvalue_wo
 tt.finetune()
+tt.trainnet2forward()
+print tt.cur_lossvalue_wo
 
 tt.policy.act(np.array([0,0,0,0]))
 

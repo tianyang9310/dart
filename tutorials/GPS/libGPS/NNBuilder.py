@@ -125,6 +125,7 @@ class PhiLoss(caffe.Layer):
         # bottom[5] 1*1  wr
 
         loss = 0.0
+        loss_wo = 0.0
         Log_Pi_theta = np.zeros(self.mPhi)
         self.Log_Pi_theta_List = np.zeros((self.batch_size, self.mPhi))
         self.J_tilt_List = np.zeros(self.batch_size)
@@ -154,10 +155,12 @@ class PhiLoss(caffe.Layer):
             # TODO remove regularizer
             tmpLoss = loss
             loss = loss + float(1)/Zt*inner_sum # + bottom[5].data[0][0]*np.log(Zt)
+            loss_wo = loss_wo + float(1)/Zt*inner_sum
             if tmpLoss>loss:
                 raise Exception('Loss is not increasing')
 
             self.J_tilt_List[t_idx] = float(1)/Zt*inner_sum
+        self.cur_lossvalue_wo = loss_wo
         top[0].data[...] = loss
 
     def backward(self, top, propagate_down, bottom):

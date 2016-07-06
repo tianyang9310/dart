@@ -162,6 +162,28 @@ class PolicyOptCaffe():
             cumulative_loss += train_loss
         self.policy.net.share_with(self.solver2.net)
 
+    def trainnet2forward(self):
+        # initialize var
+        # self.var = 
+        # self.policy.var = 
+
+        # need to call setWr() before calling finetune
+        
+        print '*********************************************************'
+        print '******** train net2 forward and loss value **************'
+        print '*********************************************************'
+        blob_names = self.solver2.net.blobs.keys()
+        self.solver2.net.blobs[blob_names[0]].data[:]=self.samplesets_x
+        self.solver2.net.blobs[blob_names[1]].data[:]=self.samplesets_x
+        self.solver2.net.blobs[blob_names[2]].data[:]=self.samplesets_u
+        self.solver2.net.blobs[blob_names[3]].data[:]=np.linalg.inv(self.var)
+        self.solver2.net.blobs[blob_names[4]].data[:]=self.samplesets_Logq
+        self.solver2.net.blobs[blob_names[5]].data[:]=self.wr
+
+        self.solver2.net.forward()
+        self.cur_lossvalue_wo = self.solver2.net.layers[-1].cur_lossvalue_wo
+
+
     def ReadSampleSets_X(self):
         self.samplesets_x = file2numpy('SampleSets_X.numpyout')
         print self.samplesets_x
