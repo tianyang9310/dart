@@ -263,12 +263,12 @@ void GPS::RetrieveLoss_wo(bool previous)
     if (previous)
     {
         PyObject_CallMethod(pInstancePolicyOptCaffe,"trainnet2forward",NULL);
-        previous_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,'cur_lossvalue_wo'));
+        previous_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,"cur_lossvalue_wo"));
     }
     else
     {
         PyObject_CallMethod(pInstancePolicyOptCaffe,"trainnet2forward",NULL);
-        current_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,'cur_lossvalue_wo'));
+        current_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,"cur_lossvalue_wo"));
     }
 }
 
