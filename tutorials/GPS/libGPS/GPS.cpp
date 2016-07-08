@@ -73,6 +73,8 @@ void GPS::InitPolicyOptCaffe()
     PyTuple_SetItem(pArgs,4, PyInt_FromLong(mPhi));
     pInstancePolicyOptCaffe = PyInstance_New(pClassPolicyOptCaffe,pArgs,NULL);
     pInstanceCaffePolicy    = PyObject_GetAttrString(pInstancePolicyOptCaffe,"policy");
+    
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"setWr",NULL);
 
     // testing whether reference and how to call method of class
 //    auto foo_before = PyObject_GetAttrString(pInstanceCaffePolicy, "foo"); 
@@ -250,7 +252,6 @@ void GPS::FineTunePolicy()
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_U",NULL);
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Quu_inv",NULL);
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Logq",NULL);
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"setWr",NULL);
 
 //  initialization of theta_star
     PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo2",NULL);
@@ -270,7 +271,6 @@ void GPS::RetrieveLoss_wo(bool previous)
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_U",NULL);
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Quu_inv",NULL);
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Logq",NULL);
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"setWr",NULL);
 
     // TODO retrieve member value of pInstancePolicyOptCaffe
     if (previous)

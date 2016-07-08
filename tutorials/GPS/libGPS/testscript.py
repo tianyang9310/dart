@@ -31,8 +31,12 @@ tt.ReadSampleSets_Logq()
 tt.setWr()
 
 tt.printFoo2()
+tt.trainnet2forward()
+print tt.lossvalue_wo
 tt.finetune()
 tt.printFoo2()
+tt.trainnet2forward()
+print tt.lossvalue_wo
 
 tt.policy.act(np.array([0,0,0,0]))
 
