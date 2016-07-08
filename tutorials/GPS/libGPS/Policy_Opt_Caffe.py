@@ -185,7 +185,7 @@ class PolicyOptCaffe():
         self.solver2.net.blobs[blob_names[5]].data[:]=self.wr
 
         self.solver2.net.forward()
-        self.cur_lossvalue_wo = self.solver2.net.layers[-1].cur_lossvalue_wo
+        self.lossvalue_wo = self.solver2.net.layers[-1].lossvalue_wo
 
     def policycopyfromsolver2(self):
         filename='Solver2TrainNet.caffemodel'
@@ -205,6 +205,10 @@ class PolicyOptCaffe():
         self.solver2.net.copy_from(filename)
         # self.solver2.net.share_with(self.solver.net)
 
+    def solver2copyfrompolicy(self):
+        filename='policy.caffemodel'
+        self.policy.net.save(filename)
+        self.solver2.net.copy_from(filename)
 
     def ReadSampleSets_X(self):
         self.samplesets_x = file2numpy('SampleSets_X.numpyout')
@@ -227,6 +231,12 @@ class PolicyOptCaffe():
 
     def setWr(self, _wr=1e-2):
         self.wr = _wr
+
+    def increaseWr(self):
+        self.wr = self.wr*10
+
+    def decreaseWr(self):
+        self.wr = self.wr*0.1
 
     def setFoo(self):
         self.policy.foo = 100

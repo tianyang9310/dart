@@ -34,6 +34,8 @@ public:
     void BuildInitSamples();
     void FineTunePolicy();
     void RetrieveLoss_wo(bool previous);
+    void replacetheta();
+    void restoretheta();
     vector<shared_ptr<sample>> trajSampleGeneratorFromDDP(int numSamples, int DDPIdx);
 	vector<shared_ptr<sample>> trajSampleGeneratorFromDDPMix(int numSamples);
     vector<shared_ptr<sample>> trajSampleGeneratorFromNN(int numSamples);

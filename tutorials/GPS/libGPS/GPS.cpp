@@ -127,6 +127,8 @@ void GPS::run()
     {
         // shuffle and choose sub sample sets Sk
 
+        // keep track of previous_lossvalue_wo
+        RetrieveLoss_wo(true);
         // Optimize theta_k w.r.t. Phi
         FineTunePolicy();
 
@@ -134,9 +136,17 @@ void GPS::run()
         // Optionally generate adaptive guiding samples
         
         // Evaluate eq(2) to see whether replace theta_k or increase wr
-        // Here this evaluation can be retrieved directly from python scripts
-        RetrieveLoss_wo(true);
+        // Here this evaluation can be retrieved directly from python interface
         RetrieveLoss_wo(false);
+
+        if (current_lossvalue_wo <= previous_lossvalue_wo)
+        {
+            replacetheta();
+        }
+        else
+        {
+            restoretheta();
+        }
         
         //
         // return the best policy
@@ -266,13 +276,36 @@ void GPS::RetrieveLoss_wo(bool previous)
     if (previous)
     {
         PyObject_CallMethod(pInstancePolicyOptCaffe,"trainnet2forward",NULL);
-        previous_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,"cur_lossvalue_wo"));
+        previous_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,"lossvalue_wo"));
     }
     else
     {
         PyObject_CallMethod(pInstancePolicyOptCaffe,"trainnet2forward",NULL);
-        current_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,"cur_lossvalue_wo"));
+        current_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,"lossvalue_wo"));
     }
+}
+
+
+void GPS::replacetheta()
+{
+    // replace theta_star with theta_k
+    // pass since optimization is essentially a replace precess
+    
+    // decrease wr
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"decreaseWr",NULL);
+}
+
+void GPS::restoretheta()
+{
+    // restore theta_star 
+    if (!Py_IsInitialized())  
+    {
+        cout<<"Python Interpreter not Initialized!!!"<<endl;
+    }
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"solver2copyfrompolicy",NULL);
+
+    // increase wr
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"increaseWr",NULL);
 }
 
 void GPS::EvalProb_Logq()

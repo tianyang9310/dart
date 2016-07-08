@@ -160,7 +160,12 @@ class PhiLoss(caffe.Layer):
                 raise Exception('Loss is not increasing')
 
             self.J_tilt_List[t_idx] = float(1)/Zt*inner_sum
-        self.cur_lossvalue_wo = loss_wo
+
+        # loss is minimized in optimization stage. Therefore the objective should be negative of above function
+        loss_wo = -loss_wo
+        loss    = -loss
+
+        self.lossvalue_wo = loss_wo
         top[0].data[...] = loss
 
     def backward(self, top, propagate_down, bottom):
@@ -192,6 +197,10 @@ class PhiLoss(caffe.Layer):
 
                     inner_sum_t_p = inner_sum_t_p + float(1)*np.exp(-np.log(zt_p) +self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx])*xi_t_p
                 gradient = gradient * inner_sum_t_p
+
+                # loss is minimized in optimization stage. Therefore the objective should be negative of above function
+                gradient = -gradient
+
                 bottom[0].diff[cur_idx] = gradient 
 
     def StepCost(self,_x,_u):
