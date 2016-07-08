@@ -132,9 +132,12 @@ void GPS::run()
 
         // generate samples from theta_k
         // Optionally generate adaptive guiding samples
-        //
+        
         // Evaluate eq(2) to see whether replace theta_k or increase wr
         // Here this evaluation can be retrieved directly from python scripts
+        RetrieveLoss_wo(true);
+        RetrieveLoss_wo(false);
+        
         //
         // return the best policy
         

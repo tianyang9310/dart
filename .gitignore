@@ -1,4 +1,6 @@
 *.pyc
+*.prototxt
+*.caffemodel
 build/
 build_6.1/
 build_debug/

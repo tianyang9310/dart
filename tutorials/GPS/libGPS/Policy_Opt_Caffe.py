@@ -116,8 +116,10 @@ class PolicyOptCaffe():
             train_loss = self.solver.net.blobs[blob_names[-1]].data
             cumulative_loss += train_loss
         
-        self.policy.net.share_with(self.solver.net)        
-        self.solver2.net.share_with(self.solver.net)        
+        self.policycopyfromsolver()
+        self.solver2copyfromsolver()
+        # self.policy.net.share_with(self.solver.net)        
+        # self.solver2.net.share_with(self.solver.net)        
 
     def ReadX(self):
         self.x = file2numpy('X.numpyout')
@@ -155,12 +157,14 @@ class PolicyOptCaffe():
             self.solver2.net.blobs[blob_names[3]].data[:]=np.linalg.inv(self.var)
             self.solver2.net.blobs[blob_names[4]].data[:]=self.samplesets_Logq
             self.solver2.net.blobs[blob_names[5]].data[:]=self.wr
-            
+
             self.solver2.step(1)
             # To get the training loss:
             train_loss = self.solver2.net.blobs[blob_names[-1]].data
             cumulative_loss += train_loss
-        self.policy.net.share_with(self.solver2.net)
+        
+        # comment because in the fine tune stage, only train solver2. But whether the parameter is accepted is determined by lossvalue_wo
+        # self.policy.net.share_with(self.solver2.net)
 
     def trainnet2forward(self):
         # initialize var
@@ -182,6 +186,24 @@ class PolicyOptCaffe():
 
         self.solver2.net.forward()
         self.cur_lossvalue_wo = self.solver2.net.layers[-1].cur_lossvalue_wo
+
+    def policycopyfromsolver2(self):
+        filename='Solver2TrainNet.caffemodel'
+        self.solver2.net.save(filename)
+        self.policy.net.copy_from(filename)
+        # self.policy.net.share_with(self.solver2.net)
+
+    def policycopyfromsolver(self):
+        filename='SolverTrainNet.caffemodel'
+        self.solver.net.save(filename)
+        self.policy.net.copy_from(filename)
+        # self.policy.net.share_with(self.solver.net)
+
+    def solver2copyfromsolver(self):
+        filename='SolverTrainNet.caffemodel'
+        self.solver.net.save(filename)
+        self.solver2.net.copy_from(filename)
+        # self.solver2.net.share_with(self.solver.net)
 
 
     def ReadSampleSets_X(self):
