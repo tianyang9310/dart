@@ -1,9 +1,10 @@
 import numpy as np
 
 class CaffePolicy():
-    def __init__(self, test_net):
+    def __init__(self, test_net, var):
         self.net = test_net
         self.foo = 500
+        self.var = var
 
     def act(self, x):
         '''

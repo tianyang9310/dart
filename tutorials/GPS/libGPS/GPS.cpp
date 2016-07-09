@@ -73,6 +73,7 @@ void GPS::InitPolicyOptCaffe()
     PyTuple_SetItem(pArgs,4, PyInt_FromLong(mPhi));
     pInstancePolicyOptCaffe = PyInstance_New(pClassPolicyOptCaffe,pArgs,NULL);
     pInstanceCaffePolicy    = PyObject_GetAttrString(pInstancePolicyOptCaffe,"policy");
+    pInstancePolicyRepo     = PyObject_GetAttrString(pInstancePolicyOptCaffe,"policyRepo");
     
     PyObject_CallMethod(pInstancePolicyOptCaffe,"setWr",NULL);
 
@@ -318,41 +319,52 @@ void GPS::EvalProb_Logq()
                 for (int i=0; i<T-1; i++)
                 {
                     double tmpq    = 0;
-                    // condition+1
+                    // Evaluation in terms of DDPs
                     for (int _cond=0; _cond<conditions; _cond++)
                     {
                         tmpq += GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](SampleEntry->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), SampleEntry->u.col(i)(0));
                     }
 
-                    PyObject* pArgs = PyTuple_New(4);
-                    PyTuple_SetItem(pArgs,0, PyFloat_FromDouble(SampleEntry->x.col(i)[0]));
-                    PyTuple_SetItem(pArgs,1, PyFloat_FromDouble(SampleEntry->x.col(i)[1]));
-                    PyTuple_SetItem(pArgs,2, PyFloat_FromDouble(SampleEntry->x.col(i)[2]));
-                    PyTuple_SetItem(pArgs,3, PyFloat_FromDouble(SampleEntry->x.col(i)[3]));
-                    PyObject* pResult =  PyObject_CallMethodObjArgs(pInstanceCaffePolicy,PyString_FromString("act"), pArgs, NULL);
-                    if (! pResult)
+                    // Evaluation in terms of NN
+                    PyObject* pPolicyRepoLen = PyObject_CallMethod(pInstancePolicyRepo,"__len__",NULL);
+                    int numNNPolicy = PyInt_AsLong(pPolicyRepoLen);
+                    for (int _idxNNPolicy=0; _idxNNPolicy<numNNPolicy; _idxNNPolicy++)
                     {
-                        cout<<"Failing to CALL act method of Caffe Policy"<<endl;
-                    }
-                    VectorXd __ut;
-                    __ut.setZero(u_dim);
-                    double u_Policy;
-                    if (! PyArg_ParseTuple(pResult, "d", &u_Policy))
-                    {
-                        cout<<"Failing to PARSE data from act method"<<endl;
-                    }
-                    __ut<<u_Policy;
-                    
-                    MatrixXd __Quu_inv;
-                    __Quu_inv.setZero(u_dim,u_dim);
-                    double Quu_inv_Policy;
-                    Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pInstanceCaffePolicy,"var"));
-                    __Quu_inv<<Quu_inv_Policy;
-                    Py_DECREF(pArgs);
-                    Py_DECREF(pResult);
-                    tmpq += GaussianEvaluator(__ut(0), __Quu_inv(0), SampleEntry->u.col(i)(0));
+                        PyObject *pIdxNNPolicy = PyInt_FromLong(_idxNNPolicy);
+                        auto pIndNNPolicy = PyObject_CallMethodObjArgs(pInstancePolicyRepo,PyString_FromString("__getitem__"), pIdxNNPolicy, NULL);
 
-                    tmpq = tmpq/double(conditions+1);
+                        PyObject* pArgs = PyTuple_New(4);
+                        PyTuple_SetItem(pArgs,0, PyFloat_FromDouble(SampleEntry->x.col(i)[0]));
+                        PyTuple_SetItem(pArgs,1, PyFloat_FromDouble(SampleEntry->x.col(i)[1]));
+                        PyTuple_SetItem(pArgs,2, PyFloat_FromDouble(SampleEntry->x.col(i)[2]));
+                        PyTuple_SetItem(pArgs,3, PyFloat_FromDouble(SampleEntry->x.col(i)[3]));
+                        PyObject* pResult =  PyObject_CallMethodObjArgs(pIndNNPolicy, PyString_FromString("act"), pArgs, NULL);
+                        if (! pResult)
+                        {
+                            cout<<"Failing to CALL act method of Caffe Policy"<<endl;
+                        }
+                        VectorXd __ut;
+                        __ut.setZero(u_dim);
+                        double u_Policy;
+                        if (! PyArg_ParseTuple(pResult, "d", &u_Policy))
+                        {
+                            cout<<"Failing to PARSE data from act method"<<endl;
+                        }
+                        __ut<<u_Policy;
+                        
+                        MatrixXd __Quu_inv;
+                        __Quu_inv.setZero(u_dim,u_dim);
+                        double Quu_inv_Policy;
+                        Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pIndNNPolicy,"var"));
+                        __Quu_inv<<Quu_inv_Policy;
+                        tmpq += GaussianEvaluator(__ut(0), __Quu_inv(0), SampleEntry->u.col(i)(0));
+                        Py_DECREF(pIdxNNPolicy);
+                        Py_DECREF(pArgs);
+                        Py_DECREF(pResult);
+                    }
+                    Py_DECREF(pPolicyRepoLen);
+
+                    tmpq = tmpq/double(conditions+numNNPolicy);
                     if (i==0)
                     {
                         SampleEntry->Logq(i) = log(tmpq);

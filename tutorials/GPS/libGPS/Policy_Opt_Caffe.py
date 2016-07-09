@@ -33,8 +33,8 @@ class PolicyOptCaffe():
         
         self.init_solver()
         self.init_solver2()
-        # self.var = 0.1 * np.ones(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
-        self.policy = CaffePolicy(self.solver.test_nets[0])
+        self.var = 0.1 * np.eye(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
+        self.policy = CaffePolicy(self.solver.test_nets[0], self.var)
         self.policyRepo = []
 
 # --------------------------------------------------
@@ -83,10 +83,6 @@ class PolicyOptCaffe():
 # --------------------------------------------------
     def pretrain(self):
     # def pretrain(self""", itr, inner_itr"""):
-        # vars of both class are initialized here
-        self.var = np.mean(self.Quu_inv,axis=0)
-        self.policy.var = self.var
-        
         # Normalize obs, but only compute normalzation at the beginning.
         """
         No normalization right now
@@ -150,9 +146,6 @@ class PolicyOptCaffe():
 # fine tune Neural Network
 # --------------------------------------------------
     def finetune(self):
-        # initialize var
-        # self.var = 
-        # self.policy.var = 
 
         # need to call setWr() before calling finetune
         
@@ -214,9 +207,6 @@ class PolicyOptCaffe():
 # compute loss value without regularizer
 # --------------------------------------------------
     def trainnet2forward(self):
-        # initialize var
-        # self.var = 
-        # self.policy.var = 
 
         # need to call setWr() before calling finetune
         
@@ -244,7 +234,7 @@ class PolicyOptCaffe():
         filename = '/tmp/_net.caffemodel'
         _net.save(filename)
         mNet = caffe.Net(f.name, filename, TEST)
-        self.policyRepo.append(mNet)
+        self.policyRepo.append(CaffePolicy(mNet, self.var))
 
 
 # --------------------------------------------------

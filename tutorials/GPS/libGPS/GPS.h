@@ -63,6 +63,7 @@ public:
 //  python wrapper
     PyObject *pInstancePolicyOptCaffe;
     PyObject *pInstanceCaffePolicy;
+    PyObject *pInstancePolicyRepo;
     void InitPolicyOptCaffe();
     void EvalProb_Logq();
     vector<PyObject*> pInstanceThetaKLists;
