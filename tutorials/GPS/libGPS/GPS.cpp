@@ -364,35 +364,6 @@ void GPS::EvalProb_Logq()
             });
 }
 
-void GPS::EvalConditionalProb_Logq()
-{
-//  this function computes the evaluation of trajectories in terms of mixture of probabilities.
-/*
-    for_each(GPSSampleLists.begin(), GPSSampleLists.end(), 
-            [=](shared_ptr<sample> &SampleEntry)
-            {
-                SampleEntry->Logq.setZero(T);
-                for (int i=0; i<T-1; i++)
-                {
-                    double tmpq    = 0;
-                    // condition+1
-                    for (int _cond=0; _cond<conditions; _cond++)
-                    {
-                        tmpq += GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](SampleEntry->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), SampleEntry->u.col(i)(0));
-                    }
-                    tmpq = tmpq/double(conditions);
-                    if (i==0)
-                    {
-                        SampleEntry->Logq(i) = log(tmpq);
-                    }
-                    {
-                        SampleEntry->Logq(i) = SampleEntry->Logq(i-1) + log(tmpq);
-                    }
-                }
-            });
-*/
-}
-
 vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromNN(int numSamples)
 {
     if (!Py_IsInitialized())  
