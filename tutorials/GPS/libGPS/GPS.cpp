@@ -135,7 +135,9 @@ void GPS::run()
         // Optimize theta_k w.r.t. Phi
         FineTunePolicy();
 
-        // generate samples from theta_k
+        // generate samples from theta_k. theta_k is now the last CaffePolicy of PolicyRepo
+        // appendSamplesFromThetaK(); trajSampleGeneratorFromNN_ThetaK();
+        
         // Optionally generate adaptive guiding samples
         
         // Evaluate eq(2) to see whether replace theta_k or increase wr
@@ -361,6 +363,7 @@ void GPS::EvalProb_Logq()
                         Py_DECREF(pIdxNNPolicy);
                         Py_DECREF(pArgs);
                         Py_DECREF(pResult);
+                        Py_DECREF(pIndNNPolicy);
                     }
                     Py_DECREF(pPolicyRepoLen);
 
@@ -374,6 +377,78 @@ void GPS::EvalProb_Logq()
                     }
                 }
             });
+}
+
+vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromNN_ThetaK(int numSamples)
+{
+    if (!Py_IsInitialized())  
+    {
+        cout<<"Python Interpreter not Initialized!!!"<<endl;
+    }
+
+    PyObject *pPolicyRepoLen = PyObject_CallMethod(pInstancePolicyRepo,"__len__",NULL);
+    int numNNPolicy = PyInt_AsLong(pPolicyRepoLen);
+    PyObject *pIdxNNPolicy = PyInt_FromLong(numNNPolicy-1);
+    auto pIndNNPolicy = PyObject_CallMethodObjArgs(pInstancePolicyRepo,PyString_FromString("__getitem__"), pIdxNNPolicy, NULL);
+
+    vector<shared_ptr<sample>> IndSampleLists(numSamples);
+    for_each(IndSampleLists.begin(),IndSampleLists.end(),
+            [=](shared_ptr<sample> &SampleEntry)
+            {
+//  randomly settle down x0 by uniform distribution
+                unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+                default_random_engine generator(seed);
+                uniform_int_distribution<int> distribution(0,conditions-1);
+                VectorXd _x0;
+                _x0 = x0Bundle[distribution(generator)];
+                SampleEntry = shared_ptr<sample>(new sample());
+                 
+                SampleEntry->x.resize(x_dim,T);
+                SampleEntry->u.resize(u_dim,T);
+                SampleEntry->Quu_inv.resize(T);
+                
+                SampleEntry->x.col(0)=_x0;
+                for (int i=0; i<T-1; i++)
+                {
+                    PyObject* pArgs = PyTuple_New(4);
+                    PyTuple_SetItem(pArgs,0, PyFloat_FromDouble(SampleEntry->x.col(i)[0]));
+                    PyTuple_SetItem(pArgs,1, PyFloat_FromDouble(SampleEntry->x.col(i)[1]));
+                    PyTuple_SetItem(pArgs,2, PyFloat_FromDouble(SampleEntry->x.col(i)[2]));
+                    PyTuple_SetItem(pArgs,3, PyFloat_FromDouble(SampleEntry->x.col(i)[3]));
+                    PyObject* pResult =  PyObject_CallMethodObjArgs(pIndNNPolicy,PyString_FromString("act"), pArgs, NULL);
+                    if (! pResult)
+                    {
+                        cout<<"Failing to CALL act method of Caffe Policy"<<endl;
+                    }
+
+                    VectorXd __ut;
+                    __ut.setZero(u_dim);
+
+                    double u_Policy;
+                    if (! PyArg_ParseTuple(pResult, "d", &u_Policy))
+                    {
+                        cout<<"Failing to PARSE data from act method"<<endl;
+                    }
+                    __ut<<u_Policy;
+                    SampleEntry->u.col(i) = __ut;
+                    SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
+                    
+                    MatrixXd __Quu_inv;
+                    __Quu_inv.setZero(u_dim,u_dim);
+                    double Quu_inv_Policy;
+                    Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pIndNNPolicy,"var"));
+                    __Quu_inv<<Quu_inv_Policy;
+                    SampleEntry->Quu_inv[i] = __Quu_inv;
+
+                    Py_DECREF(pArgs);
+                    Py_DECREF(pResult);
+                }
+                SampleEntry->u.col(T-1) = VectorXd::Constant(SampleEntry->u.col(0).size(),std::nan("0"));
+            });
+    Py_DECREF(pPolicyRepoLen);
+    Py_DECREF(pIndNNPolicy);
+    Py_DECREF(pIdxNNPolicy);
+    return IndSampleLists;
 }
 
 vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromNN(int numSamples)
