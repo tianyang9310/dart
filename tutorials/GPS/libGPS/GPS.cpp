@@ -129,6 +129,7 @@ void GPS::run()
     for (int _GPS_iter=0; _GPS_iter<GPS_iterations; _GPS_iter++)
     {
         // shuffle and choose sub sample sets Sk
+        ChooseSubSets();
 
         // keep track of previous_lossvalue_wo
         RetrieveLoss_wo(true);
@@ -314,7 +315,7 @@ void GPS::restoretheta()
 void GPS::EvalProb_Logq()
 {
 //  this function computes the evaluation of trajectories in terms of mixture of probabilities.
-    for_each(GPSSampleLists.begin(), GPSSampleLists.end(), 
+    for_each(cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), 
             [=](shared_ptr<sample> &SampleEntry)
             {
                 SampleEntry->Logq.setZero(T);
@@ -377,6 +378,28 @@ void GPS::EvalProb_Logq()
                     }
                 }
             });
+}
+
+void GPS::ChooseSubSets()
+{
+    int numGPS_Samples = GPSSampleLists.size();
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+    uniform_int_distribution<int> distribution(0,numGPS_Samples-1);
+    cur_GPSSampleLists.clear();
+    for (int _idxSubSamples=0; _idxSubSamples<mPhi; _idxSubSamples++)
+    {
+        // TODO
+        cur_GPSSampleLists.push_back();
+    }
+}
+
+void GPS::appendSamplesFromThetaK(int numSamples)
+{
+// append samples from ThetaK to Sk
+
+// append samples from ThetaK to S
+
 }
 
 vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromNN_ThetaK(int numSamples)

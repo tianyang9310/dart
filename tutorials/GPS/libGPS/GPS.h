@@ -36,6 +36,8 @@ public:
     void RetrieveLoss_wo(bool previous);
     void replacetheta();
     void restoretheta();
+    void appendSamplesFromThetaK(int numSamples); 
+    void ChooseSubSets();
     vector<shared_ptr<sample>> trajSampleGeneratorFromDDP(int numSamples, int DDPIdx);
 	vector<shared_ptr<sample>> trajSampleGeneratorFromDDPMix(int numSamples);
     vector<shared_ptr<sample>> trajSampleGeneratorFromNN(int numSamples);
@@ -60,6 +62,7 @@ public:
 	vector<shared_ptr<DDP>> DDPBundle;
 	vector<pair<vector<function<VectorXd(VectorXd)>>,vector<MatrixXd>>> DDPPolicyBundle;
     vector<shared_ptr<sample>> GPSSampleLists;
+    vector<shared_ptr<sample>> cur_GPSSampleLists;
 // --------------------
 //  python wrapper
     PyObject *pInstancePolicyOptCaffe;
