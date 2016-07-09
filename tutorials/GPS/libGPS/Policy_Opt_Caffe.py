@@ -5,6 +5,7 @@ from google.protobuf.text_format import MessageToString
 from NNBuilder import NNConstructor
 from Policy_Caffe import CaffePolicy
 from file2numpy import file2numpy
+import tempfile
 
 class PolicyOptCaffe():
     def __init__(self, x_dim, u_dim, T, N, mPhi):
@@ -34,7 +35,11 @@ class PolicyOptCaffe():
         self.init_solver2()
         # self.var = 0.1 * np.ones(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
         self.policy = CaffePolicy(self.solver.test_nets[0])
+        self.policyRepo = []
 
+# --------------------------------------------------
+# initialize solvers
+# --------------------------------------------------
     def init_solver(self):
         solver_param = SolverParameter()
         solver_param.display = 0  # Don't display anything.
@@ -73,6 +78,9 @@ class PolicyOptCaffe():
         
         self.solver2=caffe.get_solver(f.name)
 
+# --------------------------------------------------
+# pretrain neural networks
+# --------------------------------------------------
     def pretrain(self):
     # def pretrain(self""", itr, inner_itr"""):
         # vars of both class are initialized here
@@ -120,6 +128,8 @@ class PolicyOptCaffe():
         self.solver2copyfromsolver()
         # self.policy.net.share_with(self.solver.net)        
         # self.solver2.net.share_with(self.solver.net)        
+        
+        self.appendpolicyRepo(self.solver.net)
 
     def ReadX(self):
         self.x = file2numpy('X.numpyout')
@@ -136,6 +146,9 @@ class PolicyOptCaffe():
         self.Quu_inv = np.reshape(self.Quu_inv,(-1,self.u_dim,self.u_dim))
         print self.Quu_inv
 
+# --------------------------------------------------
+# fine tune Neural Network
+# --------------------------------------------------
     def finetune(self):
         # initialize var
         # self.var = 
@@ -166,49 +179,8 @@ class PolicyOptCaffe():
         # comment because in the fine tune stage, only train solver2. But whether the parameter is accepted is determined by lossvalue_wo
         # self.policy.net.share_with(self.solver2.net)
 
-    def trainnet2forward(self):
-        # initialize var
-        # self.var = 
-        # self.policy.var = 
-
-        # need to call setWr() before calling finetune
-        
-        print '*********************************************************'
-        print '******** train net2 forward and loss value **************'
-        print '*********************************************************'
-        blob_names = self.solver2.net.blobs.keys()
-        self.solver2.net.blobs[blob_names[0]].data[:]=self.samplesets_x
-        self.solver2.net.blobs[blob_names[1]].data[:]=self.samplesets_x
-        self.solver2.net.blobs[blob_names[2]].data[:]=self.samplesets_u
-        self.solver2.net.blobs[blob_names[3]].data[:]=np.linalg.inv(self.var)
-        self.solver2.net.blobs[blob_names[4]].data[:]=self.samplesets_Logq
-        self.solver2.net.blobs[blob_names[5]].data[:]=self.wr
-
-        self.solver2.net.forward()
-        self.lossvalue_wo = self.solver2.net.layers[-1].lossvalue_wo
-
-    def policycopyfromsolver2(self):
-        filename='Solver2TrainNet.caffemodel'
-        self.solver2.net.save(filename)
-        self.policy.net.copy_from(filename)
-        # self.policy.net.share_with(self.solver2.net)
-
-    def policycopyfromsolver(self):
-        filename='SolverTrainNet.caffemodel'
-        self.solver.net.save(filename)
-        self.policy.net.copy_from(filename)
-        # self.policy.net.share_with(self.solver.net)
-
-    def solver2copyfromsolver(self):
-        filename='SolverTrainNet.caffemodel'
-        self.solver.net.save(filename)
-        self.solver2.net.copy_from(filename)
-        # self.solver2.net.share_with(self.solver.net)
-
-    def solver2copyfrompolicy(self):
-        filename='policy.caffemodel'
-        self.policy.net.save(filename)
-        self.solver2.net.copy_from(filename)
+        # although fine tuned parameter may not be accepted, it should be kept in self.policyRepo to eval Logq
+        self.appendpolicyRepo(self.solver2.net)
 
     def ReadSampleSets_X(self):
         self.samplesets_x = file2numpy('SampleSets_X.numpyout')
@@ -238,6 +210,72 @@ class PolicyOptCaffe():
     def decreaseWr(self):
         self.wr = self.wr*0.1
 
+# --------------------------------------------------
+# compute loss value without regularizer
+# --------------------------------------------------
+    def trainnet2forward(self):
+        # initialize var
+        # self.var = 
+        # self.policy.var = 
+
+        # need to call setWr() before calling finetune
+        
+        print '*********************************************************'
+        print '******** train net2 forward and loss value **************'
+        print '*********************************************************'
+        blob_names = self.solver2.net.blobs.keys()
+        self.solver2.net.blobs[blob_names[0]].data[:]=self.samplesets_x
+        self.solver2.net.blobs[blob_names[1]].data[:]=self.samplesets_x
+        self.solver2.net.blobs[blob_names[2]].data[:]=self.samplesets_u
+        self.solver2.net.blobs[blob_names[3]].data[:]=np.linalg.inv(self.var)
+        self.solver2.net.blobs[blob_names[4]].data[:]=self.samplesets_Logq
+        self.solver2.net.blobs[blob_names[5]].data[:]=self.wr
+
+        self.solver2.net.forward()
+        self.lossvalue_wo = self.solver2.net.layers[-1].lossvalue_wo
+
+# --------------------------------------------------
+# append one net to self.policyRepo
+# --------------------------------------------------
+    def appendpolicyRepo(self, _net):
+        # first generate one net
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            f.write(str(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,1,TEST)))
+        filename = '/tmp/_net.caffemodel'
+        _net.save(filename)
+        mNet = caffe.Net(f.name, filename, TEST)
+        self.policyRepo.append(mNet)
+
+
+# --------------------------------------------------
+# copy or share neural nets
+# --------------------------------------------------
+    def policycopyfromsolver2(self):
+        filename='/tmp/Solver2TrainNet.caffemodel'
+        self.solver2.net.save(filename)
+        self.policy.net.copy_from(filename)
+        # self.policy.net.share_with(self.solver2.net)
+
+    def policycopyfromsolver(self):
+        filename='/tmp/SolverTrainNet.caffemodel'
+        self.solver.net.save(filename)
+        self.policy.net.copy_from(filename)
+        # self.policy.net.share_with(self.solver.net)
+
+    def solver2copyfromsolver(self):
+        filename='/tmp/SolverTrainNet.caffemodel'
+        self.solver.net.save(filename)
+        self.solver2.net.copy_from(filename)
+        # self.solver2.net.share_with(self.solver.net)
+
+    def solver2copyfrompolicy(self):
+        filename='/tmp/policy.caffemodel'
+        self.policy.net.save(filename)
+        self.solver2.net.copy_from(filename)
+
+# --------------------------------------------------
+# logistical function
+# --------------------------------------------------
     def setFoo(self):
         self.policy.foo = 100
 
