@@ -1,6 +1,9 @@
 #ifndef GPS_H
 #define GPS_H
 
+#include <algorithm>
+#include <iterator>
+#include <iostream>
 #include <memory>
 #include <functional>
 #include <random>

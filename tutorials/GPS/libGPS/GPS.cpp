@@ -236,80 +236,12 @@ void GPS::BuildInitSamples()
         auto tmpSampleLists = trajSampleGeneratorFromDDP(m, _cond);
         GPSSampleLists.insert(GPSSampleLists.end(), tmpSampleLists.begin(), tmpSampleLists.end());
     }
-    write4numpy_X(GPSSampleLists, "SampleSets_X");
-    write4numpy_U(GPSSampleLists, "SampleSets_U");
-    write4numpy_Quu_inv(GPSSampleLists, "SampleSets_Quu_inv");
+    ChooseSubSets();
+    write4numpy_X(cur_GPSSampleLists, "SampleSets_X");
+    write4numpy_U(cur_GPSSampleLists, "SampleSets_U");
+    write4numpy_Quu_inv(cur_GPSSampleLists, "SampleSets_Quu_inv");
     EvalProb_Logq();
-    write4numpy_Logq(GPSSampleLists, "SampleSets_Logq");
-}
-
-
-void GPS::FineTunePolicy()
-{
-//  transform from c++ vector to python numpy
-    if (!Py_IsInitialized())  
-    {
-        cout<<"Python Interpreter not Initialized!!!"<<endl;
-    }
-
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_X",NULL);
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_U",NULL);
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Quu_inv",NULL);
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Logq",NULL);
-
-//  initialization of theta_star
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo2",NULL);
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"finetune",NULL);
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo2",NULL);
-}
-
-
-void GPS::RetrieveLoss_wo(bool previous)
-{
-    if (!Py_IsInitialized())  
-    {
-        cout<<"Python Interpreter not Initialized!!!"<<endl;
-    }
-
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_X",NULL);
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_U",NULL);
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Quu_inv",NULL);
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Logq",NULL);
-
-    // TODO retrieve member value of pInstancePolicyOptCaffe
-    if (previous)
-    {
-        PyObject_CallMethod(pInstancePolicyOptCaffe,"trainnet2forward",NULL);
-        previous_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,"lossvalue_wo"));
-    }
-    else
-    {
-        PyObject_CallMethod(pInstancePolicyOptCaffe,"trainnet2forward",NULL);
-        current_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,"lossvalue_wo"));
-    }
-}
-
-
-void GPS::replacetheta()
-{
-    // replace theta_star with theta_k
-    // pass since optimization is essentially a replace precess
-    
-    // decrease wr
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"decreaseWr",NULL);
-}
-
-void GPS::restoretheta()
-{
-    // restore theta_star 
-    if (!Py_IsInitialized())  
-    {
-        cout<<"Python Interpreter not Initialized!!!"<<endl;
-    }
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"solver2copyfrompolicy",NULL);
-
-    // increase wr
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"increaseWr",NULL);
+    write4numpy_Logq(cur_GPSSampleLists, "SampleSets_Logq");
 }
 
 void GPS::EvalProb_Logq()
@@ -380,18 +312,81 @@ void GPS::EvalProb_Logq()
             });
 }
 
+void GPS::FineTunePolicy()
+{
+//  transform from c++ vector to python numpy
+    if (!Py_IsInitialized())  
+    {
+        cout<<"Python Interpreter not Initialized!!!"<<endl;
+    }
+
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_X",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_U",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Quu_inv",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Logq",NULL);
+
+//  initialization of theta_star
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo2",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"finetune",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo2",NULL);
+}
+
+void GPS::RetrieveLoss_wo(bool previous)
+{
+    if (!Py_IsInitialized())  
+    {
+        cout<<"Python Interpreter not Initialized!!!"<<endl;
+    }
+
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_X",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_U",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Quu_inv",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Logq",NULL);
+
+    // TODO retrieve member value of pInstancePolicyOptCaffe
+    if (previous)
+    {
+        PyObject_CallMethod(pInstancePolicyOptCaffe,"trainnet2forward",NULL);
+        previous_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,"lossvalue_wo"));
+    }
+    else
+    {
+        PyObject_CallMethod(pInstancePolicyOptCaffe,"trainnet2forward",NULL);
+        current_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,"lossvalue_wo"));
+    }
+}
+
+void GPS::replacetheta()
+{
+    // replace theta_star with theta_k
+    // pass since optimization is essentially a replace precess
+    
+    // decrease wr
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"decreaseWr",NULL);
+}
+
+void GPS::restoretheta()
+{
+    // restore theta_star 
+    if (!Py_IsInitialized())  
+    {
+        cout<<"Python Interpreter not Initialized!!!"<<endl;
+    }
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"solver2copyfrompolicy",NULL);
+
+    // increase wr
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"increaseWr",NULL);
+}
+
+
 void GPS::ChooseSubSets()
 {
     int numGPS_Samples = GPSSampleLists.size();
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    default_random_engine generator(seed);
-    uniform_int_distribution<int> distribution(0,numGPS_Samples-1);
-    cur_GPSSampleLists.clear();
-    for (int _idxSubSamples=0; _idxSubSamples<mPhi; _idxSubSamples++)
-    {
-        // TODO
-        cur_GPSSampleLists.push_back();
-    }
+    cur_GPSSampleLists = GPSSampleLists;
+    shuffle (cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), default_random_engine(seed)); 
+    // clamp cur_GPSSampleLists to mPhi
+    cur_GPSSampleLists.erase(cur_GPSSampleLists.begin()+mPhi,cur_GPSSampleLists.end());
 }
 
 void GPS::appendSamplesFromThetaK(int numSamples)
