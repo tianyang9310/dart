@@ -39,7 +39,7 @@ public:
     void RetrieveLoss_wo(bool previous);
     void replacetheta();
     void restoretheta();
-    void appendSamplesFromThetaK(int numSamples); 
+    void appendSamplesFromThetaK(); 
     void ChooseSubSets();
     vector<shared_ptr<sample>> trajSampleGeneratorFromDDP(int numSamples, int DDPIdx);
 	vector<shared_ptr<sample>> trajSampleGeneratorFromDDPMix(int numSamples);

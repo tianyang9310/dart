@@ -398,7 +398,7 @@ void GPS::ChooseSubSets()
     cur_GPSSampleLists.erase(cur_GPSSampleLists.begin()+mPhi,cur_GPSSampleLists.end());
 }
 
-void GPS::appendSamplesFromThetaK(int numSamples)
+void GPS::appendSamplesFromThetaK()
 {
     auto tmpSampleListsFromThetaK = trajSampleGeneratorFromNN_ThetaK(numSamplesPerCond);
 // append samples from ThetaK to Sk
