@@ -73,6 +73,9 @@ public:
     PyObject *pInstancePolicyRepo;
     void InitPolicyOptCaffe();
     void EvalProb_Logq();
+    void writeSubSampleSets2file();
+    void modifymPhi();
+    void restoremPhi();
     vector<PyObject*> pInstanceThetaKLists;
 
     void write4numpy_X(vector<shared_ptr<sample>> data, const std::string name);

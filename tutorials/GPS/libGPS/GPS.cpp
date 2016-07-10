@@ -20,7 +20,7 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int 
 {
     DDPIter     = 0;
     // m is a misc variable and mPhi is a unique meaningful variable
-    mPhi        = (conditions+1)*4;
+    mPhi        = (conditions+1)*numSamplesPerCond;
     GPS_iterations = 1;
     previous_lossvalue_wo = 0;
     current_lossvalue_wo = 0;
@@ -97,6 +97,9 @@ void GPS::InitPolicyOptCaffe()
 
 GPS::~GPS()
 {
+    Py_DECREF(pInstancePolicyOptCaffe);
+    Py_DECREF(pInstanceCaffePolicy);
+    Py_DECREF(pInstancePolicyRepo);
     Py_Finalize();
 }
 
@@ -130,20 +133,23 @@ void GPS::run()
     {
         // shuffle and choose sub sample sets Sk
         ChooseSubSets();
+        writeSubSampleSets2file();
 
-        // keep track of previous_lossvalue_wo
-        RetrieveLoss_wo(true);
         // Optimize theta_k w.r.t. Phi
         FineTunePolicy();
 
         // generate samples from theta_k. theta_k is now the last CaffePolicy of PolicyRepo
-        // appendSamplesFromThetaK(); trajSampleGeneratorFromNN_ThetaK();
+        appendSamplesFromThetaK(); 
         
         // Optionally generate adaptive guiding samples
         
         // Evaluate eq(2) to see whether replace theta_k or increase wr
         // Here this evaluation can be retrieved directly from python interface
+        writeSubSampleSets2file();
+        modifymPhi();
+        RetrieveLoss_wo(true);
         RetrieveLoss_wo(false);
+        restoremPhi();
 
         if (current_lossvalue_wo <= previous_lossvalue_wo)
         {
@@ -236,7 +242,9 @@ void GPS::BuildInitSamples()
         auto tmpSampleLists = trajSampleGeneratorFromDDP(m, _cond);
         GPSSampleLists.insert(GPSSampleLists.end(), tmpSampleLists.begin(), tmpSampleLists.end());
     }
-    ChooseSubSets();
+}
+void GPS::writeSubSampleSets2file()
+{
     write4numpy_X(cur_GPSSampleLists, "SampleSets_X");
     write4numpy_U(cur_GPSSampleLists, "SampleSets_U");
     write4numpy_Quu_inv(cur_GPSSampleLists, "SampleSets_Quu_inv");
@@ -343,15 +351,14 @@ void GPS::RetrieveLoss_wo(bool previous)
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Quu_inv",NULL);
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Logq",NULL);
 
-    // TODO retrieve member value of pInstancePolicyOptCaffe
     if (previous)
     {
-        PyObject_CallMethod(pInstancePolicyOptCaffe,"trainnet2forward",NULL);
+        PyObject_CallMethodObjArgs(pInstancePolicyOptCaffe,PyString_FromString("trainnet2forward"),Py_True,NULL);
         previous_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,"lossvalue_wo"));
     }
     else
     {
-        PyObject_CallMethod(pInstancePolicyOptCaffe,"trainnet2forward",NULL);
+        PyObject_CallMethodObjArgs(pInstancePolicyOptCaffe,PyString_FromString("trainnet2forward"),Py_False,NULL);
         current_lossvalue_wo = PyFloat_AsDouble(PyObject_GetAttrString(pInstancePolicyOptCaffe,"lossvalue_wo"));
     }
 }
@@ -360,6 +367,8 @@ void GPS::replacetheta()
 {
     // replace theta_star with theta_k
     // pass since optimization is essentially a replace precess
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"policycopyfromsolver2",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"solver2testfromsolver2train",NULL);
     
     // decrease wr
     PyObject_CallMethod(pInstancePolicyOptCaffe,"decreaseWr",NULL);
@@ -391,10 +400,11 @@ void GPS::ChooseSubSets()
 
 void GPS::appendSamplesFromThetaK(int numSamples)
 {
+    auto tmpSampleListsFromThetaK = trajSampleGeneratorFromNN_ThetaK(numSamplesPerCond);
 // append samples from ThetaK to Sk
-
+    cur_GPSSampleLists.insert(cur_GPSSampleLists.end(),tmpSampleListsFromThetaK.begin(),tmpSampleListsFromThetaK.end());
 // append samples from ThetaK to S
-
+    GPSSampleLists.insert(GPSSampleLists.end(),tmpSampleListsFromThetaK.begin(),tmpSampleListsFromThetaK.end());
 }
 
 vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromNN_ThetaK(int numSamples)
@@ -602,6 +612,19 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
                 SampleEntry->u.col(T-1) = VectorXd::Constant(SampleEntry->u.col(0).size(),std::nan("0"));
             });
     return MixSampleLists;
+}
+
+void GPS::modifymPhi()
+{
+    int newmPhi = cur_GPSSampleLists.size();
+    PyObject *pNewmPhi = PyInt_FromLong(newmPhi);
+    PyObject_CallMethodObjArgs(pInstancePolicyOptCaffe, PyString_FromString("modifymPhi"), pNewmPhi, NULL);
+    Py_DECREF(pNewmPhi);
+}
+
+void GPS::restoremPhi()
+{
+    PyObject_CallMethod(pInstancePolicyOptCaffe, "restoremPhi", NULL);
 }
 
 // -----------------------------------------

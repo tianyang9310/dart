@@ -72,7 +72,12 @@ class PolicyOptCaffe():
         solver_param2.random_seed = 1
          
         solver_param2.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
+        solver_param2.test_net_param.add().CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
         
+        
+        solver_param.test_iter.append(1)
+        solver_param.test_interval = 1000000
+            
         with open('NeuralNetworks2.prototxt','w') as f:
             f.write(MessageToString(solver_param2))
         
@@ -122,8 +127,7 @@ class PolicyOptCaffe():
         
         self.policycopyfromsolver()
         self.solver2copyfromsolver()
-        # self.policy.net.share_with(self.solver.net)        
-        # self.solver2.net.share_with(self.solver.net)        
+        self.solver2testfromsolver2train()
         
         self.appendpolicyRepo(self.solver.net)
 
@@ -206,23 +210,44 @@ class PolicyOptCaffe():
 # --------------------------------------------------
 # compute loss value without regularizer
 # --------------------------------------------------
-    def trainnet2forward(self):
+    def trainnet2forward(self, previous):
 
         # need to call setWr() before calling finetune
         
         print '*********************************************************'
         print '******** train net2 forward and loss value **************'
         print '*********************************************************'
-        blob_names = self.solver2.net.blobs.keys()
-        self.solver2.net.blobs[blob_names[0]].data[:]=self.samplesets_x
-        self.solver2.net.blobs[blob_names[1]].data[:]=self.samplesets_x
-        self.solver2.net.blobs[blob_names[2]].data[:]=self.samplesets_u
-        self.solver2.net.blobs[blob_names[3]].data[:]=np.linalg.inv(self.var)
-        self.solver2.net.blobs[blob_names[4]].data[:]=self.samplesets_Logq
-        self.solver2.net.blobs[blob_names[5]].data[:]=self.wr
+        if not previous:
+            blob_names = self.solver2.net.blobs.keys()
+            self.solver2.net.blobs[blob_names[0]].data[:]=self.samplesets_x
+            self.solver2.net.blobs[blob_names[1]].data[:]=self.samplesets_x
+            self.solver2.net.blobs[blob_names[2]].data[:]=self.samplesets_u
+            self.solver2.net.blobs[blob_names[3]].data[:]=np.linalg.inv(self.var)
+            self.solver2.net.blobs[blob_names[4]].data[:]=self.samplesets_Logq
+            self.solver2.net.blobs[blob_names[5]].data[:]=self.wr
 
-        self.solver2.net.forward()
-        self.lossvalue_wo = self.solver2.net.layers[-1].lossvalue_wo
+            self.solver2.net.forward()
+            self.lossvalue_wo = self.solver2.net.layers[-1].lossvalue_wo
+        else:
+            blob_names = self.solver2.test_nets[0].blobs.keys()
+            self.solver2.test_net[0].blobs[blob_names[0]].data[:]=self.samplesets_x
+            self.solver2.test_net[0].blobs[blob_names[1]].data[:]=self.samplesets_x
+            self.solver2.test_net[0].blobs[blob_names[2]].data[:]=self.samplesets_u
+            self.solver2.test_net[0].blobs[blob_names[3]].data[:]=np.linalg.inv(self.var)
+            self.solver2.test_net[0].blobs[blob_names[4]].data[:]=self.samplesets_Logq
+            self.solver2.test_net[0].blobs[blob_names[5]].data[:]=self.wr
+
+            self.solver2.test_net[0].forward()
+            self.lossvalue_wo = self.solver2.test_net[0].layers[-1].lossvalue_wo
+
+
+    def modifymPhi(self, newmPhi):
+        self.solver2.net.layers[-1].mPhi = newmPhi
+        self.solver2.test_nets[0].layers[-1].mPhi = newmPhi
+
+    def restoremPhi(self):
+        self.solver2.net.layers[-1].mPhi = self.mPhi
+        self.solver2.test_nets[0].layers[-1].mPhi = self.mPhi
 
 # --------------------------------------------------
 # append one net to self.policyRepo
@@ -261,6 +286,16 @@ class PolicyOptCaffe():
     def solver2copyfrompolicy(self):
         filename='/tmp/policy.caffemodel'
         self.policy.net.save(filename)
+        self.solver2.net.copy_from(filename)
+
+    def solver2testfromsolver2train(self):
+        filename='/tmp/Solver2TrainNet.caffemodel'
+        self.solver2.net.save(filename)
+        self.solver2.test_nets[0].copy_from(filename)
+
+    def solver2trainfromsolver2test(self):
+        filename='/tmp/Solver2TestNet.caffemodel'
+        self.solver2.test_nets[0].save(filename)
         self.solver2.net.copy_from(filename)
 
 # --------------------------------------------------
