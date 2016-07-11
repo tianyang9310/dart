@@ -6,6 +6,7 @@ from NNBuilder import NNConstructor
 from Policy_Caffe import CaffePolicy
 from file2numpy import file2numpy
 import tempfile
+import json
 
 class PolicyOptCaffe():
     def __init__(self, x_dim, u_dim, T, N, mPhi):
@@ -75,8 +76,8 @@ class PolicyOptCaffe():
         solver_param2.test_net_param.add().CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
         
         
-        solver_param.test_iter.append(1)
-        solver_param.test_interval = 1000000
+        solver_param2.test_iter.append(1)
+        solver_param2.test_interval = 1000000
             
         with open('NeuralNetworks2.prototxt','w') as f:
             f.write(MessageToString(solver_param2))
@@ -245,12 +246,36 @@ class PolicyOptCaffe():
 
 
     def modifymPhi(self, newmPhi):
+        data_layer_info = json.dumps({
+            'shape': [{'dim': (newmPhi*self.batch_size, self.x_dim)},
+                      {'dim': (newmPhi*self.batch_size, self.x_dim)},
+                      {'dim': (newmPhi*self.batch_size, self.u_dim)},
+                      {'dim': (newmPhi*self.batch_size, self.u_dim, self.u_dim)},
+                      {'dim': (newmPhi*self.batch_size, 1)},
+                      {'dim': (1, 1)}
+                      ]})
         self.solver2.net.layers[-1].mPhi = newmPhi
         self.solver2.test_nets[0].layers[-1].mPhi = newmPhi
+        self.solver2.net.layers[0].param_str = data_layer_info
+        self.solver2.net.reshape()
+        self.solver2.test_nets[0].layers[0].param_str = data_layer_info
+        self.solver2.test_nets[0].reshape()
 
     def restoremPhi(self):
+        data_layer_info = json.dumps({
+            'shape': [{'dim': (self.mPhi*self.batch_size, self.x_dim)},
+                      {'dim': (self.mPhi*self.batch_size, self.x_dim)},
+                      {'dim': (self.mPhi*self.batch_size, self.u_dim)},
+                      {'dim': (self.mPhi*self.batch_size, self.u_dim, self.u_dim)},
+                      {'dim': (self.mPhi*self.batch_size, 1)},
+                      {'dim': (1, 1)}
+                      ]})
         self.solver2.net.layers[-1].mPhi = self.mPhi
         self.solver2.test_nets[0].layers[-1].mPhi = self.mPhi
+        self.solver2.net.layers[0].param_str = data_layer_info
+        self.solver2.net.reshape()
+        self.solver2.test_nets[0].layers[0].param_str = data_layer_info
+        self.solver2.test_nets[0].reshape()
 
 # --------------------------------------------------
 # append one net to self.policyRepo

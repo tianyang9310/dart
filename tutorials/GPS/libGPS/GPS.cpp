@@ -139,6 +139,7 @@ void GPS::run()
         FineTunePolicy();
 
         // generate samples from theta_k. theta_k is now the last CaffePolicy of PolicyRepo
+        // append samples to GPSSampleLists and cur_GPSSampleLists
         appendSamplesFromThetaK(); 
         
         // Optionally generate adaptive guiding samples
@@ -147,8 +148,8 @@ void GPS::run()
         // Here this evaluation can be retrieved directly from python interface
         writeSubSampleSets2file();
         modifymPhi();
-        RetrieveLoss_wo(true);
-        RetrieveLoss_wo(false);
+        RetrieveLoss_wo(true);    // previous = true
+        RetrieveLoss_wo(false);   // previous = false
         restoremPhi();
 
         if (current_lossvalue_wo <= previous_lossvalue_wo)
