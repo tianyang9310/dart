@@ -29,7 +29,7 @@ class PolicyOptCaffe():
         self.N     = N
         self.mPhi  = mPhi
         self.hidden_dim = 50
-        self.caffe_iterations =50
+        self.caffe_iterations = 1000
         self.caffe_finetune_iterations = 2
         
         self.init_solver()
@@ -48,7 +48,7 @@ class PolicyOptCaffe():
         solver_param.lr_policy = 'fixed'
         solver_param.momentum = 0.9
         solver_param.weight_decay = 0.005
-        solver_param.type = 'Adam'
+        solver_param.type = 'SGD'
         solver_param.random_seed = 1
          
         solver_param.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.batch_size,TRAIN))
@@ -69,7 +69,7 @@ class PolicyOptCaffe():
         solver_param2.lr_policy = 'fixed'
         solver_param2.momentum = 0.9
         solver_param2.weight_decay = 0.005
-        solver_param2.type = 'Adam'
+        solver_param2.type = 'SGD'
         solver_param2.random_seed = 1
          
         solver_param2.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
@@ -112,6 +112,7 @@ class PolicyOptCaffe():
         cumulative_loss = 0.0
         np.random.shuffle(idx)
         for i in range(self.caffe_iterations):
+            # for loop can finish self.caffe_iterations/self.N epoches
             # Load in data for this batch.
             start_idx = int(i * self.batch_size %
                             (batches_per_epoch * self.batch_size))
@@ -124,7 +125,7 @@ class PolicyOptCaffe():
         
             # To get the training loss:
             train_loss = self.solver.net.blobs[blob_names[-1]].data
-            cumulative_loss += train_loss
+            print train_loss
         
         self.policycopyfromsolver()
         self.solver2copyfromsolver()
@@ -134,18 +135,18 @@ class PolicyOptCaffe():
 
     def ReadX(self):
         self.x = file2numpy('X.numpyout')
-        print self.x
+        # print self.x
 
     def ReadU(self):
         # Supposing u_dim is 1, s.t. each row is an instance
         self.u = file2numpy('U.numpyout')
-        print self.u
+        # print self.u
 
     def ReadQuu_inv(self):
         # Supposing u_dim is 1, s.t. each row is an instance
         self.Quu_inv = file2numpy('Quu_inv.numpyout')
         self.Quu_inv = np.reshape(self.Quu_inv,(-1,self.u_dim,self.u_dim))
-        print self.Quu_inv
+        # print self.Quu_inv
 
 # --------------------------------------------------
 # fine tune Neural Network
@@ -185,22 +186,22 @@ class PolicyOptCaffe():
 
     def ReadSampleSets_X(self):
         self.samplesets_x = file2numpy('SampleSets_X.numpyout')
-        print self.samplesets_x
+        # print self.samplesets_x
 
     def ReadSampleSets_U(self):
         # Supposing u_dim is 1, s.t. each row is an instance
         self.samplesets_u = file2numpy('SampleSets_U.numpyout')
-        print self.samplesets_u
+        # print self.samplesets_u
 
     def ReadSampleSets_Quu_inv(self):
         # Supposing u_dim is 1, s.t. each row is an instance
         self.samplesets_Quu_inv = file2numpy('SampleSets_Quu_inv.numpyout')
         self.samplesets_Quu_inv = np.reshape(self.samplesets_Quu_inv,(-1,self.u_dim,self.u_dim))
-        print self.samplesets_Quu_inv
+        # print self.samplesets_Quu_inv
 
     def ReadSampleSets_Logq(self):
         self.samplesets_Logq = file2numpy('SampleSets_Logq.numpyout')
-        print self.samplesets_Logq
+        # print self.samplesets_Logq
 
     def setWr(self, _wr=1e-2):
         self.wr = _wr
