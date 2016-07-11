@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
 	int T				= 100;
     int x_dim           = 4;
     int u_dim           = 1;
-	int numDDPIters		= 3;
+	int numDDPIters		= 15;
 	int conditions  	= 5;
 	int numSamplePerCond= 2;
 

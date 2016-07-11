@@ -92,6 +92,7 @@ class SumLogProbLoss(caffe.Layer):
         top[0].reshape(1)
 
     def forward(self, bottom, top):
+        # variance is arbitrarily set as 0.1, therefore it is not important here
         batch_size = bottom[0].data.shape[0]
         self.diff_ = bottom[0].data - bottom[1].data
         loss = 0.0
@@ -100,6 +101,7 @@ class SumLogProbLoss(caffe.Layer):
         top[0].data[...] = loss / 2.0 / batch_size
 
     def backward(self, top, propagate_down, bottom):
+        # variance is arbitrarily set as 0.1, therefore it is not important here
         batch_size = bottom[0].shape[0]
         for i in range(2):
             if propagate_down[i]:
