@@ -109,7 +109,6 @@ class PolicyOptCaffe():
         # Assuming that N*T >= self.batch_size.
         batches_per_epoch = np.floor(self.N*self.T / self.batch_size)
         idx = range(self.N*self.T)
-        cumulative_loss = 0.0
         np.random.shuffle(idx)
         for i in range(self.caffe_iterations):
             # for loop can finish self.caffe_iterations/self.N epoches
@@ -160,7 +159,6 @@ class PolicyOptCaffe():
         print '*********************************************************'
         
         blob_names = self.solver2.net.blobs.keys()
-        cumulative_loss = 0.0
         for i in range(self.caffe_finetune_iterations):
             print str(i)+' th iteration of finetune'
             self.solver2.net.blobs[blob_names[0]].data[:]=self.samplesets_x
@@ -176,7 +174,6 @@ class PolicyOptCaffe():
             self.solver2.step(1)
             # To get the training loss:
             train_loss = self.solver2.net.blobs[blob_names[-1]].data
-            cumulative_loss += train_loss
         
         # comment because in the fine tune stage, only train solver2. But whether the parameter is accepted is determined by lossvalue_wo
         # self.policy.net.share_with(self.solver2.net)
