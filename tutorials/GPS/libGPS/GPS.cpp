@@ -588,8 +588,9 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
                 unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
                 default_random_engine generator(seed);
                 uniform_int_distribution<int> distribution(0,conditions-1);
+                int idxDDP = distribution(generator);
                 VectorXd _x0;
-                _x0 = x0Bundle[distribution(generator)];
+                _x0 = x0Bundle[idxDDP];
                 SampleEntry = shared_ptr<sample>(new sample());
                  
                 SampleEntry->x.resize(x_dim,T);
@@ -601,10 +602,10 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
                 {
                     VectorXd __ut;
                     __ut.setZero(u_dim);
-                    __ut = (DDPPolicyBundle[distribution(generator)].first)[i](SampleEntry->x.col(i));
+                    __ut = (DDPPolicyBundle[idxDDP].first)[i](SampleEntry->x.col(i));
                     MatrixXd __Quu_inv;
                     __Quu_inv.setZero(u_dim,u_dim);
-                    __Quu_inv = (DDPPolicyBundle[distribution(generator)].second)[i];
+                    __Quu_inv = (DDPPolicyBundle[idxDDP].second)[i];
 
                     SampleEntry->u.col(i) = GaussianSampler(__ut, __Quu_inv);
                     SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
