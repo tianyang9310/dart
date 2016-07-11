@@ -31,9 +31,9 @@ int main(int argc, char* argv[])
 	int T				= 100;
     int x_dim           = 4;
     int u_dim           = 1;
-	int numDDPIters		= 15;
+	int numDDPIters		= 30;
 	int conditions  	= 5;
-	int numSamplePerCond= 2;
+	int numSamplePerCond= 10;
 
 	double delta_t		= mWorld->getTimeStep();
 	Vector4d x0			= Vector4d::Zero();
