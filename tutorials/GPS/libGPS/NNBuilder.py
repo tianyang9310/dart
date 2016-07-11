@@ -27,7 +27,7 @@ def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase, mPhi=0):
         data_layer_info = json.dumps({
             'shape': [{'dim': (batch_size, dim_input)},
                       {'dim': (batch_size, dim_output)},
-                      {'dim': (batch_size, dim_output, dim_output)}
+                      {'dim': (1, dim_output, dim_output)}
                       ]})
         [net_input, action, precision] = L.Python(ntop=3, python_param=dict(module='NNBuilder', param_str=data_layer_info, layer='PolicyDataLayer'))
     elif phase == TEST:
@@ -97,7 +97,7 @@ class SumLogProbLoss(caffe.Layer):
         self.diff_ = bottom[0].data - bottom[1].data
         loss = 0.0
         for i in range(batch_size):
-            loss += self.diff_[i].dot(bottom[2].data[i].dot(self.diff_[i]))
+            loss += self.diff_[i].dot(bottom[2].data[0].dot(self.diff_[i]))
         top[0].data[...] = loss / 2.0 / batch_size
 
     def backward(self, top, propagate_down, bottom):
@@ -108,7 +108,7 @@ class SumLogProbLoss(caffe.Layer):
                 sign = 1 if i == 0 else -1
                 alpha = sign * top[0].diff[0] / batch_size
                 for j in range(batch_size):
-                    bottom[i].diff[j] = bottom[2].data[j].dot(self.diff_[j])
+                    bottom[i].diff[j] = bottom[2].data[0].dot(self.diff_[j])
                 bottom[i].diff[...] *= alpha
 
 class PhiLoss(caffe.Layer):
