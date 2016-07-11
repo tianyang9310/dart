@@ -168,6 +168,9 @@ class PolicyOptCaffe():
             self.solver2.net.blobs[blob_names[4]].data[:]=self.samplesets_Logq
             self.solver2.net.blobs[blob_names[5]].data[:]=self.wr
 
+            # The step function only updates train net, keep test nets[0] untouched
+            # 1. in the src code, ApplyUpdate() only applies on net_
+            # 2. https://groups.google.com/forum/#!topic/caffe-users/Vu_LtKWpyhI talks about the same issue. To update test_nets[0] in step(), test_compute_loss and test_initialization both need to be true
             self.solver2.step(1)
             # To get the training loss:
             train_loss = self.solver2.net.blobs[blob_names[-1]].data
