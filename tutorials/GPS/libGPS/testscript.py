@@ -16,7 +16,7 @@ import math
 # 
 # print StepCost(np.array([0,0,0,0]),np.array(1))
 
-tt=PolicyOptCaffe(4,1,99,10,12)
+tt=PolicyOptCaffe(4,1,99,50,60)
 
 tt.ReadX()
 tt.ReadU()
@@ -30,15 +30,9 @@ tt.ReadSampleSets_Quu_inv()
 tt.ReadSampleSets_Logq()
 tt.setWr()
 
-tt.modifymPhi(14)
+# tt.modifymPhi(14)
 
-tt.printFoo2()
-tt.trainnet2forward()
-print tt.lossvalue_wo
 tt.finetune()
-tt.printFoo2()
-tt.trainnet2forward()
-print tt.lossvalue_wo
 
 tt.policy.act(np.array([0,0,0,0]))
 

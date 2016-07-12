@@ -31,6 +31,7 @@ public:
 	GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics);
     virtual ~GPS();
 	void run();
+    void rund();
     void DDPdemonstration();
 	void InitDDPPolicy();
 	void InitNNPolicy();
@@ -66,6 +67,7 @@ public:
 	vector<pair<vector<function<VectorXd(VectorXd)>>,vector<MatrixXd>>> DDPPolicyBundle;
     vector<shared_ptr<sample>> GPSSampleLists;
     vector<shared_ptr<sample>> cur_GPSSampleLists;
+    vector<shared_ptr<sample>> trajSamples4NNpretrain;
 // --------------------
 //  python wrapper
     PyObject *pInstancePolicyOptCaffe;
