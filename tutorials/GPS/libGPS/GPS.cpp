@@ -103,6 +103,35 @@ GPS::~GPS()
     Py_Finalize();
 }
 
+void GPS::rund()
+{
+    InitDDPPolicy();
+    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
+    cout<<"@@@@@@ Initialize DDP Bundles @@@@@@@@"<<endl;
+    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl<<endl;
+    cout<<"Press any key to continue..."<<endl;
+    cin.get();
+
+    InitNNPolicy();
+    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
+    cout<<"@@@@@@ Initialize Neural Net @@@@@@@@@"<<endl;
+    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl<<endl;
+    cout<<"Press any key to continue..."<<endl;
+    cin.get();
+
+    BuildInitSamples();
+    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
+    cout<<"@@@@@@ Build Initiali Sample Lists@@@@"<<endl;
+    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl<<endl;
+    cout<<"Press any key to continue..."<<endl;
+    cin.get();
+
+    // shuffle and choose sub sample sets Sk
+    ChooseSubSets();
+    writeSubSampleSets2file();
+    FineTunePolicy();
+}
+
 void GPS::run()
 {
     // GaussianSamplerDebug();
@@ -209,7 +238,6 @@ void GPS::InitNNPolicy()
 
 //  generate traj samples from mixture of DDP policies
 //  Linear combination of mutually independent normal random vectors
-    vector<shared_ptr<sample>> trajSamples4NNpretrain;
     trajSamples4NNpretrain = trajSampleGeneratorFromDDPMix(m);
 
 //  transform from c++ vector to python numpy
@@ -314,6 +342,7 @@ void GPS::EvalProb_Logq()
                     {
                         SampleEntry->Logq(i) = log(tmpq);
                     }
+                    else
                     {
                         SampleEntry->Logq(i) = SampleEntry->Logq(i-1) + log(tmpq);
                     }
@@ -391,10 +420,9 @@ void GPS::restoretheta()
 
 void GPS::ChooseSubSets()
 {
-    int numGPS_Samples = GPSSampleLists.size();
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     cur_GPSSampleLists = GPSSampleLists;
-    shuffle (cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), default_random_engine(seed)); 
+    shuffle(cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), default_random_engine(seed)); 
     // clamp cur_GPSSampleLists to mPhi
     cur_GPSSampleLists.erase(cur_GPSSampleLists.begin()+mPhi,cur_GPSSampleLists.end());
 }

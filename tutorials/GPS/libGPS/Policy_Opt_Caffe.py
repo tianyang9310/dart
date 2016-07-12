@@ -124,7 +124,7 @@ class PolicyOptCaffe():
         
             # To get the training loss:
             train_loss = self.solver.net.blobs[blob_names[-1]].data
-            print train_loss
+            # print train_loss
         
         self.policycopyfromsolver()
         self.solver2copyfromsolver()
@@ -174,6 +174,7 @@ class PolicyOptCaffe():
             self.solver2.step(1)
             # To get the training loss:
             train_loss = self.solver2.net.blobs[blob_names[-1]].data
+            print train_loss
         
         # comment because in the fine tune stage, only train solver2. But whether the parameter is accepted is determined by lossvalue_wo
         # self.policy.net.share_with(self.solver2.net)
