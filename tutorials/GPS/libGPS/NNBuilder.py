@@ -221,6 +221,6 @@ class PhiLoss(caffe.Layer):
         R  = np.array([1])
         # Matrix4d Qf = Matrix4d::Identity()
         # Qf(1,1)				= 500
-        Q = Q*0.001
-        R = R*0.001
+        Q = Q*0.02
+        R = R*0.02
         return (0.5*(_x-xd).dot(Q.dot(_x-xd)) + 0.5*_u.dot(R.dot(_u)))[0]

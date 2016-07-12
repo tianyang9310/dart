@@ -314,6 +314,7 @@ void GPS::EvalProb_Logq()
                     {
                         SampleEntry->Logq(i) = log(tmpq);
                     }
+                    else
                     {
                         SampleEntry->Logq(i) = SampleEntry->Logq(i-1) + log(tmpq);
                     }
@@ -333,6 +334,7 @@ void GPS::FineTunePolicy()
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_U",NULL);
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Quu_inv",NULL);
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Logq",NULL);
+    // no need to call setWr since it is already called in the initialization of PolicyOptCaffe 
 
 //  initialization of theta_star
     PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo2",NULL);
@@ -391,7 +393,6 @@ void GPS::restoretheta()
 
 void GPS::ChooseSubSets()
 {
-    int numGPS_Samples = GPSSampleLists.size();
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     cur_GPSSampleLists = GPSSampleLists;
     shuffle(cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), default_random_engine(seed)); 
