@@ -157,18 +157,23 @@ class PhiLoss(caffe.Layer):
                 Zt        = Zt + np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0])
                 
             self.Log_Pi_theta_List[t_idx] = Log_Pi_theta
-            self.Zt_log[t_idx] = np.log(Zt)
+            self.Zt_log[t_idx] = np.log(np.finfo(float).eps + Zt)
+
+            if (np.finfo(float).eps+inner_sum)<0:
+                print "inner_sum needs to be set as 0"
+                inner_sum = 0
 
             # TODO remove regularizer
             # tmpLoss = loss
-            loss = loss + float(1)/Zt*inner_sum  + bottom[5].data[0][0]*np.log(Zt)
-            loss_wo = loss_wo + float(1)/Zt*inner_sum
+            loss = loss + float(1)*np.exp(-np.log(np.finfo(float).eps + Zt)+np.log(np.finfo(float).eps+inner_sum))  + bottom[5].data[0][0]*np.log(np.finfo(float).eps+Zt)
+            loss_wo = loss_wo +float(1)*np.exp(-np.log(np.finfo(float).eps + Zt)+np.log(np.finfo(float).eps+inner_sum))
             # if tmpLoss>loss:
             #     raise Exception('Loss is not increasing')
 
-            self.J_tilt_List[t_idx] = float(1)/Zt*inner_sum
+            self.J_tilt_List[t_idx] = float(1)*np.exp(-np.log(np.finfo(float).eps + Zt)+np.log(np.finfo(float).eps+inner_sum))
 
         # loss is minimized in optimization stage. Therefore the objective should be negative of above function
+        # because it is cost, which needs to be minimized
         loss_wo = -loss_wo
         loss    = -loss
 
@@ -207,6 +212,7 @@ class PhiLoss(caffe.Layer):
                 gradient = gradient * inner_sum_t_p
 
                 # loss is minimized in optimization stage. Therefore the objective should be negative of above function
+                # because it is cost, which needs to be minimized
                 gradient = -gradient
 
                 bottom[0].diff[cur_idx] = gradient 
@@ -227,4 +233,4 @@ class PhiLoss(caffe.Layer):
         # Qf(1,1)				= 500
         Q = Q*0.02
         R = R*0.02
-        return (0.5*(_x-xd).dot(Q.dot(_x-xd)) + 0.5*_u.dot(R.dot(_u)))[0]
+        return 5-(0.5*(_x-xd).dot(Q.dot(_x-xd)) + 0.5*_u.dot(R.dot(_u)))[0]

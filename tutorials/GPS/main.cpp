@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
     int x_dim           = 4;
     int u_dim           = 1;
 	int numDDPIters		= 30;
-	int conditions  	= 5;
+	int conditions  	= 1;
 	int numSamplePerCond= 10;
 
 	double delta_t		= mWorld->getTimeStep();
@@ -62,17 +62,9 @@ int main(int argc, char* argv[])
 	unique_ptr<GPS> mGPS = unique_ptr<GPS>(new GPS(T,x_dim,u_dim,numDDPIters,conditions,numSamplePerCond,bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone())));
 
 	for_each(mGPS->x0Bundle.begin(),mGPS->x0Bundle.end(),[=](VectorXd& x0Bundle_sub){x0Bundle_sub=x0;});
-	mGPS->x0Bundle[0](1)=-1/3.0*M_PI;
-	mGPS->x0Bundle[1](1)=-1/6.0*M_PI;
-	mGPS->x0Bundle[2](1)=   0.0*M_PI;
-	mGPS->x0Bundle[3](1)= 1/6.0*M_PI;
-	mGPS->x0Bundle[4](1)= 1/3.0*M_PI;
+	mGPS->x0Bundle[0](1)=   0.0*M_PI;
 
 	mGPS->DDPBundle[0] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[0],xd,1)));
-	mGPS->DDPBundle[1] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[1],xd,1)));
-	mGPS->DDPBundle[2] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[2],xd,1)));
-	mGPS->DDPBundle[3] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[3],xd,1)));
-	mGPS->DDPBundle[4] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[4],xd,1)));
 
 // ---------------------------------------------------------
 

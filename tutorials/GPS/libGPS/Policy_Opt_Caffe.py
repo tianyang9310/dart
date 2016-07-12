@@ -30,7 +30,7 @@ class PolicyOptCaffe():
         self.mPhi  = mPhi
         self.hidden_dim = 50
         self.caffe_iterations = 1000
-        self.caffe_finetune_iterations = 2
+        self.caffe_finetune_iterations = 20
         
         self.init_solver()
         self.init_solver2()

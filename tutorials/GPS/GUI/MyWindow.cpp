@@ -6,7 +6,7 @@ MyWindow::MyWindow(WorldPtr world, unique_ptr<GPS> _mGPS):mGPS(std::move(_mGPS))
     mSnapShot = mWorld->clone();
 
     mGPS->rund();
-    idxDDP = 2;
+    idxDDP = 0;
     mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(mGPS->x0Bundle[idxDDP](0));
     mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(mGPS->x0Bundle[idxDDP](1));
     mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(mGPS->x0Bundle[idxDDP](2));
