@@ -34,7 +34,7 @@ class PolicyOptCaffe():
         
         self.init_solver()
         self.init_solver2()
-        self.var = 0.1 * np.eye(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
+        self.var = 0.5 * np.eye(self.u_dim) # here 0.5 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
         self.policy = CaffePolicy(self.solver.test_nets[0], self.var)
         self.policyRepo = []
 
@@ -167,6 +167,18 @@ class PolicyOptCaffe():
             self.solver2.net.blobs[blob_names[3]].data[:]=np.linalg.inv(self.var)
             self.solver2.net.blobs[blob_names[4]].data[:]=self.samplesets_Logq
             self.solver2.net.blobs[blob_names[5]].data[:]=self.wr
+            
+            self.solver2.test_nets[0].blobs[blob_names[0]].data[:]=self.samplesets_x
+            self.solver2.test_nets[0].blobs[blob_names[1]].data[:]=self.samplesets_x
+            self.solver2.test_nets[0].blobs[blob_names[2]].data[:]=self.samplesets_u
+            self.solver2.test_nets[0].blobs[blob_names[3]].data[:]=np.linalg.inv(self.var)
+            self.solver2.test_nets[0].blobs[blob_names[4]].data[:]=self.samplesets_Logq
+            self.solver2.test_nets[0].blobs[blob_names[5]].data[:]=self.wr
+
+            # params_names = self.solver2.net.params.keys()
+            # a = self.solver2.net.params[params_names[0]][0].data
+            # params_names = self.solver2.test_nets[0].params.keys()
+            # b = self.solver2.test_nets[0].params[params_names[0]][0].data
 
             # The step function only updates train net, keep test nets[0] untouched
             # 1. in the src code, ApplyUpdate() only applies on net_
@@ -175,6 +187,11 @@ class PolicyOptCaffe():
             # To get the training loss:
             train_loss = self.solver2.net.blobs[blob_names[-1]].data
             print train_loss
+
+            # params_names = self.solver2.net.params.keys()
+            # c = self.solver2.net.params[params_names[0]][0].data
+            # params_names = self.solver2.test_nets[0].params.keys()
+            # e = self.solver2.test_nets[0].params[params_names[0]][0].data
         
         # comment because in the fine tune stage, only train solver2. But whether the parameter is accepted is determined by lossvalue_wo
         # self.policy.net.share_with(self.solver2.net)
