@@ -4,6 +4,7 @@ caffe_root = '/opt/caffe/'
 import json
 import numpy as np
 from scipy.stats import norm
+from scipy.misc import logsumexp
 import math
 import sys
 sys.path.insert(0, caffe_root+'python')
@@ -40,7 +41,7 @@ def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase, mPhi=0):
             'shape': [{'dim': (mPhi*batch_size, dim_input)},
                       {'dim': (mPhi*batch_size, dim_input)},
                       {'dim': (mPhi*batch_size, dim_output)},
-                      {'dim': (mPhi*batch_size, dim_output, dim_output)},
+                      {'dim': (1, dim_output, dim_output)},
                       {'dim': (mPhi*batch_size, 1)},
                       {'dim': (1, 1)}
                       ]})
@@ -133,13 +134,14 @@ class PhiLoss(caffe.Layer):
         Log_Pi_theta = np.zeros(self.mPhi)
         self.Log_Pi_theta_List = np.zeros((self.batch_size, self.mPhi))
         self.J_tilt_List = np.zeros(self.batch_size)
+        self.Zt_log = np.zeros(self.batch_size)
 
         for t_idx in range(self.batch_size): # t=0~T-2
             inner_sum = 0.0
             Zt        = 0.0
             for m_idx in range(self.mPhi):
                 cur_idx = m_idx*self.batch_size + t_idx
-                Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + np.log(np.finfo(float).eps+norm(bottom[0].data[cur_idx][0], np.linalg.inv(bottom[3].data[cur_idx])[0,0]).pdf(bottom[2].data[cur_idx][0]))
+                Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + np.log(np.finfo(float).eps+norm(bottom[0].data[cur_idx][0], np.linalg.inv(bottom[3].data[0])[0,0]).pdf(bottom[2].data[cur_idx][0]))
 
                 # h=Log_Pi_theta[m_idx]       # float number
                 # a=bottom[0].data[cur_idx]   # ndarray 1d
@@ -155,13 +157,14 @@ class PhiLoss(caffe.Layer):
                 Zt        = Zt + np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0])
                 
             self.Log_Pi_theta_List[t_idx] = Log_Pi_theta
+            self.Zt_log[t_idx] = np.log(Zt)
 
             # TODO remove regularizer
-            tmpLoss = loss
-            loss = loss + float(1)/Zt*inner_sum # + bottom[5].data[0][0]*np.log(Zt)
+            # tmpLoss = loss
+            loss = loss + float(1)/Zt*inner_sum  + bottom[5].data[0][0]*np.log(Zt)
             loss_wo = loss_wo + float(1)/Zt*inner_sum
-            if tmpLoss>loss:
-                raise Exception('Loss is not increasing')
+            # if tmpLoss>loss:
+            #     raise Exception('Loss is not increasing')
 
             self.J_tilt_List[t_idx] = float(1)/Zt*inner_sum
 
@@ -183,23 +186,24 @@ class PhiLoss(caffe.Layer):
         for t_idx in range(self.batch_size):
             for m_idx in range(self.mPhi):
                 cur_idx = m_idx*self.batch_size + t_idx
-                gradient = (bottom[2].data[cur_idx] - bottom[0].data[cur_idx]).dot(bottom[3].data[cur_idx])
+                gradient = (bottom[2].data[cur_idx] - bottom[0].data[cur_idx]).dot(bottom[3].data[0])
                 inner_sum_t_p = 0.0
                 for t_p_idx in range(t_idx, self.batch_size):
-                    cur_p_idx = np.arange(self.mPhi)*self.batch_size + t_p_idx
-                    # compute zt_p  xi_t_p
+                    # cur_p_idx = np.arange(self.mPhi)*self.batch_size + t_p_idx
+                    # compute zt_p_log  xi_t_p
 
-                    zt_p = np.sum(np.exp((self.Log_Pi_theta_List[t_p_idx]-np.reshape(bottom[4].data[cur_p_idx],self.mPhi))))
+                    # zt_p_log = logsumexp(self.Log_Pi_theta_List[t_p_idx]-np.reshape(bottom[4].data[cur_p_idx],self.mPhi))
                     J_tilt = self.J_tilt_List[t_p_idx]
 
                     # TODO remove regularizer
-                    xi_t_p = self.StepCost(bottom[1].data[m_idx*self.batch_size+t_p_idx], bottom[2].data[m_idx*self.batch_size+t_p_idx]) - J_tilt # + bottom[5].data[0]
+                    xi_t_p = self.StepCost(bottom[1].data[m_idx*self.batch_size+t_p_idx], bottom[2].data[m_idx*self.batch_size+t_p_idx]) - J_tilt  + bottom[5].data[0][0]
 
                     # a= self.Log_Pi_theta_List[t_p_idx,m_idx]
                     # b= bottom[4].data[m_idx*self.batch_size+t_p_idx]
                     # c= self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx]
 
-                    inner_sum_t_p = inner_sum_t_p + float(1)*np.exp(-np.log(zt_p) +self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx])*xi_t_p
+                    inner_sum_t_p = inner_sum_t_p + float(1)*np.exp(-self.Zt_log[t_p_idx] +self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx])*xi_t_p
+                    # inner_sum_t_p = inner_sum_t_p + float(1)*np.exp(-zt_p_log +self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx])*xi_t_p
                 gradient = gradient * inner_sum_t_p
 
                 # loss is minimized in optimization stage. Therefore the objective should be negative of above function
