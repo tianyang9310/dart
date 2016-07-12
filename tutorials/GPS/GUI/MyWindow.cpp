@@ -15,7 +15,7 @@ MyWindow::MyWindow(WorldPtr world, unique_ptr<GPS> _mGPS):mGPS(std::move(_mGPS))
 
 void MyWindow::timeStepping() 
 {
-    bool DDPDisplay = true;
+    bool DDPDisplay = false;
     if(DDPDisplay)
     {
         if (mWorld->getSimFrames() == mGPS->T-1)
