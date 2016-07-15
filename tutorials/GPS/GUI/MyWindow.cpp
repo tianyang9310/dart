@@ -5,7 +5,7 @@ MyWindow::MyWindow(WorldPtr world, unique_ptr<GPS> _mGPS):mGPS(std::move(_mGPS))
     setWorld(world);
     mSnapShot = mWorld->clone();
 
-    mGPS->rund();
+    mGPS->run();
     idxDDP = 2;
     mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(mGPS->x0Bundle[idxDDP](0));
     mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(mGPS->x0Bundle[idxDDP](1));
@@ -15,7 +15,7 @@ MyWindow::MyWindow(WorldPtr world, unique_ptr<GPS> _mGPS):mGPS(std::move(_mGPS))
 
 void MyWindow::timeStepping() 
 {
-    bool DDPDisplay = true;
+    bool DDPDisplay = false;
     if(DDPDisplay)
     {
         if (mWorld->getSimFrames() == mGPS->T-1)
@@ -27,17 +27,22 @@ void MyWindow::timeStepping()
             mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(mGPS->x0Bundle[idxDDP](3));
         }
         int mSimFrameCount = mWorld->getSimFrames();
-        mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(mGPS->GPSSampleLists[1]->x.col(mSimFrameCount)(0));
-        mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(mGPS->GPSSampleLists[1]->x.col(mSimFrameCount)(1));
-        mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(mGPS->GPSSampleLists[1]->x.col(mSimFrameCount)(2));
-        mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(mGPS->GPSSampleLists[1]->x.col(mSimFrameCount)(3));
+
+        // play with one DDP traj samples (directly display the traj)
+        int idxSampleLists = 1;
+        mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(mGPS->GPSSampleLists[idxSampleLists]->x.col(mSimFrameCount)(0));
+        mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(mGPS->GPSSampleLists[idxSampleLists]->x.col(mSimFrameCount)(1));
+        mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(mGPS->GPSSampleLists[idxSampleLists]->x.col(mSimFrameCount)(2));
+        mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(mGPS->GPSSampleLists[idxSampleLists]->x.col(mSimFrameCount)(3));
+
+        // play with DDP policy control
         // mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(mGPS->DDPBundle[idxDDP]->u.col(mSimFrameCount)[0]);
     }
     else
     {
         if (mWorld->getSimFrames() == mGPS->T-1)
         {
-            mGPS->rund();
+            mGPS->run();
             setWorld(mSnapShot->clone());
             mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(mGPS->x0Bundle[idxDDP](0));
             mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(mGPS->x0Bundle[idxDDP](1));
@@ -45,6 +50,7 @@ void MyWindow::timeStepping()
             mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(mGPS->x0Bundle[idxDDP](3));
         }
 
+        // play with NN policy
         if (!Py_IsInitialized())  
         {
             cout<<"Python Interpreter not Initialized!!!"<<endl;

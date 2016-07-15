@@ -103,35 +103,6 @@ GPS::~GPS()
     Py_Finalize();
 }
 
-void GPS::rund()
-{
-    InitDDPPolicy();
-    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
-    cout<<"@@@@@@ Initialize DDP Bundles @@@@@@@@"<<endl;
-    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl<<endl;
-    cout<<"Press any key to continue..."<<endl;
-    cin.get();
-
-    InitNNPolicy();
-    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
-    cout<<"@@@@@@ Initialize Neural Net @@@@@@@@@"<<endl;
-    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl<<endl;
-    cout<<"Press any key to continue..."<<endl;
-    cin.get();
-
-    BuildInitSamples();
-    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
-    cout<<"@@@@@@ Build Initiali Sample Lists@@@@"<<endl;
-    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl<<endl;
-    cout<<"Press any key to continue..."<<endl;
-    cin.get();
-
-    // shuffle and choose sub sample sets Sk
-    ChooseSubSets();
-    writeSubSampleSets2file();
-    FineTunePolicy();
-}
-
 void GPS::run()
 {
     // GaussianSamplerDebug();
