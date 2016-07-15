@@ -277,9 +277,123 @@ void GPS::writeSubSampleSets2file()
     write4numpy_X(cur_GPSSampleLists, "SampleSets_X");
     write4numpy_U(cur_GPSSampleLists, "SampleSets_U");
     write4numpy_Quu_inv(cur_GPSSampleLists, "SampleSets_Quu_inv");
-    EvalProb_Logq();
+    EvalProb_Logqd();
+    cout<<"Logq debugging"<<endl;
+    cin.get();
     write4numpy_Logq(cur_GPSSampleLists, "SampleSets_Logq");
 }
+
+void GPS::EvalProb_Logqd()
+{
+//  cur_GPSSampleLists
+//  first numSamplesPerCond(10) samples are NN policy
+//  next numSamplesPerCond(10) are condition 1; next numSamplesPerCond(10) are condition2; ...
+    
+    int idx=36;
+    cout<<cur_GPSSampleLists[idx]->x.transpose()<<endl;
+
+//  eval condition 1 traj samples w.r.t. condition 1 DDP
+    VectorXd Logqd;
+    Logqd.setZero(T);
+    for(int i=0; i<T-1; i++)
+    {
+        double tmpq = 0;
+        tmpq = GaussianEvaluator((DDPPolicyBundle[2].first)[i](cur_GPSSampleLists[idx]->x.col(i))(0), (DDPPolicyBundle[2].second)[i](0), cur_GPSSampleLists[idx]->u.col(i)(0));
+        cout<<"NN var"<<(DDPPolicyBundle[2].second)[i](0)<<endl;
+        if (i==0)
+        {
+            Logqd(i) = log(tmpq);
+        }
+        else
+        {
+            Logqd(i) = Logqd(i-1) + log(tmpq);
+        }
+    }
+    writeLogqd(Logqd,"source");
+    Logqd.setZero(T);
+
+    for (int i=0; i<T-1; i++)
+    {
+        double tmpq    = 0;
+        // Evaluation in terms of DDPs
+        for (int _cond=0; _cond<conditions; _cond++)
+        {
+            tmpq += GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](cur_GPSSampleLists[idx]->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), cur_GPSSampleLists[idx]->u.col(i)(0));
+        }
+
+        // Evaluation in terms of NN
+        PyObject* pPolicyRepoLen = PyObject_CallMethod(pInstancePolicyRepo,"__len__",NULL);
+        int numNNPolicy = PyInt_AsLong(pPolicyRepoLen);
+        for (int _idxNNPolicy=0; _idxNNPolicy<numNNPolicy; _idxNNPolicy++)
+        {
+            PyObject *pIdxNNPolicy = PyInt_FromLong(_idxNNPolicy);
+            auto pIndNNPolicy = PyObject_CallMethodObjArgs(pInstancePolicyRepo,PyString_FromString("__getitem__"), pIdxNNPolicy, NULL);
+
+            PyObject* pArgs = PyTuple_New(4);
+            PyTuple_SetItem(pArgs,0, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[0]));
+            PyTuple_SetItem(pArgs,1, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[1]));
+            PyTuple_SetItem(pArgs,2, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[2]));
+            PyTuple_SetItem(pArgs,3, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[3]));
+            PyObject* pResult =  PyObject_CallMethodObjArgs(pIndNNPolicy, PyString_FromString("act"), pArgs, NULL);
+            if (! pResult)
+            {
+                cout<<"Failing to CALL act method of Caffe Policy"<<endl;
+            }
+            VectorXd __ut;
+            __ut.setZero(u_dim);
+            double u_Policy;
+            if (! PyArg_ParseTuple(pResult, "d", &u_Policy))
+            {
+                cout<<"Failing to PARSE data from act method"<<endl;
+            }
+            __ut<<u_Policy;
+            
+            MatrixXd __Quu_inv;
+            __Quu_inv.setZero(u_dim,u_dim);
+            double Quu_inv_Policy;
+            Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pIndNNPolicy,"var"));
+            __Quu_inv<<Quu_inv_Policy;
+            tmpq += GaussianEvaluator(__ut(0), __Quu_inv(0), cur_GPSSampleLists[idx]->u.col(i)(0));
+            cout<<"NN var"<<Quu_inv_Policy<<endl;
+            Py_DECREF(pIdxNNPolicy);
+            Py_DECREF(pArgs);
+            Py_DECREF(pResult);
+            Py_DECREF(pIndNNPolicy);
+        }
+        Py_DECREF(pPolicyRepoLen);
+
+        tmpq = tmpq/double(conditions+numNNPolicy);
+        if (i==0)
+        {
+            Logqd(i) = log(tmpq);
+        }
+        else
+        {
+            Logqd(i) = Logqd(i-1) + log(tmpq);
+        }
+    }
+
+    writeLogqd(Logqd,"NN");
+    Logqd.setZero(T);
+
+    for(int i=0; i<T-1; i++)
+    {
+        double tmpq = 0;
+        tmpq = GaussianEvaluator((DDPPolicyBundle[3].first)[i](cur_GPSSampleLists[idx]->x.col(i))(0), (DDPPolicyBundle[3].second)[i](0), cur_GPSSampleLists[idx]->u.col(i)(0));
+        cout<<"NN var"<<(DDPPolicyBundle[3].second)[i](0)<<endl;
+        if (i==0)
+        {
+            Logqd(i) = log(tmpq);
+        }
+        else
+        {
+            Logqd(i) = Logqd(i-1) + log(tmpq);
+        }
+    }
+    writeLogqd(Logqd,"other");
+}
+
+
 
 void GPS::EvalProb_Logq()
 {
@@ -421,11 +535,11 @@ void GPS::restoretheta()
 
 void GPS::ChooseSubSets()
 {
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+//    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     cur_GPSSampleLists = GPSSampleLists;
-    shuffle(cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), default_random_engine(seed)); 
-    // clamp cur_GPSSampleLists to mPhi
-    cur_GPSSampleLists.erase(cur_GPSSampleLists.begin()+mPhi,cur_GPSSampleLists.end());
+//    shuffle(cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), default_random_engine(seed)); 
+//    // clamp cur_GPSSampleLists to mPhi
+//    cur_GPSSampleLists.erase(cur_GPSSampleLists.begin()+mPhi,cur_GPSSampleLists.end());
 }
 
 void GPS::appendSamplesFromThetaK()
@@ -783,6 +897,20 @@ void GPS::write4numpy_Logq(vector<shared_ptr<sample>> data, const std::string na
     {
         outFile<<data[i]->Logq.head(T-1)<<std::endl; 
     }
+    outFile.close();
+}
+
+void GPS::writeLogqd(VectorXd Logqd, const std::string name)
+{
+    std::string name_ext = name;
+    name_ext.append(".Logqd");
+    std::ofstream outFile(name_ext, std::ios::out);
+    if (outFile.fail())
+    {
+        dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
+    }
+    outFile.precision(8);
+    outFile<<Logqd.head(T-1)<<std::endl; 
     outFile.close();
 }
 
