@@ -75,6 +75,7 @@ public:
     PyObject *pInstancePolicyRepo;
     void InitPolicyOptCaffe();
     void EvalProb_Logq();
+    void EvalProb_Logqd();
     void writeSubSampleSets2file();
     void modifymPhi();
     void restoremPhi();
@@ -84,6 +85,7 @@ public:
     void write4numpy_U(vector<shared_ptr<sample>> data, const std::string name);
     void write4numpy_Quu_inv(vector<shared_ptr<sample>> data, const std::string name);
     void write4numpy_Logq(vector<shared_ptr<sample>> data, const std::string name);
+    void writeLogqd(VectorXd Logqd, const std::string name);
 // --------------------
 };
 
