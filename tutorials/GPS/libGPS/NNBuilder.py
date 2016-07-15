@@ -26,8 +26,8 @@ def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase, mPhi=0):
 
     if phase == TRAIN:
         data_layer_info = json.dumps({
-            'shape': [{'dim': (batch_size, dim_input)},
-                      {'dim': (batch_size, dim_output)},
+            'shape': [{'dim': (mPhi*batch_size, dim_input)},
+                      {'dim': (mPhi*batch_size, dim_output)},
                       {'dim': (1, dim_output, dim_output)}
                       ]})
         [net_input, action, precision] = L.Python(ntop=3, python_param=dict(module='NNBuilder', param_str=data_layer_info, layer='PolicyDataLayer'))

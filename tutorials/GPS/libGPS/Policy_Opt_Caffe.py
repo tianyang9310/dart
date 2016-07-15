@@ -15,8 +15,7 @@ class PolicyOptCaffe():
         u_dim:
         T:     time horizon of one episode (normally T-1, since no control at the very end step)
         N:     used in pretrain method. 
-               pretrain is called after ReadX, ReadU and ReadQuu_inv. Therefore the total number of data pairs is self.T * N
-               now N is the number of batches per epoch. Considering caffe_iterations is 50, so the total epochs should be 50/N
+               N is the total number of samples in pretrain stage
         mPhi:  used in finetrain method.
                mPhi is the total number of samples in optimizing Phi
         batch_size: change from 25 to T-1
@@ -29,7 +28,7 @@ class PolicyOptCaffe():
         self.N     = N
         self.mPhi  = mPhi
         self.hidden_dim = 50
-        self.caffe_iterations = 1000
+        self.caffe_iterations = 100
         self.caffe_finetune_iterations = 2
         
         self.init_solver()
@@ -51,7 +50,7 @@ class PolicyOptCaffe():
         solver_param.type = 'SGD'
         solver_param.random_seed = 1
          
-        solver_param.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.batch_size,TRAIN))
+        solver_param.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.batch_size,TRAIN, mPhi=self.N))
         solver_param.test_net_param.add().CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,1,TEST))
         
         solver_param.test_iter.append(1)
@@ -105,26 +104,16 @@ class PolicyOptCaffe():
         print '---------------------------------------------------------'
             
         blob_names = self.solver.net.blobs.keys()
-        
-        # Assuming that N*T >= self.batch_size.
-        batches_per_epoch = np.floor(self.N*self.T / self.batch_size)
-        idx = range(self.N*self.T)
-        np.random.shuffle(idx)
         for i in range(self.caffe_iterations):
-            # for loop can finish self.caffe_iterations/self.N epoches
-            # Load in data for this batch.
-            start_idx = int(i * self.batch_size %
-                            (batches_per_epoch * self.batch_size))
-            idx_i = idx[start_idx:start_idx+self.batch_size]
-            self.solver.net.blobs[blob_names[0]].data[:] = self.x[idx_i]
-            self.solver.net.blobs[blob_names[1]].data[:] = self.u[idx_i]
+            self.solver.net.blobs[blob_names[0]].data[:] = self.x
+            self.solver.net.blobs[blob_names[1]].data[:] = self.u
             self.solver.net.blobs[blob_names[2]].data[:] = np.linalg.inv(self.var)
         
             self.solver.step(1)
         
             # To get the training loss:
             train_loss = self.solver.net.blobs[blob_names[-1]].data
-            # print train_loss
+            print train_loss
         
         self.policycopyfromsolver()
         self.solver2copyfromsolver()
