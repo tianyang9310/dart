@@ -362,6 +362,7 @@ void GPS::FineTunePolicy()
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_U",NULL);
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Quu_inv",NULL);
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Logq",NULL);
+    // no need to call setWr since it is already called in the initialization of PolicyOptCaffe 
 
 //  initialization of theta_star
     PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo2",NULL);
