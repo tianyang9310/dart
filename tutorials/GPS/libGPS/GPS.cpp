@@ -380,47 +380,35 @@ void GPS::EvalProb_Logqd()
     {
         double tmpq    = 0;
         // Evaluation in terms of NN
-        PyObject* pPolicyRepoLen = PyObject_CallMethod(pInstancePolicyRepo,"__len__",NULL);
-        int numNNPolicy = PyInt_AsLong(pPolicyRepoLen);
-        for (int _idxNNPolicy=0; _idxNNPolicy<numNNPolicy; _idxNNPolicy++)
+        PyObject* pArgs = PyTuple_New(4);
+        PyTuple_SetItem(pArgs,0, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[0]));
+        PyTuple_SetItem(pArgs,1, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[1]));
+        PyTuple_SetItem(pArgs,2, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[2]));
+        PyTuple_SetItem(pArgs,3, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[3]));
+        PyObject* pResult =  PyObject_CallMethodObjArgs(pInstanceCaffePolicy, PyString_FromString("act"), pArgs, NULL);
+        if (! pResult)
         {
-            PyObject *pIdxNNPolicy = PyInt_FromLong(_idxNNPolicy);
-            auto pIndNNPolicy = PyObject_CallMethodObjArgs(pInstancePolicyRepo,PyString_FromString("__getitem__"), pIdxNNPolicy, NULL);
-
-            PyObject* pArgs = PyTuple_New(4);
-            PyTuple_SetItem(pArgs,0, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[0]));
-            PyTuple_SetItem(pArgs,1, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[1]));
-            PyTuple_SetItem(pArgs,2, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[2]));
-            PyTuple_SetItem(pArgs,3, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[3]));
-            PyObject* pResult =  PyObject_CallMethodObjArgs(pIndNNPolicy, PyString_FromString("act"), pArgs, NULL);
-            if (! pResult)
-            {
-                cout<<"Failing to CALL act method of Caffe Policy"<<endl;
-            }
-            VectorXd __ut;
-            __ut.setZero(u_dim);
-            double u_Policy;
-            if (! PyArg_ParseTuple(pResult, "d", &u_Policy))
-            {
-                cout<<"Failing to PARSE data from act method"<<endl;
-            }
-            __ut<<u_Policy;
-            
-            MatrixXd __Quu_inv;
-            __Quu_inv.setZero(u_dim,u_dim);
-            double Quu_inv_Policy;
-            Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pIndNNPolicy,"var"));
-            __Quu_inv<<Quu_inv_Policy;
-            tmpq += GaussianEvaluator(__ut(0), __Quu_inv(0), cur_GPSSampleLists[idx]->u.col(i)(0));
-            cout<<"NN var"<<Quu_inv_Policy<<endl;
-            Py_DECREF(pIdxNNPolicy);
-            Py_DECREF(pArgs);
-            Py_DECREF(pResult);
-            Py_DECREF(pIndNNPolicy);
+            cout<<"Failing to CALL act method of Caffe Policy"<<endl;
         }
-        Py_DECREF(pPolicyRepoLen);
+        VectorXd __ut;
+        __ut.setZero(u_dim);
+        double u_Policy;
+        if (! PyArg_ParseTuple(pResult, "d", &u_Policy))
+        {
+            cout<<"Failing to PARSE data from act method"<<endl;
+        }
+        __ut<<u_Policy;
+        
+        MatrixXd __Quu_inv;
+        __Quu_inv.setZero(u_dim,u_dim);
+        double Quu_inv_Policy;
+        Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pInstanceCaffePolicy,"var"));
+        __Quu_inv<<Quu_inv_Policy;
+        cout<<"NN var"<<Quu_inv_Policy<<endl;
+        tmpq += GaussianEvaluator(__ut(0), __Quu_inv(0), cur_GPSSampleLists[idx]->u.col(i)(0));
+        Py_DECREF(pArgs);
+        Py_DECREF(pResult);
 
-        tmpq = tmpq/double(numNNPolicy);
         if (i==0)
         {
             Logqd(i) = log(tmpq);
@@ -752,7 +740,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples, int D
                     __Quu_inv.setZero(u_dim,u_dim);
                     __ut = (DDPPolicyBundle[DDPIdx].first)[i](SampleEntry->x.col(i));
                     __Quu_inv = (DDPPolicyBundle[DDPIdx].second)[i];
-                    SampleEntry->u.col(i) = GaussianSampler(__ut, __Quu_inv);
+                    SampleEntry->u.col(i) = __ut; //GaussianSampler(__ut, __Quu_inv);
                     SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
                     SampleEntry->Quu_inv[i] = __Quu_inv;
                 }
@@ -791,7 +779,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
                     __Quu_inv.setZero(u_dim,u_dim);
                     __Quu_inv = (DDPPolicyBundle[idxDDP].second)[i];
 
-                    SampleEntry->u.col(i) = GaussianSampler(__ut, __Quu_inv);
+                    SampleEntry->u.col(i) = __ut; //GaussianSampler(__ut, __Quu_inv);
                     SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
                     SampleEntry->Quu_inv[i] = __Quu_inv;
                 }
