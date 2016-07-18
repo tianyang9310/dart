@@ -740,7 +740,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples, int D
                     __Quu_inv.setZero(u_dim,u_dim);
                     __ut = (DDPPolicyBundle[DDPIdx].first)[i](SampleEntry->x.col(i));
                     __Quu_inv = (DDPPolicyBundle[DDPIdx].second)[i];
-                    SampleEntry->u.col(i) = __ut; //GaussianSampler(__ut, __Quu_inv);
+                    SampleEntry->u.col(i) = GaussianSampler(__ut, __Quu_inv);
                     SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
                     SampleEntry->Quu_inv[i] = __Quu_inv;
                 }
@@ -779,7 +779,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
                     __Quu_inv.setZero(u_dim,u_dim);
                     __Quu_inv = (DDPPolicyBundle[idxDDP].second)[i];
 
-                    SampleEntry->u.col(i) = __ut; //GaussianSampler(__ut, __Quu_inv);
+                    SampleEntry->u.col(i) = GaussianSampler(__ut, __Quu_inv);
                     SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
                     SampleEntry->Quu_inv[i] = __Quu_inv;
                 }

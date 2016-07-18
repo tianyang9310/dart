@@ -17,8 +17,8 @@ class CaffePolicy():
         self.net.blobs[self.net.blobs.keys()[0]].data[:]=x
         u_mean = self.net.forward().values()[0][0]
         # If seed is None, then RandomState will try to read data from /dev/urandom (or the Windows analogue) if available or seed from the clock otherwise 
-        # u = np.random.multivariate_normal(u_mean,self.var)
-        u = u_mean
+        u = np.random.multivariate_normal(u_mean,self.var)
+        # u = u_mean
         u = tuple(u)
         return u
 
