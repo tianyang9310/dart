@@ -2,8 +2,8 @@
 caffe_root = '/opt/caffe/'
 
 import json
+import warnings
 import numpy as np
-from scipy.stats import norm
 from scipy.misc import logsumexp
 import math
 import sys
@@ -130,18 +130,23 @@ class PhiLoss(caffe.Layer):
         # bottom[5] 1*1  wr
 
         loss = 0.0
-        loss_wo = 0.0
         Log_Pi_theta = np.zeros(self.mPhi)
         self.Log_Pi_theta_List = np.zeros((self.batch_size, self.mPhi))
-        self.J_tilt_List = np.zeros(self.batch_size)
-        self.Zt_log = np.zeros(self.batch_size)
+        self.Log_J_tilt_List = np.zeros(self.batch_size)
+        self.Log_Zt_List = np.zeros(self.batch_size)
 
         for t_idx in range(self.batch_size): # t=0~T-2
-            inner_sum = 0.0
-            Zt        = 0.0
+            Log_inner_sum_ind = np.zeros(self.mPhi)
+            Log_Zt_ind        = np.zeros(self.mPhi)
             for m_idx in range(self.mPhi):
                 cur_idx = m_idx*self.batch_size + t_idx
-                Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + np.log(np.finfo(float).eps+norm(bottom[0].data[cur_idx][0], np.linalg.inv(bottom[3].data[0])[0,0]).pdf(bottom[2].data[cur_idx][0]))
+
+                with warnings.catch_warnings():
+                    warnings.filterwarnings('error')
+                    try:
+                        Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + np.log(self.GaussianEvaluator(bottom[0].data[cur_idx][0], np.linalg.inv(bottom[3].data[0])[0,0], bottom[2].data[cur_idx][0]))
+                    except Warning as e:
+                        print 'Probability is approaching 0'
 
                 # h=Log_Pi_theta[m_idx]       # float number
                 # a=bottom[0].data[cur_idx]   # ndarray 1d
@@ -153,27 +158,23 @@ class PhiLoss(caffe.Layer):
                 # g=self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx]) # float number
                 # error = Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0]
 
-                inner_sum = inner_sum + np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0])* self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx])
-                Zt        = Zt + np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0])
+                Log_inner_sum_ind[m_idx] = Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0] + np.log(self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx]))
+                Log_Zt_ind[m_idx]        = Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0]
                 
+            Log_inner_sum = logsumexp(Log_inner_sum_ind)
+            Log_Zt        = logsumexp(Log_Zt_ind)
             self.Log_Pi_theta_List[t_idx] = Log_Pi_theta
-            self.Zt_log[t_idx] = np.log(np.finfo(float).eps + Zt)
+            self.Log_Zt_List[t_idx] = Log_Zt
 
-            if (np.finfo(float).eps+inner_sum)<0:
-                print "inner_sum needs to be set as 0"
-                inner_sum = 0
-
-            # TODO remove regularizer
             # tmpLoss = loss
-            loss = loss + float(1)*np.exp(-np.log(np.finfo(float).eps + Zt)+np.log(np.finfo(float).eps+inner_sum))  + bottom[5].data[0][0]*np.log(np.finfo(float).eps+Zt)
-            loss_wo = loss_wo +float(1)*np.exp(-np.log(np.finfo(float).eps + Zt)+np.log(np.finfo(float).eps+inner_sum))
+            loss = loss + np.exp(-Log_Zt+Log_inner_sum)  + bottom[5].data[0][0]*Log_Zt
             # if tmpLoss>loss:
             #     raise Exception('Loss is not increasing')
 
-            self.J_tilt_List[t_idx] = float(1)*np.exp(-np.log(np.finfo(float).eps + Zt)+np.log(np.finfo(float).eps+inner_sum))
+            self.Log_J_tilt_List[t_idx] = -Log_Zt+Log_inner_sum
 
+        loss_wo = np.exp(logsumexp(self.Log_J_tilt_List))
         # loss is minimized in optimization stage. Therefore the objective should be negative of above function
-        # because it is cost, which needs to be minimized
         loss_wo = -loss_wo
         loss    = -loss
 
@@ -192,30 +193,26 @@ class PhiLoss(caffe.Layer):
             for m_idx in range(self.mPhi):
                 cur_idx = m_idx*self.batch_size + t_idx
                 gradient = (bottom[2].data[cur_idx] - bottom[0].data[cur_idx]).dot(bottom[3].data[0])
-                inner_sum_t_p = 0.0
+                inner_sum_t_p_ind = np.zeros(self.batch_size-t_idx)
                 for t_p_idx in range(t_idx, self.batch_size):
-                    # cur_p_idx = np.arange(self.mPhi)*self.batch_size + t_p_idx
-                    # compute zt_p_log  xi_t_p
-
                     # zt_p_log = logsumexp(self.Log_Pi_theta_List[t_p_idx]-np.reshape(bottom[4].data[cur_p_idx],self.mPhi))
-                    J_tilt = self.J_tilt_List[t_p_idx]
+                    Log_J_tilt = self.Log_J_tilt_List[t_p_idx]
 
-                    # TODO remove regularizer
-                    xi_t_p = self.StepCost(bottom[1].data[m_idx*self.batch_size+t_p_idx], bottom[2].data[m_idx*self.batch_size+t_p_idx]) - J_tilt  + bottom[5].data[0][0]
+                    xi_t_p = self.StepCost(bottom[1].data[m_idx*self.batch_size+t_p_idx], bottom[2].data[m_idx*self.batch_size+t_p_idx]) - np.exp(Log_J_tilt)  + bottom[5].data[0][0]
 
-                    # a= self.Log_Pi_theta_List[t_p_idx,m_idx]
-                    # b= bottom[4].data[m_idx*self.batch_size+t_p_idx]
-                    # c= self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx]
-
-                    inner_sum_t_p = inner_sum_t_p + float(1)*np.exp(-self.Zt_log[t_p_idx] +self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx])*xi_t_p
-                    # inner_sum_t_p = inner_sum_t_p + float(1)*np.exp(-zt_p_log +self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx])*xi_t_p
+                    inner_sum_t_p_ind[t_p_idx-t_idx]=np.exp(-self.Log_Zt_List[t_p_idx]+self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx])* xi_t_p
+                inner_sum_t_p = np.sum(inner_sum_t_p_ind)
                 gradient = gradient * inner_sum_t_p
 
                 # loss is minimized in optimization stage. Therefore the objective should be negative of above function
-                # because it is cost, which needs to be minimized
                 gradient = -gradient
 
                 bottom[0].diff[cur_idx] = gradient 
+        bottom[1].diff[...] = 0
+        bottom[2].diff[...] = 0
+        bottom[3].diff[...] = 0
+        bottom[4].diff[...] = 0
+        bottom[5].diff[...] = 0
 
     def StepCost(self,_x,_u):
         '''
@@ -233,4 +230,11 @@ class PhiLoss(caffe.Layer):
         # Qf(1,1)				= 500
         Q = Q*0.02
         R = R*0.02
-        return 5-(0.5*(_x-xd).dot(Q.dot(_x-xd)) + 0.5*_u.dot(R.dot(_u)))[0]
+        return 10.0/((0.5*(_x-xd).dot(Q.dot(_x-xd)) + 0.5*_u.dot(R.dot(_u)))[0])
+
+    def GaussianEvaluator(self, mean, covariance, testX):
+        probability = 0.0
+        probability = 1.0/np.sqrt(2*np.pi*covariance)*np.exp(-0.5*((mean-testX)**2)/covariance)
+        if probability < np.finfo(np.double).tiny:  
+            probability = np.finfo(np.double).tiny  
+        return probability

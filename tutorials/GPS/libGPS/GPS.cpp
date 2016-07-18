@@ -277,10 +277,10 @@ void GPS::writeSubSampleSets2file()
     write4numpy_X(cur_GPSSampleLists, "SampleSets_X");
     write4numpy_U(cur_GPSSampleLists, "SampleSets_U");
     write4numpy_Quu_inv(cur_GPSSampleLists, "SampleSets_Quu_inv");
-    EvalProb_Logqd();
-    cout<<"Logq debugging"<<endl;
-    cin.get();
+    EvalProb_Logq();
     write4numpy_Logq(cur_GPSSampleLists, "SampleSets_Logq");
+    cout<<"output all data for finetuning...";
+    cin.get();
 }
 
 void GPS::EvalProb_Logqd()
