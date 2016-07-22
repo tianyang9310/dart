@@ -124,7 +124,7 @@ class PolicyOptCaffe():
         
             # To get the training loss:
             train_loss = self.solver.net.blobs[blob_names[-1]].data
-            print train_loss
+            # print train_loss
         
         self.policycopyfromsolver()
         self.solver2copyfromsolver()

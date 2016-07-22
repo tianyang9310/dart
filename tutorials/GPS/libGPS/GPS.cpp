@@ -6,13 +6,13 @@ void printDict(PyObject* obj);
 void GaussianSamplerDebug();
 void GaussianEvaluatorDebug();
 
-GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics):
+GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, valarray<int> _numSamplesPerPolicy, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics):
     T(_T),
     x_dim(_x_dim),
     u_dim(_u_dim),
     numDDPIters(_numDDPIters),
     conditions(_conditions),
-    numSamplesPerCond(_numSamplesPerCond),
+    numSamplesPerPolicy(_numSamplesPerPolicy),
     StepDynamics(_StepDynamics),
     x0Bundle(_conditions),
     DDPBundle(_conditions),
@@ -20,7 +20,7 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int 
 {
     DDPIter     = 0;
     // m is a misc variable and mPhi is a unique meaningful variable
-    mPhi        = (conditions+1)*numSamplesPerCond;
+    mPhi        = numSamplesPerPolicy.sum();
     GPS_iterations = 1;
     previous_lossvalue_wo = 0;
     current_lossvalue_wo = 0;
@@ -68,7 +68,7 @@ void GPS::InitPolicyOptCaffe()
     PyTuple_SetItem(pArgs,0, PyInt_FromLong(x_dim));
     PyTuple_SetItem(pArgs,1, PyInt_FromLong(u_dim));
     PyTuple_SetItem(pArgs,2, PyInt_FromLong(T-1));
-    int m = numSamplesPerCond * conditions;
+    int m = numSamplesPerPolicy.sum() - numSamplesPerPolicy[0];
     PyTuple_SetItem(pArgs,3, PyInt_FromLong(m));
     PyTuple_SetItem(pArgs,4, PyInt_FromLong(mPhi));
     pInstancePolicyOptCaffe = PyInstance_New(pClassPolicyOptCaffe,pArgs,NULL);
@@ -234,7 +234,7 @@ void GPS::InitDDPPolicy()
 
 void GPS::InitNNPolicy()
 {
-    int m = numSamplesPerCond * conditions;
+    int m = numSamplesPerPolicy.sum() - numSamplesPerPolicy[0];
 
 //  generate traj samples from mixture of DDP policies
 //  Linear combination of mutually independent normal random vectors
@@ -263,12 +263,10 @@ void GPS::InitNNPolicy()
 
 void GPS::BuildInitSamples()
 {
-    // here no casting because mPhi is designed to be dividible
-    int m = mPhi/(conditions+1);
-    GPSSampleLists = trajSampleGeneratorFromNN(m);
+    GPSSampleLists = trajSampleGeneratorFromNN(numSamplesPerPolicy[0]);
     for (int _cond=0; _cond<conditions; _cond++)
     {
-        auto tmpSampleLists = trajSampleGeneratorFromDDP(m, _cond);
+        auto tmpSampleLists = trajSampleGeneratorFromDDP(numSamplesPerPolicy[_cond + 1], _cond);
         GPSSampleLists.insert(GPSSampleLists.end(), tmpSampleLists.begin(), tmpSampleLists.end());
     }
 }
@@ -286,10 +284,8 @@ void GPS::writeSubSampleSets2file()
 void GPS::EvalProb_Logqd()
 {
 //  cur_GPSSampleLists
-//  first numSamplesPerCond(10) samples are NN policy
-//  next numSamplesPerCond(10) are condition 1; next numSamplesPerCond(10) are condition2; ...
     
-    int idx=16;
+    int idx=5;
     cout<<cur_GPSSampleLists[idx]->x.transpose()<<endl;
 
 //  eval condition 1 traj samples w.r.t. condition 1 DDP
@@ -318,7 +314,7 @@ void GPS::EvalProb_Logqd()
         // Evaluation in terms of DDPs
         for (int _cond=0; _cond<conditions; _cond++)
         {
-            tmpq += GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](cur_GPSSampleLists[idx]->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), cur_GPSSampleLists[idx]->u.col(i)(0));
+            tmpq += numSamplesPerPolicy[_cond+1]*GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](cur_GPSSampleLists[idx]->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), cur_GPSSampleLists[idx]->u.col(i)(0));
         }
 
         // Evaluation in terms of NN
@@ -353,7 +349,7 @@ void GPS::EvalProb_Logqd()
             double Quu_inv_Policy;
             Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pIndNNPolicy,"var"));
             __Quu_inv<<Quu_inv_Policy;
-            tmpq += GaussianEvaluator(__ut(0), __Quu_inv(0), cur_GPSSampleLists[idx]->u.col(i)(0));
+            tmpq += numSamplesPerPolicy[0]*GaussianEvaluator(__ut(0), __Quu_inv(0), cur_GPSSampleLists[idx]->u.col(i)(0));
             cout<<"NN var"<<Quu_inv_Policy<<endl;
             Py_DECREF(pIdxNNPolicy);
             Py_DECREF(pArgs);
@@ -362,7 +358,7 @@ void GPS::EvalProb_Logqd()
         }
         Py_DECREF(pPolicyRepoLen);
 
-        tmpq = tmpq/double(conditions+numNNPolicy);
+        tmpq = tmpq/double(numSamplesPerPolicy.sum());
         if (i==0)
         {
             Logqd(i) = log(tmpq);
@@ -437,7 +433,7 @@ void GPS::EvalProb_Logq()
                     // Evaluation in terms of DDPs
                     for (int _cond=0; _cond<conditions; _cond++)
                     {
-                        tmpq += GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](SampleEntry->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), SampleEntry->u.col(i)(0));
+                        tmpq += numSamplesPerPolicy[_cond+1]*GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](SampleEntry->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), SampleEntry->u.col(i)(0));
                     }
 
                     // Evaluation in terms of NN
@@ -472,7 +468,7 @@ void GPS::EvalProb_Logq()
                         double Quu_inv_Policy;
                         Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pIndNNPolicy,"var"));
                         __Quu_inv<<Quu_inv_Policy;
-                        tmpq += GaussianEvaluator(__ut(0), __Quu_inv(0), SampleEntry->u.col(i)(0));
+                        tmpq += numSamplesPerPolicy[0]*GaussianEvaluator(__ut(0), __Quu_inv(0), SampleEntry->u.col(i)(0));
                         Py_DECREF(pIdxNNPolicy);
                         Py_DECREF(pArgs);
                         Py_DECREF(pResult);
@@ -480,7 +476,7 @@ void GPS::EvalProb_Logq()
                     }
                     Py_DECREF(pPolicyRepoLen);
 
-                    tmpq = tmpq/double(conditions+numNNPolicy);
+                    tmpq = tmpq/double(numSamplesPerPolicy.sum());
                     if (i==0)
                     {
                         SampleEntry->Logq(i) = log(tmpq);
@@ -564,6 +560,8 @@ void GPS::restoretheta()
 
 void GPS::ChooseSubSets()
 {
+//  In order to debug, don't shuffle GPS sample lists
+
 //    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     cur_GPSSampleLists = GPSSampleLists;
 //    shuffle(cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), default_random_engine(seed)); 
@@ -573,7 +571,7 @@ void GPS::ChooseSubSets()
 
 void GPS::appendSamplesFromThetaK()
 {
-    auto tmpSampleListsFromThetaK = trajSampleGeneratorFromNN_ThetaK(numSamplesPerCond);
+    auto tmpSampleListsFromThetaK = trajSampleGeneratorFromNN_ThetaK(numSamplesPerPolicy[0]);
 // append samples from ThetaK to Sk
     cur_GPSSampleLists.insert(cur_GPSSampleLists.end(),tmpSampleListsFromThetaK.begin(),tmpSampleListsFromThetaK.end());
 // append samples from ThetaK to S

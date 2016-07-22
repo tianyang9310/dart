@@ -8,6 +8,7 @@
 #include <functional>
 #include <random>
 #include <chrono>
+#include <valarray>
 #include <Python.h>
 #include <string>
 #include <math.h>
@@ -28,7 +29,7 @@ class GPS
 public:
 // --------------------
 //  member function
-	GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _numSamplesPerCond, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics);
+	GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, valarray<int> _numSamplesPerPolicy, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics);
     virtual ~GPS();
 	void run();
     void rund();
@@ -56,7 +57,7 @@ public:
 	int numDDPIters;
 	int DDPIter;
 	int conditions;
-	int numSamplesPerCond;
+	valarray<int> numSamplesPerPolicy;
     int mPhi;
     int GPS_iterations;
     double previous_lossvalue_wo;

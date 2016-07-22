@@ -27,10 +27,10 @@ void MyWindow::timeStepping()
             mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(mGPS->x0Bundle[idxDDP](3));
         }
         int mSimFrameCount = mWorld->getSimFrames();
-        mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(mGPS->GPSSampleLists[1]->x.col(mSimFrameCount)(0));
-        mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(mGPS->GPSSampleLists[1]->x.col(mSimFrameCount)(1));
-        mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(mGPS->GPSSampleLists[1]->x.col(mSimFrameCount)(2));
-        mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(mGPS->GPSSampleLists[1]->x.col(mSimFrameCount)(3));
+        mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(mGPS->cur_GPSSampleLists[30]->x.col(mSimFrameCount)(0));
+        mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(mGPS->cur_GPSSampleLists[30]->x.col(mSimFrameCount)(1));
+        mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(mGPS->cur_GPSSampleLists[30]->x.col(mSimFrameCount)(2));
+        mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(mGPS->cur_GPSSampleLists[30]->x.col(mSimFrameCount)(3));
         // mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(mGPS->DDPBundle[idxDDP]->u.col(mSimFrameCount)[0]);
     }
     else
