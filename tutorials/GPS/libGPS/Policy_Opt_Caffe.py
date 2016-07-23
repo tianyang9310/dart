@@ -65,10 +65,10 @@ class PolicyOptCaffe():
     def init_solver2(self):
         solver_param2 = SolverParameter()
         solver_param2.display = 0  # Don't display anything.
-        solver_param2.base_lr = 0.001
+        solver_param2.base_lr = 1e-6
         solver_param2.lr_policy = 'fixed'
-        solver_param2.momentum = 0.9
-        solver_param2.weight_decay = 0.005
+        solver_param2.momentum = 0.95
+        solver_param2.weight_decay = 0.001
         solver_param2.type = 'SGD'
         solver_param2.random_seed = 1
          

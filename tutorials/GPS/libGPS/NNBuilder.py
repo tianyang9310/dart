@@ -132,11 +132,11 @@ class PhiLoss(caffe.Layer):
         loss = 0.0
         Log_Pi_theta = np.zeros(self.mPhi)
         self.Log_Pi_theta_List = np.zeros((self.batch_size, self.mPhi))
-        self.Log_J_tilt_List = np.zeros(self.batch_size)
+        self.J_tilt_List = np.zeros(self.batch_size)
         self.Log_Zt_List = np.zeros(self.batch_size)
 
         for t_idx in range(self.batch_size): # t=0~T-2
-            Log_inner_sum_ind = np.zeros(self.mPhi)
+            inner_sum_ind = np.zeros(self.mPhi)
             Log_Zt_ind        = np.zeros(self.mPhi)
             for m_idx in range(self.mPhi):
                 cur_idx = m_idx*self.batch_size + t_idx
@@ -144,6 +144,12 @@ class PhiLoss(caffe.Layer):
                 with warnings.catch_warnings():
                     warnings.filterwarnings('error')
                     try:
+                        # debugging
+                        # print bottom[0].data[cur_idx][0]
+                        # print np.linalg.inv(bottom[3].data[0])[0,0]
+                        # print bottom[2].data[cur_idx][0]
+                        # print self.GaussianEvaluator(bottom[0].data[cur_idx][0], np.linalg.inv(bottom[3].data[0])[0,0], bottom[2].data[cur_idx][0])
+
                         Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + np.log(self.GaussianEvaluator(bottom[0].data[cur_idx][0], np.linalg.inv(bottom[3].data[0])[0,0], bottom[2].data[cur_idx][0]))
                     except Warning as e:
                         print 'Probability is approaching 0'
@@ -158,22 +164,32 @@ class PhiLoss(caffe.Layer):
                 # g=self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx]) # float number
                 # error = Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0]
 
-                Log_inner_sum_ind[m_idx] = Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0] + np.log(self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx]))
+                # debugging
+                # print bottom[1].data[cur_idx]
+                # print bottom[2].data[cur_idx]
+                # print self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx])
+
+                inner_sum_ind[m_idx] = np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0]) * self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx])
                 Log_Zt_ind[m_idx]        = Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0]
                 
-            Log_inner_sum = logsumexp(Log_inner_sum_ind)
+            inner_sum = np.sum(inner_sum_ind)
             Log_Zt        = logsumexp(Log_Zt_ind)
+
+            # debugging
+            # print np.exp(Log_Zt)
+            # print '                         ',inner_sum
+
             self.Log_Pi_theta_List[t_idx] = Log_Pi_theta
             self.Log_Zt_List[t_idx] = Log_Zt
 
             # tmpLoss = loss
-            loss = loss + np.exp(-Log_Zt+Log_inner_sum)  + bottom[5].data[0][0]*Log_Zt
+            loss = loss + np.exp(-Log_Zt)*inner_sum  + bottom[5].data[0][0]*Log_Zt
             # if tmpLoss>loss:
             #     raise Exception('Loss is not increasing')
 
-            self.Log_J_tilt_List[t_idx] = -Log_Zt+Log_inner_sum
+            self.J_tilt_List[t_idx] = np.exp(-Log_Zt)*inner_sum
 
-        loss_wo = np.exp(logsumexp(self.Log_J_tilt_List))
+        loss_wo = np.sum(self.J_tilt_List)
         # loss is minimized in optimization stage. Therefore the objective should be negative of above function
         loss_wo = -loss_wo
         loss    = -loss
@@ -189,6 +205,7 @@ class PhiLoss(caffe.Layer):
         # bottom[4] mPhi*batch_size*1  Logq
         # bottom[5] 1*1  wr
 
+        bottom[0].diff[...] = 0
         for t_idx in range(self.batch_size):
             for m_idx in range(self.mPhi):
                 cur_idx = m_idx*self.batch_size + t_idx
@@ -196,9 +213,9 @@ class PhiLoss(caffe.Layer):
                 inner_sum_t_p_ind = np.zeros(self.batch_size-t_idx)
                 for t_p_idx in range(t_idx, self.batch_size):
                     # zt_p_log = logsumexp(self.Log_Pi_theta_List[t_p_idx]-np.reshape(bottom[4].data[cur_p_idx],self.mPhi))
-                    Log_J_tilt = self.Log_J_tilt_List[t_p_idx]
+                    J_tilt = self.J_tilt_List[t_p_idx]
 
-                    xi_t_p = self.StepCost(bottom[1].data[m_idx*self.batch_size+t_p_idx], bottom[2].data[m_idx*self.batch_size+t_p_idx]) - np.exp(Log_J_tilt)  + bottom[5].data[0][0]
+                    xi_t_p = self.StepCost(bottom[1].data[m_idx*self.batch_size+t_p_idx], bottom[2].data[m_idx*self.batch_size+t_p_idx]) - J_tilt  + bottom[5].data[0][0]
 
                     inner_sum_t_p_ind[t_p_idx-t_idx]=np.exp(-self.Log_Zt_List[t_p_idx]+self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx])* xi_t_p
                 inner_sum_t_p = np.sum(inner_sum_t_p_ind)
@@ -208,6 +225,10 @@ class PhiLoss(caffe.Layer):
                 gradient = -gradient
 
                 bottom[0].diff[cur_idx] = gradient 
+
+        # debugging
+        b = bottom[0].diff
+
         bottom[1].diff[...] = 0
         bottom[2].diff[...] = 0
         bottom[3].diff[...] = 0
@@ -221,16 +242,16 @@ class PhiLoss(caffe.Layer):
         return: float number (not a ndarray)
         '''
         xd = np.array([0, math.pi, 0, 0])
-        Q  = np.array([[0.01,0,0,0],
-                       [0   ,5,0,0],
+        Q  = np.array([[0.001,0,0,0],
+                       [0   ,1,0,0],
                        [0   ,0,0,0],
                        [0   ,0,0,0]])
         R  = np.array([1])
         # Matrix4d Qf = Matrix4d::Identity()
         # Qf(1,1)				= 500
-        Q = Q*0.02
-        R = R*0.02
-        return 10.0/((0.5*(_x-xd).dot(Q.dot(_x-xd)) + 0.5*_u.dot(R.dot(_u)))[0])
+        Q = Q
+        R = R*0.001
+        return -((0.5*(_x-xd).dot(Q.dot(_x-xd)) + 0.5*_u.dot(R.dot(_u)))[0])
 
     def GaussianEvaluator(self, mean, covariance, testX):
         probability = 0.0
