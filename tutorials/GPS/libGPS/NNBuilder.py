@@ -130,40 +130,32 @@ class PhiLoss(caffe.Layer):
         # bottom[5] 1*1  wr
 
         loss = 0.0
-        Log_Pi_theta = np.zeros(self.mPhi)
+        loss_wo = 0.0
         self.Log_Pi_theta_List = np.zeros((self.batch_size, self.mPhi))
         self.J_tilt_List = np.zeros(self.batch_size)
         self.Log_Zt_List = np.zeros(self.batch_size)
 
-        for t_idx in range(self.batch_size): # t=0~T-2
-            cur_idx = np.arange(self.mPhi)*self.batch_size + t_idx
+        cur_idx = np.arange(self.mPhi)*self.batch_size + np.arange(self.batch_size).reshape((self.batch_size,1))
 
-            with warnings.catch_warnings():
-                warnings.filterwarnings('error')
-                try:
-                    Log_Pi_theta = Log_Pi_theta + np.reshape(np.log(self.GaussianEvaluator_m_batch(bottom[0].data[cur_idx], np.linalg.inv(bottom[3].data[0])[0,0], bottom[2].data[cur_idx])),self.mPhi)
-                except Warning as e:
-                    print 'Probability is approaching 0'
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            try:
+                self.Log_Pi_theta_List = self.Log_Pi_theta_List + np.reshape(np.log(self.GaussianEvaluator_m_batch(bottom[0].data[cur_idx], np.linalg.inv(bottom[3].data[0])[0,0], bottom[2].data[cur_idx])),(self.batch_size,self.mPhi))
+            except Warning as e:
+                print 'Probability is approaching 0'
 
-            inner_sum_ind = np.exp(Log_Pi_theta - bottom[4].data[cur_idx].reshape(self.mPhi)) *self.StepCost_m_batch(bottom[1].data[cur_idx], bottom[2].data[cur_idx])
-            Log_Zt_ind = Log_Pi_theta - bottom[4].data[cur_idx].reshape(self.mPhi)
+        self.Log_Pi_theta_List = np.cumsum(self.Log_Pi_theta_List,axis=0)
 
-            inner_sum = np.sum(inner_sum_ind)
-            Log_Zt        = logsumexp(Log_Zt_ind)
+        inner_sum_ind = np.exp(self.Log_Pi_theta_List - bottom[4].data[cur_idx].reshape(self.batch_size,self.mPhi)) *self.StepCost_t_batch(bottom[1].data[cur_idx], bottom[2].data[cur_idx])
+        Log_Zt_ind = self.Log_Pi_theta_List - bottom[4].data[cur_idx].reshape(self.batch_size,self.mPhi)
 
-            # debugging
-            # print np.exp(Log_Zt)
-            # print '                         ',inner_sum
+        inner_sum =np.sum(inner_sum_ind,axis=1)
+        self.Log_Zt_List = logsumexp(Log_Zt_ind,axis=1)
 
-            self.Log_Pi_theta_List[t_idx] = Log_Pi_theta
-            self.Log_Zt_List[t_idx] = Log_Zt
+        loss_ind = np.multiply(np.exp(-self.Log_Zt_List),inner_sum) + bottom[5].data[0][0]*self.Log_Zt_List
+        loss = np.sum(loss_ind)
 
-            # tmpLoss = loss
-            loss = loss + np.exp(-Log_Zt)*inner_sum  + bottom[5].data[0][0]*Log_Zt
-            # if tmpLoss>loss:
-            #     raise Exception('Loss is not increasing')
-
-            self.J_tilt_List[t_idx] = np.exp(-Log_Zt)*inner_sum
+        self.J_tilt_List = np.multiply(np.exp(-self.Log_Zt_List),inner_sum)
 
         loss_wo = np.sum(self.J_tilt_List)
         # loss is minimized in optimization stage. Therefore the objective should be negative of above function
@@ -247,6 +239,27 @@ class PhiLoss(caffe.Layer):
         R = R*0.001
         return -(0.5*np.diag((_x-xd).dot(Q.dot((_x-xd).T))) + 0.5*np.diag(_u.dot(R.dot(_u.T))))
 
+    def StepCost_t_batch(self,_x,_u):
+        '''
+        _x: dim_intput ndarray
+        _u: dim_output ndarray
+        return: float number (not a ndarray)
+        '''
+        xd = np.array([0, math.pi, 0, 0])
+        Q  = np.array([[0.001,0,0,0],
+                       [0   ,1,0,0],
+                       [0   ,0,0,0],
+                       [0   ,0,0,0]])
+        R  = np.array([[1]])
+        # Matrix4d Qf = Matrix4d::Identity()
+        # Qf(1,1)				= 500
+        Q = Q
+        R = R*0.001
+
+        delta_X = (_x-xd).reshape(self.batch_size*self.mPhi,4)
+        delta_U = _u.reshape(self.batch_size*self.mPhi,1)
+        return -(0.5*np.reshape(np.diag(delta_X.dot(Q.dot(delta_X.T))),(self.batch_size,self.mPhi)) + 0.5*np.reshape(np.diag(delta_U.dot(R.dot(delta_U.T))), (self.batch_size,self.mPhi)))
+
     def GaussianEvaluator(self, mean, covariance, testX):
         probability = 0.0
         probability = 1.0/np.sqrt(2*np.pi*covariance)*np.exp(-0.5*((mean-testX)**2)/covariance)
@@ -258,5 +271,4 @@ class PhiLoss(caffe.Layer):
         probability = np.zeros(len(mean))
         probability = 1.0/np.sqrt(2*np.pi*covariance)*np.exp(-0.5*((mean-testX)**2)/covariance)
         probability = np.maximum(probability, np.finfo(np.double).tiny)
-        print probability
         return probability
