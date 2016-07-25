@@ -136,42 +136,18 @@ class PhiLoss(caffe.Layer):
         self.Log_Zt_List = np.zeros(self.batch_size)
 
         for t_idx in range(self.batch_size): # t=0~T-2
-            inner_sum_ind = np.zeros(self.mPhi)
-            Log_Zt_ind        = np.zeros(self.mPhi)
-            for m_idx in range(self.mPhi):
-                cur_idx = m_idx*self.batch_size + t_idx
+            cur_idx = np.arange(self.mPhi)*self.batch_size + t_idx
 
-                with warnings.catch_warnings():
-                    warnings.filterwarnings('error')
-                    try:
-                        # debugging
-                        # print bottom[0].data[cur_idx][0]
-                        # print np.linalg.inv(bottom[3].data[0])[0,0]
-                        # print bottom[2].data[cur_idx][0]
-                        # print self.GaussianEvaluator(bottom[0].data[cur_idx][0], np.linalg.inv(bottom[3].data[0])[0,0], bottom[2].data[cur_idx][0])
+            with warnings.catch_warnings():
+                warnings.filterwarnings('error')
+                try:
+                    Log_Pi_theta = Log_Pi_theta + np.reshape(np.log(self.GaussianEvaluator_m_batch(bottom[0].data[cur_idx], np.linalg.inv(bottom[3].data[0])[0,0], bottom[2].data[cur_idx])),self.mPhi)
+                except Warning as e:
+                    print 'Probability is approaching 0'
 
-                        Log_Pi_theta[m_idx] = Log_Pi_theta[m_idx] + np.log(self.GaussianEvaluator(bottom[0].data[cur_idx][0], np.linalg.inv(bottom[3].data[0])[0,0], bottom[2].data[cur_idx][0]))
-                    except Warning as e:
-                        print 'Probability is approaching 0'
+            inner_sum_ind = np.exp(Log_Pi_theta - bottom[4].data[cur_idx].reshape(self.mPhi)) *self.StepCost_m_batch(bottom[1].data[cur_idx], bottom[2].data[cur_idx])
+            Log_Zt_ind = Log_Pi_theta - bottom[4].data[cur_idx].reshape(self.mPhi)
 
-                # h=Log_Pi_theta[m_idx]       # float number
-                # a=bottom[0].data[cur_idx]   # ndarray 1d
-                # b=bottom[1].data[cur_idx]   # ndarray 1d
-                # c=bottom[2].data[cur_idx]   # ndarray 1d
-                # d=bottom[3].data[cur_idx]   # ndarray 2d
-                # e=bottom[4].data[cur_idx]   # ndarray 1d
-                # f=bottom[5].data[0]   # ndarray 1d
-                # g=self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx]) # float number
-                # error = Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0]
-
-                # debugging
-                # print bottom[1].data[cur_idx]
-                # print bottom[2].data[cur_idx]
-                # print self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx])
-
-                inner_sum_ind[m_idx] = np.exp(Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0]) * self.StepCost(bottom[1].data[cur_idx], bottom[2].data[cur_idx])
-                Log_Zt_ind[m_idx]        = Log_Pi_theta[m_idx] - bottom[4].data[cur_idx][0]
-                
             inner_sum = np.sum(inner_sum_ind)
             Log_Zt        = logsumexp(Log_Zt_ind)
 
@@ -253,9 +229,34 @@ class PhiLoss(caffe.Layer):
         R = R*0.001
         return -((0.5*(_x-xd).dot(Q.dot(_x-xd)) + 0.5*_u.dot(R.dot(_u)))[0])
 
+    def StepCost_m_batch(self,_x,_u):
+        '''
+        _x: dim_intput ndarray
+        _u: dim_output ndarray
+        return: float number (not a ndarray)
+        '''
+        xd = np.array([0, math.pi, 0, 0])
+        Q  = np.array([[0.001,0,0,0],
+                       [0   ,1,0,0],
+                       [0   ,0,0,0],
+                       [0   ,0,0,0]])
+        R  = np.array([[1]])
+        # Matrix4d Qf = Matrix4d::Identity()
+        # Qf(1,1)				= 500
+        Q = Q
+        R = R*0.001
+        return -(0.5*np.diag((_x-xd).dot(Q.dot((_x-xd).T))) + 0.5*np.diag(_u.dot(R.dot(_u.T))))
+
     def GaussianEvaluator(self, mean, covariance, testX):
         probability = 0.0
         probability = 1.0/np.sqrt(2*np.pi*covariance)*np.exp(-0.5*((mean-testX)**2)/covariance)
         if probability < np.finfo(np.double).tiny:  
             probability = np.finfo(np.double).tiny  
+        return probability
+
+    def GaussianEvaluator_m_batch(self, mean, covariance, testX):
+        probability = np.zeros(len(mean))
+        probability = 1.0/np.sqrt(2*np.pi*covariance)*np.exp(-0.5*((mean-testX)**2)/covariance)
+        probability = np.maximum(probability, np.finfo(np.double).tiny)
+        print probability
         return probability
