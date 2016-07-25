@@ -173,19 +173,24 @@ class PhiLoss(caffe.Layer):
         # bottom[4] mPhi*batch_size*1  Logq
         # bottom[5] 1*1  wr
 
-        bottom[0].diff[...] = 0
+        bottom[0].diff[...] = 0 # propagate_down[0] True 4950,1
+        bottom[1].diff[...] = 0 # propagate_down[1] False
+        bottom[2].diff[...] = 0 # propagate_down[2] False
+        bottom[3].diff[...] = 0 # propagate_down[3] False
+        bottom[4].diff[...] = 0 # propagate_down[4] False
+        bottom[5].diff[...] = 0 # propagate_down[5] False
         for t_idx in range(self.batch_size):
             for m_idx in range(self.mPhi):
                 cur_idx = m_idx*self.batch_size + t_idx
                 gradient = (bottom[2].data[cur_idx] - bottom[0].data[cur_idx]).dot(bottom[3].data[0])
                 inner_sum_t_p_ind = np.zeros(self.batch_size-t_idx)
-                for t_p_idx in range(t_idx, self.batch_size):
-                    # zt_p_log = logsumexp(self.Log_Pi_theta_List[t_p_idx]-np.reshape(bottom[4].data[cur_p_idx],self.mPhi))
-                    J_tilt = self.J_tilt_List[t_p_idx]
 
-                    xi_t_p = self.StepCost(bottom[1].data[m_idx*self.batch_size+t_p_idx], bottom[2].data[m_idx*self.batch_size+t_p_idx]) - J_tilt  + bottom[5].data[0][0]
+                t_p_idx = np.arange(t_idx,self.batch_size)
+                J_tilt = self.J_tilt_List[t_p_idx]
+                cur_idx_t_p = m_idx*self.batch_size + t_p_idx
+                xi_t_p = self.StepCost_t_batch(bottom[1].data[cur_idx_t_p], bottom[2].data[cur_idx_t_p]) - J_tilt  + bottom[5].data[0][0]
+                inner_sum_t_p_ind = np.multiply(np.exp(-self.Log_Zt_List[t_p_idx]+self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[cur_idx_t_p].reshape(self.batch_size-t_idx)),xi_t_p)
 
-                    inner_sum_t_p_ind[t_p_idx-t_idx]=np.exp(-self.Log_Zt_List[t_p_idx]+self.Log_Pi_theta_List[t_p_idx,m_idx]-bottom[4].data[m_idx*self.batch_size+t_p_idx])* xi_t_p
                 inner_sum_t_p = np.sum(inner_sum_t_p_ind)
                 gradient = gradient * inner_sum_t_p
 
@@ -193,15 +198,6 @@ class PhiLoss(caffe.Layer):
                 gradient = -gradient
 
                 bottom[0].diff[cur_idx] = gradient 
-
-        # debugging
-        b = bottom[0].diff
-
-        bottom[1].diff[...] = 0
-        bottom[2].diff[...] = 0
-        bottom[3].diff[...] = 0
-        bottom[4].diff[...] = 0
-        bottom[5].diff[...] = 0
 
     def StepCost(self,_x,_u):
         '''
@@ -256,9 +252,18 @@ class PhiLoss(caffe.Layer):
         Q = Q
         R = R*0.001
 
-        delta_X = (_x-xd).reshape(self.batch_size*self.mPhi,4)
-        delta_U = _u.reshape(self.batch_size*self.mPhi,1)
-        return -(0.5*np.reshape(np.diag(delta_X.dot(Q.dot(delta_X.T))),(self.batch_size,self.mPhi)) + 0.5*np.reshape(np.diag(delta_U.dot(R.dot(delta_U.T))), (self.batch_size,self.mPhi)))
+        if len(_x.shape) == 3:
+            delta_X = (_x-xd).reshape(self.batch_size*self.mPhi,4)
+            delta_U = _u.reshape(self.batch_size*self.mPhi,1)
+            return -(0.5*np.reshape(np.diag(delta_X.dot(Q.dot(delta_X.T))),(self.batch_size,self.mPhi)) + 0.5*np.reshape(np.diag(delta_U.dot(R.dot(delta_U.T))), (self.batch_size,self.mPhi)))
+        elif len(_x.shape) == 2:
+            clamped_batch_size = _u.shape[0]
+            delta_X = (_x-xd).reshape(clamped_batch_size,4)
+            delta_U = _u.reshape(clamped_batch_size,1)
+            return -(0.5*np.reshape(np.diag(delta_X.dot(Q.dot(delta_X.T))),(clamped_batch_size)) + 0.5*np.reshape(np.diag(delta_U.dot(R.dot(delta_U.T))), (clamped_batch_size)))
+        else:
+            print "unknown size of _x"
+
 
     def GaussianEvaluator(self, mean, covariance, testX):
         probability = 0.0
