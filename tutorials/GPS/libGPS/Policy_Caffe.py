@@ -22,3 +22,9 @@ class CaffePolicy():
         u = tuple(u)
         return u
 
+    def printFoo(self):
+        print "~~~~~~~~~~~~~~~~~~~~~ Policy Net Parameters ~~~~~~~~~~~~~~~~~~~~~"
+        params_names = self.net.params.keys()
+        print params_names
+        print self.net.params[params_names[0]][0].data[0:1,:]
+

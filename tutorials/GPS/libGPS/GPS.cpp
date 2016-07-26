@@ -21,7 +21,7 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, vala
     DDPIter     = 0;
     // m is a misc variable and mPhi is a unique meaningful variable
     mPhi        = numSamplesPerPolicy.sum();
-    GPS_iterations = 2;
+    GPS_iterations = 5;
     previous_lossvalue_wo = 0;
     current_lossvalue_wo = 0;
 
@@ -624,12 +624,16 @@ void GPS::replacetheta()
         cout<<"Python Interpreter not Initialized!!!"<<endl;
     }
 
+    PyObject_CallMethod(pInstanceCaffePolicy,"printFoo",NULL);
+
     // pass since optimization is essentially a replace precess
     PyObject_CallMethod(pInstancePolicyOptCaffe,"policycopyfromsolver2",NULL);
     PyObject_CallMethod(pInstancePolicyOptCaffe,"solver3copyfromsolver2",NULL);
     
     // decrease wr
     PyObject_CallMethod(pInstancePolicyOptCaffe,"decreaseWr",NULL);
+
+    PyObject_CallMethod(pInstanceCaffePolicy,"printFoo",NULL);
 }
 
 void GPS::restoretheta()
@@ -639,10 +643,15 @@ void GPS::restoretheta()
     {
         cout<<"Python Interpreter not Initialized!!!"<<endl;
     }
+    
+    PyObject_CallMethod(pInstanceCaffePolicy,"printFoo",NULL);
+
     PyObject_CallMethod(pInstancePolicyOptCaffe,"solver2copyfromsolver3",NULL);
 
     // increase wr
     PyObject_CallMethod(pInstancePolicyOptCaffe,"increaseWr",NULL);
+
+    PyObject_CallMethod(pInstanceCaffePolicy,"printFoo",NULL);
 }
 
 
