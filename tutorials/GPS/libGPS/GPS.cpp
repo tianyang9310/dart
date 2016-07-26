@@ -135,8 +135,6 @@ void GPS::rund()
         // Optimize theta_k w.r.t. Phi
         FineTunePolicy();
 
-        cin.get();
-
         // generate samples from theta_k. theta_k is now the last CaffePolicy of PolicyRepo
         // append samples to GPSSampleLists and cur_GPSSampleLists
         appendSamplesFromThetaK(); 
@@ -579,9 +577,14 @@ void GPS::RetrieveLoss_wo(bool previous)
 void GPS::replacetheta()
 {
     // replace theta_star with theta_k
+    if (!Py_IsInitialized())  
+    {
+        cout<<"Python Interpreter not Initialized!!!"<<endl;
+    }
+
     // pass since optimization is essentially a replace precess
     PyObject_CallMethod(pInstancePolicyOptCaffe,"policycopyfromsolver2",NULL);
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"solver2testfromsolver2train",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"solver3copyfromsolver2",NULL);
     
     // decrease wr
     PyObject_CallMethod(pInstancePolicyOptCaffe,"decreaseWr",NULL);
@@ -594,7 +597,7 @@ void GPS::restoretheta()
     {
         cout<<"Python Interpreter not Initialized!!!"<<endl;
     }
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"solver2copyfrompolicy",NULL);
+    PyObject_CallMethod(pInstancePolicyOptCaffe,"solver2copyfromsolver3",NULL);
 
     // increase wr
     PyObject_CallMethod(pInstancePolicyOptCaffe,"increaseWr",NULL);

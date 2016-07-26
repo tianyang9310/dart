@@ -1,5 +1,6 @@
 import numpy as np
 import caffe
+import copy
 from caffe.proto.caffe_pb2 import SolverParameter,TRAIN, TEST
 from google.protobuf.text_format import MessageToString
 from NNBuilder import NNConstructor
@@ -34,6 +35,7 @@ class PolicyOptCaffe():
         
         self.init_solver()
         self.init_solver2()
+        self.init_solver3()
         self.var = 0.5 * np.eye(self.u_dim) # here 0.5 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
 
         with tempfile.NamedTemporaryFile(delete=False) as _init_f:
@@ -74,16 +76,28 @@ class PolicyOptCaffe():
         solver_param2.random_seed = 1
          
         solver_param2.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
-        solver_param2.test_net_param.add().CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
-        
-        
-        solver_param2.test_iter.append(1)
-        solver_param2.test_interval = 1000000
             
         with open('NeuralNetworks2.prototxt','w') as f:
             f.write(MessageToString(solver_param2))
         
         self.solver2=caffe.get_solver(f.name)
+
+    def init_solver3(self):
+        solver_param3 = SolverParameter()
+        solver_param3.display = 0  # Don't display anything.
+        solver_param3.base_lr = 1e-6
+        solver_param3.lr_policy = 'fixed'
+        solver_param3.momentum = 0.95
+        solver_param3.weight_decay = 0.001
+        solver_param3.type = 'SGD'
+        solver_param3.random_seed = 1
+         
+        solver_param3.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
+            
+        with open('NeuralNetworks2.prototxt','w') as f:
+            f.write(MessageToString(solver_param3))
+        
+        self.solver3=caffe.get_solver(f.name)
 
 # --------------------------------------------------
 # pretrain neural networks
@@ -129,7 +143,7 @@ class PolicyOptCaffe():
         
         self.policycopyfromsolver()
         self.solver2copyfromsolver()
-        self.solver2testfromsolver2train()
+        self.solver3copyfromsolver2()
         
         # why this line impacts finetune???
         self.appendpolicyRepo(self.solver.net)
@@ -153,7 +167,6 @@ class PolicyOptCaffe():
 # fine tune Neural Network
 # --------------------------------------------------
     def finetune(self):
-
         # need to call setWr() before calling finetune
         
         print '*********************************************************'
@@ -170,35 +183,22 @@ class PolicyOptCaffe():
             self.solver2.net.blobs[blob_names[4]].data[:]=self.samplesets_Logq
             self.solver2.net.blobs[blob_names[5]].data[:]=self.wr
             
-            self.solver2.test_nets[0].blobs[blob_names[0]].data[:]=self.samplesets_x
-            self.solver2.test_nets[0].blobs[blob_names[1]].data[:]=self.samplesets_x
-            self.solver2.test_nets[0].blobs[blob_names[2]].data[:]=self.samplesets_u
-            self.solver2.test_nets[0].blobs[blob_names[3]].data[:]=np.linalg.inv(self.var)
-            self.solver2.test_nets[0].blobs[blob_names[4]].data[:]=self.samplesets_Logq
-            self.solver2.test_nets[0].blobs[blob_names[5]].data[:]=self.wr
-
             # params_names = self.solver2.net.params.keys()
-            # a = self.solver2.net.params[params_names[0]][0].data
-            # params_names = self.solver2.test_nets[0].params.keys()
-            # b = self.solver2.test_nets[0].params[params_names[0]][0].data
-            # d = self.solver.net.params[params_names[0]][0].data
+            # a = copy.deepcopy(self.solver2.net.params[params_names[0]][0].data)
+            # params_names = self.solver3.net.params.keys()
+            # b = copy.deepcopy(self.solver3.net.params[params_names[0]][0].data)
+            # d = copy.deepcopy(self.solver.net.params[params_names[0]][0].data)
 
-            # The step function only updates train net, keep test nets[0] untouched
-            # 1. in the src code, ApplyUpdate() only applies on net_
-            # 2. https://groups.google.com/forum/#!topic/caffe-users/Vu_LtKWpyhI talks about the same issue. To update test_nets[0] in step(), test_compute_loss and test_initialization both need to be true
             self.solver2.step(1)
             # To get the training loss:
             train_loss = self.solver2.net.blobs[blob_names[-1]].data
             print train_loss
 
             # params_names = self.solver2.net.params.keys()
-            # c = self.solver2.net.params[params_names[0]][0].data
-            # params_names = self.solver2.test_nets[0].params.keys()
-            # e = self.solver2.test_nets[0].params[params_names[0]][0].data
+            # c = copy.deepcopy(self.solver2.net.params[params_names[0]][0].data)
+            # params_names = self.solver3.net.params.keys()
+            # e = copy.deepcopy(self.solver3.net.params[params_names[0]][0].data)
         
-        # comment because in the fine tune stage, only train solver2. But whether the parameter is accepted is determined by lossvalue_wo
-        # self.policy.net.share_with(self.solver2.net)
-
         # although fine tuned parameter may not be accepted, it should be kept in self.policyRepo to eval Logq
         self.appendpolicyRepo(self.solver2.net)
 
@@ -234,7 +234,6 @@ class PolicyOptCaffe():
 # compute loss value without regularizer
 # --------------------------------------------------
     def trainnet2forward(self, previous):
-
         # need to call setWr() before calling finetune
         
         print '*********************************************************'
@@ -252,16 +251,16 @@ class PolicyOptCaffe():
             self.solver2.net.forward()
             self.lossvalue_wo = self.solver2.net.layers[-1].lossvalue_wo
         else:
-            blob_names = self.solver2.test_nets[0].blobs.keys()
-            self.solver2.test_net[0].blobs[blob_names[0]].data[:]=self.samplesets_x
-            self.solver2.test_net[0].blobs[blob_names[1]].data[:]=self.samplesets_x
-            self.solver2.test_net[0].blobs[blob_names[2]].data[:]=self.samplesets_u
-            self.solver2.test_net[0].blobs[blob_names[3]].data[:]=np.linalg.inv(self.var)
-            self.solver2.test_net[0].blobs[blob_names[4]].data[:]=self.samplesets_Logq
-            self.solver2.test_net[0].blobs[blob_names[5]].data[:]=self.wr
+            blob_names = self.solver3.net.blobs.keys()
+            self.solver3.net.blobs[blob_names[0]].data[:]=self.samplesets_x
+            self.solver3.net.blobs[blob_names[1]].data[:]=self.samplesets_x
+            self.solver3.net.blobs[blob_names[2]].data[:]=self.samplesets_u
+            self.solver3.net.blobs[blob_names[3]].data[:]=np.linalg.inv(self.var)
+            self.solver3.net.blobs[blob_names[4]].data[:]=self.samplesets_Logq
+            self.solver3.net.blobs[blob_names[5]].data[:]=self.wr
 
-            self.solver2.test_net[0].forward()
-            self.lossvalue_wo = self.solver2.test_net[0].layers[-1].lossvalue_wo
+            self.solver3.net.forward()
+            self.lossvalue_wo = self.solver3.net.layers[-1].lossvalue_wo
 
 
     def modifymPhi(self, newmPhi):
@@ -273,12 +272,14 @@ class PolicyOptCaffe():
                       {'dim': (newmPhi*self.batch_size, 1)},
                       {'dim': (1, 1)}
                       ]})
+        
         self.solver2.net.layers[-1].mPhi = newmPhi
-        self.solver2.test_nets[0].layers[-1].mPhi = newmPhi
         self.solver2.net.layers[0].param_str = data_layer_info
         self.solver2.net.reshape()
-        self.solver2.test_nets[0].layers[0].param_str = data_layer_info
-        self.solver2.test_nets[0].reshape()
+        
+        self.solver3.net.layers[-1].mPhi = newmPhi
+        self.solver3.net.layers[0].param_str = data_layer_info
+        self.solver3.net.reshape()
 
     def restoremPhi(self):
         data_layer_info = json.dumps({
@@ -290,11 +291,12 @@ class PolicyOptCaffe():
                       {'dim': (1, 1)}
                       ]})
         self.solver2.net.layers[-1].mPhi = self.mPhi
-        self.solver2.test_nets[0].layers[-1].mPhi = self.mPhi
         self.solver2.net.layers[0].param_str = data_layer_info
         self.solver2.net.reshape()
-        self.solver2.test_nets[0].layers[0].param_str = data_layer_info
-        self.solver2.test_nets[0].reshape()
+        
+        self.solver3.net.layers[-1].mPhi = self.mPhi
+        self.solver3.net.layers[0].param_str = data_layer_info
+        self.solver3.net.reshape()
 
 # --------------------------------------------------
 # append one net to self.policyRepo
@@ -312,6 +314,15 @@ class PolicyOptCaffe():
 # --------------------------------------------------
 # copy or share neural nets
 # --------------------------------------------------
+    def policycopyfromsolver3(self):
+        # ------------------------
+        # solver3.net => policy
+        # ------------------------
+        
+        filename='/tmp/Solver3TrainNet.caffemodel'
+        self.solver3.net.save(filename)
+        self.policy.net.copy_from(filename)
+
     def policycopyfromsolver2(self):
         # ------------------------
         # solver2.net => policy
@@ -340,42 +351,23 @@ class PolicyOptCaffe():
         self.solver2.net.copy_from(filename)
         # self.solver2.net.share_with(self.solver.net)
 
-    def solver2copyfrompolicy(self):
+    def solver3copyfromsolver2(self):
         # ------------------------
-        # policy => solver.net
+        # solver2.net =>solver3.net
         # ------------------------
-        
-        filename='/tmp/policy.caffemodel'
-        self.policy.net.save(filename)
-        self.solver2.net.copy_from(filename)
 
-    def solver2testfromsolver2train(self):
-        # ------------------------
-        # solver2.net =>solver2.test_nets[0]
-        # ------------------------
-        
         filename='/tmp/Solver2TrainNet.caffemodel'
         self.solver2.net.save(filename)
-        self.solver2.test_nets[0].copy_from(filename)
+        self.solver3.net.copy_from(filename)
 
-    def solver2trainfromsolver2test(self):
+    def solver2copyfromsolver3(self):
         # ------------------------
-        # solver2.test_net[0] => solver2.net
+        # solver3.net =>solver2.net
         # ------------------------
-        
-        filename='/tmp/Solver2TestNet.caffemodel'
-        self.solver2.test_nets[0].save(filename)
+
+        filename='/tmp/Solver2TrainNet.caffemodel'
+        self.solver3.net.save(filename)
         self.solver2.net.copy_from(filename)
-
-    def solver2testfromsolver(self):
-        # ------------------------
-        # solver.net =>solver2.test_nets[0]
-        # ------------------------
-        
-        filename='/tmp/SolverTrainNet.caffemodel'
-        self.solver.net.save(filename)
-        self.solver2.test_nets[0].copy_from(filename)
-
 
 # --------------------------------------------------
 # logistical function
