@@ -126,53 +126,58 @@ void GPS::rund()
     cout<<"Press any key to continue..."<<endl;
     cin.get();
 
-    for (int _GPS_iter=0; _GPS_iter<GPS_iterations; _GPS_iter++)
-    {
-        // shuffle and choose sub sample sets Sk
-        ChooseSubSets();
-        writeSubSampleSets2file();
-
-        // Optimize theta_k w.r.t. Phi
-        FineTunePolicy();
-
-        // generate samples from theta_k. theta_k is now the last CaffePolicy of PolicyRepo
-        // append samples to GPSSampleLists and cur_GPSSampleLists
-        appendSamplesFromThetaK(); 
-        
-        // Optionally generate adaptive guiding samples
-        
-        // Evaluate eq(2) to see whether replace theta_k or increase wr
-        // Here this evaluation can be retrieved directly from python interface
-        writeSubSampleSets2file();
-        modifymPhi();
-        RetrieveLoss_wo(true);    // previous = true
-        RetrieveLoss_wo(false);   // previous = false
-        restoremPhi();
-
-        if (current_lossvalue_wo <= previous_lossvalue_wo)
-        {
-            cout<<"replace new policy"<<endl;
-            replacetheta();
-        }
-        else
-        {
-            cout<<"restore to old policy"<<endl;
-            restoretheta();
-        }
-        
-        //
-        // return the best policy
-        
-        cout<<"& & & & & & & & & & & & & & &"<<endl;
-        cout<<"& & One iteration of Run  & &"<<endl;
-        cout<<"& Press any key to continue &"<<endl;
-        cout<<"& & & & & & & & & & & & & & &"<<endl;
-        cin.get();
-    }
+    // for (int _GPS_iter=0; _GPS_iter<GPS_iterations; _GPS_iter++)
+    // {
+         innerloop();
+    // }
     // shuffle and choose sub sample sets Sk
     // ChooseSubSets();
     // writeSubSampleSets2file();
     // FineTunePolicy();
+}
+
+void GPS::innerloop()
+{
+    // shuffle and choose sub sample sets Sk
+    ChooseSubSets();
+    writeSubSampleSets2file();
+
+    // Optimize theta_k w.r.t. Phi
+    FineTunePolicy();
+
+    // generate samples from theta_k. theta_k is now the last CaffePolicy of PolicyRepo
+    // append samples to GPSSampleLists and cur_GPSSampleLists
+    appendSamplesFromThetaK(); 
+    
+    // Optionally generate adaptive guiding samples
+    
+    // Evaluate eq(2) to see whether replace theta_k or increase wr
+    // Here this evaluation can be retrieved directly from python interface
+    writeSubSampleSets2file();
+    modifymPhi();
+    RetrieveLoss_wo(true);    // previous = true
+    RetrieveLoss_wo(false);   // previous = false
+    restoremPhi();
+
+    if (current_lossvalue_wo <= previous_lossvalue_wo)
+    {
+        cout<<"replace new policy"<<endl;
+        replacetheta();
+    }
+    else
+    {
+        cout<<"restore to old policy"<<endl;
+        restoretheta();
+    }
+    
+    //
+    // return the best policy
+    
+    cout<<"& & & & & & & & & & & & & & &"<<endl;
+    cout<<"& & One iteration of Run  & &"<<endl;
+    cout<<"& Press any key to continue &"<<endl;
+    cout<<"& & & & & & & & & & & & & & &"<<endl;
+    cin.get();
 }
 
 void GPS::run()

@@ -33,6 +33,7 @@ public:
     virtual ~GPS();
 	void run();
     void rund();
+    void innerloop();
     void DDPdemonstration();
 	void InitDDPPolicy();
 	void InitNNPolicy();
