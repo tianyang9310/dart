@@ -126,10 +126,55 @@ void GPS::rund()
     cout<<"Press any key to continue..."<<endl;
     cin.get();
 
+    for (int _GPS_iter=0; _GPS_iter<GPS_iterations; _GPS_iter++)
+    {
+        // shuffle and choose sub sample sets Sk
+        ChooseSubSets();
+        writeSubSampleSets2file();
+
+        // Optimize theta_k w.r.t. Phi
+        FineTunePolicy();
+
+        cin.get();
+
+        // generate samples from theta_k. theta_k is now the last CaffePolicy of PolicyRepo
+        // append samples to GPSSampleLists and cur_GPSSampleLists
+        appendSamplesFromThetaK(); 
+        
+        // Optionally generate adaptive guiding samples
+        
+        // Evaluate eq(2) to see whether replace theta_k or increase wr
+        // Here this evaluation can be retrieved directly from python interface
+        writeSubSampleSets2file();
+        modifymPhi();
+        RetrieveLoss_wo(true);    // previous = true
+        RetrieveLoss_wo(false);   // previous = false
+        restoremPhi();
+
+        if (current_lossvalue_wo <= previous_lossvalue_wo)
+        {
+            cout<<"replace new policy"<<endl;
+            replacetheta();
+        }
+        else
+        {
+            cout<<"restore to old policy"<<endl;
+            restoretheta();
+        }
+        
+        //
+        // return the best policy
+        
+        cout<<"& & & & & & & & & & & & & & &"<<endl;
+        cout<<"& & One iteration of Run  & &"<<endl;
+        cout<<"& Press any key to continue &"<<endl;
+        cout<<"& & & & & & & & & & & & & & &"<<endl;
+        cin.get();
+    }
     // shuffle and choose sub sample sets Sk
-    ChooseSubSets();
-    writeSubSampleSets2file();
-    FineTunePolicy();
+    // ChooseSubSets();
+    // writeSubSampleSets2file();
+    // FineTunePolicy();
 }
 
 void GPS::run()
@@ -277,8 +322,6 @@ void GPS::writeSubSampleSets2file()
     write4numpy_Quu_inv(cur_GPSSampleLists, "SampleSets_Quu_inv");
     EvalProb_Logq();
     write4numpy_Logq(cur_GPSSampleLists, "SampleSets_Logq");
-    cout<<"output all data for finetuning...";
-    cin.get();
 }
 
 void GPS::EvalProb_Logqd()
@@ -560,13 +603,11 @@ void GPS::restoretheta()
 
 void GPS::ChooseSubSets()
 {
-//  In order to debug, don't shuffle GPS sample lists
-
-//    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     cur_GPSSampleLists = GPSSampleLists;
-//    shuffle(cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), default_random_engine(seed)); 
-//    // clamp cur_GPSSampleLists to mPhi
-//    cur_GPSSampleLists.erase(cur_GPSSampleLists.begin()+mPhi,cur_GPSSampleLists.end());
+    shuffle(cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), default_random_engine(seed)); 
+    // clamp cur_GPSSampleLists to mPhi
+    cur_GPSSampleLists.erase(cur_GPSSampleLists.begin()+mPhi,cur_GPSSampleLists.end());
 }
 
 void GPS::appendSamplesFromThetaK()

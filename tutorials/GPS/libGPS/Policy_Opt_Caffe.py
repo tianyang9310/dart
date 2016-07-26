@@ -35,7 +35,12 @@ class PolicyOptCaffe():
         self.init_solver()
         self.init_solver2()
         self.var = 0.5 * np.eye(self.u_dim) # here 0.5 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
-        self.policy = CaffePolicy(self.solver.test_nets[0], self.var)
+
+        with tempfile.NamedTemporaryFile(delete=False) as _init_f:
+            _init_f.write(str(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,1,TEST)))
+        _init_mNet = caffe.Net(_init_f.name, TEST)
+        self.policy = CaffePolicy(_init_mNet, self.var)
+
         self.policyRepo = []
 
 # --------------------------------------------------
@@ -52,10 +57,6 @@ class PolicyOptCaffe():
         solver_param.random_seed = 1
          
         solver_param.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.batch_size,TRAIN))
-        solver_param.test_net_param.add().CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,1,TEST))
-        
-        solver_param.test_iter.append(1)
-        solver_param.test_interval = 1000000
         
         with open('NeuralNetworks.prototxt','w') as f:
             f.write(MessageToString(solver_param))
@@ -130,6 +131,7 @@ class PolicyOptCaffe():
         self.solver2copyfromsolver()
         self.solver2testfromsolver2train()
         
+        # why this line impacts finetune???
         self.appendpolicyRepo(self.solver.net)
 
     def ReadX(self):
@@ -179,6 +181,7 @@ class PolicyOptCaffe():
             # a = self.solver2.net.params[params_names[0]][0].data
             # params_names = self.solver2.test_nets[0].params.keys()
             # b = self.solver2.test_nets[0].params[params_names[0]][0].data
+            # d = self.solver.net.params[params_names[0]][0].data
 
             # The step function only updates train net, keep test nets[0] untouched
             # 1. in the src code, ApplyUpdate() only applies on net_
@@ -310,37 +313,69 @@ class PolicyOptCaffe():
 # copy or share neural nets
 # --------------------------------------------------
     def policycopyfromsolver2(self):
+        # ------------------------
+        # solver2.net => policy
+        # ------------------------
+        
         filename='/tmp/Solver2TrainNet.caffemodel'
         self.solver2.net.save(filename)
         self.policy.net.copy_from(filename)
-        # self.policy.net.share_with(self.solver2.net)
 
     def policycopyfromsolver(self):
+        # ------------------------
+        # solver.net => policy
+        # ------------------------
+        
         filename='/tmp/SolverTrainNet.caffemodel'
         self.solver.net.save(filename)
         self.policy.net.copy_from(filename)
-        # self.policy.net.share_with(self.solver.net)
 
     def solver2copyfromsolver(self):
+        # ------------------------
+        # solver.net => solver2.net
+        # ------------------------
+        
         filename='/tmp/SolverTrainNet.caffemodel'
         self.solver.net.save(filename)
         self.solver2.net.copy_from(filename)
         # self.solver2.net.share_with(self.solver.net)
 
     def solver2copyfrompolicy(self):
+        # ------------------------
+        # policy => solver.net
+        # ------------------------
+        
         filename='/tmp/policy.caffemodel'
         self.policy.net.save(filename)
         self.solver2.net.copy_from(filename)
 
     def solver2testfromsolver2train(self):
+        # ------------------------
+        # solver2.net =>solver2.test_nets[0]
+        # ------------------------
+        
         filename='/tmp/Solver2TrainNet.caffemodel'
         self.solver2.net.save(filename)
         self.solver2.test_nets[0].copy_from(filename)
 
     def solver2trainfromsolver2test(self):
+        # ------------------------
+        # solver2.test_net[0] => solver2.net
+        # ------------------------
+        
         filename='/tmp/Solver2TestNet.caffemodel'
         self.solver2.test_nets[0].save(filename)
         self.solver2.net.copy_from(filename)
+
+    def solver2testfromsolver(self):
+        # ------------------------
+        # solver.net =>solver2.test_nets[0]
+        # ------------------------
+        
+        filename='/tmp/SolverTrainNet.caffemodel'
+        self.solver.net.save(filename)
+        self.solver2.test_nets[0].copy_from(filename)
+
 
 # --------------------------------------------------
 # logistical function
