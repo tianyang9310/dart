@@ -37,12 +37,13 @@ void MyWindow::timeStepping()
     {
         if (mWorld->getSimFrames() == mGPS->T-1)
         {
-            mGPS->rund();
-            setWorld(mSnapShot->clone());
-            mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(mGPS->x0Bundle[idxDDP](0));
-            mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(mGPS->x0Bundle[idxDDP](1));
-            mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(mGPS->x0Bundle[idxDDP](2));
-            mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(mGPS->x0Bundle[idxDDP](3));
+            // mGPS->rund();
+            // setWorld(mSnapShot->clone());
+            // mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(mGPS->x0Bundle[idxDDP](0));
+            // mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(mGPS->x0Bundle[idxDDP](1));
+            // mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(mGPS->x0Bundle[idxDDP](2));
+            // mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(mGPS->x0Bundle[idxDDP](3));
+            keyboard(' ', 0,0);
         }
 
         if (!Py_IsInitialized())  

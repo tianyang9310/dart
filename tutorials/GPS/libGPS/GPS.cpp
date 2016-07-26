@@ -21,7 +21,7 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, vala
     DDPIter     = 0;
     // m is a misc variable and mPhi is a unique meaningful variable
     mPhi        = numSamplesPerPolicy.sum();
-    GPS_iterations = 1;
+    GPS_iterations = 2;
     previous_lossvalue_wo = 0;
     current_lossvalue_wo = 0;
 
@@ -312,6 +312,14 @@ void GPS::BuildInitSamples()
         auto tmpSampleLists = trajSampleGeneratorFromDDP(numSamplesPerPolicy[_cond], _cond);
         GPSSampleLists.insert(GPSSampleLists.end(), tmpSampleLists.begin(), tmpSampleLists.end());
     }
+    
+    /*
+    for_each(GPSSampleLists.begin(),GPSSampleLists.end(),
+            [](shared_ptr<sample> SampleEntry)
+            {
+                cout<<"Sample's source flag is "<<SampleEntry->SourceFlag<<endl;
+            });
+    */
 }
 void GPS::writeSubSampleSets2file()
 {
@@ -324,6 +332,8 @@ void GPS::writeSubSampleSets2file()
 
 void GPS::EvalProb_Logqd()
 {
+    Registration();
+
 //  cur_GPSSampleLists
     
     int idx=5;
@@ -353,9 +363,14 @@ void GPS::EvalProb_Logqd()
     {
         double tmpq    = 0;
         // Evaluation in terms of DDPs
+        
         for (int _cond=0; _cond<conditions; _cond++)
         {
-            tmpq += numSamplesPerPolicy[_cond]*GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](cur_GPSSampleLists[idx]->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), cur_GPSSampleLists[idx]->u.col(i)(0));
+            if (sampleRegistrar[_cond] == 0)
+            {
+                continue;
+            }
+            tmpq += sampleRegistrar[_cond]*GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](cur_GPSSampleLists[idx]->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), cur_GPSSampleLists[idx]->u.col(i)(0));
         }
 
         // Evaluation in terms of NN
@@ -363,6 +378,10 @@ void GPS::EvalProb_Logqd()
         int numNNPolicy = PyInt_AsLong(pPolicyRepoLen);
         for (int _idxNNPolicy=0; _idxNNPolicy<numNNPolicy; _idxNNPolicy++)
         {
+            if (sampleRegistrar[conditions+_idxNNPolicy] == 0)
+            {
+                continue;
+            }
             PyObject *pIdxNNPolicy = PyInt_FromLong(_idxNNPolicy);
             auto pIndNNPolicy = PyObject_CallMethodObjArgs(pInstancePolicyRepo,PyString_FromString("__getitem__"), pIdxNNPolicy, NULL);
 
@@ -390,7 +409,7 @@ void GPS::EvalProb_Logqd()
             double Quu_inv_Policy;
             Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pIndNNPolicy,"var"));
             __Quu_inv<<Quu_inv_Policy;
-            tmpq += numSamplesPerPolicy[conditions]*GaussianEvaluator(__ut(0), __Quu_inv(0), cur_GPSSampleLists[idx]->u.col(i)(0));
+            tmpq += sampleRegistrar[conditions+_idxNNPolicy]*GaussianEvaluator(__ut(0), __Quu_inv(0), cur_GPSSampleLists[idx]->u.col(i)(0));
             cout<<"NN var"<<Quu_inv_Policy<<endl;
             Py_DECREF(pIdxNNPolicy);
             Py_DECREF(pArgs);
@@ -399,7 +418,7 @@ void GPS::EvalProb_Logqd()
         }
         Py_DECREF(pPolicyRepoLen);
 
-        tmpq = tmpq/double(numSamplesPerPolicy.sum());
+        tmpq = tmpq/double(sampleRegistrar.sum());
         if (i==0)
         {
             Logqd(i) = log(tmpq);
@@ -463,6 +482,9 @@ void GPS::EvalProb_Logqd()
 
 void GPS::EvalProb_Logq()
 {
+    Registration();
+    cout<<"Sample Registration... "<<sampleRegistrar.transpose()<<endl;
+
 //  this function computes the evaluation of trajectories in terms of mixture of probabilities.
     for_each(cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), 
             [=](shared_ptr<sample> &SampleEntry)
@@ -474,7 +496,11 @@ void GPS::EvalProb_Logq()
                     // Evaluation in terms of DDPs
                     for (int _cond=0; _cond<conditions; _cond++)
                     {
-                        tmpq += numSamplesPerPolicy[_cond]*GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](SampleEntry->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), SampleEntry->u.col(i)(0));
+                        if (sampleRegistrar[_cond] == 0)
+                        {
+                            continue;
+                        }
+                        tmpq += sampleRegistrar[_cond]*GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](SampleEntry->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), SampleEntry->u.col(i)(0));
                     }
 
                     // Evaluation in terms of NN
@@ -482,6 +508,10 @@ void GPS::EvalProb_Logq()
                     int numNNPolicy = PyInt_AsLong(pPolicyRepoLen);
                     for (int _idxNNPolicy=0; _idxNNPolicy<numNNPolicy; _idxNNPolicy++)
                     {
+                        if (sampleRegistrar[conditions+_idxNNPolicy] == 0)
+                        {
+                            continue;
+                        }
                         PyObject *pIdxNNPolicy = PyInt_FromLong(_idxNNPolicy);
                         auto pIndNNPolicy = PyObject_CallMethodObjArgs(pInstancePolicyRepo,PyString_FromString("__getitem__"), pIdxNNPolicy, NULL);
 
@@ -509,7 +539,7 @@ void GPS::EvalProb_Logq()
                         double Quu_inv_Policy;
                         Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pIndNNPolicy,"var"));
                         __Quu_inv<<Quu_inv_Policy;
-                        tmpq += numSamplesPerPolicy[conditions]*GaussianEvaluator(__ut(0), __Quu_inv(0), SampleEntry->u.col(i)(0));
+                        tmpq += sampleRegistrar[conditions+_idxNNPolicy]*GaussianEvaluator(__ut(0), __Quu_inv(0), SampleEntry->u.col(i)(0));
                         Py_DECREF(pIdxNNPolicy);
                         Py_DECREF(pArgs);
                         Py_DECREF(pResult);
@@ -517,7 +547,7 @@ void GPS::EvalProb_Logq()
                     }
                     Py_DECREF(pPolicyRepoLen);
 
-                    tmpq = tmpq/double(numSamplesPerPolicy.sum());
+                    tmpq = tmpq/double(sampleRegistrar.sum());
                     if (i==0)
                     {
                         SampleEntry->Logq(i) = log(tmpq);
@@ -527,6 +557,18 @@ void GPS::EvalProb_Logq()
                         SampleEntry->Logq(i) = SampleEntry->Logq(i-1) + log(tmpq);
                     }
                 }
+            });
+}
+
+void GPS::Registration()
+{
+// Registrate cur_GPSSampleLists' sourceFlag
+    sampleRegistrar.setZero(conditions+GPS_iterations+1);
+    
+    for_each(cur_GPSSampleLists.begin(),cur_GPSSampleLists.end(),
+            [=](shared_ptr<sample> SampleEntry)
+            {
+                sampleRegistrar[SampleEntry->SourceFlag+conditions]++;
             });
 }
 
@@ -611,6 +653,14 @@ void GPS::ChooseSubSets()
     shuffle(cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), default_random_engine(seed)); 
     // clamp cur_GPSSampleLists to mPhi
     cur_GPSSampleLists.erase(cur_GPSSampleLists.begin()+mPhi,cur_GPSSampleLists.end());
+
+    for_each(cur_GPSSampleLists.begin(),cur_GPSSampleLists.end(),
+            [](shared_ptr<sample> SampleEntry)
+            {
+                cout<<"[After Shuffling] Sample's source flag is "<<SampleEntry->SourceFlag<<endl;
+            });
+    cout<<"Shuffling sample sets, Press any key to continue..."<<endl;
+    cin.get();
 }
 
 void GPS::appendSamplesFromThetaK()
@@ -774,7 +824,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples, int D
                 SampleEntry->x.resize(x_dim,T);
                 SampleEntry->u.resize(u_dim,T);
                 SampleEntry->Quu_inv.resize(T);
-                SampleEntry->SourceFlag = -DDPIdx;
+                SampleEntry->SourceFlag = DDPIdx-conditions;
                 
                 SampleEntry->x.col(0)=_x0;
                 for (int i=0; i<T-1; i++)
@@ -813,7 +863,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
                 SampleEntry->x.resize(x_dim,T);
                 SampleEntry->u.resize(u_dim,T);
                 SampleEntry->Quu_inv.resize(T);
-                SampleEntry->SourceFlag = -idxDDP;
+                SampleEntry->SourceFlag = idxDDP-conditions;
                 
                 SampleEntry->x.col(0)=_x0;
                 for (int i=0; i<T-1; i++)

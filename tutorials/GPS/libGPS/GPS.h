@@ -43,6 +43,7 @@ public:
     void restoretheta();
     void appendSamplesFromThetaK(); 
     void ChooseSubSets();
+    void Registration();
     vector<shared_ptr<sample>> trajSampleGeneratorFromDDP(int numSamples, int DDPIdx);
 	vector<shared_ptr<sample>> trajSampleGeneratorFromDDPMix(int numSamples);
     vector<shared_ptr<sample>> trajSampleGeneratorFromNN(int numSamples);
@@ -69,6 +70,7 @@ public:
     vector<shared_ptr<sample>> GPSSampleLists;
     vector<shared_ptr<sample>> cur_GPSSampleLists;
     vector<shared_ptr<sample>> trajSamples4NNpretrain;
+    VectorXi sampleRegistrar;
 // --------------------
 //  python wrapper
     PyObject *pInstancePolicyOptCaffe;
