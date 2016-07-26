@@ -35,8 +35,8 @@ int main(int argc, char* argv[])
 	int numDDPIters		= 50;
 	int conditions  	= 1;
 	valarray<int> numSamplePerPolicy(conditions+1);
-    numSamplePerPolicy[0] = 10;
-    numSamplePerPolicy[1] = 40;
+    numSamplePerPolicy[0] = 40;
+    numSamplePerPolicy[1] = 10;
 
 	double delta_t		= mWorld->getTimeStep();
 	Vector4d x0			= Vector4d::Zero();

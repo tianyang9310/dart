@@ -68,7 +68,7 @@ void GPS::InitPolicyOptCaffe()
     PyTuple_SetItem(pArgs,0, PyInt_FromLong(x_dim));
     PyTuple_SetItem(pArgs,1, PyInt_FromLong(u_dim));
     PyTuple_SetItem(pArgs,2, PyInt_FromLong(T-1));
-    int m = numSamplesPerPolicy.sum() - numSamplesPerPolicy[0];
+    int m = numSamplesPerPolicy.sum() - numSamplesPerPolicy[conditions];
     PyTuple_SetItem(pArgs,3, PyInt_FromLong(m));
     PyTuple_SetItem(pArgs,4, PyInt_FromLong(mPhi));
     pInstancePolicyOptCaffe = PyInstance_New(pClassPolicyOptCaffe,pArgs,NULL);
@@ -277,7 +277,7 @@ void GPS::InitDDPPolicy()
 
 void GPS::InitNNPolicy()
 {
-    int m = numSamplesPerPolicy.sum() - numSamplesPerPolicy[0];
+    int m = numSamplesPerPolicy.sum() - numSamplesPerPolicy[conditions];
 
 //  generate traj samples from mixture of DDP policies
 //  Linear combination of mutually independent normal random vectors
@@ -306,10 +306,10 @@ void GPS::InitNNPolicy()
 
 void GPS::BuildInitSamples()
 {
-    GPSSampleLists = trajSampleGeneratorFromNN(numSamplesPerPolicy[0]);
+    GPSSampleLists = trajSampleGeneratorFromNN(numSamplesPerPolicy[conditions]);
     for (int _cond=0; _cond<conditions; _cond++)
     {
-        auto tmpSampleLists = trajSampleGeneratorFromDDP(numSamplesPerPolicy[_cond + 1], _cond);
+        auto tmpSampleLists = trajSampleGeneratorFromDDP(numSamplesPerPolicy[_cond], _cond);
         GPSSampleLists.insert(GPSSampleLists.end(), tmpSampleLists.begin(), tmpSampleLists.end());
     }
 }
@@ -355,7 +355,7 @@ void GPS::EvalProb_Logqd()
         // Evaluation in terms of DDPs
         for (int _cond=0; _cond<conditions; _cond++)
         {
-            tmpq += numSamplesPerPolicy[_cond+1]*GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](cur_GPSSampleLists[idx]->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), cur_GPSSampleLists[idx]->u.col(i)(0));
+            tmpq += numSamplesPerPolicy[_cond]*GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](cur_GPSSampleLists[idx]->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), cur_GPSSampleLists[idx]->u.col(i)(0));
         }
 
         // Evaluation in terms of NN
@@ -390,7 +390,7 @@ void GPS::EvalProb_Logqd()
             double Quu_inv_Policy;
             Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pIndNNPolicy,"var"));
             __Quu_inv<<Quu_inv_Policy;
-            tmpq += numSamplesPerPolicy[0]*GaussianEvaluator(__ut(0), __Quu_inv(0), cur_GPSSampleLists[idx]->u.col(i)(0));
+            tmpq += numSamplesPerPolicy[conditions]*GaussianEvaluator(__ut(0), __Quu_inv(0), cur_GPSSampleLists[idx]->u.col(i)(0));
             cout<<"NN var"<<Quu_inv_Policy<<endl;
             Py_DECREF(pIdxNNPolicy);
             Py_DECREF(pArgs);
@@ -474,7 +474,7 @@ void GPS::EvalProb_Logq()
                     // Evaluation in terms of DDPs
                     for (int _cond=0; _cond<conditions; _cond++)
                     {
-                        tmpq += numSamplesPerPolicy[_cond+1]*GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](SampleEntry->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), SampleEntry->u.col(i)(0));
+                        tmpq += numSamplesPerPolicy[_cond]*GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](SampleEntry->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), SampleEntry->u.col(i)(0));
                     }
 
                     // Evaluation in terms of NN
@@ -509,7 +509,7 @@ void GPS::EvalProb_Logq()
                         double Quu_inv_Policy;
                         Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pIndNNPolicy,"var"));
                         __Quu_inv<<Quu_inv_Policy;
-                        tmpq += numSamplesPerPolicy[0]*GaussianEvaluator(__ut(0), __Quu_inv(0), SampleEntry->u.col(i)(0));
+                        tmpq += numSamplesPerPolicy[conditions]*GaussianEvaluator(__ut(0), __Quu_inv(0), SampleEntry->u.col(i)(0));
                         Py_DECREF(pIdxNNPolicy);
                         Py_DECREF(pArgs);
                         Py_DECREF(pResult);
@@ -615,7 +615,7 @@ void GPS::ChooseSubSets()
 
 void GPS::appendSamplesFromThetaK()
 {
-    auto tmpSampleListsFromThetaK = trajSampleGeneratorFromNN_ThetaK(numSamplesPerPolicy[0]);
+    auto tmpSampleListsFromThetaK = trajSampleGeneratorFromNN_ThetaK(numSamplesPerPolicy[conditions]);
 // append samples from ThetaK to Sk
     cur_GPSSampleLists.insert(cur_GPSSampleLists.end(),tmpSampleListsFromThetaK.begin(),tmpSampleListsFromThetaK.end());
 // append samples from ThetaK to S
@@ -649,6 +649,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromNN_ThetaK(int numSamples)
                 SampleEntry->x.resize(x_dim,T);
                 SampleEntry->u.resize(u_dim,T);
                 SampleEntry->Quu_inv.resize(T);
+                SampleEntry->SourceFlag = numNNPolicy-1;
                 
                 SampleEntry->x.col(0)=_x0;
                 for (int i=0; i<T-1; i++)
@@ -716,6 +717,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromNN(int numSamples)
                 SampleEntry->x.resize(x_dim,T);
                 SampleEntry->u.resize(u_dim,T);
                 SampleEntry->Quu_inv.resize(T);
+                SampleEntry->SourceFlag = 0;
                 
                 SampleEntry->x.col(0)=_x0;
                 for (int i=0; i<T-1; i++)
@@ -772,6 +774,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples, int D
                 SampleEntry->x.resize(x_dim,T);
                 SampleEntry->u.resize(u_dim,T);
                 SampleEntry->Quu_inv.resize(T);
+                SampleEntry->SourceFlag = -DDPIdx;
                 
                 SampleEntry->x.col(0)=_x0;
                 for (int i=0; i<T-1; i++)
@@ -810,6 +813,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
                 SampleEntry->x.resize(x_dim,T);
                 SampleEntry->u.resize(u_dim,T);
                 SampleEntry->Quu_inv.resize(T);
+                SampleEntry->SourceFlag = -idxDDP;
                 
                 SampleEntry->x.col(0)=_x0;
                 for (int i=0; i<T-1; i++)

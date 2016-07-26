@@ -17,6 +17,7 @@ public:
 	MatrixXd u;
     vector<MatrixXd> Quu_inv;
     VectorXd Logq;
+    int SourceFlag;
 };
 
 
