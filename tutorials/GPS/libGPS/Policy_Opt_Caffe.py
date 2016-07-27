@@ -227,12 +227,20 @@ class PolicyOptCaffe():
         self.wr = _wr
 
     def increaseWr(self):
-        print 'Increasing wr from ',self.wr,' to ',self.wr*10
-        self.wr = self.wr*10
+        if self.wr*10<=1e-2 and self.wr*10>=1e-6:
+            print 'Increasing wr from ',self.wr,' to ',self.wr*10
+            self.wr = self.wr*10
+        else:
+            print 'Change of wr is out of bound, thus no change of wr...'
+            print 'wr is ',self.wr
 
     def decreaseWr(self):
-        print 'Decreasing wr from ',self.wr,' to ',self.wr*0.1
-        self.wr = self.wr*0.1
+        if self.wr*0.1<=1e-2 and self.wr*0.1>=1e-6:
+            print 'Decreasing wr from ',self.wr,' to ',self.wr*0.1
+            self.wr = self.wr*0.1
+        else:
+            print 'Change of wr is out of bound, thus no change of wr...'
+            print 'wr is ',self.wr
 
 # --------------------------------------------------
 # compute loss value without regularizer
