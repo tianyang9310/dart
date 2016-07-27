@@ -5,6 +5,7 @@ MyWindow::MyWindow(WorldPtr world, unique_ptr<GPS> _mGPS):mGPS(std::move(_mGPS))
     setWorld(world);
     mSnapShot = mWorld->clone();
 
+    MaxJointPos = -1e2;
     mGPS->rund();
     idxDDP = 0;
     mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(mGPS->x0Bundle[idxDDP](0));
@@ -35,10 +36,14 @@ void MyWindow::timeStepping()
     }
     else
     {
+        double CurJointPos = mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
+        MaxJointPos = MaxJointPos > CurJointPos ? MaxJointPos:CurJointPos;
         if (mWorld->getSimFrames() == mGPS->T-1)
         {
-            cout<<"[Final Angle] "<<mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition()<<endl;
+            dtmsg<<"[Max Position] "<<MaxJointPos<<endl;
+            dtmsg<<"[Final Angle] "<<CurJointPos<<endl;
             keyboard(' ', 0,0);
+            MaxJointPos = -1e2;
             mGPS->innerloop();
             setWorld(mSnapShot->clone());
             mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(mGPS->x0Bundle[idxDDP](0));

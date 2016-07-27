@@ -28,6 +28,7 @@ public:
 	unique_ptr<GPS> mGPS;
     int idxDDP;
 	WorldPtr mSnapShot;
+    double MaxJointPos;
 
 };
 

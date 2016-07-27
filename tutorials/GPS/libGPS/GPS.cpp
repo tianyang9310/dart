@@ -110,21 +110,21 @@ void GPS::rund()
     cout<<"@@@@@@ Initialize DDP Bundles @@@@@@@@"<<endl;
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl<<endl;
     cout<<"Press any key to continue..."<<endl;
-    cin.get();
+    // cin.get();
 
     InitNNPolicy();
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
     cout<<"@@@@@@ Initialize Neural Net @@@@@@@@@"<<endl;
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl<<endl;
     cout<<"Press any key to continue..."<<endl;
-    cin.get();
+    // cin.get();
 
     BuildInitSamples();
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
     cout<<"@@@@@@ Build Initiali Sample Lists@@@@"<<endl;
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl<<endl;
     cout<<"Press any key to continue..."<<endl;
-    cin.get();
+    // cin.get();
 
     // for (int _GPS_iter=0; _GPS_iter<GPS_iterations; _GPS_iter++)
     // {
@@ -671,10 +671,10 @@ void GPS::ChooseSubSets()
     for_each(cur_GPSSampleLists.begin(),cur_GPSSampleLists.end(),
             [](shared_ptr<sample> SampleEntry)
             {
-                cout<<"[After Shuffling] Sample's source flag is "<<SampleEntry->SourceFlag<<endl;
+                dtmsg<<"Sample's from "<<SampleEntry->SourceFlag<<endl;
             });
-    cout<<"Shuffling sample sets, Press any key to continue..."<<endl;
-    cin.get();
+    cout<<"Shuffling sample sets, Press any key to continue..."<<endl<<endl;
+    // cin.get();
 }
 
 void GPS::appendSamplesFromThetaK()

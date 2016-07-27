@@ -60,7 +60,7 @@ class PolicyOptCaffe():
          
         solver_param.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.batch_size,TRAIN))
         
-        with open('NeuralNetworks.prototxt','w') as f:
+        with open('/tmp/NeuralNetworks.prototxt','w') as f:
             f.write(MessageToString(solver_param))
         
         self.solver=caffe.get_solver(f.name)
@@ -77,7 +77,7 @@ class PolicyOptCaffe():
          
         solver_param2.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
             
-        with open('NeuralNetworks2.prototxt','w') as f:
+        with open('/tmp/NeuralNetworks2.prototxt','w') as f:
             f.write(MessageToString(solver_param2))
         
         self.solver2=caffe.get_solver(f.name)
@@ -94,7 +94,7 @@ class PolicyOptCaffe():
          
         solver_param3.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
             
-        with open('NeuralNetworks2.prototxt','w') as f:
+        with open('/tmp/NeuralNetworks3.prototxt','w') as f:
             f.write(MessageToString(solver_param3))
         
         self.solver3=caffe.get_solver(f.name)
@@ -139,7 +139,8 @@ class PolicyOptCaffe():
         
             # To get the training loss:
             train_loss = self.solver.net.blobs[blob_names[-1]].data
-            # print train_loss
+            if i%500 == 0:
+                print train_loss
         
         self.policycopyfromsolver()
         self.solver2copyfromsolver()
@@ -222,12 +223,15 @@ class PolicyOptCaffe():
         # print self.samplesets_Logq
 
     def setWr(self, _wr=1e-2):
+        print 'Setting wr as ',_wr
         self.wr = _wr
 
     def increaseWr(self):
+        print 'Increasing wr from ',self.wr,' to ',self.wr*10
         self.wr = self.wr*10
 
     def decreaseWr(self):
+        print 'Decreasing wr from ',self.wr,' to ',self.wr*0.1
         self.wr = self.wr*0.1
 
 # --------------------------------------------------
@@ -379,19 +383,19 @@ class PolicyOptCaffe():
         print "~~~~~~~~~~~~~~~~~~~~~ Train Net Parameters ~~~~~~~~~~~~~~~~~~~~~"
         params_names = self.solver.net.params.keys()
         print params_names
-        print self.solver.net.params[params_names[0]][0].data[0:1,:]
+        print self.solver.net.params[params_names[0]][0].data[0:3,:]
         print "~~~~~~~~~~~~~~~~~~~~~ Policy Net Parameters ~~~~~~~~~~~~~~~~~~~~~"
         params_names = self.policy.net.params.keys()
         print params_names
-        print self.policy.net.params[params_names[0]][0].data[0:1,:]
+        print self.policy.net.params[params_names[0]][0].data[0:3,:]
 
     def printFoo2(self):
         print "~~~~~~~~~~~~~~~~~~~~~ Train Net Parameters ~~~~~~~~~~~~~~~~~~~~~"
         params_names = self.solver2.net.params.keys()
         print params_names
-        print self.solver2.net.params[params_names[0]][0].data[0:1,:]
+        print self.solver2.net.params[params_names[0]][0].data[0:3,:]
         print "~~~~~~~~~~~~~~~~~~~~~ Policy Net Parameters ~~~~~~~~~~~~~~~~~~~~~"
         params_names = self.policy.net.params.keys()
         print params_names
-        print self.policy.net.params[params_names[0]][0].data[0:1,:]
+        print self.policy.net.params[params_names[0]][0].data[0:3,:]
 
