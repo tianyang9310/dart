@@ -24,7 +24,7 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, vala
     GPS_iterations = 20;
     previous_lossvalue_wo = 0;
     current_lossvalue_wo = 0;
-    numSk = 80;
+    numSk = 60;
 
     Py_Initialize();
     PyRun_SimpleString("import sys");  
@@ -689,11 +689,13 @@ void GPS::ChooseSubSets()
     int numDDPtrajsamples = (numSamplesPerPolicy.sum()-numSamplesPerPolicy[conditions]);
     if (GPSSampleLists.size() <= numSk)
     {
+        dtmsg<<"Choose all samples"<<endl;
         cur_GPSSampleLists = GPSSampleLists;
         curGPSmapGPS.setLinSpaced(cur_GPSSampleLists.size(),0,cur_GPSSampleLists.size()-1);
     }
     else
     {
+        dtmsg<<"Choose high weights samples"<<endl;
         cur_GPSSampleLists.erase(cur_GPSSampleLists.begin(),cur_GPSSampleLists.end());
         cur_GPSSampleLists.insert(cur_GPSSampleLists.end(),GPSSampleLists.begin(),GPSSampleLists.begin()+numDDPtrajsamples);
 
@@ -704,13 +706,19 @@ void GPS::ChooseSubSets()
         curGPSmapGPS.head(_tmpcurGPSmapGPS.rows()) = _tmpcurGPSmapGPS;
 
         // choose high weights samples
-        vector<pair<double,size_t>> weights_GPSSampleLists(numSk-numDDPtrajsamples);
-        for (int i=numDDPtrajsamples; i<numSk; i++)
+        vector<pair<double,size_t>> weights_GPSSampleLists(GPSSampleLists.size()-numDDPtrajsamples);
+        for (int i=numDDPtrajsamples; i<GPSSampleLists.size(); i++)
         {
             weights_GPSSampleLists[i-numDDPtrajsamples].first = GPSSampleLists[i]->weights;
             weights_GPSSampleLists[i-numDDPtrajsamples].second = i;
         }
         sort(weights_GPSSampleLists.begin(),weights_GPSSampleLists.end());
+        reverse(weights_GPSSampleLists.begin(),weights_GPSSampleLists.end());
+
+        for (int i=0; i<weights_GPSSampleLists.size(); i++)
+        {
+            cout<<"Weights: "<<weights_GPSSampleLists[i].first<<" ; Index: "<<weights_GPSSampleLists[i].second<<endl;
+        }
 
         for (int i=numDDPtrajsamples; i<numSk; i++)
         {
