@@ -45,6 +45,7 @@ public:
     void appendSamplesFromThetaK(); 
     void ChooseSubSets();
     void Registration();
+    void attachWeights();
     vector<shared_ptr<sample>> trajSampleGeneratorFromDDP(int numSamples, int DDPIdx);
 	vector<shared_ptr<sample>> trajSampleGeneratorFromDDPMix(int numSamples);
     vector<shared_ptr<sample>> trajSampleGeneratorFromNN(int numSamples);
@@ -74,6 +75,7 @@ public:
     VectorXi sampleRegistrar;
     VectorXd WeightsList;
     int numSk;
+    VectorXi curGPSmapGPS;
 // --------------------
 //  python wrapper
     PyObject *pInstancePolicyOptCaffe;

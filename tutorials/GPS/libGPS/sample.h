@@ -18,6 +18,7 @@ public:
     vector<MatrixXd> Quu_inv;
     VectorXd Logq;
     int SourceFlag;
+    double weights;
 };
 
 

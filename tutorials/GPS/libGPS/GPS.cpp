@@ -106,10 +106,6 @@ GPS::~GPS()
 
 void GPS::rund()
 {
-    // Debug Read weights
-    // readWeights(WeightsList,"WeightsList.txt");
-    // cin.get();
-
     InitDDPPolicy();
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
     cout<<"@@@@@@ Initialize DDP Bundles @@@@@@@@"<<endl;
@@ -163,6 +159,11 @@ void GPS::innerloop()
     writeSubSampleSets2file();
     modifymPhi();
     RetrieveLoss_wo(true);    // previous = true
+
+    // read weights from file
+    readWeights(WeightsList,"WeightsList.txt");
+    attachWeights();
+
     RetrieveLoss_wo(false);   // previous = false
     restoremPhi();
 
@@ -189,6 +190,7 @@ void GPS::innerloop()
 
 void GPS::run()
 {
+    // readWeights(WeightsList,"WeightsList.txt");
     // GaussianSamplerDebug();
     // GaussianEvaluatorDebug();
 
@@ -586,6 +588,16 @@ void GPS::Registration()
             });
 }
 
+void GPS::attachWeights()
+{
+// attach weights according to curGPSmapGPS
+
+    for (int i=0; i<curGPSmapGPS.rows(); i++)
+    {
+        GPSSampleLists[curGPSmapGPS[i]]->weights = WeightsList[i];
+    }
+}
+
 void GPS::FineTunePolicy()
 {
 //  transform from c++ vector to python numpy
@@ -674,13 +686,37 @@ void GPS::ChooseSubSets()
     // Always choose guiding samples and high weights samples
     // guiding samples are always first numSamplesPerPolicy[0:conditions-1].sum() samples
     // the following samples are NN policies
-    if GPSSampleLists.size() < numSk
+    int numDDPtrajsamples = (numSamplesPerPolicy.sum()-numSamplesPerPolicy[conditions]);
+    if (GPSSampleLists.size() <= numSk)
     {
         cur_GPSSampleLists = GPSSampleLists;
+        curGPSmapGPS.setLinSpaced(cur_GPSSampleLists.size(),0,cur_GPSSampleLists.size()-1);
     }
     else
     {
-    
+        cur_GPSSampleLists.erase(cur_GPSSampleLists.begin(),cur_GPSSampleLists.end());
+        cur_GPSSampleLists.insert(cur_GPSSampleLists.end(),GPSSampleLists.begin(),GPSSampleLists.begin()+numDDPtrajsamples);
+
+        VectorXi _tmpcurGPSmapGPS;
+        _tmpcurGPSmapGPS.setLinSpaced(numDDPtrajsamples,0,(numDDPtrajsamples-1));
+
+        curGPSmapGPS.setZero(numSk);
+        curGPSmapGPS.head(_tmpcurGPSmapGPS.rows()) = _tmpcurGPSmapGPS;
+
+        // choose high weights samples
+        vector<pair<double,size_t>> weights_GPSSampleLists(numSk-numDDPtrajsamples);
+        for (int i=numDDPtrajsamples; i<numSk; i++)
+        {
+            weights_GPSSampleLists[i-numDDPtrajsamples].first = GPSSampleLists[i]->weights;
+            weights_GPSSampleLists[i-numDDPtrajsamples].second = i;
+        }
+        sort(weights_GPSSampleLists.begin(),weights_GPSSampleLists.end());
+
+        for (int i=numDDPtrajsamples; i<numSk; i++)
+        {
+            cur_GPSSampleLists.push_back(GPSSampleLists[weights_GPSSampleLists[i-numDDPtrajsamples].second]);
+            curGPSmapGPS[i]=weights_GPSSampleLists[i-numDDPtrajsamples].second;
+        }
     }
     
     /*
