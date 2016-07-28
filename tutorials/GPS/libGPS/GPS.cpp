@@ -21,9 +21,10 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, vala
     DDPIter     = 0;
     // m is a misc variable and mPhi is a unique meaningful variable
     mPhi        = numSamplesPerPolicy.sum();
-    GPS_iterations = 5;
+    GPS_iterations = 20;
     previous_lossvalue_wo = 0;
     current_lossvalue_wo = 0;
+    numSk = 80;
 
     Py_Initialize();
     PyRun_SimpleString("import sys");  
@@ -70,7 +71,7 @@ void GPS::InitPolicyOptCaffe()
     PyTuple_SetItem(pArgs,2, PyInt_FromLong(T-1));
     int m = numSamplesPerPolicy.sum() - numSamplesPerPolicy[conditions];
     PyTuple_SetItem(pArgs,3, PyInt_FromLong(m));
-    PyTuple_SetItem(pArgs,4, PyInt_FromLong(mPhi));
+    PyTuple_SetItem(pArgs,4, PyInt_FromLong(numSk));
     pInstancePolicyOptCaffe = PyInstance_New(pClassPolicyOptCaffe,pArgs,NULL);
     pInstanceCaffePolicy    = PyObject_GetAttrString(pInstancePolicyOptCaffe,"policy");
     pInstancePolicyRepo     = PyObject_GetAttrString(pInstancePolicyOptCaffe,"policyRepo");
@@ -147,7 +148,9 @@ void GPS::innerloop()
     writeSubSampleSets2file();
 
     // Optimize theta_k w.r.t. Phi
+    modifymPhi();
     FineTunePolicy();
+    restoremPhi();
 
     // generate samples from theta_k. theta_k is now the last CaffePolicy of PolicyRepo
     // append samples to GPSSampleLists and cur_GPSSampleLists
@@ -217,7 +220,9 @@ void GPS::run()
         writeSubSampleSets2file();
 
         // Optimize theta_k w.r.t. Phi
+        modifymPhi();
         FineTunePolicy();
+        restoremPhi();
 
         // generate samples from theta_k. theta_k is now the last CaffePolicy of PolicyRepo
         // append samples to GPSSampleLists and cur_GPSSampleLists
@@ -666,11 +671,26 @@ void GPS::restoretheta()
 
 void GPS::ChooseSubSets()
 {
+    // Always choose guiding samples and high weights samples
+    // guiding samples are always first numSamplesPerPolicy[0:conditions-1].sum() samples
+    // the following samples are NN policies
+    if GPSSampleLists.size() < numSk
+    {
+        cur_GPSSampleLists = GPSSampleLists;
+    }
+    else
+    {
+    
+    }
+    
+    /*
+    // There is no need to shuffle sample sets
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     cur_GPSSampleLists = GPSSampleLists;
     shuffle(cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), default_random_engine(seed)); 
     // clamp cur_GPSSampleLists to mPhi
     cur_GPSSampleLists.erase(cur_GPSSampleLists.begin()+mPhi,cur_GPSSampleLists.end());
+    */
 
     for_each(cur_GPSSampleLists.begin(),cur_GPSSampleLists.end(),
             [](shared_ptr<sample> SampleEntry)

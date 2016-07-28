@@ -165,6 +165,9 @@ class PhiLoss(caffe.Layer):
         self.lossvalue_wo = loss_wo
         top[0].data[...] = loss
 
+        # write weights for each samples
+        np.savetxt('WeightsList.txt',Log_Zt_ind[-1,:],fmt='%1.4f')
+
     def backward(self, top, propagate_down, bottom):
         # bottom[0] mPhi*batch_size*dim_output u given x
         # bottom[1] mPhi*batch_size*dim_input  x

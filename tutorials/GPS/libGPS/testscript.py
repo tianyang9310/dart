@@ -31,7 +31,7 @@ tt.ReadSampleSets_Quu_inv()
 tt.ReadSampleSets_Logq()
 tt.setWr()
 
-# tt.modifymPhi(14)
+tt.modifymPhi(60)
 
 tt.finetune()
 

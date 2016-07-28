@@ -73,6 +73,7 @@ public:
     vector<shared_ptr<sample>> trajSamples4NNpretrain;
     VectorXi sampleRegistrar;
     VectorXd WeightsList;
+    int numSk;
 // --------------------
 //  python wrapper
     PyObject *pInstancePolicyOptCaffe;
