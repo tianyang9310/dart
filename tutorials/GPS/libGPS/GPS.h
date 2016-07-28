@@ -72,6 +72,7 @@ public:
     vector<shared_ptr<sample>> cur_GPSSampleLists;
     vector<shared_ptr<sample>> trajSamples4NNpretrain;
     VectorXi sampleRegistrar;
+    VectorXd WeightsList;
 // --------------------
 //  python wrapper
     PyObject *pInstancePolicyOptCaffe;
@@ -90,6 +91,7 @@ public:
     void write4numpy_Quu_inv(vector<shared_ptr<sample>> data, const std::string name);
     void write4numpy_Logq(vector<shared_ptr<sample>> data, const std::string name);
     void writeLogqd(VectorXd Logqd, const std::string name);
+    void readWeights(VectorXd &data, const std::string name);
 // --------------------
 };
 

@@ -105,6 +105,10 @@ GPS::~GPS()
 
 void GPS::rund()
 {
+    // Debug Read weights
+    // readWeights(WeightsList,"WeightsList.txt");
+    // cin.get();
+
     InitDDPPolicy();
     cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
     cout<<"@@@@@@ Initialize DDP Bundles @@@@@@@@"<<endl;
@@ -904,6 +908,8 @@ void GPS::modifymPhi()
     PyObject *pNewmPhi = PyInt_FromLong(newmPhi);
     PyObject_CallMethodObjArgs(pInstancePolicyOptCaffe, PyString_FromString("modifymPhi"), pNewmPhi, NULL);
     Py_DECREF(pNewmPhi);
+
+    WeightsList.setZero(newmPhi);
 }
 
 void GPS::restoremPhi()
@@ -1051,6 +1057,29 @@ void GPS::writeLogqd(VectorXd Logqd, const std::string name)
     outFile.precision(8);
     outFile<<Logqd.head(T-1)<<std::endl; 
     outFile.close();
+}
+
+void GPS::readWeights(VectorXd &data, const std::string name)
+{
+    data.setZero(60);
+    ifstream fin(name);
+    int nrows = data.rows();
+    if (fin.is_open())
+    {
+        for (int _row=0; _row<nrows; _row++)
+        {
+            float item = 0.0;
+            fin>>item;
+            data(_row) = item;
+        }
+        fin.close();
+    }
+    else
+    {
+        dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
+    }
+    dtmsg<<"Read Weights from file as follows..."<<endl<<endl;
+    // cout<<data<<endl;
 }
 
 }
