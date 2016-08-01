@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 	int T				= 100;
     int x_dim           = 4;
     int u_dim           = 1;
-	int numDDPIters		= 50;
+	int numDDPIters		= 100;
 	int conditions  	= 1;
 	valarray<int> numSamplePerPolicy(conditions+1);
     numSamplePerPolicy[0] = 40;
@@ -47,12 +47,17 @@ int main(int argc, char* argv[])
 	Matrix4d Q	= Matrix4d::Zero();
 	Q(0,0)				= 0.01;
 	Q(1,1)				= 5;
+	Q(2,2)				= 5;
+	Q(3,3)				= 5;
 
 	Matrix<double,1,1> R;
 	R(0,0)				= 1;
 
 	Matrix4d Qf = Matrix4d::Identity();
+	Qf(0,0)				= 10;
 	Qf(1,1)				= 500;
+	Qf(2,2)				= 500;
+	Qf(3,3)				= 500;
 
 	Q			= Q*delta_t;
 	R			= R*delta_t;

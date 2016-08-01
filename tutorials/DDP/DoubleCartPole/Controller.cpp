@@ -22,16 +22,24 @@ Controller::Controller(WorldPtr mDDPWorld)
 
 	Eigen::MatrixXd Q(6,6);
 	Q.setZero();
+	Q(0,0)				= 0.01;
 	Q(1,1)				= 5;
 	Q(2,2)				= 5;
+	Q(3,3)				= 8;
+	Q(4,4)				= 8;
+	Q(5,5)				= 8;
 
 	Eigen::Matrix<double,1,1> R;
 	R(0,0)				= 1;
 
 	Eigen::MatrixXd Qf(6,6);
 	Qf.setZero();
+	Qf(0,0)				= 10;
 	Qf(1,1)				= 500;
 	Qf(2,2)				= 500;
+	Qf(3,3)				= 800;
+	Qf(4,4)				= 800;
+	Qf(5,5)				= 800;
 
 	Q			= Q*delta_t;
 	R			= R*delta_t;

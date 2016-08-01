@@ -215,7 +215,6 @@ void GPS::DDPdemonstration()
         cout<<"[BEFORE] "<<_cond<<" DDP mu is "<<DDPBundle[_cond]->mu<<endl;
         DDPBundle[_cond]->setMu();
         cout<<"[AFTER]"<<_cond<<" DDP mu is "<<DDPBundle[_cond]->mu<<endl;
-
     }
 }
 
@@ -955,6 +954,7 @@ inline void GaussianEvaluatorDebug()
     cout<<"The probability of 3 in N(5,1) is "<<GaussianEvaluator(5,1,3)<<endl;
     cin.get();
 }
+
 
 void printDict(PyObject* obj) {  
     if (!PyDict_Check(obj))  

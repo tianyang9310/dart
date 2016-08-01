@@ -18,6 +18,7 @@ using namespace dart::gui;
 int main(int argc, char* argv[])
 {
 	WorldPtr mWorld = std::make_shared<World>();
+    mWorld->setTimeStep(0.02);
 	WorldSetup(mWorld);
 
 	MyWindow window(mWorld);

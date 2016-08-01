@@ -25,12 +25,17 @@ Controller::Controller(WorldPtr mDDPWorld)
 	Eigen::Matrix4d Q	= Eigen::Matrix4d::Zero();
 	Q(0,0)				= 0.01;
 	Q(1,1)				= 5;
+	Q(2,2)				= 5;
+	Q(3,3)				= 5;
 
 	Eigen::Matrix<double,1,1> R;
 	R(0,0)				= 1;
 
 	Eigen::Matrix4d Qf = Eigen::Matrix4d::Identity();
+	Qf(0,0)				= 10;
 	Qf(1,1)				= 500;
+	Qf(2,2)				= 500;
+	Qf(3,3)				= 500;
 
 	Q			= Q*delta_t;
 	R			= R*delta_t;
@@ -45,7 +50,7 @@ Controller::Controller(WorldPtr mDDPWorld)
 //	mDDP = std::unique_ptr<DDP>(new DDP(2000, std::bind(CartPoleStepDynamics, std::placeholders::_1, std::placeholders::_2, m_c, m_p, l, g, delta_t), std::bind(CartPoleStepCost, std::placeholders::_1, std::placeholders::_2, xd, Q, R), std::bind(CartPoleFinalCost,std::placeholders::_1, xd, Qf), LQR, std::make_tuple(x0,xd,1)));
 
 //  Dynamics from DART
-	mDDP = std::unique_ptr<DDP>(new DDP(2000, std::bind(DartStepDynamics, std::placeholders::_1, std::placeholders::_2, mDDPWorld), std::bind(CartPoleStepCost, std::placeholders::_1, std::placeholders::_2, xd, Q, R), std::bind(CartPoleFinalCost,std::placeholders::_1, xd, Qf), LQR, std::make_tuple(x0,xd,1)));
+	mDDP = std::unique_ptr<DDP>(new DDP(100, std::bind(DartStepDynamics, std::placeholders::_1, std::placeholders::_2, mDDPWorld), std::bind(CartPoleStepCost, std::placeholders::_1, std::placeholders::_2, xd, Q, R), std::bind(CartPoleFinalCost,std::placeholders::_1, xd, Qf), LQR, std::make_tuple(x0,xd,1)));
 
 
 // --------------------------------------------------
