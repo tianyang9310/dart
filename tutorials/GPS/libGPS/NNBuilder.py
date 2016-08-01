@@ -166,6 +166,7 @@ class PhiLoss(caffe.Layer):
         top[0].data[...] = loss
 
         # write weights for each samples
+        print Log_Zt_ind[-1,:].shape
         np.savetxt('WeightsList.txt',Log_Zt_ind[-1,:],fmt='%1.4f')
 
     def backward(self, top, propagate_down, bottom):

@@ -1,3 +1,5 @@
+import os
+os.environ['GLOG_minloglevel']='2'
 import numpy as np
 import caffe
 import copy
@@ -8,6 +10,7 @@ from Policy_Caffe import CaffePolicy
 from file2numpy import file2numpy
 import tempfile
 import json
+import os
 
 class PolicyOptCaffe():
     def __init__(self, x_dim, u_dim, T, N, mPhi):

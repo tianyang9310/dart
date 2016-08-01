@@ -141,10 +141,10 @@ void GPS::innerloop()
 {
     // shuffle and choose sub sample sets Sk
     ChooseSubSets();
-    writeSubSampleSets2file();
+    writeSubSampleSets2file(cur_GPSSampleLists);
 
     // Optimize theta_k w.r.t. Phi
-    modifymPhi();
+    modifymPhi(cur_GPSSampleLists);
     FineTunePolicy();
     restoremPhi();
 
@@ -156,15 +156,26 @@ void GPS::innerloop()
     
     // Evaluate eq(2) to see whether replace theta_k or increase wr
     // Here this evaluation can be retrieved directly from python interface
-    writeSubSampleSets2file();
-    modifymPhi();
+    writeSubSampleSets2file(cur_GPSSampleLists);
+    modifymPhi(cur_GPSSampleLists);
     RetrieveLoss_wo(true);    // previous = true
 
-    // read weights from file
-    readWeights(WeightsList,"WeightsList.txt");
-    attachWeights();
-
     RetrieveLoss_wo(false);   // previous = false
+    restoremPhi();
+
+    // read weights from file
+    writeSubSampleSets2file(GPSSampleLists);
+    modifymPhi(GPSSampleLists);
+    {
+        PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_X",NULL);
+        PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_U",NULL);
+        PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Quu_inv",NULL);
+        PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadSampleSets_Logq",NULL);
+
+        PyObject_CallMethodObjArgs(pInstancePolicyOptCaffe,PyString_FromString("trainnet2forward"),Py_False,NULL);
+    }
+    readWeights(GPSSampleLists.size(),WeightsList,"WeightsList.txt");
+    attachWeights();
     restoremPhi();
 
     if (current_lossvalue_wo <= previous_lossvalue_wo)
@@ -186,78 +197,6 @@ void GPS::innerloop()
     cout<<"& Press any key to continue &"<<endl;
     cout<<"& & & & & & & & & & & & & & &"<<endl;
     cin.get();
-}
-
-void GPS::run()
-{
-    // readWeights(WeightsList,"WeightsList.txt");
-    // GaussianSamplerDebug();
-    // GaussianEvaluatorDebug();
-
-    InitDDPPolicy();
-    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
-    cout<<"@@@@@@ Initialize DDP Bundles @@@@@@@@"<<endl;
-    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl<<endl;
-    cout<<"Press any key to continue..."<<endl;
-    cin.get();
-
-    InitNNPolicy();
-    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
-    cout<<"@@@@@@ Initialize Neural Net @@@@@@@@@"<<endl;
-    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl<<endl;
-    cout<<"Press any key to continue..."<<endl;
-    cin.get();
-
-    BuildInitSamples();
-    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
-    cout<<"@@@@@@ Build Initiali Sample Lists@@@@"<<endl;
-    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl<<endl;
-    cout<<"Press any key to continue..."<<endl;
-    cin.get();
-
-    for (int _GPS_iter=0; _GPS_iter<GPS_iterations; _GPS_iter++)
-    {
-        // shuffle and choose sub sample sets Sk
-        ChooseSubSets();
-        writeSubSampleSets2file();
-
-        // Optimize theta_k w.r.t. Phi
-        modifymPhi();
-        FineTunePolicy();
-        restoremPhi();
-
-        // generate samples from theta_k. theta_k is now the last CaffePolicy of PolicyRepo
-        // append samples to GPSSampleLists and cur_GPSSampleLists
-        appendSamplesFromThetaK(); 
-        
-        // Optionally generate adaptive guiding samples
-        
-        // Evaluate eq(2) to see whether replace theta_k or increase wr
-        // Here this evaluation can be retrieved directly from python interface
-        writeSubSampleSets2file();
-        modifymPhi();
-        RetrieveLoss_wo(true);    // previous = true
-        RetrieveLoss_wo(false);   // previous = false
-        restoremPhi();
-
-        if (current_lossvalue_wo <= previous_lossvalue_wo)
-        {
-            replacetheta();
-        }
-        else
-        {
-            restoretheta();
-        }
-        
-        //
-        // return the best policy
-        
-        cout<<"& & & & & & & & & & & & & & &"<<endl;
-        cout<<"& & One iteration of Run  & &"<<endl;
-        cout<<"& Press any key to continue &"<<endl;
-        cout<<"& & & & & & & & & & & & & & &"<<endl;
-        cin.get();
-    }
 }
 
 void GPS::DDPdemonstration()
@@ -322,12 +261,14 @@ void GPS::InitNNPolicy()
 
 void GPS::BuildInitSamples()
 {
-    GPSSampleLists = trajSampleGeneratorFromNN(numSamplesPerPolicy[conditions]);
+    GPSSampleLists.erase(GPSSampleLists.begin(),GPSSampleLists.end());
     for (int _cond=0; _cond<conditions; _cond++)
     {
         auto tmpSampleLists = trajSampleGeneratorFromDDP(numSamplesPerPolicy[_cond], _cond);
         GPSSampleLists.insert(GPSSampleLists.end(), tmpSampleLists.begin(), tmpSampleLists.end());
     }
+    auto tmpSampleLists = trajSampleGeneratorFromNN(numSamplesPerPolicy[conditions]); 
+    GPSSampleLists.insert(GPSSampleLists.end(), tmpSampleLists.begin(), tmpSampleLists.end());
     
     /*
     for_each(GPSSampleLists.begin(),GPSSampleLists.end(),
@@ -337,23 +278,24 @@ void GPS::BuildInitSamples()
             });
     */
 }
-void GPS::writeSubSampleSets2file()
+
+void GPS::writeSubSampleSets2file(vector<shared_ptr<sample>>& _workingGPSSampleLists)
 {
-    write4numpy_X(cur_GPSSampleLists, "SampleSets_X");
-    write4numpy_U(cur_GPSSampleLists, "SampleSets_U");
-    write4numpy_Quu_inv(cur_GPSSampleLists, "SampleSets_Quu_inv");
-    EvalProb_Logq();
-    write4numpy_Logq(cur_GPSSampleLists, "SampleSets_Logq");
+    write4numpy_X(_workingGPSSampleLists, "SampleSets_X");
+    write4numpy_U(_workingGPSSampleLists, "SampleSets_U");
+    write4numpy_Quu_inv(_workingGPSSampleLists, "SampleSets_Quu_inv");
+    EvalProb_Logq(_workingGPSSampleLists);
+    write4numpy_Logq(_workingGPSSampleLists, "SampleSets_Logq");
 }
 
-void GPS::EvalProb_Logqd()
+void GPS::EvalProb_Logqd(vector<shared_ptr<sample>>& _workingGPSSampleLists)
 {
-    Registration();
+    Registration(_workingGPSSampleLists);
 
-//  cur_GPSSampleLists
+//  _workingGPSSampleLists
     
     int idx=5;
-    cout<<cur_GPSSampleLists[idx]->x.transpose()<<endl;
+    cout<<_workingGPSSampleLists[idx]->x.transpose()<<endl;
 
 //  eval condition 1 traj samples w.r.t. condition 1 DDP
     VectorXd Logqd;
@@ -361,7 +303,7 @@ void GPS::EvalProb_Logqd()
     for(int i=0; i<T-1; i++)
     {
         double tmpq = 0;
-        tmpq = GaussianEvaluator((DDPPolicyBundle[0].first)[i](cur_GPSSampleLists[idx]->x.col(i))(0), (DDPPolicyBundle[0].second)[i](0), cur_GPSSampleLists[idx]->u.col(i)(0));
+        tmpq = GaussianEvaluator((DDPPolicyBundle[0].first)[i](_workingGPSSampleLists[idx]->x.col(i))(0), (DDPPolicyBundle[0].second)[i](0), _workingGPSSampleLists[idx]->u.col(i)(0));
         cout<<"NN var"<<(DDPPolicyBundle[0].second)[i](0)<<endl;
         if (i==0)
         {
@@ -386,7 +328,7 @@ void GPS::EvalProb_Logqd()
             {
                 continue;
             }
-            tmpq += sampleRegistrar[_cond]*GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](cur_GPSSampleLists[idx]->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), cur_GPSSampleLists[idx]->u.col(i)(0));
+            tmpq += sampleRegistrar[_cond]*GaussianEvaluator((DDPPolicyBundle[_cond].first)[i](_workingGPSSampleLists[idx]->x.col(i))(0), (DDPPolicyBundle[_cond].second)[i](0), _workingGPSSampleLists[idx]->u.col(i)(0));
         }
 
         // Evaluation in terms of NN
@@ -402,10 +344,10 @@ void GPS::EvalProb_Logqd()
             auto pIndNNPolicy = PyObject_CallMethodObjArgs(pInstancePolicyRepo,PyString_FromString("__getitem__"), pIdxNNPolicy, NULL);
 
             PyObject* pArgs = PyTuple_New(4);
-            PyTuple_SetItem(pArgs,0, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[0]));
-            PyTuple_SetItem(pArgs,1, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[1]));
-            PyTuple_SetItem(pArgs,2, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[2]));
-            PyTuple_SetItem(pArgs,3, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[3]));
+            PyTuple_SetItem(pArgs,0, PyFloat_FromDouble(_workingGPSSampleLists[idx]->x.col(i)[0]));
+            PyTuple_SetItem(pArgs,1, PyFloat_FromDouble(_workingGPSSampleLists[idx]->x.col(i)[1]));
+            PyTuple_SetItem(pArgs,2, PyFloat_FromDouble(_workingGPSSampleLists[idx]->x.col(i)[2]));
+            PyTuple_SetItem(pArgs,3, PyFloat_FromDouble(_workingGPSSampleLists[idx]->x.col(i)[3]));
             PyObject* pResult =  PyObject_CallMethodObjArgs(pIndNNPolicy, PyString_FromString("act"), pArgs, NULL);
             if (! pResult)
             {
@@ -425,7 +367,7 @@ void GPS::EvalProb_Logqd()
             double Quu_inv_Policy;
             Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pIndNNPolicy,"var"));
             __Quu_inv<<Quu_inv_Policy;
-            tmpq += sampleRegistrar[conditions+_idxNNPolicy]*GaussianEvaluator(__ut(0), __Quu_inv(0), cur_GPSSampleLists[idx]->u.col(i)(0));
+            tmpq += sampleRegistrar[conditions+_idxNNPolicy]*GaussianEvaluator(__ut(0), __Quu_inv(0), _workingGPSSampleLists[idx]->u.col(i)(0));
             cout<<"NN var"<<Quu_inv_Policy<<endl;
             Py_DECREF(pIdxNNPolicy);
             Py_DECREF(pArgs);
@@ -453,10 +395,10 @@ void GPS::EvalProb_Logqd()
         double tmpq    = 0;
         // Evaluation in terms of NN
         PyObject* pArgs = PyTuple_New(4);
-        PyTuple_SetItem(pArgs,0, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[0]));
-        PyTuple_SetItem(pArgs,1, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[1]));
-        PyTuple_SetItem(pArgs,2, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[2]));
-        PyTuple_SetItem(pArgs,3, PyFloat_FromDouble(cur_GPSSampleLists[idx]->x.col(i)[3]));
+        PyTuple_SetItem(pArgs,0, PyFloat_FromDouble(_workingGPSSampleLists[idx]->x.col(i)[0]));
+        PyTuple_SetItem(pArgs,1, PyFloat_FromDouble(_workingGPSSampleLists[idx]->x.col(i)[1]));
+        PyTuple_SetItem(pArgs,2, PyFloat_FromDouble(_workingGPSSampleLists[idx]->x.col(i)[2]));
+        PyTuple_SetItem(pArgs,3, PyFloat_FromDouble(_workingGPSSampleLists[idx]->x.col(i)[3]));
         PyObject* pResult =  PyObject_CallMethodObjArgs(pInstanceCaffePolicy, PyString_FromString("act"), pArgs, NULL);
         if (! pResult)
         {
@@ -477,7 +419,7 @@ void GPS::EvalProb_Logqd()
         Quu_inv_Policy = PyFloat_AsDouble(PyObject_GetAttrString(pInstanceCaffePolicy,"var"));
         __Quu_inv<<Quu_inv_Policy;
         cout<<"NN var"<<Quu_inv_Policy<<endl;
-        tmpq += GaussianEvaluator(__ut(0), __Quu_inv(0), cur_GPSSampleLists[idx]->u.col(i)(0));
+        tmpq += GaussianEvaluator(__ut(0), __Quu_inv(0), _workingGPSSampleLists[idx]->u.col(i)(0));
         Py_DECREF(pArgs);
         Py_DECREF(pResult);
 
@@ -496,13 +438,13 @@ void GPS::EvalProb_Logqd()
 
 
 
-void GPS::EvalProb_Logq()
+void GPS::EvalProb_Logq(vector<shared_ptr<sample>>& _workingGPSSampleLists)
 {
-    Registration();
+    Registration(_workingGPSSampleLists);
     cout<<"Sample Registration... "<<sampleRegistrar.transpose()<<endl;
 
 //  this function computes the evaluation of trajectories in terms of mixture of probabilities.
-    for_each(cur_GPSSampleLists.begin(), cur_GPSSampleLists.end(), 
+    for_each(_workingGPSSampleLists.begin(), _workingGPSSampleLists.end(), 
             [=](shared_ptr<sample> &SampleEntry)
             {
                 SampleEntry->Logq.setZero(T);
@@ -576,12 +518,12 @@ void GPS::EvalProb_Logq()
             });
 }
 
-void GPS::Registration()
+void GPS::Registration(vector<shared_ptr<sample>>& _workingGPSSampleLists)
 {
-// Registrate cur_GPSSampleLists' sourceFlag
+// Registrate _workingGPSSampleLists' sourceFlag
     sampleRegistrar.setZero(conditions+GPS_iterations+1);
     
-    for_each(cur_GPSSampleLists.begin(),cur_GPSSampleLists.end(),
+    for_each(_workingGPSSampleLists.begin(),_workingGPSSampleLists.end(),
             [=](shared_ptr<sample> SampleEntry)
             {
                 sampleRegistrar[SampleEntry->SourceFlag+conditions]++;
@@ -590,12 +532,17 @@ void GPS::Registration()
 
 void GPS::attachWeights()
 {
-// attach weights according to curGPSmapGPS
-
-    for (int i=0; i<curGPSmapGPS.rows(); i++)
+    for (int i=0; i<GPSSampleLists.size(); i++)
     {
-        GPSSampleLists[curGPSmapGPS[i]]->weights = WeightsList[i];
+        GPSSampleLists[i]->weights = WeightsList[i];
     }
+
+    cout<<"GPSSampleLists' Weights are"<<endl;
+    for_each(GPSSampleLists.begin(),GPSSampleLists.end(),
+            [](shared_ptr<sample> SampleEntry)
+            {
+                cout<<SampleEntry->weights<<endl;
+            });
 }
 
 void GPS::FineTunePolicy()
@@ -691,19 +638,12 @@ void GPS::ChooseSubSets()
     {
         dtmsg<<"Choose all samples"<<endl;
         cur_GPSSampleLists = GPSSampleLists;
-        curGPSmapGPS.setLinSpaced(cur_GPSSampleLists.size(),0,cur_GPSSampleLists.size()-1);
     }
     else
     {
         dtmsg<<"Choose high weights samples"<<endl;
         cur_GPSSampleLists.erase(cur_GPSSampleLists.begin(),cur_GPSSampleLists.end());
         cur_GPSSampleLists.insert(cur_GPSSampleLists.end(),GPSSampleLists.begin(),GPSSampleLists.begin()+numDDPtrajsamples);
-
-        VectorXi _tmpcurGPSmapGPS;
-        _tmpcurGPSmapGPS.setLinSpaced(numDDPtrajsamples,0,(numDDPtrajsamples-1));
-
-        curGPSmapGPS.setZero(numSk);
-        curGPSmapGPS.head(_tmpcurGPSmapGPS.rows()) = _tmpcurGPSmapGPS;
 
         // choose high weights samples
         vector<pair<double,size_t>> weights_GPSSampleLists(GPSSampleLists.size()-numDDPtrajsamples);
@@ -715,15 +655,14 @@ void GPS::ChooseSubSets()
         sort(weights_GPSSampleLists.begin(),weights_GPSSampleLists.end());
         reverse(weights_GPSSampleLists.begin(),weights_GPSSampleLists.end());
 
-        for (int i=0; i<weights_GPSSampleLists.size(); i++)
-        {
-            cout<<"Weights: "<<weights_GPSSampleLists[i].first<<" ; Index: "<<weights_GPSSampleLists[i].second<<endl;
-        }
+        // for (int i=0; i<weights_GPSSampleLists.size(); i++)
+        // {
+        //     cout<<"Weights: "<<weights_GPSSampleLists[i].first<<" ; Index: "<<weights_GPSSampleLists[i].second<<endl;
+        // }
 
         for (int i=numDDPtrajsamples; i<numSk; i++)
         {
             cur_GPSSampleLists.push_back(GPSSampleLists[weights_GPSSampleLists[i-numDDPtrajsamples].second]);
-            curGPSmapGPS[i]=weights_GPSSampleLists[i-numDDPtrajsamples].second;
         }
     }
     
@@ -966,9 +905,9 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
     return MixSampleLists;
 }
 
-void GPS::modifymPhi()
+void GPS::modifymPhi(vector<shared_ptr<sample>>& _workingGPSSampleLists)
 {
-    int newmPhi = cur_GPSSampleLists.size();
+    int newmPhi = _workingGPSSampleLists.size();
     PyObject *pNewmPhi = PyInt_FromLong(newmPhi);
     PyObject_CallMethodObjArgs(pInstancePolicyOptCaffe, PyString_FromString("modifymPhi"), pNewmPhi, NULL);
     Py_DECREF(pNewmPhi);
@@ -1123,9 +1062,9 @@ void GPS::writeLogqd(VectorXd Logqd, const std::string name)
     outFile.close();
 }
 
-void GPS::readWeights(VectorXd &data, const std::string name)
+void GPS::readWeights(int _size, VectorXd &data, const std::string name)
 {
-    data.setZero(60);
+    data.setZero(_size);
     ifstream fin(name);
     int nrows = data.rows();
     if (fin.is_open())

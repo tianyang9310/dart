@@ -44,7 +44,7 @@ public:
     void restoretheta();
     void appendSamplesFromThetaK(); 
     void ChooseSubSets();
-    void Registration();
+    void Registration(vector<shared_ptr<sample>>& _workingGPSSampleLists);
     void attachWeights();
     vector<shared_ptr<sample>> trajSampleGeneratorFromDDP(int numSamples, int DDPIdx);
 	vector<shared_ptr<sample>> trajSampleGeneratorFromDDPMix(int numSamples);
@@ -75,17 +75,16 @@ public:
     VectorXi sampleRegistrar;
     VectorXd WeightsList;
     int numSk;
-    VectorXi curGPSmapGPS;
 // --------------------
 //  python wrapper
     PyObject *pInstancePolicyOptCaffe;
     PyObject *pInstanceCaffePolicy;
     PyObject *pInstancePolicyRepo;
     void InitPolicyOptCaffe();
-    void EvalProb_Logq();
-    void EvalProb_Logqd();
-    void writeSubSampleSets2file();
-    void modifymPhi();
+    void EvalProb_Logq(vector<shared_ptr<sample>>& _workingGPSSampleLists);
+    void EvalProb_Logqd(vector<shared_ptr<sample>>& _workingGPSSampleLists);
+    void writeSubSampleSets2file(vector<shared_ptr<sample>>& _workingGPSSampleLists);
+    void modifymPhi(vector<shared_ptr<sample>>& _workingGPSSampleLists);
     void restoremPhi();
     vector<PyObject*> pInstanceThetaKLists;
 
@@ -94,7 +93,7 @@ public:
     void write4numpy_Quu_inv(vector<shared_ptr<sample>> data, const std::string name);
     void write4numpy_Logq(vector<shared_ptr<sample>> data, const std::string name);
     void writeLogqd(VectorXd Logqd, const std::string name);
-    void readWeights(VectorXd &data, const std::string name);
+    void readWeights(int _size, VectorXd &data, const std::string name);
 // --------------------
 };
 
