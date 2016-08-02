@@ -304,6 +304,7 @@ bool DDP::backwardpass()
     return localDiverge;
 }
 
+
 void DDP::forwardpass()
 {
     dtmsg<<"Forward pass starting..."<<std::endl;
@@ -315,10 +316,9 @@ void DDP::forwardpass()
         C_new.row(i) = StepCost(x_new.col(i),u_new.col(i));
 
 
-        gx[i] = [=](Eigen::VectorXd xt)
+        gx[i] = [=](Eigen::VectorXd xt)->VectorXd
                     {
-                        VectorXd gx_result=(K[i]*(xt - x.col(i)) + u.col(i) + alpha*k[i]);
-                        return gx_result;
+                        return (K[i]*(xt - x.col(i)) + u.col(i) + alpha*k[i]).eval();
                     };
 
         // // debug gx

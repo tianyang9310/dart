@@ -8,7 +8,6 @@
 #include <functional>
 #include "dart/dart.h"
 #include "type.h"
-#include <typeinfo>
 
 using namespace dart::dynamics;
 using namespace dart::simulation;
