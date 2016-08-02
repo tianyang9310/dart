@@ -16,7 +16,7 @@ MyWindow::MyWindow(WorldPtr world, unique_ptr<GPS> _mGPS):mGPS(std::move(_mGPS))
 
 void MyWindow::timeStepping() 
 {
-    bool DDPDisplay = false;
+    bool DDPDisplay = true;
     if(DDPDisplay)
     {
         if (mWorld->getSimFrames() == mGPS->T-1)
@@ -39,6 +39,18 @@ void MyWindow::timeStepping()
         // mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(mGPS->cur_GPSSampleLists[30]->x.col(mSimFrameCount)(2));
         // mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(mGPS->cur_GPSSampleLists[30]->x.col(mSimFrameCount)(3));
         
+        dtmsg<<mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition()<<endl;
+        dtmsg<<mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition()<<endl;
+        dtmsg<<mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity()<<endl;
+        dtmsg<<mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity()<<endl;
+        VectorXd _tmpX(4);
+        _tmpX<<mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition(),
+               mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition(),
+               mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity(),
+               mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity();
+        cout<<mGPS->DDPPolicyBundle[idxDDP].first[mSimFrameCount](_tmpX)<<endl;
+
+        cout<<mGPS->DDPBundle[idxDDP]->u.col(mSimFrameCount)[0]<<endl;
         mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setForce(mGPS->DDPBundle[idxDDP]->u.col(mSimFrameCount)[0]);
     }
     else

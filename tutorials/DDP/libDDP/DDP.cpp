@@ -314,14 +314,17 @@ void DDP::forwardpass()
         x_new.col(i+1) = StepDynamics(x_new.col(i), u_new.col(i));
         C_new.row(i) = StepCost(x_new.col(i),u_new.col(i));
 
+
         gx[i] = [=](Eigen::VectorXd xt)
                     {
-                        return u.col(i) + alpha*k[i] + K[i]*(xt - x.col(i));
+                        VectorXd gx_result=(K[i]*(xt - x.col(i)) + u.col(i) + alpha*k[i]);
+                        return gx_result;
                     };
 
-        // debug gx
-        // std::cout<<"u_new is "<<u_new.col(i).transpose()<<std::endl;
-        // std::cout<<"gx is "<<gx[i](x_new.col(i)).transpose()<<std::endl;
+        // // debug gx
+        // std::cout<<"~~~~~~~~~~~~~~~~~~~~~~"<<std::endl;
+        // std::cout<<"u_new is "<<u_new.col(i)<<std::endl;
+        // std::cout<<"gx is "<<gx[i](x_new.col(i))<<std::endl;
         // std::cout<<"press any key to continue...";
         // std::cin.get();
     }
