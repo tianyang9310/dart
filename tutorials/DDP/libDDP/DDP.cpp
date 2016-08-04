@@ -211,7 +211,7 @@ bool DDP::backwardpass()
     else
     {
         Vx[T-1]  = (FiniteDiff(FinalCost,x.col(T-1))).transpose();
-        Vxx[T-1] = FiniteDiff([=](Eigen::VectorXd Var){
+        Vxx[T-1] = FiniteDiff([=](Eigen::VectorXd Var)->Eigen::MatrixXd{
                         return FiniteDiff(FinalCost,Var);},
                         x.col(T-1));
     }
@@ -387,7 +387,7 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
     else
     {
         Eigen::MatrixXd Cxu_bundle;
-        Cxu_bundle  = FiniteDiff([=](Eigen::VectorXd Var){
+        Cxu_bundle  = FiniteDiff([=](Eigen::VectorXd Var)->Scalar{
                   return StepCost(Var.head(_xi.rows()), Var.tail(_ui.rows()));},
                  (Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui ).finished());
         Cx = (Cxu_bundle.leftCols(_xi.rows())).transpose();
@@ -395,14 +395,14 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
 
         Eigen::MatrixXd Cxxuu_bundle;
 
-        auto Cxu_FD = [=](Eigen::VectorXd __xi, Eigen::VectorXd __ui){
+        auto Cxu_FD = [=](Eigen::VectorXd __xi, Eigen::VectorXd __ui)->Eigen::MatrixXd{
         return    
-            FiniteDiff([=](Eigen::VectorXd Var){
+            FiniteDiff([=](Eigen::VectorXd Var)->Scalar{
                 return StepCost(Var.head(__xi.rows()), Var.tail(__ui.rows()));},
                 (Eigen::VectorXd(__xi.rows()+__ui.rows()) << __xi, __ui ).finished())
         ;};
 
-        Cxxuu_bundle = FiniteDiff([=](Eigen::VectorXd Var){
+        Cxxuu_bundle = FiniteDiff([=](Eigen::VectorXd Var)->Eigen::MatrixXd{
                 return Cxu_FD(Var.head(_xi.rows()),Var.tail(_ui.rows()));},
                 (Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui ).finished());
 
@@ -414,7 +414,7 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
     
 // fx, fu are computed according to finite difference
     Eigen::MatrixXd fxu_bundle;
-    fxu_bundle = FiniteDiff([=](Eigen::VectorXd Var){
+    fxu_bundle = FiniteDiff([=](Eigen::VectorXd Var)->Eigen::VectorXd{
             return StepDynamics(Var.head(_xi.rows()), Var.tail(_ui.rows()));}, 
             (Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui).finished());
     fx  = fxu_bundle.leftCols(_xi.rows());
