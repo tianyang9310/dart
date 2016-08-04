@@ -213,7 +213,7 @@ void GPS::DDPdemonstration()
         }
         
         cout<<"[BEFORE] "<<_cond<<" DDP mu is "<<DDPBundle[_cond]->mu<<endl;
-        // DDPBundle[_cond]->setMu();
+        DDPBundle[_cond]->setMu();
         cout<<"[AFTER]"<<_cond<<" DDP mu is "<<DDPBundle[_cond]->mu<<endl;
     }
 }

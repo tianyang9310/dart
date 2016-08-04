@@ -183,6 +183,7 @@ void DDP::trajopt()
     x = x_new;
     u = u_new;
     C = C_new;
+    dtmsg<<"updated x, u and c..."<<std::endl;
 // --------------------------------------------------
     std::cout<<"Current cost is "<<C.sum()<<std::endl;
 #ifdef mDebug_DDP
@@ -309,6 +310,14 @@ void DDP::forwardpass()
 {
     dtmsg<<"Forward pass starting..."<<std::endl;
     x_new.col(0) = x0;
+
+    Eigen::MatrixXd u_cache = u;
+    Eigen::MatrixXd x_cache = x;
+    std::vector<Eigen::MatrixXd> k_cache=k;
+    std::vector<Eigen::MatrixXd> K_cache=K;
+    double alpha_cache = alpha;
+
+    
     for (int i=0; i<T-1; i++)
     {
         u_new.col(i) = u.col(i) + alpha*k[i] + K[i]*(x_new.col(i)-x.col(i));
@@ -318,7 +327,14 @@ void DDP::forwardpass()
 
         gx[i] = [=](Eigen::VectorXd xt)->VectorXd
                     {
-                        return (K[i]*(xt - x.col(i)) + u.col(i) + alpha*k[i]).eval();
+                        // std::cout<<"u.col(i) + alpha*k[i] + K[i]*(xt - x.col(i))"<<std::endl;
+                        // std::cout<<"u.col("<<i<<") = "<<u_cache.col(i)<<std::endl;
+                        // std::cout<<"alpha = "<<alpha_cache<<std::endl;
+                        // std::cout<<"k["<<i<<"] = "<<k_cache[i]<<std::endl;
+                        // std::cout<<"K["<<i<<"] = "<<K_cache[i]<<std::endl;
+                        // std::cout<<"xt = "<<xt.transpose()<<std::endl;
+                        // std::cout<<"x.col("<<i<<") = "<<x_cache.col(i).transpose()<<std::endl;
+                        return (K_cache[i]*(xt - x_cache.col(i)) + u_cache.col(i) + alpha_cache*k_cache[i]).eval();
                     };
 
         // // debug gx
