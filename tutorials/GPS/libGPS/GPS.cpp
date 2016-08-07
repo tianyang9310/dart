@@ -129,7 +129,7 @@ void GPS::rund()
 
     // for (int _GPS_iter=0; _GPS_iter<GPS_iterations; _GPS_iter++)
     // {
-         innerloop();
+    //     innerloop();
     // }
     // shuffle and choose sub sample sets Sk
     // ChooseSubSets();
@@ -196,7 +196,7 @@ void GPS::innerloop()
     cout<<"& & One iteration of Run  & &"<<endl;
     cout<<"& Press any key to continue &"<<endl;
     cout<<"& & & & & & & & & & & & & & &"<<endl;
-    cin.get();
+    // cin.get();
 }
 
 void GPS::DDPdemonstration()
@@ -536,12 +536,12 @@ void GPS::attachWeights()
         GPSSampleLists[i]->weights = WeightsList[i];
     }
 
-    cout<<"GPSSampleLists' Weights are"<<endl;
-    for_each(GPSSampleLists.begin(),GPSSampleLists.end(),
-            [](shared_ptr<sample> SampleEntry)
-            {
-                cout<<SampleEntry->weights<<endl;
-            });
+    // cout<<"GPSSampleLists' Weights are"<<endl;
+    // for_each(GPSSampleLists.begin(),GPSSampleLists.end(),
+    //         [](shared_ptr<sample> SampleEntry)
+    //         {
+    //             cout<<SampleEntry->weights<<endl;
+    //         });
 }
 
 void GPS::FineTunePolicy()
@@ -674,12 +674,12 @@ void GPS::ChooseSubSets()
     cur_GPSSampleLists.erase(cur_GPSSampleLists.begin()+mPhi,cur_GPSSampleLists.end());
     */
 
-    for_each(cur_GPSSampleLists.begin(),cur_GPSSampleLists.end(),
-            [](shared_ptr<sample> SampleEntry)
-            {
-                dtmsg<<"Sample's from "<<SampleEntry->SourceFlag<<endl;
-            });
-    cout<<"Shuffling sample sets, Press any key to continue..."<<endl<<endl;
+    // for_each(cur_GPSSampleLists.begin(),cur_GPSSampleLists.end(),
+    //         [](shared_ptr<sample> SampleEntry)
+    //         {
+    //             dtmsg<<"Sample's from "<<SampleEntry->SourceFlag<<endl;
+    //         });
+    // cout<<"Shuffling sample sets, Press any key to continue..."<<endl<<endl;
     // cin.get();
 }
 
@@ -855,7 +855,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDP(int numSamples, int D
                     __Quu_inv.setZero(u_dim,u_dim);
                     __ut = (DDPPolicyBundle[DDPIdx].first)[i](SampleEntry->x.col(i));
                     __Quu_inv = (DDPPolicyBundle[DDPIdx].second)[i];
-                    SampleEntry->u.col(i) = __ut; //GaussianSampler(__ut, __Quu_inv);
+                    SampleEntry->u.col(i) = GaussianSampler(__ut, __Quu_inv);
                     SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
                     SampleEntry->Quu_inv[i] = __Quu_inv;
                 }
@@ -895,7 +895,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
                     __Quu_inv.setZero(u_dim,u_dim);
                     __Quu_inv = (DDPPolicyBundle[idxDDP].second)[i];
 
-                    SampleEntry->u.col(i) = __ut; //GaussianSampler(__ut, __Quu_inv);
+                    SampleEntry->u.col(i) = GaussianSampler(__ut, __Quu_inv);
                     SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
                     SampleEntry->Quu_inv[i] = __Quu_inv;
                 }

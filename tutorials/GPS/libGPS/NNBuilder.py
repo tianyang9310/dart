@@ -272,12 +272,12 @@ class PhiLoss(caffe.Layer):
     def GaussianEvaluator(self, mean, covariance, testX):
         probability = 0.0
         probability = 1.0/np.sqrt(2*np.pi*covariance)*np.exp(-0.5*((mean-testX)**2)/covariance)
-        if probability < np.finfo(np.double).tiny:  
-            probability = np.finfo(np.double).tiny  
+        if probability < np.finfo(np.float32).tiny:  
+            probability = np.finfo(np.float32).tiny  
         return probability
 
     def GaussianEvaluator_m_batch(self, mean, covariance, testX):
         probability = np.zeros(len(mean))
         probability = 1.0/np.sqrt(2*np.pi*covariance)*np.exp(-0.5*((mean-testX)**2)/covariance)
-        probability = np.maximum(probability, np.finfo(np.double).tiny)
+        probability = np.maximum(probability, np.finfo(np.float32).tiny)
         return probability

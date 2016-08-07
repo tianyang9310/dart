@@ -439,7 +439,7 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
 
 void DDP::setMu()
 {
-    mu_default = 10;
+    mu_default = 50;
     mu = mu_default;
 }
 
