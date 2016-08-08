@@ -24,11 +24,14 @@ public:
 	
 	void keyboard(unsigned char _key, int _x, int _y) override;
 
+    void mReset();
+
 // ------------------
 	unique_ptr<GPS> mGPS;
     int idxDDP;
 	WorldPtr mSnapShot;
     double MaxJointPos;
+    double CurJointPos;
 
 };
 

@@ -55,27 +55,12 @@ void MyWindow::timeStepping()
     }
     else
     {
-        double CurJointPos = mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
+        CurJointPos = mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition();
         MaxJointPos = MaxJointPos > CurJointPos ? MaxJointPos:CurJointPos;
-        if (mWorld->getSimFrames() == mGPS->T-1)
-        {
-            cout<<"Final State: "<<endl;
-            cout<<mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition()<<endl;
-            cout<<mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition()<<endl;
-            cout<<mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity()<<endl;
-            cout<<mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity()<<endl;
-
-            dtmsg<<"[Max Position] "<<MaxJointPos<<endl;
-            dtmsg<<"[Final Angle] "<<CurJointPos<<endl;
-            // keyboard(' ', 0,0);
-            MaxJointPos = -1e2;
-            // mGPS->innerloop();
-            setWorld(mSnapShot->clone());
-            mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(mGPS->x0Bundle[idxDDP](0));
-            mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(mGPS->x0Bundle[idxDDP](1));
-            mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(mGPS->x0Bundle[idxDDP](2));
-            mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(mGPS->x0Bundle[idxDDP](3));
-        }
+        // if (mWorld->getSimFrames() == mGPS->T-1)
+        // {
+        //     mReset();
+        // }
 
         if (!Py_IsInitialized())  
         {
@@ -113,15 +98,44 @@ void MyWindow::drawSkels()
     SimWindow::drawSkels();
 }
 
-void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
+void MyWindow::keyboard(unsigned char _key, int _x, int _y) 
+{
     switch(_key)
     {
-        case 'x':
-        
+        case 'r':
+        mReset(); 
         break;
 
         default:
         SimWindow::keyboard(_key, _x, _y);
         break;
     }
+}
+
+void MyWindow::mReset()
+{
+    cout<<"Final State: "<<endl;
+    cout<<mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getPosition()<<endl;
+    cout<<mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getPosition()<<endl;
+    cout<<mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity()<<endl;
+    cout<<mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity()<<endl;
+
+    dtmsg<<"[Max Position] "<<MaxJointPos<<endl;
+    dtmsg<<"[Final Angle] "<<CurJointPos<<endl;
+    // keyboard(' ', 0,0);
+    MaxJointPos = -1e2;
+    // mGPS->innerloop();
+    setWorld(mSnapShot->clone());
+
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+    uniform_int_distribution<int> distribution(0,mGPS->T-2);
+    int idxPosinTraj = distribution(generator);
+    // idxPosinTraj = 0;
+
+
+    mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setPosition(mGPS->DDPBundle[idxDDP]->x.col(idxPosinTraj)(0));
+    mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(mGPS->DDPBundle[idxDDP]->x.col(idxPosinTraj)(1));
+    mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(mGPS->DDPBundle[idxDDP]->x.col(idxPosinTraj)(2));
+    mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(mGPS->DDPBundle[idxDDP]->x.col(idxPosinTraj)(3));
 }
