@@ -127,7 +127,7 @@ class PolicyOptCaffe():
         # Assuming that N*T >= self.batch_size.
         batches_per_epoch = np.floor(self.N*self.T / self.batch_size)
         idx = range(self.N*self.T)
-        # np.random.shuffle(idx)
+        np.random.shuffle(idx)
         for i in range(self.caffe_iterations):
             # for loop can finish self.caffe_iterations/self.N epoches
             # Load in data for this batch.
