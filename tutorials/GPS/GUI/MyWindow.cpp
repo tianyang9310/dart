@@ -124,7 +124,7 @@ void MyWindow::mReset()
     dtmsg<<"[Final Angle] "<<CurJointPos<<endl;
     // keyboard(' ', 0,0);
     MaxJointPos = -1e2;
-    // mGPS->innerloop();
+    mGPS->innerloop();
     setWorld(mSnapShot->clone());
 
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
