@@ -129,7 +129,7 @@ void MyWindow::mReset()
 
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     default_random_engine generator(seed);
-    uniform_int_distribution<int> distribution(0,mGPS->T-2);
+    uniform_int_distribution<int> distribution(0,mGPS->T/2);
     int idxPosinTraj = distribution(generator);
     // idxPosinTraj = 0;
 

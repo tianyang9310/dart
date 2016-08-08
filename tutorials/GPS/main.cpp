@@ -32,12 +32,14 @@ int main(int argc, char* argv[])
 	int T				= 100;
     int x_dim           = 4;
     int u_dim           = 1;
-	int numDDPIters		= 100;
-	int conditions  	= 2;
+	int numDDPIters		= 50;
+	int conditions  	= 4;
 	valarray<int> numSamplePerPolicy(conditions+1);
-    numSamplePerPolicy[0] = 20;
-    numSamplePerPolicy[1] = 20;
+    numSamplePerPolicy[0] = 10;
+    numSamplePerPolicy[1] = 10;
     numSamplePerPolicy[2] = 10;
+    numSamplePerPolicy[3] = 10;
+    numSamplePerPolicy[4] = 10;
 
 
 	double delta_t		= mWorld->getTimeStep();
@@ -75,10 +77,16 @@ int main(int argc, char* argv[])
 
     mGPS->x0Bundle[0](1)=      0.0*M_PI;
 
-	mGPS->x0Bundle[1](1)= (1-1e-1)*M_PI;
+	mGPS->x0Bundle[1](1)=      2.0*M_PI;
+
+	mGPS->x0Bundle[2](1)= (1-1e-1)*M_PI;
+
+	mGPS->x0Bundle[3](1)= (1+1e-1)*M_PI;
 
 	mGPS->DDPBundle[0] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[0],xd,1)));
 	mGPS->DDPBundle[1] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[1],xd,1)));
+	mGPS->DDPBundle[2] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[2],xd,1)));
+	mGPS->DDPBundle[3] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[3],xd,1)));
 
 
 
