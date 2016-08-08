@@ -151,7 +151,7 @@ void GPS::innerloop()
     // generate samples from theta_k. theta_k is now the last CaffePolicy of PolicyRepo
     // append samples to GPSSampleLists and cur_GPSSampleLists
     appendSamplesFromThetaK(); 
-    
+
     // Optionally generate adaptive guiding samples
     
     // Evaluate eq(2) to see whether replace theta_k or increase wr
