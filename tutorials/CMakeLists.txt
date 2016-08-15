@@ -5,6 +5,7 @@ message(STATUS "")
 message(STATUS "[ Tutorials ]")
 
 add_subdirectory( DDP )
+add_subdirectory( MPC )
 add_subdirectory( GPS )
 
 foreach(tutorial ${tutorials_src})
