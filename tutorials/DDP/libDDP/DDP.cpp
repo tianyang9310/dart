@@ -109,7 +109,7 @@ Eigen::MatrixXd DDP::TrajGenerator(const Eigen::VectorXd _x0, const Eigen::Matri
     for (int i=0; i<T-1; i++)
     {
         _x.col(i+1) = StepDynamics(_x.col(i), _u.col(i));
-        C.row(i) = StepCost(x.col(i),u.col(i));
+        C.row(i) = StepCost(_x.col(i),_u.col(i));
     }
     C.row(T-1)  = FinalCost(_x.col(T-1));
     return _x;
