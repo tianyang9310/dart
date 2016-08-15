@@ -15,6 +15,8 @@ using namespace dart::gui;
 class MyWindow : public dart::gui::SimWindow {
 public:
 	MyWindow(WorldPtr world);
+    
+    void inner_loop();
 	
 	void timeStepping() override;
 	
@@ -22,13 +24,9 @@ public:
 	
 	void keyboard(unsigned char _key, int _x, int _y) override;
 
-	void mPointer_Debug();
-
-	void mDofStat();
-
 	std::unique_ptr<Controller> mController;
 	WorldPtr mSnapshot;
-	int mDDP_iter;
+	int mMPC_iter;
 };
 
 #endif  
