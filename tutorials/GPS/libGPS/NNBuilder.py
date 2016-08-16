@@ -142,7 +142,7 @@ class PhiLoss(caffe.Layer):
             try:
                 self.Log_Pi_theta_List = self.Log_Pi_theta_List + np.reshape(np.log(self.GaussianEvaluator_m_batch(bottom[0].data[cur_idx], np.linalg.inv(bottom[3].data[0])[0,0], bottom[2].data[cur_idx])),(self.batch_size,self.mPhi))
             except Warning as e:
-                print 'Probability is approaching 0'
+                print 'Probability is approaching 0',e
 
         self.Log_Pi_theta_List = np.cumsum(self.Log_Pi_theta_List,axis=0)
 
@@ -294,6 +294,14 @@ class PhiLoss(caffe.Layer):
 
     def GaussianEvaluator_m_batch(self, mean, covariance, testX):
         probability = np.zeros(len(mean))
-        probability = 1.0/np.sqrt(2*np.pi*covariance)*np.exp(-0.5*((mean-testX)**2)/covariance)
+
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            try:
+                probability = 1.0/np.sqrt(2*np.pi*covariance)*np.exp(-0.5*((mean-testX)**2)/covariance)
+            except Warning as e:
+                print 'RuntimeWarning, overflow encountered in pow','302'
+
         probability = np.maximum(probability, np.finfo(np.float32).tiny)
         return probability
