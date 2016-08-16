@@ -39,7 +39,7 @@ class PolicyOptCaffe():
         self.init_solver()
         self.init_solver2()
         self.init_solver3()
-        self.var = 0.1 * np.eye(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
+        self.var = 0.2 * np.eye(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
 
         with tempfile.NamedTemporaryFile(delete=False) as _init_f:
             _init_f.write(str(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,1,TEST)))

@@ -25,7 +25,7 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int 
     GPS_iterations = 20;
     previous_lossvalue_wo = 0;
     current_lossvalue_wo = 0;
-    numSk = 60;
+    numSk = 80;
 
     Py_Initialize();
     PyRun_SimpleString("import sys");  
