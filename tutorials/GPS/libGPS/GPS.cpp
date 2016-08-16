@@ -6,11 +6,12 @@ void printDict(PyObject* obj);
 void GaussianSamplerDebug();
 void GaussianEvaluatorDebug();
 
-GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, valarray<int> _numSamplesPerPolicy, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics):
+GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _CondOpt, valarray<int> _numSamplesPerPolicy, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics):
     T(_T),
     x_dim(_x_dim),
     u_dim(_u_dim),
     numDDPIters(_numDDPIters),
+    CondOpt(_CondOpt),
     conditions(_conditions),
     numSamplesPerPolicy(_numSamplesPerPolicy),
     StepDynamics(_StepDynamics),
@@ -201,7 +202,7 @@ void GPS::innerloop()
 
 void GPS::DDPdemonstration()
 {
-    for (int _cond=0; _cond<conditions; _cond++)
+    for (int _cond=0; _cond<CondOpt; _cond++)
     {
         for(int i=0; i<numDDPIters; i++)
         {

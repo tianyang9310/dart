@@ -26,7 +26,6 @@ public:
     MPC(int _local_T, int _T, int _x_dim, int _u_dim, Vector4d _x0, Vector4d _xd, MatrixXd _Q, Matrix<double,1,1> _R, MatrixXd _Qf, function<VectorXd(const VectorXd, const VectorXd)> _mStepDynamics, function<Scalar(const VectorXd, const VectorXd)> _mStepCost, function<Scalar(const VectorXd)> _mFinalCost);
     void run();
     void inner_run(int i);
-    MatrixXd getX();
     MatrixXd getU();
     
 

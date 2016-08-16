@@ -29,7 +29,7 @@ class GPS
 public:
 // --------------------
 //  member function
-	GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, valarray<int> _numSamplesPerPolicy, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics);
+	GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, int _CondOpt, valarray<int> _numSamplesPerPolicy, function<VectorXd(const VectorXd, const VectorXd)> _StepDynamics);
     virtual ~GPS();
 	void run();
     void rund();
@@ -59,6 +59,7 @@ public:
     const int u_dim;
 	int numDDPIters;
 	int DDPIter;
+    int CondOpt;
 	int conditions;
 	valarray<int> numSamplesPerPolicy;
     int mPhi;

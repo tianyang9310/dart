@@ -7,4 +7,4 @@ find_package(PythonLibs REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS} /usr/local/lib/python2.7/dist-packages/numpy/core/include)
 
 add_executable( main main.cpp ${DIR_AGENT_SRCS} ${DIR_GUI_SRCS})
-target_link_libraries( main GPS DDP dart ${PYTHON_LIBRARIES})
+target_link_libraries( main GPS MPC DDP dart ${PYTHON_LIBRARIES})

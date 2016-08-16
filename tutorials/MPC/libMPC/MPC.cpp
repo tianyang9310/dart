@@ -58,13 +58,10 @@ void MPC::inner_run(int i)
     x.col(i+1)=mStepDynamics(mDDP->x.col(0),mDDP->u.col(0));
 }
 
-MatrixXd MPC::getX()
-{
-    return x;
-}
-
 MatrixXd MPC::getU()
 {
+    int u_dim = u.rows();
+    u.col(T-1) = VectorXd::Constant(u_dim, nan("0"));
     return u;
 }
 
