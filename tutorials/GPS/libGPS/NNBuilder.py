@@ -152,10 +152,26 @@ class PhiLoss(caffe.Layer):
         inner_sum =np.sum(inner_sum_ind,axis=1)
         self.Log_Zt_List = logsumexp(Log_Zt_ind,axis=1)
 
-        loss_ind = np.multiply(np.exp(-self.Log_Zt_List),inner_sum) + bottom[5].data[0][0]*self.Log_Zt_List
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            try:
+                intermediate = np.exp(np.minimum(-self.Log_Zt_List,np.log(np.finfo(np.float64).max)))
+                loss_ind = np.multiply(intermediate,inner_sum) + bottom[5].data[0][0]*self.Log_Zt_List
+                # loss_ind = np.multiply(np.exp(-self.Log_Zt_List),inner_sum) + bottom[5].data[0][0]*self.Log_Zt_List
+            except Warning as e:
+                print 'RuntimeWarning, overflow encountered in exp','159'
+
         loss = np.sum(loss_ind)
 
-        self.J_tilt_List = np.multiply(np.exp(-self.Log_Zt_List),inner_sum)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            try:
+                intermediate = np.exp(np.minimum(-self.Log_Zt_List,np.log(np.finfo(np.float64).max)))
+                self.J_tilt_List = np.multiply(intermediate,inner_sum)
+                # self.J_tilt_List = np.multiply(np.exp(-self.Log_Zt_List),inner_sum)
+            except Warning as e:
+                print 'RuntimeWarning, overflow encountered in exp','170'
 
         loss_wo = np.sum(self.J_tilt_List)
         # loss is minimized in optimization stage. Therefore the objective should be negative of above function
