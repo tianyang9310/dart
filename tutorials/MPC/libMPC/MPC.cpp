@@ -41,6 +41,14 @@ void MPC::inner_run(int i)
     cout<<" "<<i<<" step of traj"<<endl;
 	mDDP = unique_ptr<DDP>(new DDP(local_T, mStepDynamics, mStepCost, mFinalCost, LQR, make_tuple(x.col(i),xd,1)));
 
+    if (i<T-local_T)
+    {
+        int u_dim = u.rows();
+        mDDP->u = u.block(u_dim-1,i,u_dim,local_T);
+        mDDP->u.col(local_T-1) = VectorXd::Constant(u_dim, nan("0"));
+        mDDP->x = mDDP->TrajGenerator(x.col(i),mDDP->u);
+    }
+
     for (int _DDP_iter=0; _DDP_iter<DDPiters; _DDP_iter++)
     {
         mDDP->trajopt();

@@ -16,8 +16,8 @@ Controller::Controller(WorldPtr mDDPWorld)
 	double delta_t		= mDDPWorld->getTimeStep();
 
 	x0  = Eigen::Vector4d::Zero();
-	x0(1)  = 1.0*M_PI;
-	x0(3)  = 0.5*M_PI;
+	x0(1)  = 0.8*M_PI;
+	x0(3)  = 0.0*M_PI;
 
 
 	Eigen::Vector4d	xd	= Eigen::Vector4d::Zero();

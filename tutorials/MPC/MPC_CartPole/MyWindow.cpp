@@ -1,7 +1,4 @@
 #include "MyWindow.h"
-//#define mPOINTER_DEBUG
-//#define mDOFSTAT
-//#define mDYNAMICS_DEBUG
 
 MyWindow::MyWindow(WorldPtr world)
 {
@@ -19,6 +16,7 @@ void MyWindow::timeStepping()
 {
     std::cout<<'\r'<<mWorld->getTime();
     if (mWorld->getSimFrames()==mController->mMPC->T-1)
+    // if (mWorld->getSimFrames()==mController->mMPC->local_T-1)
     {
         inner_loop();
     }
@@ -39,12 +37,11 @@ void MyWindow::inner_loop()
     cout<<mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->getVelocity()<<endl;
     cout<<mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->getVelocity()<<endl;
 
-    // reset x to zero
-    // When clone the world, x0 is automatically reset to 0
-    cout<<std::endl;
 
     mController->mMPC->run();
     // mController->mMPC->inner_run(mMPC_iter++);
+
+    cout<<"After one sweep of MPC...Ctrl is "<<endl<<mController->mMPC->u<<endl;
 
     setWorld(mSnapshot->clone());
 
