@@ -50,6 +50,7 @@ void MyWindow::timeStepping()
         // reset x to zero
         // When clone the world, x0 is automatically reset to 0
         std::cout<<std::endl;
+        for (int skip = 0; skip<5; skip++)
         mController->mDDP->trajopt();
 
 
