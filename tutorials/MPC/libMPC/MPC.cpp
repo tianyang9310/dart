@@ -46,7 +46,7 @@ void MPC::inner_run(int i)
         int u_dim = u.rows();
         mDDP->u = u.block(u_dim-1,i,u_dim,local_T);
         mDDP->u.col(local_T-1) = VectorXd::Constant(u_dim, nan("0"));
-        mDDP->x = mDDP->TrajGenerator(x.col(i),mDDP->u);
+        mDDP->TrajGenerator();
     }
 
     for (int _DDP_iter=0; _DDP_iter<DDPiters; _DDP_iter++)

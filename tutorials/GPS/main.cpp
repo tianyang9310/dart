@@ -36,13 +36,13 @@ int main(int argc, char* argv[])
     int x_dim           = 4;
     int u_dim           = 1;
 	int numDDPIters		= 50;
-	int conditions  	= 4;
+	int conditions  	= 2;
 	int CondOpt       	= 2;
 	valarray<int> numSamplePerPolicy(conditions+1);
     numSamplePerPolicy[0] = 25;
     numSamplePerPolicy[1] = 25;
-    numSamplePerPolicy[2] = 10;
-    numSamplePerPolicy[3] = 10;
+//   numSamplePerPolicy[2] = 10;
+//   numSamplePerPolicy[3] = 10;
     numSamplePerPolicy[4] = 10;
 
 
@@ -84,17 +84,17 @@ int main(int argc, char* argv[])
 
 	mGPS->x0Bundle[1](1)=      2.0*M_PI;
 
-
+/*
 	mGPS->x0Bundle[2](1)=      (1)*M_PI;
 	mGPS->x0Bundle[2](3)=      0.05*M_PI;
 
 	mGPS->x0Bundle[3](1)=      (1)*M_PI;
 	mGPS->x0Bundle[3](3)=      -0.05*M_PI;
-
+*/
 	mGPS->DDPBundle[0] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[0],xd,1)));
 	mGPS->DDPBundle[1] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[1],xd,1)));
 
-
+/*
     int x0Bundle_idx;
 ////////////////////////////////////////////////////////////
     x0Bundle_idx = 2;
@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
 
 	mGPS->DDPBundle[x0Bundle_idx] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[x0Bundle_idx],xd,1)));
     mGPS->DDPBundle[x0Bundle_idx]->u = mMPC->getU();
-    mGPS->DDPBundle[x0Bundle_idx]->x = mGPS->DDPBundle[x0Bundle_idx]->TrajGenerator(mGPS->x0Bundle[x0Bundle_idx], mGPS->DDPBundle[x0Bundle_idx]->u);
+    mGPS->DDPBundle[x0Bundle_idx]->TrajGenerator();
 
 ////////////////////////////////////////////////////////////
     x0Bundle_idx = 3;
@@ -112,8 +112,8 @@ int main(int argc, char* argv[])
 
 	mGPS->DDPBundle[x0Bundle_idx] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Q, R), bind(CartPoleFinalCost,placeholders::_1, xd, Qf), LQR, make_tuple(mGPS->x0Bundle[x0Bundle_idx],xd,1)));
     mGPS->DDPBundle[x0Bundle_idx]->u = mMPC->getU();
-    mGPS->DDPBundle[x0Bundle_idx]->x = mGPS->DDPBundle[x0Bundle_idx]->TrajGenerator(mGPS->x0Bundle[x0Bundle_idx], mGPS->DDPBundle[x0Bundle_idx]->u);
-
+    mGPS->DDPBundle[x0Bundle_idx]->TrajGenerator();
+*/
 // ---------------------------------------------------------
 
 	MyWindow window(mWorld,move(mGPS));

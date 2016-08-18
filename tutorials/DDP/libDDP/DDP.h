@@ -15,6 +15,8 @@ using namespace dart::utils;
 using namespace dart::common;
 using namespace dart::math;
 using namespace dart::gui;
+using namespace std;
+using namespace Eigen;
 
 
 namespace DDP_NSpace
@@ -27,39 +29,39 @@ public:
     bool backwardpass();
     void forwardpass();
 // --------------------------------------------------
-    DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR, std::tuple<Eigen::VectorXd, Eigen::VectorXd, int> StateBundle);
-    void Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui);
+    DDP(int T, function<VectorXd(const VectorXd, const VectorXd)> StepDynamics, function<Scalar(const VectorXd, const VectorXd)> StepCost, function<Scalar(const VectorXd)> FinalCost, vector<tuple<MatrixXd, MatrixXd, MatrixXd>> LQR, tuple<VectorXd, VectorXd, int> StateBundle);
+    void Derivative(const VectorXd & _xi, const VectorXd & _ui);
 
-    Eigen::MatrixXd TrajGenerator(const Eigen::VectorXd _x0, const Eigen::MatrixXd _u);
+    void TrajGenerator();
 
 
-    std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics;
-    std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost;
-    std::function<Scalar(const Eigen::VectorXd)> FinalCost;
+    function<VectorXd(const VectorXd, const VectorXd)> StepDynamics;
+    function<Scalar(const VectorXd, const VectorXd)> StepCost;
+    function<Scalar(const VectorXd)> FinalCost;
 // --------------------------------------------------
     int T;
     int x_dim;
     int u_dim;
-    Eigen::MatrixXd x;
-    Eigen::MatrixXd u;
-    Eigen::VectorXd C;
-    Eigen::MatrixXd x_new;
-    Eigen::MatrixXd u_new;
-    Eigen::VectorXd C_new;
-    Eigen::Vector2d dV;
-    std::vector<Eigen::MatrixXd> Vx;
-    std::vector<Eigen::MatrixXd> Vxx;
-    std::vector<Eigen::MatrixXd> k;
-    std::vector<Eigen::MatrixXd> K;
-    std::vector<Eigen::MatrixXd> Quu_inv;
-    std::vector<std::function<Eigen::VectorXd(Eigen::VectorXd)>> gx;
-    Eigen::MatrixXd fx;
-    Eigen::MatrixXd fu;
-    Eigen::MatrixXd Cx;
-    Eigen::MatrixXd Cu;
-    Eigen::MatrixXd Cxx;
-    Eigen::MatrixXd Cuu;
-    Eigen::MatrixXd Cux;
+    MatrixXd x;
+    MatrixXd u;
+    VectorXd C;
+    MatrixXd x_new;
+    MatrixXd u_new;
+    VectorXd C_new;
+    Vector2d dV;
+    vector<MatrixXd> Vx;
+    vector<MatrixXd> Vxx;
+    vector<MatrixXd> k;
+    vector<MatrixXd> K;
+    vector<MatrixXd> Quu_inv;
+    vector<function<VectorXd(VectorXd)>> gx;
+    MatrixXd fx;
+    MatrixXd fu;
+    MatrixXd Cx;
+    MatrixXd Cu;
+    MatrixXd Cxx;
+    MatrixXd Cuu;
+    MatrixXd Cux;
 // --------------------------------------------------
     void setMu();
     double mu;
@@ -67,18 +69,18 @@ public:
 // --------------------------------------------------
     double alpha;
 // --------------------------------------------------
-    Eigen::MatrixXd Qf;
-    Eigen::MatrixXd Q;
-    Eigen::MatrixXd R;
-    Eigen::MatrixXd xd;
-    Eigen::MatrixXd x0;
+    MatrixXd Qf;
+    MatrixXd Q;
+    MatrixXd R;
+    MatrixXd xd;
+    MatrixXd x0;
 // --------------------------------------------------
     bool isLQR;
 };
 
 
 template<typename FuncType>
-Eigen::MatrixXd FiniteDiff(FuncType Func, Eigen::VectorXd Var)
+MatrixXd FiniteDiff(FuncType Func, VectorXd Var)
 {
     // Note:
     //      1. The order of mixed partial derivatives of Hessian
@@ -94,7 +96,7 @@ Eigen::MatrixXd FiniteDiff(FuncType Func, Eigen::VectorXd Var)
     int VarDim = Var.rows();
     int OutputDim;
     bool Hessian;
-    Eigen::MatrixXd J_FD;
+    MatrixXd J_FD;
     if ((Func(Var)).cols() == 1)
     {
         OutputDim = (Func(Var)).rows();
@@ -108,7 +110,7 @@ Eigen::MatrixXd FiniteDiff(FuncType Func, Eigen::VectorXd Var)
         J_FD.resize(VarDim,OutputDim);
     }
 
-    Eigen::MatrixXd IndicatorVec(Var.rows(),Var.rows());
+    MatrixXd IndicatorVec(Var.rows(),Var.rows());
     IndicatorVec.setIdentity();
 
     for (int i=0; i<VarDim; i++)
@@ -122,41 +124,41 @@ Eigen::MatrixXd FiniteDiff(FuncType Func, Eigen::VectorXd Var)
             J_FD.row(i) =  (Func(Var+h*IndicatorVec.col(i)) - Func(Var-h*IndicatorVec.col(i)))/(2*h);
         }
     }
-    return J_FD;
+    return J_FD.eval();
 }
 
 
 // --------------------------------------------------
 template<typename dataFormat_std>
-void write2file_std(dataFormat_std data, const std::string name)
+void write2file_std(dataFormat_std data, const string name)
 {
-    std::string name_ext = name;
+    string name_ext = name;
     name_ext.append(".out");
-    std::ofstream outFile(name_ext, std::ios::out);
+    ofstream outFile(name_ext, ios::out);
     if (outFile.fail())
     {
-        dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
+        dtmsg << "Cannot open "<<name<<" file, please check..."<<endl;
     }
     outFile.precision(8);
     for (size_t i=0; i<data.size(); i++)
     {
-        outFile<<data[i]<<std::endl;
+        outFile<<data[i]<<endl;
     }
     outFile.close();
 }
 
 template<typename dataFormat_eigen>
-void write2file_eigen(dataFormat_eigen data, const std::string name)
+void write2file_eigen(dataFormat_eigen data, const string name)
 {
-    std::string name_ext = name;
+    string name_ext = name;
     name_ext.append(".out");
-    std::ofstream outFile(name_ext, std::ios::out);
+    ofstream outFile(name_ext, ios::out);
     if (outFile.fail())
     {
-        dtmsg << "Cannot open "<<name<<" file, please check..."<<std::endl;
+        dtmsg << "Cannot open "<<name<<" file, please check..."<<endl;
     }
     outFile.precision(8);
-    outFile<<data<<std::endl;
+    outFile<<data<<endl;
     outFile.close();
 }
 

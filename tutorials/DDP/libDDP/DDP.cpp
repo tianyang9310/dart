@@ -1,20 +1,12 @@
 #include "DDP.h"
-//#define mDebug_DDP
 
 namespace DDP_NSpace
 {
+VectorXd gxTemplate(VectorXd xtT, int iT, MatrixXd uT, MatrixXd xT, vector<MatrixXd> kT, vector<MatrixXd> KT, double alphaT);
 
-DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen::VectorXd)> StepDynamics, std::function<Scalar(const Eigen::VectorXd, const Eigen::VectorXd)> StepCost, std::function<Scalar(const Eigen::VectorXd)> FinalCost, std::vector<std::tuple<Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd>> LQR, std::tuple<Eigen::VectorXd, Eigen::VectorXd, int> StateBundle):
-    StepDynamics(StepDynamics),
-    StepCost(StepCost),
-    FinalCost(FinalCost),
-    T(T),
-    Vx(T),
-    Vxx(T),
-    k(T),
-    K(T),
-    Quu_inv(T),
-    gx(T)
+DDP::DDP(int T, function<VectorXd(const VectorXd, const VectorXd)> StepDynamics, function<Scalar(const VectorXd, const VectorXd)> StepCost, function<Scalar(const VectorXd)> FinalCost, vector<tuple<MatrixXd, MatrixXd, MatrixXd>> LQR, tuple<VectorXd, VectorXd, int> StateBundle):
+    StepDynamics(StepDynamics),StepCost(StepCost),FinalCost(FinalCost),
+    T(T),Vx(T),Vxx(T),k(T),K(T),Quu_inv(T),gx(T)
 {
 // --------------------------------------------------
 // constant initialization
@@ -22,27 +14,27 @@ DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen
     if (!LQR.empty())
     {
         isLQR   = true;
-        Q       = std::get<0>(LQR[0]);
-        R       = std::get<1>(LQR[0]);
-        Qf      = std::get<2>(LQR[0]);
+        Q       = get<0>(LQR[0]);
+        R       = get<1>(LQR[0]);
+        Qf      = get<2>(LQR[0]);
     }
     if (isLQR)
     {
-        std::cout<<"Solving LQR problem..."<<std::endl;
+        cout<<"Solving LQR problem..."<<endl;
     }
     else
     {
-        std::cout<<"Solving non-LQR problem"<<std::endl;
+        cout<<"Solving non-LQR problem"<<endl;
     }
 
-    x0 = std::get<0>(StateBundle);
-    xd = std::get<1>(StateBundle);
+    x0 = get<0>(StateBundle);
+    xd = get<1>(StateBundle);
     mu_default = 0;    
     mu    = mu_default;
     alpha = 1;
 // matrix initialization
     x_dim = x0.rows();
-    u_dim = std::get<2>(StateBundle); 
+    u_dim = get<2>(StateBundle); 
     fx.resize(x_dim,x_dim);
     fu.resize(x_dim,u_dim);
     Cx.resize(x_dim,1);
@@ -51,18 +43,18 @@ DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen
     Cuu.resize(u_dim,u_dim);
     Cux.resize(u_dim,x_dim);
 // memory allocation
-    x       = Eigen::MatrixXd::Zero(x_dim,T);
-    u       = Eigen::MatrixXd::Zero(u_dim,T);
-    C       = Eigen::VectorXd::Zero(T);
-    x_new   = Eigen::MatrixXd::Zero(x_dim,T);
-    u_new   = Eigen::MatrixXd::Zero(u_dim,T);
-    C_new   = Eigen::VectorXd::Zero(T);
+    x       = MatrixXd::Zero(x_dim,T);
+    u       = MatrixXd::Zero(u_dim,T);
+    C       = VectorXd::Zero(T);
+    x_new   = MatrixXd::Zero(x_dim,T);
+    u_new   = MatrixXd::Zero(u_dim,T);
+    C_new   = VectorXd::Zero(T);
 // --------------------------------------------------
 // produce initial trajectory
-    //u         = Eigen::MatrixXd::Random(u_dim,T)*150;
-    u.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
+    //u         = MatrixXd::Random(u_dim,T)*150;
+    u.col(T-1) = VectorXd::Constant(u_dim,nan("0"));
 
-    x       = TrajGenerator(x0, u);
+    /*x       =*/ TrajGenerator(/*x0, u*/);
 // --------------------------------------------------
     dV.setZero();
     for (int i=0;i<T;i++)
@@ -79,40 +71,23 @@ DDP::DDP(int T, std::function<Eigen::VectorXd(const Eigen::VectorXd, const Eigen
         K[i].setZero();
         Quu_inv[i].setZero();
     }
-
-#ifdef mDebug_DDP
-// DDP initial data and some variable output
-//  std::cout<<"Initial control sequence is"<<std::endl<<u<<std::endl;
-//  std::cout<<"Initial state   sequence is"<<std::endl<<x.transpose()<<std::endl;
-    std::cout<<"Initial cost is "<<C.sum()<<std::endl;
-    std::cout<<"Press any key to print initial x and u to file..."<<std::endl;
-//  std::cin.get();
-    write2file_eigen(x,"x");
-    write2file_eigen(u,"u");
-    std::cout<<"Please use python script to plot figures"<<std::endl;
-    std::cout<<"Press any key to continue..."<<std::endl;
-    //std::cin.get();
-#endif
 }
 
-Eigen::MatrixXd DDP::TrajGenerator(const Eigen::VectorXd _x0, const Eigen::MatrixXd _u)
+void DDP::TrajGenerator()
 {
 // --------------------------------------------------
 //  Whole Trajectory Generator
 //  Computing _x according to _x0 and _u using step dynamics
 // --------------------------------------------------
 
-    Eigen::MatrixXd _x;
-    _x.setZero(_x0.rows(),T);
-    _x.col(0) = _x0;
+    x.col(0) = x0;
 
     for (int i=0; i<T-1; i++)
     {
-        _x.col(i+1) = StepDynamics(_x.col(i), _u.col(i));
-        C.row(i) = StepCost(_x.col(i),_u.col(i));
+        x.col(i+1) = StepDynamics(x.col(i), u.col(i));
+        C.row(i) = StepCost(x.col(i),u.col(i));
     }
-    C.row(T-1)  = FinalCost(_x.col(T-1));
-    return _x;
+    C.row(T-1)  = FinalCost(x.col(T-1));
 }
 
 void DDP::trajopt()
@@ -130,18 +105,6 @@ void DDP::trajopt()
         }
     }
     mu = mu_default;
-// --------------------------------------------------
-#ifdef mDebug_DDP
-//  backward debugging
-        std::cout<<diverge<<std::endl;
-        std::cout<<"Press any key to print k, K, Vx, Vxx to file..."<<std::endl;
-        write2file_std(k,"k");
-        write2file_std(K,"K");
-        write2file_std(Vx,"Vx");
-        write2file_std(Vxx,"Vxx");
-        std::cin.get();
-#endif
-// --------------------------------------------------
 
 // forward  pass
     bool forward_done = false;
@@ -149,8 +112,7 @@ void DDP::trajopt()
     {
         forwardpass();
 
-        std::cout<<"One forward iteration finishes..."<<std::endl;
-        std::cout<<"Press any key to continue..."<<std::endl;
+        cout<<"One forward iteration finishes..."<<endl;
 
         double dCost = C.sum() - C_new.sum();
         double expected = -alpha*(dV[0]+alpha*dV[1]);
@@ -158,24 +120,22 @@ void DDP::trajopt()
         if (expected>0)
         {
             z = dCost/expected;
-            std::cout<<"dCost: "<<dCost<<" expected: "<<expected<<std::endl;
-            dtmsg<<"positive expected reduction "<<z<<std::endl;
-            std::cout<<"Press any key to continue..."<<std::endl;
+            cout<<"dCost: "<<dCost<<" expected: "<<expected<<endl;
+            dtmsg<<"positive expected reduction "<<z<<endl;
         }
         else
         {
-            z = 2*(dCost > 0)-1;
-            dtmsg<<"non-positive expected reduction "<<z<<std::endl;
-            std::cout<<"Press any key to continue..."<<std::endl;
+            z = 2*(dCost >= 0)-1;
+            dtmsg<<"non-positive expected reduction "<<z<<endl;
         }
-        if (z>0)
+        if (z>=0)
         {
             forward_done = true;
             break;
         }
         else
         {
-            alpha *= std::pow(10,-0.3);
+            alpha *= pow(10,-0.3);
         }
     }
     alpha = 1;
@@ -183,24 +143,15 @@ void DDP::trajopt()
     x = x_new;
     u = u_new;
     C = C_new;
-    dtmsg<<"updated x, u and c..."<<std::endl;
+    dtmsg<<"updated x, u and c..."<<endl;
 // --------------------------------------------------
-    std::cout<<"Current cost is "<<C.sum()<<std::endl;
-#ifdef mDebug_DDP
-    std::cout<<"Press any key to print x and u to file..."<<std::endl;
-    //std::cin.get();
-    write2file_eigen(x,"x");
-    write2file_eigen(u,"u");
-    std::cout<<"Please use python script to plot figures"<<std::endl;
-    std::cout<<"Press any key to continue..."<<std::endl;
-    //std::cin.get();
-#endif
+    cout<<"Current cost is "<<C.sum()<<endl;
 }
 
 bool DDP::backwardpass()
 {
 //  variable initialization
-    dtmsg<<"Backward pass starting..."<<std::endl;
+    dtmsg<<"Backward pass starting..."<<endl;
     bool localDiverge = false;
     dV.setZero();
 
@@ -212,7 +163,7 @@ bool DDP::backwardpass()
     else
     {
         Vx[T-1]  = (FiniteDiff(FinalCost,x.col(T-1))).transpose();
-        Vxx[T-1] = FiniteDiff([=](Eigen::VectorXd Var)->Eigen::MatrixXd{
+        Vxx[T-1] = FiniteDiff([=](VectorXd Var)->MatrixXd{
                         return FiniteDiff(FinalCost,Var);},
                         x.col(T-1));
     }
@@ -221,73 +172,30 @@ bool DDP::backwardpass()
     {
         Derivative(x.col(i),u.col(i));
 
-        Eigen::MatrixXd Qx(x_dim,1);    
-        Eigen::MatrixXd Qu(u_dim,1);    
-        Eigen::MatrixXd Qxx(x_dim,x_dim);   
-        Eigen::MatrixXd Quu(u_dim,u_dim);   
-        Eigen::MatrixXd Qux(u_dim,x_dim);   
-        Eigen::MatrixXd Quu_reg(u_dim,u_dim);       
-        Eigen::MatrixXd Qux_reg(u_dim,x_dim);       
+        MatrixXd Qx(x_dim,1);    
+        MatrixXd Qu(u_dim,1);    
+        MatrixXd Qxx(x_dim,x_dim);   
+        MatrixXd Quu(u_dim,u_dim);   
+        MatrixXd Qux(u_dim,x_dim);   
+        MatrixXd Quu_reg(u_dim,u_dim);       
+        MatrixXd Qux_reg(u_dim,x_dim);       
 
         Qx      = Cx + fx.transpose()*Vx[i+1];
         Qu      = Cu + fu.transpose()*Vx[i+1];
         Qxx     = Cxx + fx.transpose()*Vxx[i+1]*fx;
         Quu     = Cuu + fu.transpose()*Vxx[i+1]*fu;
         Qux     = Cux + fu.transpose()*Vxx[i+1]*fx;
-        Eigen::MatrixXd uEye(u_dim,u_dim);
+        MatrixXd uEye(u_dim,u_dim);
         uEye.setIdentity();
         Quu_reg = Quu + mu*uEye;
         Qux_reg = Qux;
-// --------------------------------------------------
-//      backward debugging
-#ifdef mDebug_DDP
-        if (i%100 == 0)
-        {
-            dtmsg<<" "<<i<<" step in backward pass"<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"fx "<<std::endl<<fx<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"fu "<<std::endl<<fu<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"Cx "<<std::endl<<Cx<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"Cu "<<std::endl<<Cu<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"Cxx "<<std::endl<<Cxx<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"Cuu "<<std::endl<<Cuu<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"Cux "<<std::endl<<Cux<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"Qx "<<std::endl<<Qx<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"Qu "<<std::endl<<Qu<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"Qxx "<<std::endl<<Qxx<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"Quu "<<std::endl<<Quu<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"Quu_reg "<<std::endl<<Quu_reg<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"Qux_reg "<<std::endl<<Qux_reg<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"value function derivative "<<std::endl;
-            std::cout<<"Vx "<<std::endl<<Vx[i+1]<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"Vxx "<<std::endl<<Vxx[i+1]<<std::endl;
-            std::cout<<"***************************************"<<std::endl;
-            std::cout<<"Break point in backward pass. Press any key to continue"<<std::endl;
-            //std::cin.get();
-        }
-#endif
 // --------------------------------------------------
 //      TODO: change the analyze to cholesky decomposition
 //            to find out whether Quu is PD
         if (Quu_reg(0)<=0)
         {
             localDiverge = true;
-            dtmsg<<"Diverge occurs in the backward pass"<<std::endl;
+            dtmsg<<"Diverge occurs in the backward pass"<<endl;
             return localDiverge;
         }
         //k[i]  = -Qu/Quu_reg(0);
@@ -297,7 +205,7 @@ bool DDP::backwardpass()
         Quu_inv[i]
                 = Quu_reg.inverse();
 
-        dV     += (Eigen::Vector2d() << k[i].transpose()*Qu, 0.5*k[i].transpose()*Quu*k[i]).finished();
+        dV     += (Vector2d() << k[i].transpose()*Qu, 0.5*k[i].transpose()*Quu*k[i]).finished();
         Vx[i]   = Qx+K[i].transpose()*Quu*k[i]+K[i].transpose()*Qu+Qux.transpose()*k[i];
         Vxx[i]  = Qxx + K[i].transpose()*Quu*K[i]+K[i].transpose()*Qux+Qux.transpose()*K[i];
         Vxx[i]  = 0.5*(Vxx[i]+Vxx[i].transpose());
@@ -308,47 +216,22 @@ bool DDP::backwardpass()
 
 void DDP::forwardpass()
 {
-    dtmsg<<"Forward pass starting..."<<std::endl;
+    dtmsg<<"Forward pass starting..."<<endl;
     x_new.col(0) = x0;
 
-    Eigen::MatrixXd u_cache = u;
-    Eigen::MatrixXd x_cache = x;
-    std::vector<Eigen::MatrixXd> k_cache=k;
-    std::vector<Eigen::MatrixXd> K_cache=K;
-    double alpha_cache = alpha;
-
-    
     for (int i=0; i<T-1; i++)
     {
         u_new.col(i) = u.col(i) + alpha*k[i] + K[i]*(x_new.col(i)-x.col(i));
         x_new.col(i+1) = StepDynamics(x_new.col(i), u_new.col(i));
         C_new.row(i) = StepCost(x_new.col(i),u_new.col(i));
 
-
-        gx[i] = [=](Eigen::VectorXd xt)->VectorXd
-                    {
-                        // std::cout<<"u.col(i) + alpha*k[i] + K[i]*(xt - x.col(i))"<<std::endl;
-                        // std::cout<<"u.col("<<i<<") = "<<u_cache.col(i)<<std::endl;
-                        // std::cout<<"alpha = "<<alpha_cache<<std::endl;
-                        // std::cout<<"k["<<i<<"] = "<<k_cache[i]<<std::endl;
-                        // std::cout<<"K["<<i<<"] = "<<K_cache[i]<<std::endl;
-                        // std::cout<<"xt = "<<xt.transpose()<<std::endl;
-                        // std::cout<<"x.col("<<i<<") = "<<x_cache.col(i).transpose()<<std::endl;
-                        return (K_cache[i]*(xt - x_cache.col(i)) + u_cache.col(i) + alpha_cache*k_cache[i]).eval();
-                    };
-
-        // // debug gx
-        // std::cout<<"~~~~~~~~~~~~~~~~~~~~~~"<<std::endl;
-        // std::cout<<"u_new is "<<u_new.col(i)<<std::endl;
-        // std::cout<<"gx is "<<gx[i](x_new.col(i))<<std::endl;
-        // std::cout<<"press any key to continue...";
-        // std::cin.get();
+        gx[i] = bind(gxTemplate, placeholders::_1,i,u,x,k,K,alpha);
     }
-    u_new.col(T-1) = Eigen::VectorXd::Constant(u_dim,std::nan("0"));
+    u_new.col(T-1) = VectorXd::Constant(u_dim,nan("0"));
     C_new.row(T-1) = FinalCost(x_new.col(T-1));
 }
 
-void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
+void DDP::Derivative(const VectorXd & _xi, const VectorXd & _ui)
 {
 // compute fx, fu, Cx, Cu, Cxx, Cuu, Cux according to x_i and u_i
 // Cx, Cu, Cxx, Cuu, Cux are computed according to analytic solution
@@ -363,64 +246,64 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
         Cux.setZero();
         
 // ----------------------------------------
-//      std::cout<<"#########  LQR   #################"<<std::endl;
-//      std::cout<<Cx<<std::endl;
-//      std::cout<<Cu<<std::endl;
-//      std::cout<<Cxx<<std::endl;
-//      std::cout<<Cuu<<std::endl;
-//      std::cout<<Cux<<std::endl;
-//      std::cout<<"#########finite diff   #################"<<std::endl;
-//      Eigen::MatrixXd Cxu_bundle;
-//      Cxu_bundle  = FiniteDiff([=](Eigen::VectorXd Var){
+//      cout<<"#########  LQR   #################"<<endl;
+//      cout<<Cx<<endl;
+//      cout<<Cu<<endl;
+//      cout<<Cxx<<endl;
+//      cout<<Cuu<<endl;
+//      cout<<Cux<<endl;
+//      cout<<"#########finite diff   #################"<<endl;
+//      MatrixXd Cxu_bundle;
+//      Cxu_bundle  = FiniteDiff([=](VectorXd Var){
 //                return StepCost(Var.head(_xi.rows()), Var.tail(_ui.rows()));},
-//               (Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui ).finished());
+//               (VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui ).finished());
 //      Cx = (Cxu_bundle.leftCols(_xi.rows())).transpose();
 //      Cu = (Cxu_bundle.rightCols(_ui.rows())).transpose();
 //
-//      Eigen::MatrixXd Cxxuu_bundle;
+//      MatrixXd Cxxuu_bundle;
 //
-//      auto Cxu_FD = [=](Eigen::VectorXd __xi, Eigen::VectorXd __ui){
+//      auto Cxu_FD = [=](VectorXd __xi, VectorXd __ui){
 //      return    
-//          FiniteDiff([=](Eigen::VectorXd Var){
+//          FiniteDiff([=](VectorXd Var){
 //              return StepCost(Var.head(__xi.rows()), Var.tail(__ui.rows()));},
-//              (Eigen::VectorXd(__xi.rows()+__ui.rows()) << __xi, __ui ).finished())
+//              (VectorXd(__xi.rows()+__ui.rows()) << __xi, __ui ).finished())
 //      ;};
 //
-//      Cxxuu_bundle = FiniteDiff([=](Eigen::VectorXd Var){
+//      Cxxuu_bundle = FiniteDiff([=](VectorXd Var){
 //              return Cxu_FD(Var.head(_xi.rows()),Var.tail(_ui.rows()));},
-//              (Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui ).finished());
+//              (VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui ).finished());
 //
 //      Cxx = Cxxuu_bundle.topLeftCorner(_xi.rows(),_xi.rows());
 //      Cuu = Cxxuu_bundle.bottomRightCorner(_ui.rows(),_ui.rows());
 //      Cux = Cxxuu_bundle.bottomLeftCorner(_ui.rows(),_xi.rows());
 //
-//      std::cout<<Cx<<std::endl;
-//      std::cout<<Cu<<std::endl;
-//      std::cout<<Cxxuu_bundle<<std::endl;
-//      std::cin.get();
+//      cout<<Cx<<endl;
+//      cout<<Cu<<endl;
+//      cout<<Cxxuu_bundle<<endl;
+//      cin.get();
 // ----------------------------------------
     }
     else
     {
-        Eigen::MatrixXd Cxu_bundle;
-        Cxu_bundle  = FiniteDiff([=](Eigen::VectorXd Var)->Scalar{
+        MatrixXd Cxu_bundle;
+        Cxu_bundle  = FiniteDiff([=](VectorXd Var)->Scalar{
                   return StepCost(Var.head(_xi.rows()), Var.tail(_ui.rows()));},
-                 (Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui ).finished());
+                 (VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui ).finished());
         Cx = (Cxu_bundle.leftCols(_xi.rows())).transpose();
         Cu = (Cxu_bundle.rightCols(_ui.rows())).transpose();
 
-        Eigen::MatrixXd Cxxuu_bundle;
+        MatrixXd Cxxuu_bundle;
 
-        auto Cxu_FD = [=](Eigen::VectorXd __xi, Eigen::VectorXd __ui)->Eigen::MatrixXd{
+        auto Cxu_FD = [=](VectorXd __xi, VectorXd __ui)->MatrixXd{
         return    
-            FiniteDiff([=](Eigen::VectorXd Var)->Scalar{
+            FiniteDiff([=](VectorXd Var)->Scalar{
                 return StepCost(Var.head(__xi.rows()), Var.tail(__ui.rows()));},
-                (Eigen::VectorXd(__xi.rows()+__ui.rows()) << __xi, __ui ).finished())
+                (VectorXd(__xi.rows()+__ui.rows()) << __xi, __ui ).finished())
         ;};
 
-        Cxxuu_bundle = FiniteDiff([=](Eigen::VectorXd Var)->Eigen::MatrixXd{
+        Cxxuu_bundle = FiniteDiff([=](VectorXd Var)->MatrixXd{
                 return Cxu_FD(Var.head(_xi.rows()),Var.tail(_ui.rows()));},
-                (Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui ).finished());
+                (VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui ).finished());
 
         Cxx = Cxxuu_bundle.topLeftCorner(_xi.rows(),_xi.rows());
         Cuu = Cxxuu_bundle.bottomRightCorner(_ui.rows(),_ui.rows());
@@ -429,12 +312,24 @@ void DDP::Derivative(Eigen::VectorXd _xi, Eigen::VectorXd _ui)
     }
     
 // fx, fu are computed according to finite difference
-    Eigen::MatrixXd fxu_bundle;
-    fxu_bundle = FiniteDiff([=](Eigen::VectorXd Var)->Eigen::VectorXd{
-            return StepDynamics(Var.head(_xi.rows()), Var.tail(_ui.rows()));}, 
-            (Eigen::VectorXd(_xi.rows()+_ui.rows()) << _xi, _ui).finished());
-    fx  = fxu_bundle.leftCols(_xi.rows());
-    fu  = fxu_bundle.rightCols(_ui.rows());
+    MatrixXd fxu_bundle;
+    fxu_bundle = FiniteDiff([this](VectorXd Var)->VectorXd{
+            return (StepDynamics(Var.head(x_dim), Var.tail(u_dim))).eval();}, 
+            (VectorXd(x_dim+u_dim) << _xi, _ui).finished());
+    fx  = fxu_bundle.leftCols(x_dim);
+    fu  = fxu_bundle.rightCols(u_dim);
+}
+
+VectorXd gxTemplate(VectorXd xtT, int iT, MatrixXd uT, MatrixXd xT, vector<MatrixXd> kT, vector<MatrixXd> KT, double alphaT)
+{
+    // cout<<"u.col(i) + alpha*k[i] + K[i]*(xt - x.col(i))"<<endl;
+    // cout<<"u.col("<<iT<<") = "<<uT.col(iT)<<endl;
+    // cout<<"alpha = "<<alphaT<<endl;
+    // cout<<"k["<<iT<<"] = "<<kT[iT]<<endl;
+    // cout<<"K["<<iT<<"] = "<<KT[iT]<<endl;
+    // cout<<"xt = "<<xtT.transpose()<<endl;
+    // cout<<"x.col("<<iT<<") = "<<xT.col(iT).transpose()<<endl;
+    return (KT[iT]*(xtT - xT.col(iT)) + uT.col(iT) + alphaT*kT[iT]).eval();
 }
 
 void DDP::setMu()
@@ -442,5 +337,6 @@ void DDP::setMu()
     mu_default = 50;
     mu = mu_default;
 }
+
 
 }
