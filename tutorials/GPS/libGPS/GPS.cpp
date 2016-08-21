@@ -20,7 +20,6 @@ GPS::GPS(int _T, int _x_dim, int _u_dim, int _numDDPIters, int _conditions, vala
 {
     DDPIter     = 0;
     // m is a misc variable and mPhi is a unique meaningful variable
-    mPhi        = numSamplesPerPolicy.sum();
     GPS_iterations = 20;
     previous_lossvalue_wo = 0;
     current_lossvalue_wo = 0;
@@ -69,8 +68,8 @@ void GPS::InitPolicyOptCaffe()
     PyTuple_SetItem(pArgs,0, PyInt_FromLong(x_dim));
     PyTuple_SetItem(pArgs,1, PyInt_FromLong(u_dim));
     PyTuple_SetItem(pArgs,2, PyInt_FromLong(T-1));
-    int m = numSamplesPerPolicy.sum() - numSamplesPerPolicy[conditions];
-    PyTuple_SetItem(pArgs,3, PyInt_FromLong(m));
+    int N = numSamplesPerPolicy.sum() - numSamplesPerPolicy[conditions];
+    PyTuple_SetItem(pArgs,3, PyInt_FromLong(N));
     PyTuple_SetItem(pArgs,4, PyInt_FromLong(numSk));
     pInstancePolicyOptCaffe = PyInstance_New(pClassPolicyOptCaffe,pArgs,NULL);
     pInstanceCaffePolicy    = PyObject_GetAttrString(pInstancePolicyOptCaffe,"policy");
@@ -231,11 +230,10 @@ void GPS::InitDDPPolicy()
 
 void GPS::InitNNPolicy()
 {
-    int m = numSamplesPerPolicy.sum() - numSamplesPerPolicy[conditions];
+    int N = numSamplesPerPolicy.sum() - numSamplesPerPolicy[conditions];
 
 //  generate traj samples from mixture of DDP policies
-//  Linear combination of mutually independent normal random vectors
-    trajSamples4NNpretrain = trajSampleGeneratorFromDDPMix(m);
+    trajSamples4NNpretrain = trajSampleGeneratorFromDDPMix(N);
 
 //  transform from c++ vector to python numpy
     if (!Py_IsInitialized())  
@@ -249,8 +247,8 @@ void GPS::InitNNPolicy()
     write4numpy_U(trajSamples4NNpretrain, "U");
     PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadU",NULL);
 
-    write4numpy_Quu_inv(trajSamples4NNpretrain, "Quu_inv");
-    PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadQuu_inv",NULL);
+    // write4numpy_Quu_inv(trajSamples4NNpretrain, "Quu_inv");
+    // PyObject_CallMethod(pInstancePolicyOptCaffe,"ReadQuu_inv",NULL);
 
 //  initialization of theta_star
     PyObject_CallMethod(pInstancePolicyOptCaffe,"printFoo",NULL);
@@ -899,7 +897,7 @@ vector<shared_ptr<sample>> GPS::trajSampleGeneratorFromDDPMix(int numSamples)
                     SampleEntry->x.col(i+1) = StepDynamics(SampleEntry->x.col(i),SampleEntry->u.col(i));
                     SampleEntry->Quu_inv[i] = __Quu_inv;
                 }
-                SampleEntry->u.col(T-1) = VectorXd::Constant(SampleEntry->u.col(0).size(),std::nan("0"));
+                SampleEntry->u.col(T-1) = VectorXd::Constant(u_dim,std::nan("0"));
             });
     return MixSampleLists;
 }

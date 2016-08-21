@@ -32,15 +32,17 @@ int main(int argc, char* argv[])
     int x_dim           = 4;
     int u_dim           = 1;
 	int numDDPIters		= 80;
-	int conditions  	= 4;
+	int conditions  	= 6;
 	valarray<int> numSamplePerPolicy(conditions+1);
     // num of samples for each DDP policy
-    numSamplePerPolicy[0] = 10;
-    numSamplePerPolicy[1] = 10;
-    numSamplePerPolicy[2] = 10;
-    numSamplePerPolicy[3] = 10;
+    numSamplePerPolicy[0] = 100;
+    numSamplePerPolicy[1] = 100;
+    numSamplePerPolicy[2] = 100;
+    numSamplePerPolicy[3] = 100;
+    numSamplePerPolicy[4] = 100;
+    numSamplePerPolicy[5] = 100;
     // num of samples for each NN policy
-    numSamplePerPolicy[4] = 10;
+    numSamplePerPolicy[6] = 10;
 
 
 // ---------------------------------------------------------
@@ -105,16 +107,24 @@ int main(int argc, char* argv[])
 
 	mGPS->x0Bundle[1](1)=      2.0*M_PI;
 
-	mGPS->x0Bundle[2](1)=      1.0*M_PI;
-	mGPS->x0Bundle[2](3)=      0.05*M_PI;
+	mGPS->x0Bundle[2](1)=      0.9*M_PI;
+	mGPS->x0Bundle[2](3)=      1.2*M_PI;
 
-	mGPS->x0Bundle[3](1)=      1.0*M_PI;
-	mGPS->x0Bundle[3](3)=      -0.05*M_PI;
+	mGPS->x0Bundle[3](1)=      1.1*M_PI;
+	mGPS->x0Bundle[3](3)=      -1.2*M_PI;
+
+	mGPS->x0Bundle[4](1)=      0.65*M_PI;
+	mGPS->x0Bundle[4](3)=      -0.2*M_PI;
+
+	mGPS->x0Bundle[5](1)=      1.35*M_PI;
+	mGPS->x0Bundle[5](3)=      0.2*M_PI;
 
 	mGPS->DDPBundle[0] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Qswing, Rswing), bind(CartPoleFinalCost,placeholders::_1, xd, Qfswing), LQRswing, make_tuple(mGPS->x0Bundle[0],xd,1)));
 	mGPS->DDPBundle[1] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Qswing, Rswing), bind(CartPoleFinalCost,placeholders::_1, xd, Qfswing), LQRswing, make_tuple(mGPS->x0Bundle[1],xd,1)));
 	mGPS->DDPBundle[2] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Qbalac, Rbalac), bind(CartPoleFinalCost,placeholders::_1, xd, Qfbalac), LQRbalac, make_tuple(mGPS->x0Bundle[2],xd,1)));
 	mGPS->DDPBundle[3] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Qbalac, Rbalac), bind(CartPoleFinalCost,placeholders::_1, xd, Qfbalac), LQRbalac, make_tuple(mGPS->x0Bundle[3],xd,1)));
+	mGPS->DDPBundle[4] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Qswing, Rswing), bind(CartPoleFinalCost,placeholders::_1, xd, Qfswing), LQRswing, make_tuple(mGPS->x0Bundle[4],xd,1)));
+	mGPS->DDPBundle[5] = make_shared<DDP>(DDP(T, bind(DartStepDynamics, placeholders::_1, placeholders::_2, mWorld->clone()), bind(CartPoleStepCost, placeholders::_1, placeholders::_2, xd, Qswing, Rswing), bind(CartPoleFinalCost,placeholders::_1, xd, Qfswing), LQRswing, make_tuple(mGPS->x0Bundle[5],xd,1)));
 
 // ---------------------------------------------------------
 

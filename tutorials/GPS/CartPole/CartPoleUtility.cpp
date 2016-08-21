@@ -27,6 +27,8 @@ VectorXd DartStepDynamics(VectorXd xi, VectorXd ui, dart::simulation::WorldPtr m
 	xi_1(2) = mCartPole->getDof("Joint_hold_cart")->getVelocity();
 	xi_1(3) = mCartPole->getDof("Joint_cart_pole")->getVelocity();
 
+    // DartStepDynamicsRegularizer(xi_1);
+
 	return xi_1;
 }
 
@@ -48,27 +50,19 @@ Scalar CartPoleFinalCost(const VectorXd xT, const VectorXd xd, const MatrixXd Qf
 	return ( 0.5*(xT-xd).transpose()*Qf*(xT-xd) );
 }
 
-
-Scalar CartPoleStepCostCos(const VectorXd xi, const VectorXd ui, const MatrixXd Q, const MatrixXd R)
+void DartStepDynamicsRegularizer(VectorXd & xi)
 {
-// --------------------------------------------------
-//	CartPole Step Cost Function
-//	Computing ci according to xi and ui 
-// --------------------------------------------------
-	VectorXd xi_aug = xi;
-	xi_aug(1) = 5 + cos(xi(1));
-	return (0.5*xi.transpose()*Q*xi + 0.5*ui.transpose()*R*ui);
-}
-
-Scalar CartPoleFinalCostCos(const VectorXd xT, const MatrixXd Qf)
-{
-// --------------------------------------------------
-//	CartPole Final Cost Function
-//	Computing cT according to xT
-// --------------------------------------------------
-	VectorXd xT_aug = xT;
-	xT_aug(1) = 5 + cos(xT(1));
-	return ( 0.5*xT_aug.transpose()*Qf*xT_aug );
+    while ((xi(1) > 3*M_PI) || (xi(1)<-M_PI))
+    {
+        if (xi(1) > 3*M_PI)
+        {
+            xi(1) = xi(1) - 2*M_PI; 
+        }
+        if (xi(1) < -M_PI)
+        {
+            xi(1) = xi(1) + 2*M_PI; 
+        }
+    }
 }
 
 }

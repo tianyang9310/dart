@@ -334,7 +334,7 @@ VectorXd gxTemplate(VectorXd xtT, int iT, MatrixXd uT, MatrixXd xT, vector<Matri
 
 void DDP::setMu()
 {
-    mu_default = 50;
+    mu_default = 0.05;
     mu = mu_default;
 }
 

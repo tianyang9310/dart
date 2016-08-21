@@ -3,6 +3,7 @@
 
 #include <Python.h>
 #include "dart/dart.h"
+#include "../CartPole/CartPoleUtility.h"
 #include "../libGPS/GPS.h"
 
 using namespace dart::dynamics;
@@ -13,6 +14,7 @@ using namespace dart::math;
 using namespace dart::gui;
 using namespace GPS_NSpace;
 using namespace std;
+using namespace CartPoleUtility;
 
 class MyWindow : public dart::gui::SimWindow {
 public:
@@ -25,6 +27,8 @@ public:
 	void keyboard(unsigned char _key, int _x, int _y) override;
 
     void mReset();
+
+    void mReset_wo_fine();
 
 // ------------------
 	unique_ptr<GPS> mGPS;

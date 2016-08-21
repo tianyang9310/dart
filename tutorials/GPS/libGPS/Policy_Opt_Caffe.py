@@ -39,7 +39,7 @@ class PolicyOptCaffe():
         self.init_solver()
         self.init_solver2()
         self.init_solver3()
-        self.var = 0.2 * np.eye(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
+        self.var = 0.1 * np.eye(self.u_dim) # here 0.1 is the parameter set arbitrarily. It would be a better idea to bundle all parameter in a separate file.
 
         with tempfile.NamedTemporaryFile(delete=False) as _init_f:
             _init_f.write(str(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,1,TEST)))
@@ -54,7 +54,7 @@ class PolicyOptCaffe():
     def init_solver(self):
         solver_param = SolverParameter()
         solver_param.display = 0  # Don't display anything.
-        solver_param.base_lr = 0.001
+        solver_param.base_lr = 0.0008
         solver_param.lr_policy = 'fixed'
         solver_param.momentum = 0.9
         solver_param.weight_decay = 0.005
@@ -76,7 +76,7 @@ class PolicyOptCaffe():
         solver_param2.momentum = 0.95
         solver_param2.weight_decay = 0.001
         solver_param2.type = 'SGD'
-        solver_param2.random_seed = 1
+        solver_param2.random_seed = 2
          
         solver_param2.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
             
@@ -93,7 +93,7 @@ class PolicyOptCaffe():
         solver_param3.momentum = 0.95
         solver_param3.weight_decay = 0.001
         solver_param3.type = 'SGD'
-        solver_param3.random_seed = 1
+        solver_param3.random_seed = 3
          
         solver_param3.train_net_param.CopyFrom(NNConstructor(self.x_dim,self.u_dim,self.hidden_dim,self.T,"ISLOSS",mPhi=self.mPhi))
             
@@ -142,7 +142,7 @@ class PolicyOptCaffe():
         
             # To get the training loss:
             train_loss = self.solver.net.blobs[blob_names[-1]].data
-            if i%500 == 0:
+            if i%50 == 0:
                 print train_loss
         
         self.policycopyfromsolver()
