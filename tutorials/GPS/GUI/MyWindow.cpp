@@ -103,6 +103,11 @@ void MyWindow::timeStepping()
 	mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setPosition(x_reg(1));
 	mWorld->getSkeleton("mCartPole")->getDof("Joint_hold_cart")->setVelocity(x_reg(2));
 	mWorld->getSkeleton("mCartPole")->getDof("Joint_cart_pole")->setVelocity(x_reg(3));
+    if (abs(x_reg(1)-M_PI)<0.1)
+    {
+        cout<<"Near the peak point"<<endl;
+        cout<<x_reg<<endl;
+    }
 }
 
 void MyWindow::drawSkels() 
