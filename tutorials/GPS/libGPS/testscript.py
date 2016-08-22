@@ -16,7 +16,7 @@ import math
 # 
 # print StepCost(np.array([0,0,0,0]),np.array(1))
 
-tt=PolicyOptCaffe(4,1,99,80,50)
+tt=PolicyOptCaffe(4,1,99,500,50)
 
 
 tt.ReadX()

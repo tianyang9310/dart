@@ -50,9 +50,11 @@ def NNConstructor(dim_input, dim_output, dim_hidden, batch_size, phase, mPhi=0):
         raise Exception('Unknown Network Phase')
 
     cur_top = net_input
-    cur_top = L.InnerProduct(cur_top, num_output=dim_hidden, weight_filler=dict(type='gaussian',std=0.01), bias_filler=dict(type='constant',value=0))
+    cur_top = L.InnerProduct(cur_top, num_output=dim_hidden, weight_filler=dict(type='gaussian',std=1/np.sqrt(dim_input)), bias_filler=dict(type='constant',value=0))
     cur_top = L.ReLU(cur_top, in_place=True)
-    cur_top = L.InnerProduct(cur_top, num_output=dim_output, weight_filler=dict(type='gaussian',std=0.01), bias_filler=dict(type='constant',value=0))
+    cur_top = L.InnerProduct(cur_top, num_output=dim_hidden, weight_filler=dict(type='gaussian',std=1/np.sqrt(dim_hidden)), bias_filler=dict(type='constant',value=0))
+    cur_top = L.ReLU(cur_top, in_place=True)
+    cur_top = L.InnerProduct(cur_top, num_output=dim_output, weight_filler=dict(type='gaussian',std=1/np.sqrt(dim_hidden)), bias_filler=dict(type='constant',value=0))
 
     if phase == TRAIN:
         out = L.Python(cur_top, action, precision, loss_weight=1.0, python_param=dict(module='NNBuilder', layer='SumLogProbLoss'))
