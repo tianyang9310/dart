@@ -72,9 +72,26 @@ void MyWorld::simulate() {
         Eigen::Vector3d dPos = mRigidBodies[i]->mLinMomentum / mRigidBodies[i]->mMass;
         Eigen::Vector3d dLinMom = mRigidBodies[i]->mMass * mGravity + mRigidBodies[i]->mAccumulatedForce;
         
+        // derivation of angle and angular momentum
+        mRigidBodies[i]->mOrientation = mRigidBodies[i]->mQuatOrient.toRotationMatrix();
+        Eigen::Matrix3d curInertiaTensor = (mRigidBodies[i]->mOrientation * mRigidBodies[i]->mInertiaTensor * mRigidBodies[i]->mOrientation.transpose()).eval();
+        Eigen::Vector3d AngVel = curInertiaTensor.ldlt().solve(mRigidBodies[i]->mAngMomentum);
+        Eigen::Quaterniond QuatAngVel;
+        QuatAngVel.w() = 0;
+        QuatAngVel.vec() = AngVel;
+        Eigen::Quaterniond dQuatOrient = QuatAngVel*mRigidBodies[i]->mQuatOrient;
+        dQuatOrient.w() = dQuatOrient.w() * 0.5;
+        dQuatOrient.vec() = dQuatOrient.vec() * 0.5;
+        Eigen::Vector3d dAngMom = mRigidBodies[i]->mAccumulatedTorque;
+        
         // update position and linear momentum
         mRigidBodies[i]->mPosition += dPos * mTimeStep;
         mRigidBodies[i]->mLinMomentum += mTimeStep * dLinMom;
+        
+        // update angle and angular momentum
+        mRigidBodies[i]->mQuatOrient.w() += mTimeStep * dQuatOrient.w();
+        mRigidBodies[i]->mQuatOrient.vec() += mTimeStep * dQuatOrient.vec();
+        mRigidBodies[i]->mAngMomentum += mTimeStep * dAngMom;
     }
     
     // Reset accumulated force and torque to be zero after a complete integration

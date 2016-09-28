@@ -14,11 +14,18 @@ class RigidBody {
         mOrientation.setIdentity(); // R = identity
 		mQuatOrient.setIdentity();	//initialize quaternion
         mColor << 0.9, 0.2, 0.2, 1.0; // Red
+        mInertiaTensor.setIdentity();
         
         if (_type == dart::dynamics::Shape::BOX) {
             mShape = Eigen::make_aligned_shared<dart::dynamics::BoxShape>(_dim);
+            mInertiaTensor(0,0) = 1.0/12.0*(_dim(1)*_dim(1)+_dim(2)*_dim(2))*mMass;
+            mInertiaTensor(1,1) = 1.0/12.0*(_dim(0)*_dim(0)+_dim(2)*_dim(2))*mMass;
+            mInertiaTensor(2,2) = 1.0/12.0*(_dim(0)*_dim(0)+_dim(1)*_dim(1))*mMass;
         } else if (_type == dart::dynamics::Shape::ELLIPSOID) {
             mShape = Eigen::make_aligned_shared<dart::dynamics::EllipsoidShape>(_dim);
+            mInertiaTensor(0,0) = 1.0/5.0*(_dim(1)*_dim(1)+_dim(2)*_dim(2))*mMass;
+            mInertiaTensor(1,1) = 1.0/5.0*(_dim(0)*_dim(0)+_dim(2)*_dim(2))*mMass;
+            mInertiaTensor(2,2) = 1.0/5.0*(_dim(0)*_dim(0)+_dim(1)*_dim(1))*mMass;
         }
         
         mLinMomentum.setZero();
@@ -40,6 +47,7 @@ class RigidBody {
 	Eigen::Vector3d mPosition;
     Eigen::Quaterniond mQuatOrient; // quaternion
 	Eigen::Matrix3d mOrientation;   // rotation matrix
+    Eigen::Matrix3d mInertiaTensor;
     Eigen::Vector3d mLinMomentum;
     Eigen::Vector3d mAngMomentum;
     dart::dynamics::ShapePtr mShape;
