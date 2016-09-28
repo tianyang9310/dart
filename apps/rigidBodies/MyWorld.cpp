@@ -91,6 +91,7 @@ void MyWorld::simulate() {
         // update angle and angular momentum
         mRigidBodies[i]->mQuatOrient.w() += mTimeStep * dQuatOrient.w();
         mRigidBodies[i]->mQuatOrient.vec() += mTimeStep * dQuatOrient.vec();
+        mRigidBodies[i]->mQuatOrient.normalize();   // Normalize to ensure effective quaternion whose norm is 1
         mRigidBodies[i]->mAngMomentum += mTimeStep * dAngMom;
     }
     
@@ -122,15 +123,98 @@ void MyWorld::simulate() {
 void MyWorld::collisionHandling() {
     // restitution coefficient
     double epsilon = 0.8;
+    double inf     = 1e10;
     
     // TODO: handle the collision events
+    int numContacts = mCollisionDetector->getNumContacts();
+    if (numContacts > 0)
+    {
+        cout<<"There exist "<<numContacts<<" contact points."<<endl;
+        for (int idxCnt=0; idxCnt<numContacts; idxCnt++)
+        {
+            cout<<"The "<<(idxCnt+1)<<" contact point: "<<endl;
+            RigidBody* rbA = mCollisionDetector->getContact(idxCnt).rb1;
+            RigidBody* rbB = mCollisionDetector->getContact(idxCnt).rb2;
+            Eigen::Vector3d p = mCollisionDetector->getContact(idxCnt).point;  // contact coordinate
+            Eigen::Vector3d n = mCollisionDetector->getContact(idxCnt).normal; // contact normal
+            
+            cout<<"Coordinate: "<<p.transpose()<<endl;
+            cout<<"Normal direction: "<<n.transpose()<<endl;
+            
+            double Ma_inv;
+            double Mb_inv;
+            Eigen::Matrix3d Ic_a;
+            Eigen::Vector3d wa;
+            Eigen::Vector3d ra;
+            Eigen::Matrix3d Ic_b;
+            Eigen::Vector3d wb;
+            Eigen::Vector3d rb;
+            Eigen::Vector3d vr;
+            
+            if (rbA)
+            {
+                Ma_inv = 1/rbA->mMass;
+                rbA->mOrientation = rbA->mQuatOrient.toRotationMatrix();
+                Ic_a = (rbA->mOrientation * rbA->mInertiaTensor * rbA->mOrientation.transpose()).eval();
+                wa = Ic_a.ldlt().solve(rbA->mAngMomentum);
+                ra = (p - rbA->mPosition).eval(); // contact point in ra frame
+            }
+            else
+            {
+                // one contact object is pinata
+                cout<<"Object A is pinata"<<endl;
+                Ma_inv = 0.0;  // infinite mass
+                Ic_a = Eigen::Matrix3d::Identity()*inf;
+                ra = p; // contact point in pinata frame (a.k.a. world frame)
+            }
+            
+            if (rbB)
+            {
+                Mb_inv = 1/rbB->mMass;
+                rbB->mOrientation = rbB->mQuatOrient.toRotationMatrix();
+                Ic_b = (rbB->mOrientation * rbB->mInertiaTensor * rbB->mOrientation.transpose()).eval();
+                wb = Ic_b.ldlt().solve(rbB->mAngMomentum);
+                rb = (p - rbB->mPosition).eval(); // contact point in rb frame
+            }
+            else
+            {
+                // one contact object is pinata
+                cout<<"Object B is pinata"<<endl;
+                Mb_inv = 0.0;  // infinite mass
+                Ic_b = Eigen::Matrix3d::Identity()*inf;
+                rb = p; // contact point in pinata frame (a.k.a. world frame)
+            }
+            
+            if (rbA && rbB)
+            {
+                vr = (rbA->mLinMomentum*Ma_inv + wa.cross(ra)) - (rbB->mLinMomentum*Mb_inv+ wb.cross(rb)); // relative velocity (vector)
+            }
+            else if (rbB)
+            {
+                vr = mCollisionDetector->getContact(idxCnt).pinataVelocity - (rbB->mLinMomentum*Mb_inv+ wb.cross(rb)); // relative velocity (vector)
+            }
+            else
+            {
+                vr = (rbA->mLinMomentum*Ma_inv + wa.cross(ra)) - mCollisionDetector->getContact(idxCnt).pinataVelocity; // relative velocity (vector)
+            }
+            
+            double vrn= n.dot(vr); // normal relative velocity (scalar)
+            double j;
+            
+            j =                                             -(1+epsilon)*vrn/
+                ( Ma_inv + Mb_inv + n.dot((Ic_a.ldlt().solve(ra.cross(n))).cross(ra)) + n.dot((Ic_b.ldlt().solve(rb.cross(n))).cross(rb)) );
+            
+            if (rbA)
+            {
+                rbA->mLinMomentum += j*n;
+                rbA->mAngMomentum += ra.cross(j*n);
+            }
+            
+            if (rbB)
+            {
+                rbB->mLinMomentum += -j*n;
+                rbB->mAngMomentum += rb.cross(-j*n);
+            }
+        }
+    }
 }
-
-
-
-
-
-
-
-
-
