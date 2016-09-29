@@ -51,8 +51,6 @@
 #include "dart/constraint/SoftContactConstraint.h"
 #include "dart/constraint/JointLimitConstraint.h"
 #include "dart/constraint/JointCoulombFrictionConstraint.h"
-#include "dart/constraint/DantzigLCPSolver.h"
-#include "dart/constraint/PGSLCPSolver.h"
 
 namespace dart {
 namespace constraint {
@@ -271,6 +269,12 @@ void ConstraintSolver::solve()
 
   // Solve constrained groups
   solveConstrainedGroups();
+}
+    
+//==============================================================================
+void ConstraintSolver::setLCPSolver(DantzigLCPSolver* _DantzigLCPSolver)
+{
+    mLCPSolver = _DantzigLCPSolver;
 }
 
 //==============================================================================

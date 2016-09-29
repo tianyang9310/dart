@@ -43,6 +43,8 @@
 
 #include "dart/constraint/ConstraintBase.h"
 #include "dart/collision/CollisionDetector.h"
+#include "dart/constraint/DantzigLCPSolver.h"
+#include "dart/constraint/PGSLCPSolver.h"
 
 namespace dart {
 
@@ -121,6 +123,8 @@ public:
 
   /// Solve constraint impulses and apply them to the skeletons
   void solve();
+    
+  void setLCPSolver(DantzigLCPSolver* _DantzigLCPSolver);
 
 private:
   /// Check if the skeleton is contained in this solver

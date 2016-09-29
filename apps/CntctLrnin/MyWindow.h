@@ -10,10 +10,13 @@ public:
     MyWindow(dart::simulation::WorldPtr world);
     virtual ~MyWindow();
     
+    void timeStepping() override;
+    void keyboard(unsigned char _key, int _x, int _y) override;
     void drawSkels() override;
 
 private:
     std::unique_ptr<Controller> mController;
+    std::unique_ptr<dart::collision::CollisionDetector> mCollisionDetector;
 };
 
 #endif  // CNTCTLRNIN_MYWINDOW_H
