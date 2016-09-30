@@ -10,6 +10,9 @@ public:
     MyWindow(dart::simulation::WorldPtr world);
     virtual ~MyWindow();
     
+    
+    void addExtForce();
+    
     void timeStepping() override;
     void keyboard(unsigned char _key, int _x, int _y) override;
     void drawSkels() override;

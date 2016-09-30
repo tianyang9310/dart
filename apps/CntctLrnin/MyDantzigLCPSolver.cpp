@@ -111,7 +111,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     std::cout<<"-----------------------------"<<std::endl;
     std::cout<<"---Solve LCP via Lemke-------"<<std::endl;
     assert(nSkip == n);
-    Eigen::Map<Eigen::MatrixXd> _eigen_A(A,nSkip,n);
+    Eigen::Map<Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>> _eigen_A(A,n,nSkip);
     std::cout<<"Eigen::MatrixXd A is now"<<std::endl;
     std::cout<<_eigen_A<<std::endl;
     Eigen::Map<Eigen::VectorXd> _eigen_b(b,n);
