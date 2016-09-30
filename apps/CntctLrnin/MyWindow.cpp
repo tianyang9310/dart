@@ -8,7 +8,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world)
     mCollisionDetector = std::unique_ptr<dart::collision::CollisionDetector>(mWorld->getConstraintSolver()->getCollisionDetector());
 }
 
-MyWindow::~MyWindow() 
+MyWindow::~MyWindow()
 {
     
 }

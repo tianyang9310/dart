@@ -7,7 +7,7 @@ public:
     Controller();
     virtual ~Controller();
 protected:
-
+    
 };
 
 #endif  // CNTCTLRNIN_CONTROL_H
