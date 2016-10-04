@@ -29,6 +29,11 @@ public:
 protected:
     void print(size_t _n, double* _A, double* _x, double* _lo, double* _hi, double* _b, double* w, int* _findex);
     
+    /// Return true if the matrix is symmetric
+    bool isSymmetric(size_t _n, double* _A);
+    
+    /// Return true if the diagonla block of matrix is symmetric
+    bool isSymmetric(size_t _n, double* _A, size_t _begin, size_t _end);
     
 };
 

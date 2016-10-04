@@ -110,25 +110,44 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     // compute A and b for Lemke
     std::cout<<"-----------------------------"<<std::endl;
     std::cout<<"---Solve LCP via Lemke-------"<<std::endl;
-    assert(nSkip == n);
+    if (!isSymmetric(n, A))
+    // if (n != nSkip)
+    {
+        std::cout<<nSkip<<std::endl;
+        std::cout<<n<<std::endl;
+        std::cin.get();
+    }
     Eigen::Map<Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>> _eigen_A(A,n,nSkip);
+    // cropping _eigen_A to be square matrix
+    Eigen::MatrixXd _eigen_A_cropped(n,n);
+    _eigen_A_cropped = _eigen_A.block(0,0,n,n);
+    
     std::cout<<"Eigen::MatrixXd A is now"<<std::endl;
-    std::cout<<_eigen_A<<std::endl;
+    std::cout<<_eigen_A_cropped<<std::endl;
     Eigen::Map<Eigen::VectorXd> _eigen_b(b,n);
+    // negating b to be true LCP
+    Eigen::VectorXd _eigen_b_neg(n);
+    _eigen_b_neg = - _eigen_b;
+    
     std::cout<<"Eigen::VectorXd b is now"<<std::endl;
-    std::cout<<_eigen_b<<std::endl;
+    std::cout<<_eigen_b_neg<<std::endl;
 
     // Solve LCP using Lemke's algorithm
     // A and b are reference
     // z is pointer
     Eigen::VectorXd* z = new Eigen::VectorXd(n);
-    int err = dart::lcpsolver::Lemke(_eigen_A,_eigen_b,z);
+    int err = dart::lcpsolver::Lemke(_eigen_A_cropped,_eigen_b_neg,z);
     
     // Print LCP formulation
     std::cout<<"Using Lemke to solve the LCP problem"<<std::endl;
     std::cout<<"error: "<<err<<std::endl;
     std::cout<<"z "<<(*z).transpose()<<std::endl;
     std::cout<<"-----------------------------"<<std::endl;
+    if (!dart::lcpsolver::validate(_eigen_A_cropped, *z, _eigen_b_neg))
+    {
+        std::cout<<"invalid Lemke solution"<<std::endl;
+        // std::cin.get();
+    }
 //  ---------------------------------------
 
     // Solve LCP using ODE's Dantzig algorithm
@@ -246,3 +265,64 @@ void MyDantzigLCPSolver::print(size_t _n, double* _A, double* _x,
     
     delete[] Ax;
 }
+
+bool MyDantzigLCPSolver::isSymmetric(size_t _n, double* _A)
+{
+    size_t nSkip = dPAD(_n);
+    for (size_t i = 0; i < _n; ++i)
+    {
+        for (size_t j = 0; j < _n; ++j)
+        {
+            if (std::abs(_A[nSkip * i + j] - _A[nSkip * j + i]) > 1e-6)
+            {
+                std::cout << "A: " << std::endl;
+                for (size_t k = 0; k < _n; ++k)
+                {
+                    for (size_t l = 0; l < nSkip; ++l)
+                    {
+                        std::cout << std::setprecision(4) << _A[k * nSkip + l] << " ";
+                    }
+                    std::cout << std::endl;
+                }
+                
+                std::cout << "A(" << i << ", " << j << "): " << _A[nSkip * i + j] << std::endl;
+                std::cout << "A(" << j << ", " << i << "): " << _A[nSkip * j + i] << std::endl;
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
+//==============================================================================
+bool MyDantzigLCPSolver::isSymmetric(size_t _n, double* _A,
+                                   size_t _begin, size_t _end)
+{
+    size_t nSkip = dPAD(_n);
+    for (size_t i = _begin; i <= _end; ++i)
+    {
+        for (size_t j = _begin; j <= _end; ++j)
+        {
+            if (std::abs(_A[nSkip * i + j] - _A[nSkip * j + i]) > 1e-6)
+            {
+                std::cout << "A: " << std::endl;
+                for (size_t k = 0; k < _n; ++k)
+                {
+                    for (size_t l = 0; l < nSkip; ++l)
+                    {
+                        std::cout << std::setprecision(4) << _A[k * nSkip + l] << " ";
+                    }
+                    std::cout << std::endl;
+                }
+                
+                std::cout << "A(" << i << ", " << j << "): " << _A[nSkip * i + j] << std::endl;
+                std::cout << "A(" << j << ", " << i << "): " << _A[nSkip * j + i] << std::endl;
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
