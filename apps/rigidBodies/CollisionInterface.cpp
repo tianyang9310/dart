@@ -5,7 +5,8 @@
 using namespace Eigen;
 
 CollisionInterface::CollisionInterface() {
-  mCollisionChecker = new dart::collision::DARTCollisionDetector();
+  // mCollisionChecker = new dart::collision::DARTCollisionDetector();
+  mCollisionChecker = new dart::collision::BulletCollisionDetector();
   mCollisionChecker->setNumMaxContacs(10);
 }
 

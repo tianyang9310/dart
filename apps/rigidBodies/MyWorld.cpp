@@ -79,7 +79,12 @@ void MyWorld::simulate() {
         Eigen::Quaterniond QuatAngVel;
         QuatAngVel.w() = 0;
         QuatAngVel.vec() = AngVel;
+        // ----------------------------
         Eigen::Quaterniond dQuatOrient = QuatAngVel*mRigidBodies[i]->mQuatOrient;
+        // Eigen::Quaterniond dQuatOrient; 
+        // dQuatOrient.w() = QuatAngVel.w()*mRigidBodies[i]->mQuatOrient.w() - QuatAngVel.vec().dot(mRigidBodies[i]->mQuatOrient.vec());
+        // dQuatOrient.vec() = QuatAngVel.w()*mRigidBodies[i]->mQuatOrient.vec() + QuatAngVel.vec()*mRigidBodies[i]->mQuatOrient.w() + QuatAngVel.vec().cross(mRigidBodies[i]->mQuatOrient.vec());
+        // ----------------------------
         dQuatOrient.w() = dQuatOrient.w() * 0.5;
         dQuatOrient.vec() = dQuatOrient.vec() * 0.5;
         Eigen::Vector3d dAngMom = mRigidBodies[i]->mAccumulatedTorque;
@@ -123,7 +128,7 @@ void MyWorld::simulate() {
 void MyWorld::collisionHandling() {
     // restitution coefficient
     double epsilon = 0.8;
-    double inf     = 1e10;
+    double inf     = 1e100; // dInfinity;
     
     // TODO: handle the collision events
     int numContacts = mCollisionDetector->getNumContacts();
@@ -137,6 +142,8 @@ void MyWorld::collisionHandling() {
             RigidBody* rbB = mCollisionDetector->getContact(idxCnt).rb2;
             Eigen::Vector3d p = mCollisionDetector->getContact(idxCnt).point;  // contact coordinate
             Eigen::Vector3d n = mCollisionDetector->getContact(idxCnt).normal; // contact normal
+
+            // n = n / n.norm();
             
             cout<<"Coordinate: "<<p.transpose()<<endl;
             cout<<"Normal direction: "<<n.transpose()<<endl;
@@ -153,7 +160,7 @@ void MyWorld::collisionHandling() {
             
             if (rbA)
             {
-                Ma_inv = 1/rbA->mMass;
+                Ma_inv = 1.0/rbA->mMass;
                 rbA->mOrientation = rbA->mQuatOrient.toRotationMatrix();
                 Ic_a = (rbA->mOrientation * rbA->mInertiaTensor * rbA->mOrientation.transpose()).eval();
                 wa = Ic_a.ldlt().solve(rbA->mAngMomentum);
@@ -170,7 +177,7 @@ void MyWorld::collisionHandling() {
             
             if (rbB)
             {
-                Mb_inv = 1/rbB->mMass;
+                Mb_inv = 1.0/rbB->mMass;
                 rbB->mOrientation = rbB->mQuatOrient.toRotationMatrix();
                 Ic_b = (rbB->mOrientation * rbB->mInertiaTensor * rbB->mOrientation.transpose()).eval();
                 wb = Ic_b.ldlt().solve(rbB->mAngMomentum);
