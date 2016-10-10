@@ -149,7 +149,7 @@ private:
   ///
   Eigen::MatrixXd getTangentBasisMatrixODE(const Eigen::Vector3d& _n);
 
-private:
+public:
   /// Time step
   double mTimeStep;
 

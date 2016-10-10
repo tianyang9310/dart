@@ -1,6 +1,6 @@
 #include "MyDantzigLCPSolver.h"
 
-MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep):DantzigLCPSolver(_timestep)
+MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep,int _totalDOF):DantzigLCPSolver(_timestep),totalDOF(_totalDOF)
 {
     
 }
@@ -8,12 +8,12 @@ MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep):DantzigLCPSolver(_times
 void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
 {
     // If there is no constraint, then just return true.
-    size_t numConstraints = _group->getNumConstraints();
+    size_t numConstraints = _group->getNumConstraints(); // numConstraints is exactly the number of contact points 
     if (numConstraints == 0)
         return;
     
     // Build LCP terms by aggregating them from constraints
-    size_t n = _group->getTotalDimension();
+    size_t n = _group->getTotalDimension(); // n = 3*numConstraints if mIsFrictionOn else numConstraints
     int nSkip = dPAD(n);
     double* A = new double[n * nSkip];
     double* x = new double[n];
@@ -66,7 +66,11 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         {
             // Adjust findex for global index
             if (findex[offset[i] + j] >= 0)
+            {
+                // std::cout<<"Adject findex for global index"<<std::endl;
                 findex[offset[i] + j] += offset[i];
+                // std::cin.get();
+            }
             
             // Apply impulse for mipulse test
             constraint->applyUnitImpulse(j);
@@ -102,12 +106,62 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     assert(isSymmetric(n, A));
     
     // Print LCP formulation
-    dtdbg << "Before solve:" << std::endl;
-    print(n, A, x, lo, hi, b, w, findex);
-    std::cout << std::endl;
+    // dtdbg << "Before solve:" << std::endl;
+    // print(n, A, x, lo, hi, b, w, findex);
+    // std::cout << std::endl;
+
+//  ---------------------------------------
+    // establish A and b matrix for Lemke algorithm
+    ContactConstraint* cntctconstraint; 
+    Eigen::MatrixXd M(totalDOF,totalDOF); 
+    M.setIdentity();
+    Eigen::MatrixXd N(totalDOF,numConstraints); 
+    N.setZero();
+    for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; idx_cnstrnt++)
+    {
+        cntctconstraint = dynamic_cast<ContactConstraint*>(_group->getConstraint(idx_cnstrnt));
+        // std::cout<<cntctconstraint->mContacts.size()<<std::endl;
+        if (cntctconstraint->mContacts.size() > 1)
+        {
+            dtmsg<<"ERROR: more than one contact for current ContactConstraint"<<std::endl;
+            std::cin.get();
+        }
+        dart::collision::Contact* ct = cntctconstraint->mContacts[0];
+        Eigen::Vector3d bodyPoint1;
+        Eigen::Vector3d bodyPoint2;
+        bodyPoint1.noalias() = cntctconstraint->mBodyNode1->getTransform().inverse() * ct->point;
+        bodyPoint2.noalias() = cntctconstraint->mBodyNode2->getTransform().inverse() * ct->point;
+
+        dart::math::LinearJacobian J1;  // J1 and BodyNode1 is 
+        dart::math::LinearJacobian J2;
+        J1 = cntctconstraint->mBodyNode1->getLinearJacobian(bodyPoint1);
+        J2 = cntctconstraint->mBodyNode2->getLinearJacobian(bodyPoint2);
+        assert(J1.rows()=J2.rows());
+
+        Eigen::Vector3d normDirection;
+        normDirection = ct->normal;
+
+        N.col(idx_cnstrnt) << J1.transpose()*normDirection,-J2.transpose()*normDirection;
+
+        // TODO: here mass matrix should be computed beforehand
+        Eigen::MatrixXd M1;
+        Eigen::MatrixXd M2;
+        M1 = cntctconstraint->mBodyNode1->getSkeleton()->getMassMatrix();
+        M2 = cntctconstraint->mBodyNode2->getSkeleton()->getMassMatrix();
+        
+        M.block(0,0,M1.rows(),M1.cols()) = M1;
+        M.block(M1.rows(),M1.cols(),M2.rows(),M2.cols()) = M2;
+    }
+    Eigen::MatrixXd __Lemke__A;
+    __Lemke__A = N.transpose()*M.ldlt().solve(N);
+    std::cout<<__Lemke__A<<std::endl;
+    std::cin.get();
     
 //  ---------------------------------------
-    // compute A and b for Lemke
+    
+/*
+//  ---------------------------------------
+    // Borrow A and b for Lemke
     std::cout<<"-----------------------------"<<std::endl;
     std::cout<<"---Solve LCP via Lemke-------"<<std::endl;
     if (!isSymmetric(n, A))
@@ -149,14 +203,15 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         // std::cin.get();
     }
 //  ---------------------------------------
+*/
 
     // Solve LCP using ODE's Dantzig algorithm
     dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
     
     // Print LCP formulation
-    dtdbg << "After solve:" << std::endl;
-    print(n, A, x, lo, hi, b, w, findex);
-    std::cout << std::endl;
+    // dtdbg << "After solve:" << std::endl;
+    // print(n, A, x, lo, hi, b, w, findex);
+    // std::cout << std::endl;
     
     // Apply constraint impulses
     for (size_t i = 0; i < numConstraints; ++i)

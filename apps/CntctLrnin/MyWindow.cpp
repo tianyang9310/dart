@@ -21,6 +21,8 @@ void MyWindow::timeStepping()
         cout<<"There are "<<numCntct<<" contact points"<<endl;
         // retrieve A and p in LCP (for only normal part, assuming frictionless)
         
+        // std::cout<<mWorld->getSkeleton("ground skeleton")->getBodyNode("ground")->getArticulatedInertia()<<std::endl;
+        // std::cin.get();
     }
     
     dart::gui::SimWindow::timeStepping();

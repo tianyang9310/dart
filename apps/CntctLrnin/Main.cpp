@@ -10,7 +10,8 @@ int main(int argc, char* argv[])
 {
     // create and initialize the world
     dart::simulation::WorldPtr mWorld = dart::utils::SkelParser::readWorld(DART_DATA_PATH"skel/ground.skel");
-    assert(myWorld != nullptr);
+    assert(mWorld != nullptr);
+    AddSkel(mWorld);
     
     Eigen::Vector3d gravity(0.0, -9.81, 0.0);
     mWorld->setGravity(gravity);
@@ -19,9 +20,10 @@ int main(int argc, char* argv[])
     mWorld->getConstraintSolver()->setCollisionDetector(new dart::collision::BulletCollisionDetector());
     
     // using MyDantzigLCPSolver
-    mWorld->getConstraintSolver()->setLCPSolver(new MyDantzigLCPSolver(mWorld->getTimeStep()));
-    
-    AddSkel(mWorld);
+    int totalDOF = 0;
+    totalDOF += mWorld->getSkeleton("ground skeleton")->getNumDofs();
+    totalDOF += mWorld->getSkeleton("mBox")->getNumDofs();
+    mWorld->getConstraintSolver()->setLCPSolver(new MyDantzigLCPSolver(mWorld->getTimeStep(), totalDOF));
     
     // create a window and link it to the world
     MyWindow window(mWorld);

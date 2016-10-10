@@ -19,10 +19,10 @@
 
 using namespace dart::constraint;
 
-class MyDantzigLCPSolver : public dart::constraint::DantzigLCPSolver
+class MyDantzigLCPSolver : public DantzigLCPSolver
 {
 public:
-    MyDantzigLCPSolver(double _timestep);
+    MyDantzigLCPSolver(double _timestep,int _totalDOF);
     virtual ~MyDantzigLCPSolver(){};
     
     void solve(ConstrainedGroup* _group) override;
@@ -34,6 +34,8 @@ protected:
     
     /// Return true if the diagonla block of matrix is symmetric
     bool isSymmetric(size_t _n, double* _A, size_t _begin, size_t _end);
+
+    int totalDOF;
     
 };
 
