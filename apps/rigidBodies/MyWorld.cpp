@@ -73,6 +73,7 @@ void MyWorld::simulate() {
         Eigen::Vector3d dLinMom = mRigidBodies[i]->mMass * mGravity + mRigidBodies[i]->mAccumulatedForce;
         
         // derivation of angle and angular momentum
+        mRigidBodies[i]->mQuatOrient.normalize();
         mRigidBodies[i]->mOrientation = mRigidBodies[i]->mQuatOrient.toRotationMatrix();
         Eigen::Matrix3d curInertiaTensor = (mRigidBodies[i]->mOrientation * mRigidBodies[i]->mInertiaTensor * mRigidBodies[i]->mOrientation.transpose()).eval();
         Eigen::Vector3d AngVel = curInertiaTensor.ldlt().solve(mRigidBodies[i]->mAngMomentum);
@@ -143,7 +144,7 @@ void MyWorld::collisionHandling() {
             Eigen::Vector3d p = mCollisionDetector->getContact(idxCnt).point;  // contact coordinate
             Eigen::Vector3d n = mCollisionDetector->getContact(idxCnt).normal; // contact normal
 
-            // n = n / n.norm();
+            n = n / n.norm();
             
             cout<<"Coordinate: "<<p.transpose()<<endl;
             cout<<"Normal direction: "<<n.transpose()<<endl;
@@ -161,6 +162,7 @@ void MyWorld::collisionHandling() {
             if (rbA)
             {
                 Ma_inv = 1.0/rbA->mMass;
+                rbA->mQuatOrient.normalize();
                 rbA->mOrientation = rbA->mQuatOrient.toRotationMatrix();
                 Ic_a = (rbA->mOrientation * rbA->mInertiaTensor * rbA->mOrientation.transpose()).eval();
                 wa = Ic_a.ldlt().solve(rbA->mAngMomentum);
@@ -178,6 +180,7 @@ void MyWorld::collisionHandling() {
             if (rbB)
             {
                 Mb_inv = 1.0/rbB->mMass;
+                rbB->mQuatOrient.normalize();
                 rbB->mOrientation = rbB->mQuatOrient.toRotationMatrix();
                 Ic_b = (rbB->mOrientation * rbB->mInertiaTensor * rbB->mOrientation.transpose()).eval();
                 wb = Ic_b.ldlt().solve(rbB->mAngMomentum);
@@ -208,8 +211,21 @@ void MyWorld::collisionHandling() {
             double vrn= n.dot(vr); // normal relative velocity (scalar)
             double j;
             
-            j =                                             -(1+epsilon)*vrn/
-                ( Ma_inv + Mb_inv + n.dot((Ic_a.ldlt().solve(ra.cross(n))).cross(ra)) + n.dot((Ic_b.ldlt().solve(rb.cross(n))).cross(rb)) );
+            if (rbA && rbB)
+            {
+                j =                                             -(1+epsilon)*vrn/
+                    ( Ma_inv + Mb_inv + n.dot((Ic_a.ldlt().solve(ra.cross(n))).cross(ra)) + n.dot((Ic_b.ldlt().solve(rb.cross(n))).cross(rb)) );
+            }
+            else if (rbB)
+            {
+                j =                                             -(1+epsilon)*vrn/
+                    ( Mb_inv + n.dot((Ic_b.ldlt().solve(rb.cross(n))).cross(rb)) );
+            }
+            else
+            {
+                j =                                             -(1+epsilon)*vrn/
+                    ( Ma_inv + n.dot((Ic_a.ldlt().solve(ra.cross(n))).cross(ra)) );
+            }
             
             if (rbA)
             {
