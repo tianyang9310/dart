@@ -2,7 +2,7 @@
 
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep,int _totalDOF):DantzigLCPSolver(_timestep),totalDOF(_totalDOF)
 {
-    
+    numBasis = 8;
 }
 
 void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
@@ -117,6 +117,12 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     M.setIdentity();
     Eigen::MatrixXd N(totalDOF,numConstraints); 
     N.setZero();
+    Eigen::MatrixXd B(totalDOF,numConstraints*numBasis); 
+    B.setZero();
+    Eigen::MatrixXd mu(numConstraints,numConstraints);
+    mu.setZero();
+    Eigen::MatrixXd E(numConstraints*numBasis,numConstraints);
+    E.setZero();
     Eigen::VectorXd tau(totalDOF);
     tau.setZero();
     for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; idx_cnstrnt++)
@@ -161,9 +167,32 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         tau2 = M2*cntctconstraint->mBodyNode2->getSkeleton()->getVelocities() - mTimeStep*cntctconstraint->mBodyNode2->getSkeleton()->getCoriolisAndGravityForces(); 
         tau.head(tau1.rows()) = tau1;
         tau.tail(tau2.rows()) = tau2;
+
+        // B matrix
+        Eigen::MatrixXd D = getTangentBasisMatrix(normDirection);
+        B.block(0,idx_cnstrnt*numBasis,totalDOF,numBasis) << J1.transpose()*D, -J2.transpose()*D;
+
+        // mu
+        // std::cout<<"The friction coeff for the two BodyNodes are: ";
+        // std::cout<<cntctconstraint->mBodyNode1->getFrictionCoeff()<<"   ";
+        // std::cout<<cntctconstraint->mBodyNode2->getFrictionCoeff()<<std::endl;
+        mu(idx_cnstrnt,idx_cnstrnt) = std::min(cntctconstraint->mBodyNode1->getFrictionCoeff(), cntctconstraint->mBodyNode2->getFrictionCoeff());
+
+        // E
+        E.block(idx_cnstrnt*numBasis,idx_cnstrnt,numBasis,1) = Eigen::VectorXd::Ones(numBasis);
     }
-    Eigen::MatrixXd __Lemke__A;
-    __Lemke__A = N.transpose()*M.ldlt().solve(N);
+    Eigen::MatrixXd __Lemke__A(Eigen::MatrixXd::Zero(numConstraints*(2+numBasis),numConstraints*(2+numBasis)));
+    __Lemke__A.block(0,0,numConstraints,numConstraints) = N.transpose()*M.ldlt().solve(N);
+    __Lemke__A.block(0,numConstraints,numConstraints,numConstraints*numBasis) 
+                                                        = N.transpose()*M.ldlt().solve(B);
+    __Lemke__A.block(numConstraints,0,numConstraints*numBasis,numConstraints)
+                                                        = B.transpose()*M.ldlt().solve(N);
+    __Lemke__A.block(numConstraints,numConstraints,numConstraints*numBasis,numConstraints*numBasis)
+                                                        = B.transpose()*M.ldlt().solve(B);
+    __Lemke__A.block(numConstraints*(numBasis+1),0,numConstraints,numConstraints) = mu;
+    __Lemke__A.block(numConstraints*(numBasis+1),numConstraints,numConstraints,numConstraints*numBasis) = -E.transpose();
+    __Lemke__A.block(numConstraints,numConstraints*(numBasis+1),numConstraints*numBasis,numConstraints) = E;
+
     Eigen::VectorXd __Lemke__b;
     __Lemke__b = N.transpose()*M.ldlt().solve(tau);
 
@@ -398,3 +427,39 @@ bool MyDantzigLCPSolver::isSymmetric(size_t _n, double* _A,
     return true;
 }
 
+Eigen::MatrixXd MyDantzigLCPSolver::getTangentBasisMatrix(
+    const Eigen::Vector3d& _n)
+{
+    // TODO(JS): Use mNumFrictionConeBases
+    // Check if the number of bases is even number.
+    //  bool isEvenNumBases = mNumFrictionConeBases % 2 ? true : false;
+
+    Eigen::MatrixXd T(Eigen::MatrixXd::Zero(3, numBasis));
+
+    // Pick an arbitrary vector to take the cross product of (in this case,
+    // Z-axis)
+    Eigen::Vector3d tangent = Eigen::Vector3d::UnitZ().cross(_n);
+
+    // TODO(JS): Modify following lines once _updateFirstFrictionalDirection() is
+    //           implemented.
+    // If they're too close, pick another tangent (use X-axis as arbitrary vector)
+    if (tangent.norm() < DART_CONTACT_CONSTRAINT_EPSILON)
+    tangent = Eigen::Vector3d::UnitX().cross(_n);
+
+    tangent.normalize();
+
+    // Rotate the tangent around the normal to compute bases.
+    // Note: a possible speedup is in place for mNumDir % 2 = 0
+    // Each basis and its opposite belong in the matrix, so we iterate half as
+    // many times
+    T.col(0) = tangent;
+    for (size_t idx_basis = 1; idx_basis<numBasis; idx_basis++)
+    {
+        T.col(idx_basis) = Eigen::Quaterniond(Eigen::AngleAxisd(DART_PI_HALF/2, _n)) * T.col(idx_basis-1);
+        if (T.col(idx_basis).dot(_n) > DART_EPSILON)
+        {
+            std::cout<<"Error in constructing basis matrix"<<std::endl; 
+        }
+    }
+    return T;
+}
