@@ -107,7 +107,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     
     // Print LCP formulation
     // dtdbg << "Before solve:" << std::endl;
-    // print(n, A, x, lo, hi, b, w, findex);
+    print(n, A, x, lo, hi, b, w, findex);
     // std::cout << std::endl;
 
 //  ---------------------------------------
@@ -117,6 +117,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     M.setIdentity();
     Eigen::MatrixXd N(totalDOF,numConstraints); 
     N.setZero();
+    Eigen::VectorXd tau(totalDOF);
+    tau.setZero();
     for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; idx_cnstrnt++)
     {
         cntctconstraint = dynamic_cast<ContactConstraint*>(_group->getConstraint(idx_cnstrnt));
@@ -151,10 +153,25 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         
         M.block(0,0,M1.rows(),M1.cols()) = M1;
         M.block(M1.rows(),M1.cols(),M2.rows(),M2.cols()) = M2;
+
+        // TODO: here b matrix should also be computed outside for loop
+        Eigen::VectorXd tau1;
+        Eigen::VectorXd tau2;
+        tau1 = M1*cntctconstraint->mBodyNode1->getSkeleton()->getVelocities() - mTimeStep*cntctconstraint->mBodyNode1->getSkeleton()->getCoriolisAndGravityForces(); 
+        tau2 = M2*cntctconstraint->mBodyNode2->getSkeleton()->getVelocities() - mTimeStep*cntctconstraint->mBodyNode2->getSkeleton()->getCoriolisAndGravityForces(); 
+        tau.head(tau1.rows()) = tau1;
+        tau.tail(tau2.rows()) = tau2;
     }
     Eigen::MatrixXd __Lemke__A;
     __Lemke__A = N.transpose()*M.ldlt().solve(N);
+    Eigen::VectorXd __Lemke__b;
+    __Lemke__b = N.transpose()*M.ldlt().solve(tau);
+
+    std::cout<<"^^^^^^Lemke Preparation ^^^^^"<<std::endl;
     std::cout<<__Lemke__A<<std::endl;
+    std::cout<<"Lemke b is "<<std::endl;
+    std::cout<<- __Lemke__b.transpose()<<std::endl;
+    std::cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<std::endl;
     std::cin.get();
     
 //  ---------------------------------------

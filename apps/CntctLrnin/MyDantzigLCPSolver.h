@@ -36,7 +36,6 @@ protected:
     bool isSymmetric(size_t _n, double* _A, size_t _begin, size_t _end);
 
     int totalDOF;
-    
 };
 
 
