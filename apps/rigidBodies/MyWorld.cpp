@@ -68,6 +68,10 @@ void MyWorld::simulate() {
     // TODO: The skeleton code has provided the integration of position and linear momentum,
     // your first job is to fill in the integration of orientation and angular momentum.
     for (int i = 0; i < mRigidBodies.size(); i++) {
+        // // update linear momentum and angular momentum according to result from collision handling
+        // mRigidBodies[i]->mLinMomentum += mRigidBodies[i]->mAccumulatedLinImpulse;
+        // mRigidBodies[i]->mAngMomentum += mRigidBodies[i]->mAccumulatedAngImpulse;
+
         // derivative of position and linear momentum
         Eigen::Vector3d dPos = mRigidBodies[i]->mLinMomentum / mRigidBodies[i]->mMass;
         Eigen::Vector3d dLinMom = mRigidBodies[i]->mMass * mGravity + mRigidBodies[i]->mAccumulatedForce;
@@ -98,13 +102,16 @@ void MyWorld::simulate() {
         mRigidBodies[i]->mQuatOrient.w() += mTimeStep * dQuatOrient.w();
         mRigidBodies[i]->mQuatOrient.vec() += mTimeStep * dQuatOrient.vec();
         mRigidBodies[i]->mQuatOrient.normalize();   // Normalize to ensure effective quaternion whose norm is 1
-        mRigidBodies[i]->mAngMomentum += mTimeStep * dAngMom;
+        mRigidBodies[i]->mAngMomentum += mTimeStep * dAngMom; 
+
     }
     
     // Reset accumulated force and torque to be zero after a complete integration
     for (int i = 0; i < mRigidBodies.size(); i++) {
         mRigidBodies[i]->mAccumulatedForce.setZero();
         mRigidBodies[i]->mAccumulatedTorque.setZero();
+        mRigidBodies[i]->mAccumulatedLinImpulse.setZero();
+        mRigidBodies[i]->mAccumulatedAngImpulse.setZero();
     }
     
     // Apply external force to the pinata
@@ -119,6 +126,11 @@ void MyWorld::simulate() {
     
     // TODO: implement a collision handler
     collisionHandling();
+    for (int i = 0; i < mRigidBodies.size(); i++) {
+        // update linear momentum and angular momentum from collision handling
+        mRigidBodies[i]->mLinMomentum += mRigidBodies[i]->mAccumulatedLinImpulse;
+        mRigidBodies[i]->mAngMomentum += mRigidBodies[i]->mAccumulatedAngImpulse;
+    }
     
     // Break the pinata if it has enough momentum
     if (mPinataWorld->getSkeleton(0)->getCOMLinearVelocity().norm() > 0.6)
@@ -129,7 +141,7 @@ void MyWorld::simulate() {
 void MyWorld::collisionHandling() {
     // restitution coefficient
     double epsilon = 0.8;
-    double inf     = 1e100; // dInfinity;
+    // double inf     = 1e100; // dInfinity;
     
     // TODO: handle the collision events
     int numContacts = mCollisionDetector->getNumContacts();
@@ -144,10 +156,10 @@ void MyWorld::collisionHandling() {
             Eigen::Vector3d p = mCollisionDetector->getContact(idxCnt).point;  // contact coordinate
             Eigen::Vector3d n = mCollisionDetector->getContact(idxCnt).normal; // contact normal
 
-            n = n / n.norm();
+            // n = n / n.norm();
             
-            cout<<"Coordinate: "<<p.transpose()<<endl;
-            cout<<"Normal direction: "<<n.transpose()<<endl;
+            // cout<<"Coordinate: "<<p.transpose()<<endl;
+            // cout<<"Normal direction: "<<n.transpose()<<endl;
             
             double Ma_inv;
             double Mb_inv;
@@ -162,7 +174,7 @@ void MyWorld::collisionHandling() {
             if (rbA)
             {
                 Ma_inv = 1.0/rbA->mMass;
-                rbA->mQuatOrient.normalize();
+                // rbA->mQuatOrient.normalize();
                 rbA->mOrientation = rbA->mQuatOrient.toRotationMatrix();
                 Ic_a = (rbA->mOrientation * rbA->mInertiaTensor * rbA->mOrientation.transpose()).eval();
                 wa = Ic_a.ldlt().solve(rbA->mAngMomentum);
@@ -171,16 +183,16 @@ void MyWorld::collisionHandling() {
             else
             {
                 // one contact object is pinata
-                cout<<"Object A is pinata"<<endl;
-                Ma_inv = 0.0;  // infinite mass
-                Ic_a = Eigen::Matrix3d::Identity()*inf;
-                ra = p; // contact point in pinata frame (a.k.a. world frame)
+                // cout<<"Object A is pinata"<<endl;
+                // Ma_inv = 0.0;  // infinite mass
+                // Ic_a = Eigen::Matrix3d::Identity()*inf;
+                // ra = p; // contact point in pinata frame (a.k.a. world frame)
             }
             
             if (rbB)
             {
                 Mb_inv = 1.0/rbB->mMass;
-                rbB->mQuatOrient.normalize();
+                // rbB->mQuatOrient.normalize();
                 rbB->mOrientation = rbB->mQuatOrient.toRotationMatrix();
                 Ic_b = (rbB->mOrientation * rbB->mInertiaTensor * rbB->mOrientation.transpose()).eval();
                 wb = Ic_b.ldlt().solve(rbB->mAngMomentum);
@@ -189,54 +201,62 @@ void MyWorld::collisionHandling() {
             else
             {
                 // one contact object is pinata
-                cout<<"Object B is pinata"<<endl;
-                Mb_inv = 0.0;  // infinite mass
-                Ic_b = Eigen::Matrix3d::Identity()*inf;
-                rb = p; // contact point in pinata frame (a.k.a. world frame)
+                // cout<<"Object B is pinata"<<endl;
+                // Mb_inv = 0.0;  // infinite mass
+                // Ic_b = Eigen::Matrix3d::Identity()*inf;
+                // rb = p; // contact point in pinata frame (a.k.a. world frame)
             }
             
             if (rbA && rbB)
             {
                 vr = (rbA->mLinMomentum*Ma_inv + wa.cross(ra)) - (rbB->mLinMomentum*Mb_inv+ wb.cross(rb)); // relative velocity (vector)
+                std::cout<<"Both rigid bodies are not pinata"<<std::endl;
             }
             else if (rbB)
             {
                 vr = mCollisionDetector->getContact(idxCnt).pinataVelocity - (rbB->mLinMomentum*Mb_inv+ wb.cross(rb)); // relative velocity (vector)
+                std::cout<<"Rigid body B is not pinata"<<std::endl;
             }
             else
             {
                 vr = (rbA->mLinMomentum*Ma_inv + wa.cross(ra)) - mCollisionDetector->getContact(idxCnt).pinataVelocity; // relative velocity (vector)
+                std::cout<<"Rigid body A is not pinata"<<std::endl;
             }
             
             double vrn= n.dot(vr); // normal relative velocity (scalar)
             double j;
             
+            if (vrn>0)
+            {
+                break;
+            }
+            
             if (rbA && rbB)
             {
-                j =                                             -(1+epsilon)*vrn/
-                    ( Ma_inv + Mb_inv + n.dot((Ic_a.ldlt().solve(ra.cross(n))).cross(ra)) + n.dot((Ic_b.ldlt().solve(rb.cross(n))).cross(rb)) );
+              j =                                             -(1+epsilon)*vrn/
+                  ( Ma_inv + Mb_inv + n.dot((Ic_a.ldlt().solve(ra.cross(n))).cross(ra)) + n.dot((Ic_b.ldlt().solve(rb.cross(n))).cross(rb)) );
             }
             else if (rbB)
             {
-                j =                                             -(1+epsilon)*vrn/
-                    ( Mb_inv + n.dot((Ic_b.ldlt().solve(rb.cross(n))).cross(rb)) );
+              j =                                             -(1+epsilon)*vrn/
+                ( Mb_inv + n.dot((Ic_b.ldlt().solve(rb.cross(n))).cross(rb)) );
             }
             else
             {
-                j =                                             -(1+epsilon)*vrn/
-                    ( Ma_inv + n.dot((Ic_a.ldlt().solve(ra.cross(n))).cross(ra)) );
+              j =                                             -(1+epsilon)*vrn/
+                ( Ma_inv + n.dot((Ic_a.ldlt().solve(ra.cross(n))).cross(ra)) );
             }
-            
+
             if (rbA)
             {
-                rbA->mLinMomentum += j*n;
-                rbA->mAngMomentum += ra.cross(j*n);
+                rbA->mAccumulatedLinImpulse += j*n;
+                rbA->mAccumulatedAngImpulse += ra.cross(j*n);
             }
             
             if (rbB)
             {
-                rbB->mLinMomentum += -j*n;
-                rbB->mAngMomentum += rb.cross(-j*n);
+                rbB->mAccumulatedLinImpulse += -j*n;
+                rbB->mAccumulatedAngImpulse += rb.cross(-j*n);
             }
         }
     }

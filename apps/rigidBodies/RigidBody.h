@@ -33,6 +33,8 @@ class RigidBody {
         
         mAccumulatedForce.setZero();
         mAccumulatedTorque.setZero();
+        mAccumulatedLinImpulse.setZero();
+        mAccumulatedAngImpulse.setZero();
     }
     virtual ~RigidBody() {}
 
@@ -54,6 +56,8 @@ class RigidBody {
     
 	Eigen::Vector3d mAccumulatedForce;
     Eigen::Vector3d mAccumulatedTorque;
+	Eigen::Vector3d mAccumulatedLinImpulse;
+    Eigen::Vector3d mAccumulatedAngImpulse;
 
     Eigen::Vector4d mColor;
 };
