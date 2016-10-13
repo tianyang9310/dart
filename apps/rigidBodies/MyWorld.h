@@ -53,6 +53,7 @@ class MyWorld {
 	void setExtForce(int _dir, double _mag) {
 		mForce[_dir] = _mag;
 	}
+    void addObject(dart::dynamics::Shape::ShapeType _type, Eigen::Vector3d _dim);
   
  protected:
 	int mFrame;

@@ -27,6 +27,11 @@ int main(int argc, char* argv[])
   std::cout << "Left click: rotate camera" << std::endl;
   std::cout << "Right click: pan camera" << std::endl;
   std::cout << "Shift + Left click: zoom camera" << std::endl;
+
+  std::cout << "###########################" << std::endl;
+  std::cout << "##'a': spawn a new cube  ##" << std::endl;
+  std::cout << "##'b': spawn a new sphere##" << std::endl;
+  std::cout << "###########################" << std::endl;
   
   glutMainLoop();
   

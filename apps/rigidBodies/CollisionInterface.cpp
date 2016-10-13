@@ -39,6 +39,19 @@ void CollisionInterface::addRigidBody(RigidBody *_rb, const std::string& name) {
   mNodeMap[bn] = _rb;
 }
 
+void CollisionInterface::removeRigidBody(RigidBody *_rb)
+{
+  dart::dynamics::BodyNode* bn;
+  for (auto const & element : mNodeMap)
+  {
+    if (element.second == _rb)
+       bn = element.first;
+  }
+  mCollisionChecker->removeCollisionSkeletonNode(bn);
+  mSkeletons.pop_back();
+  mNodeMap.erase(bn);
+}
+
 void CollisionInterface::checkCollision() {
   updateBodyNodes();
   mCollisionChecker->detectCollision(true, true);

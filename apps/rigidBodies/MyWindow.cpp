@@ -158,6 +158,14 @@ void MyWindow::keyboard(unsigned char key, int x, int y)
     mWorld->setExtForce(2, 500.0);
     break;
 
+  case 'a': // Throw a new cube
+    mWorld->addObject(dart::dynamics::Shape::BOX, Eigen::Vector3d(0.05,0.05,0.05));
+    break;
+
+  case 'b': // Throw a new sphere
+    mWorld->addObject(dart::dynamics::Shape::ELLIPSOID, Eigen::Vector3d(0.06,0.06,0.06));
+    break;
+
   // case 'b': // Break the pinata
   //   mWorld->getPinataWorld()->getConstraintSolver()->removeAllConstraints();
     

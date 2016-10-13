@@ -147,10 +147,10 @@ void MyWorld::collisionHandling() {
     int numContacts = mCollisionDetector->getNumContacts();
     if (numContacts > 0)
     {
-        cout<<"There exist "<<numContacts<<" contact points."<<endl;
+        // cout<<"There exist "<<numContacts<<" contact points."<<endl;
         for (int idxCnt=0; idxCnt<numContacts; idxCnt++)
         {
-            cout<<"The "<<(idxCnt+1)<<" contact point: "<<endl;
+            // cout<<"The "<<(idxCnt+1)<<" contact point: "<<endl;
             RigidBody* rbA = mCollisionDetector->getContact(idxCnt).rb1;
             RigidBody* rbB = mCollisionDetector->getContact(idxCnt).rb2;
             Eigen::Vector3d p = mCollisionDetector->getContact(idxCnt).point;  // contact coordinate
@@ -210,17 +210,17 @@ void MyWorld::collisionHandling() {
             if (rbA && rbB)
             {
                 vr = (rbA->mLinMomentum*Ma_inv + wa.cross(ra)) - (rbB->mLinMomentum*Mb_inv+ wb.cross(rb)); // relative velocity (vector)
-                std::cout<<"Both rigid bodies are not pinata"<<std::endl;
+                // std::cout<<"Both rigid bodies are not pinata"<<std::endl;
             }
             else if (rbB)
             {
                 vr = mCollisionDetector->getContact(idxCnt).pinataVelocity - (rbB->mLinMomentum*Mb_inv+ wb.cross(rb)); // relative velocity (vector)
-                std::cout<<"Rigid body B is not pinata"<<std::endl;
+                // std::cout<<"Rigid body B is not pinata"<<std::endl;
             }
             else
             {
                 vr = (rbA->mLinMomentum*Ma_inv + wa.cross(ra)) - mCollisionDetector->getContact(idxCnt).pinataVelocity; // relative velocity (vector)
-                std::cout<<"Rigid body A is not pinata"<<std::endl;
+                // std::cout<<"Rigid body A is not pinata"<<std::endl;
             }
             
             double vrn= n.dot(vr); // normal relative velocity (scalar)
@@ -260,4 +260,54 @@ void MyWorld::collisionHandling() {
             }
         }
     }
+}
+
+void MyWorld::addObject(dart::dynamics::Shape::ShapeType _type, Eigen::Vector3d _dim)
+{
+    // Legally spawn range
+    // x: -0.3 0.3
+    // y: -0.7 -0.3
+    // z: -0.3 0.3
+    RigidBody *newrb = new RigidBody(_type, _dim);
+    if (_type == dart::dynamics::Shape::BOX) 
+    {
+        std::cout<<"Add a new cube"<<std::endl;
+        mCollisionDetector->addRigidBody(newrb, "box"); 
+    } 
+    else if (_type == dart::dynamics::Shape::ELLIPSOID) 
+    {
+        std::cout<<"Add a new sphere"<<std::endl;
+        mCollisionDetector->addRigidBody(newrb, "ellipse");
+        newrb->mColor = Eigen::Vector4d(0.2,0.8,0.2,1.0);
+    }
+
+
+    newrb->mPosition[0] = dart::math::random(-0.3,0.3);
+    newrb->mPosition[1] = dart::math::random(-0.7,-0.3);
+    newrb->mPosition[2] = dart::math::random(-0.3,0.3);
+
+    newrb->mLinMomentum = 0.01*Vector3d::Random();
+    newrb->mAngMomentum = 0.01*Vector3d::Random();
+    
+    mRigidBodies.push_back(newrb);
+
+    // make sure the new object is collision free
+    bool collision = false;
+    for (size_t idx_Cnt=0; idx_Cnt<mCollisionDetector->getNumContacts(); idx_Cnt++)
+    {
+        if (mCollisionDetector->getContact(idx_Cnt).rb1 == newrb || 
+            mCollisionDetector->getContact(idx_Cnt).rb2 == newrb)
+        {
+            collision = true;
+            break; 
+        }
+    }
+    
+    if (collision)
+    {
+        mCollisionDetector->removeRigidBody(newrb);
+        mRigidBodies.pop_back();
+    }
+
+
 }
