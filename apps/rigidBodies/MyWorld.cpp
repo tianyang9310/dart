@@ -1,10 +1,13 @@
 #include "MyWorld.h"
 #include "RigidBody.h"
-#include "CollisionInterface.h"
 #include <iostream>
+#include "dart/lcpsolver/Lemke.h"
 
 using namespace Eigen;
 using namespace std;
+
+
+#define COLLISION_EPSILON 1e-3
 
 MyWorld::MyWorld() {
     mFrame = 0;
@@ -30,6 +33,7 @@ MyWorld::MyWorld() {
     rb2->mAngMomentum = Vector3d(0.01, 0.0, 0.0);
     rb2->mColor = Vector4d(0.2, 0.8, 0.2, 1.0); // Blue
     mRigidBodies.push_back(rb2);
+    restingContact = false;
 }
 
 void MyWorld::initializePinata() {
@@ -73,26 +77,26 @@ void MyWorld::simulate() {
         // mRigidBodies[i]->mAngMomentum += mRigidBodies[i]->mAccumulatedAngImpulse;
 
         // derivative of position and linear momentum
-        Eigen::Vector3d dPos = mRigidBodies[i]->mLinMomentum / mRigidBodies[i]->mMass;
-        Eigen::Vector3d dLinMom = mRigidBodies[i]->mMass * mGravity + mRigidBodies[i]->mAccumulatedForce;
+        Vector3d dPos = mRigidBodies[i]->mLinMomentum / mRigidBodies[i]->mMass;
+        Vector3d dLinMom = mRigidBodies[i]->mMass * mGravity + mRigidBodies[i]->mAccumulatedForce;
         
         // derivation of angle and angular momentum
         mRigidBodies[i]->mQuatOrient.normalize();
         mRigidBodies[i]->mOrientation = mRigidBodies[i]->mQuatOrient.toRotationMatrix();
-        Eigen::Matrix3d curInertiaTensor = (mRigidBodies[i]->mOrientation * mRigidBodies[i]->mInertiaTensor * mRigidBodies[i]->mOrientation.transpose()).eval();
-        Eigen::Vector3d AngVel = curInertiaTensor.ldlt().solve(mRigidBodies[i]->mAngMomentum);
-        Eigen::Quaterniond QuatAngVel;
+        Matrix3d curInertiaTensor = (mRigidBodies[i]->mOrientation * mRigidBodies[i]->mInertiaTensor * mRigidBodies[i]->mOrientation.transpose()).eval();
+        Vector3d AngVel = curInertiaTensor.ldlt().solve(mRigidBodies[i]->mAngMomentum);
+        Quaterniond QuatAngVel;
         QuatAngVel.w() = 0;
         QuatAngVel.vec() = AngVel;
         // ----------------------------
-        Eigen::Quaterniond dQuatOrient = QuatAngVel*mRigidBodies[i]->mQuatOrient;
-        // Eigen::Quaterniond dQuatOrient; 
+        Quaterniond dQuatOrient = QuatAngVel*mRigidBodies[i]->mQuatOrient;
+        // Quaterniond dQuatOrient; 
         // dQuatOrient.w() = QuatAngVel.w()*mRigidBodies[i]->mQuatOrient.w() - QuatAngVel.vec().dot(mRigidBodies[i]->mQuatOrient.vec());
         // dQuatOrient.vec() = QuatAngVel.w()*mRigidBodies[i]->mQuatOrient.vec() + QuatAngVel.vec()*mRigidBodies[i]->mQuatOrient.w() + QuatAngVel.vec().cross(mRigidBodies[i]->mQuatOrient.vec());
         // ----------------------------
         dQuatOrient.w() = dQuatOrient.w() * 0.5;
         dQuatOrient.vec() = dQuatOrient.vec() * 0.5;
-        Eigen::Vector3d dAngMom = mRigidBodies[i]->mAccumulatedTorque;
+        Vector3d dAngMom = mRigidBodies[i]->mAccumulatedTorque;
         
         // update position and linear momentum
         mRigidBodies[i]->mPosition += dPos * mTimeStep;
@@ -131,6 +135,11 @@ void MyWorld::simulate() {
         mRigidBodies[i]->mLinMomentum += mRigidBodies[i]->mAccumulatedLinImpulse;
         mRigidBodies[i]->mAngMomentum += mRigidBodies[i]->mAccumulatedAngImpulse;
     }
+
+    if (restingContact)
+    {
+        restingCollisionHandling();
+    }
     
     // Break the pinata if it has enough momentum
     if (mPinataWorld->getSkeleton(0)->getCOMLinearVelocity().norm() > 0.6)
@@ -141,8 +150,7 @@ void MyWorld::simulate() {
 void MyWorld::collisionHandling() {
     // restitution coefficient
     double epsilon = 0.8;
-    // double inf     = 1e100; // dInfinity;
-    
+    // double inf     = 1e100; // dInfinity; 
     // TODO: handle the collision events
     int numContacts = mCollisionDetector->getNumContacts();
     if (numContacts > 0)
@@ -153,8 +161,8 @@ void MyWorld::collisionHandling() {
             // cout<<"The "<<(idxCnt+1)<<" contact point: "<<endl;
             RigidBody* rbA = mCollisionDetector->getContact(idxCnt).rb1;
             RigidBody* rbB = mCollisionDetector->getContact(idxCnt).rb2;
-            Eigen::Vector3d p = mCollisionDetector->getContact(idxCnt).point;  // contact coordinate
-            Eigen::Vector3d n = mCollisionDetector->getContact(idxCnt).normal; // contact normal
+            Vector3d p = mCollisionDetector->getContact(idxCnt).point;  // contact coordinate
+            Vector3d n = mCollisionDetector->getContact(idxCnt).normal; // contact normal
 
             // n = n / n.norm();
             
@@ -163,13 +171,13 @@ void MyWorld::collisionHandling() {
             
             double Ma_inv;
             double Mb_inv;
-            Eigen::Matrix3d Ic_a;
-            Eigen::Vector3d wa;
-            Eigen::Vector3d ra;
-            Eigen::Matrix3d Ic_b;
-            Eigen::Vector3d wb;
-            Eigen::Vector3d rb;
-            Eigen::Vector3d vr;
+            Matrix3d Ic_a;
+            Vector3d wa;
+            Vector3d ra;
+            Matrix3d Ic_b;
+            Vector3d wb;
+            Vector3d rb;
+            Vector3d vr;
             
             if (rbA)
             {
@@ -185,7 +193,7 @@ void MyWorld::collisionHandling() {
                 // one contact object is pinata
                 // cout<<"Object A is pinata"<<endl;
                 // Ma_inv = 0.0;  // infinite mass
-                // Ic_a = Eigen::Matrix3d::Identity()*inf;
+                // Ic_a = Matrix3d::Identity()*inf;
                 // ra = p; // contact point in pinata frame (a.k.a. world frame)
             }
             
@@ -203,32 +211,39 @@ void MyWorld::collisionHandling() {
                 // one contact object is pinata
                 // cout<<"Object B is pinata"<<endl;
                 // Mb_inv = 0.0;  // infinite mass
-                // Ic_b = Eigen::Matrix3d::Identity()*inf;
+                // Ic_b = Matrix3d::Identity()*inf;
                 // rb = p; // contact point in pinata frame (a.k.a. world frame)
             }
             
             if (rbA && rbB)
             {
                 vr = (rbA->mLinMomentum*Ma_inv + wa.cross(ra)) - (rbB->mLinMomentum*Mb_inv+ wb.cross(rb)); // relative velocity (vector)
-                // std::cout<<"Both rigid bodies are not pinata"<<std::endl;
+                // cout<<"Both rigid bodies are not pinata"<<endl;
             }
             else if (rbB)
             {
                 vr = mCollisionDetector->getContact(idxCnt).pinataVelocity - (rbB->mLinMomentum*Mb_inv+ wb.cross(rb)); // relative velocity (vector)
-                // std::cout<<"Rigid body B is not pinata"<<std::endl;
+                // cout<<"Rigid body B is not pinata"<<endl;
             }
             else
             {
                 vr = (rbA->mLinMomentum*Ma_inv + wa.cross(ra)) - mCollisionDetector->getContact(idxCnt).pinataVelocity; // relative velocity (vector)
-                // std::cout<<"Rigid body A is not pinata"<<std::endl;
+                // cout<<"Rigid body A is not pinata"<<endl;
             }
             
             double vrn= n.dot(vr); // normal relative velocity (scalar)
             double j;
             
-            if (vrn>0)
+            cout<<vrn<<endl;
+            if (vrn>=COLLISION_EPSILON)  // contact break away
             {
                 break;
+            }
+            else if (vrn > -COLLISION_EPSILON) // resting contact
+            {
+                restingContact = true;
+                mRestingContactList.push_back(mCollisionDetector->getContact(idxCnt));
+                break; 
             }
             
             if (rbA && rbB)
@@ -262,7 +277,7 @@ void MyWorld::collisionHandling() {
     }
 }
 
-void MyWorld::addObject(dart::dynamics::Shape::ShapeType _type, Eigen::Vector3d _dim)
+void MyWorld::addObject(dart::dynamics::Shape::ShapeType _type, Vector3d _dim)
 {
     // Legally spawn range
     // x: -0.3 0.3
@@ -271,14 +286,14 @@ void MyWorld::addObject(dart::dynamics::Shape::ShapeType _type, Eigen::Vector3d 
     RigidBody *newrb = new RigidBody(_type, _dim);
     if (_type == dart::dynamics::Shape::BOX) 
     {
-        std::cout<<"Add a new cube"<<std::endl;
+        cout<<"Add a new cube"<<endl;
         mCollisionDetector->addRigidBody(newrb, "box"); 
     } 
     else if (_type == dart::dynamics::Shape::ELLIPSOID) 
     {
-        std::cout<<"Add a new sphere"<<std::endl;
+        cout<<"Add a new sphere"<<endl;
         mCollisionDetector->addRigidBody(newrb, "ellipse");
-        newrb->mColor = Eigen::Vector4d(0.2,0.8,0.2,1.0);
+        newrb->mColor = Vector4d(0.2,0.8,0.2,1.0);
     }
 
 
@@ -308,6 +323,263 @@ void MyWorld::addObject(dart::dynamics::Shape::ShapeType _type, Eigen::Vector3d 
         mCollisionDetector->removeRigidBody(newrb);
         mRigidBodies.pop_back();
     }
+}
 
+void MyWorld::restingCollisionHandling()
+{
+    cout<<"Handling resting contact..."<<endl;
+    int numContacts = mRestingContactList.size();
+    MatrixXd A(MatrixXd::Zero(numContacts,numContacts));
+    VectorXd b(VectorXd::Zero(numContacts));
+    VectorXd* f = new VectorXd(VectorXd::Zero(numContacts));
+
+    compute_b(b);
+    compute_A(A);
+
+    int err = dart::lcpsolver::Lemke(A,b,f);
+    cout<<"resting contact force: "<<endl;
+    cout<<(*f)<<endl;
+
+    // clear Resting flag
+}
+
+void MyWorld::compute_A(Eigen::MatrixXd &A)
+{
+    int numContacts = mRestingContactList.size();
+    for (size_t idx_RstCnt_i=0; idx_RstCnt_i<numContacts; idx_RstCnt_i++)
+    {
+        for (size_t idx_RstCnt_j=0; idx_RstCnt_j<numContacts; idx_RstCnt_j++)
+        {
+            A(idx_RstCnt_i,idx_RstCnt_j) = compute_aij(mRestingContactList[idx_RstCnt_i],mRestingContactList[idx_RstCnt_j]);
+        }
+    }
+}
+
+double MyWorld::compute_aij(RigidContact ct_i, RigidContact ct_j)
+{
+    if ((ct_i.rb1 != ct_j.rb1) && (ct_i.rb2 !=ct_j.rb2) && (ct_i.rb1 != ct_j.rb2) && (ct_i.rb2 != ct_j.rb1))
+    {
+        return 0.0;
+    }
+
+    RigidBody* rbA = ct_i.rb1;
+    RigidBody* rbB = ct_i.rb2;
+    Vector3d ni = ct_i.normal;
+    Vector3d nj = ct_j.normal;
+    Vector3d pi = ct_i.point;
+    Vector3d pj = ct_j.point;
+    Vector3d ra;
+    Vector3d rb;
+    Matrix3d Ic_a;
+    Matrix3d Ic_b;
+
+    if (rbA)
+    {
+        ra = (pi- rbA->mPosition).eval();
+        rbA->mOrientation = rbA->mQuatOrient.toRotationMatrix();
+        Ic_a = (rbA->mOrientation * rbA->mInertiaTensor * rbA->mOrientation.transpose()).eval().inverse();
+    }
+    else
+    {
+        ra = pi;
+    }
+
+    if (rbB)
+    {
+        rb = (pi- rbB->mPosition).eval();
+        rbB->mOrientation = rbB->mQuatOrient.toRotationMatrix();
+        Ic_b = (rbB->mOrientation * rbB->mInertiaTensor * rbB->mOrientation.transpose()).eval();
+    }
+    else
+    {
+        rb = pi;
+    }
+
+    Vector3d force_on_a = Vector3d::Zero();
+    Vector3d torque_on_a = Vector3d::Zero();
+
+    if (ct_j.rb1 == ct_i.rb1)
+    {
+        force_on_a = nj;
+        if (rbA)
+        {
+            torque_on_a = (pj-rbA->mPosition).cross(nj);
+        }
+        else
+        {
+            torque_on_a = pj.cross(nj);
+        }
+    }
+    else if (ct_j.rb2 == ct_i.rb1)
+    {
+        force_on_a = -nj;
+        if (rbA)
+        {
+            torque_on_a = (pj-rbA->mPosition).cross(nj);
+        }
+        else
+        {
+            torque_on_a = pj.cross(nj);
+        }
+    }
+
+    Vector3d force_on_b = Vector3d::Zero();
+    Vector3d torque_on_b = Vector3d::Zero();
+    if (ct_j.rb1 == ct_i.rb2)
+    {
+        force_on_b = nj;
+        if (rbB)
+        {
+            torque_on_b = (pj-rbB->mPosition).cross(nj);
+        }
+        else
+        {
+            torque_on_b = pj.cross(nj);
+        }
+    }
+    else if (ct_j.rb2 == ct_i.rb2)
+    {
+        force_on_b = -nj;
+        if (rbB)
+        {
+            torque_on_b = (pj-rbB->mPosition).cross(nj);
+        }
+        else
+        {
+            torque_on_b = pj.cross(nj);
+        }
+    }
+
+    Vector3d a_linear;
+    Vector3d a_angular;
+    if (rbA)
+    {
+        a_linear = force_on_a / rbA->mMass;
+        a_angular = (Ic_a.ldlt().solve(torque_on_a)).cross(ra);
+    }
+    else
+    {
+        a_linear = Vector3d::Zero(); 
+        a_angular =Vector3d::Zero();
+    }
+
+
+    Vector3d b_linear;
+    Vector3d b_angular;
+    if (rbB)
+    {
+        b_linear = force_on_b / rbB->mMass;
+        b_angular = (Ic_b.ldlt().solve(torque_on_b)).cross(rb);
+    }
+    else
+    {
+        b_linear = Vector3d::Zero();
+        b_angular = Vector3d::Zero();
+    }
+    
+    return (ni.dot(((a_linear+a_angular) - (b_linear+b_angular))));
+}
+
+void MyWorld::compute_b(Eigen::VectorXd &b)
+{
+    int numContacts = mRestingContactList.size();
+    for (size_t idx_RstCnt=0; idx_RstCnt<numContacts; idx_RstCnt++)
+    {
+        RigidContact ct = mRestingContactList[idx_RstCnt];
+        RigidBody* rbA = ct.rb1;
+        RigidBody* rbB = ct.rb2;
+        Vector3d p = ct.point;
+        Vector3d n = ct.normal;
+
+        Matrix3d Ic_a;
+        Matrix3d Ic_b;
+        Vector3d ra;
+        Vector3d rb;
+        Vector3d wa;
+        Vector3d wb;
+        Vector3d vr;
+
+        if (rbA)
+        {
+            ra = (p - rbA->mPosition).eval();
+            rbA->mOrientation = rbA->mQuatOrient.toRotationMatrix();
+            Ic_a = (rbA->mOrientation * rbA->mInertiaTensor * rbA->mOrientation.transpose()).eval().inverse();
+            wa = Ic_a.ldlt().solve(rbA->mAngMomentum);
+        }
+        else
+        {
+            ra = p;
+            wa = Vector3d::Zero();
+        }
+
+        if (rbB)
+        {
+            rb = (p - rbB->mPosition).eval();
+            rbB->mOrientation = rbB->mQuatOrient.toRotationMatrix();
+            Ic_b = (rbB->mOrientation * rbB->mInertiaTensor * rbB->mOrientation.transpose()).eval();
+            wb = Ic_b.ldlt().solve(rbB->mAngMomentum);
+        }
+        else
+        {
+            rb = p;
+            wb = Vector3d::Zero();
+        }
+
+        // Supposing we have fixed pinata
+        // And rigid body B would always be pinata if it is involved in this contact
+        // get the external forces and torques
+        Vector3d f_ext_a = mGravity * rbA->mMass;
+        Vector3d f_ext_b = Vector3d::Zero();
+        Vector3d t_ext_a = Vector3d::Zero();
+        Vector3d t_ext_b = Vector3d::Zero();
+
+
+        Vector3d a_ext_part;
+        Vector3d b_ext_part;
+        Vector3d a_vel_part;
+        Vector3d b_vel_part;
+
+        if (rbA)
+        {
+            a_ext_part = f_ext_a / rbA->mMass + ((Ic_a.ldlt().solve(t_ext_a)).cross(ra));
+            a_vel_part = wa.cross(wa.cross(ra)) + ((Ic_a.ldlt().solve(rbA->mAngMomentum.cross(wa))).cross(ra));
+        }
+        else
+        {
+            a_ext_part = Vector3d::Zero();
+            a_vel_part = Vector3d::Zero();
+        }
+        if (rbB)
+        {
+            b_ext_part = f_ext_b / rbB->mMass + ((Ic_b.ldlt().solve(t_ext_b)).cross(rb));
+            b_vel_part = wb.cross(wb.cross(rb)) + ((Ic_b.ldlt().solve(rbB->mAngMomentum.cross(wb))).cross(rb));
+        }
+        else
+        {
+            b_ext_part = Vector3d::Zero();
+            b_vel_part = Vector3d::Zero();
+        }
+
+
+        double k1 = n.dot((a_ext_part+a_vel_part)-(b_ext_part+b_vel_part));
+        Vector3d ndot = wb.cross(n);
+
+        if (rbA && rbB)
+        {
+            vr = (rbA->mLinMomentum/rbA->mMass + wa.cross(ra)) - (rbB->mLinMomentum/rbB->mMass+ wb.cross(rb)); 
+        }
+        else if (rbB)
+        {
+            vr = - (rbB->mLinMomentum/rbB->mMass+ wb.cross(rb));
+        }
+        else
+        {
+            vr = (rbA->mLinMomentum/rbA->mMass + wa.cross(ra));
+        }
+
+        double k2 = 2 * ndot.dot(vr);
+
+        b[idx_RstCnt] = k1 + k2;
+    }
 
 }

@@ -3,8 +3,9 @@
 
 #include <vector>
 #include <Eigen/Dense>
-#include<Eigen/StdVector>
+#include <Eigen/StdVector>
 #include "dart/dart.h"
+#include "CollisionInterface.h"
 
 class RigidBody;
 class CollisionInterface;
@@ -29,6 +30,10 @@ class MyWorld {
 	// TODO: your simulation and collision handling code goes here
 	void simulate();
 	void collisionHandling();
+	void restingCollisionHandling();
+    void compute_A(Eigen::MatrixXd &A);
+    void compute_b(Eigen::VectorXd &b);
+    double compute_aij(RigidContact ct_i, RigidContact ct_j);
         
 	CollisionInterface* getCollisionDetector() {
 		return mCollisionDetector;
@@ -63,6 +68,8 @@ class MyWorld {
 	CollisionInterface* mCollisionDetector; // Access to collision detection information
 	dart::simulation::WorldPtr mPinataWorld;
 	Eigen::Vector3d mForce;
+    bool restingContact;
+    std::vector<RigidContact> mRestingContactList;
 };
 
 #endif
