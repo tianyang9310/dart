@@ -18,13 +18,13 @@ MyWorld::MyWorld() {
     mCollisionDetector = new CollisionInterface();
     
     // Create and intialize two default rigid bodies
-    //// RigidBody *rb1 = new RigidBody(dart::dynamics::Shape::BOX, Vector3d(0.05, 0.05, 0.05));
-    //// mCollisionDetector->addRigidBody(rb1, "box"); // Put rb1 in collision detector
-    //// rb1->mPosition[0] = -0.3;
-    //// rb1->mPosition[1] = -0.5;
-    //// 
-    //// // rb1->mAngMomentum = Vector3d(0.0, 0.01, 0.0);
-    //// mRigidBodies.push_back(rb1);
+    ///// RigidBody *rb1 = new RigidBody(dart::dynamics::Shape::BOX, Vector3d(0.05, 0.05, 0.05));
+    ///// mCollisionDetector->addRigidBody(rb1, "box"); // Put rb1 in collision detector
+    ///// rb1->mPosition[0] = -0.3;
+    ///// rb1->mPosition[1] = -0.5;
+    ///// 
+    ///// rb1->mAngMomentum = Vector3d(0.0, 0.01, 0.0);
+    ///// mRigidBodies.push_back(rb1);
     
     RigidBody *rb2 = new RigidBody(dart::dynamics::Shape::ELLIPSOID, Vector3d(0.06, 0.06, 0.06));
     mCollisionDetector->addRigidBody(rb2, "ellipse"); // Put rb2 in collision detector
@@ -114,8 +114,8 @@ void MyWorld::simulate() {
     for (int i = 0; i < mRigidBodies.size(); i++) {
         mRigidBodies[i]->mAccumulatedForce.setZero();
         mRigidBodies[i]->mAccumulatedTorque.setZero();
-        mRigidBodies[i]->mAccumulatedLinImpulse.setZero();
-        mRigidBodies[i]->mAccumulatedAngImpulse.setZero();
+        mRigidBodies[i]->mAccumulatedLinImpulse.clear();
+        mRigidBodies[i]->mAccumulatedAngImpulse.clear();
     }
     
     // Apply external force to the pinata
@@ -132,8 +132,20 @@ void MyWorld::simulate() {
     collisionHandling();
     for (int i = 0; i < mRigidBodies.size(); i++) {
         // update linear momentum and angular momentum from collision handling
-        mRigidBodies[i]->mLinMomentum += mRigidBodies[i]->mAccumulatedLinImpulse;
-        mRigidBodies[i]->mAngMomentum += mRigidBodies[i]->mAccumulatedAngImpulse;
+        Vector3d totalLinImpulse(Vector3d::Zero());
+        Vector3d totalAngImpulse(Vector3d::Zero());
+        for (size_t idx=0; idx<mRigidBodies[i]->mAccumulatedLinImpulse.size(); idx++)
+        {
+            totalLinImpulse += mRigidBodies[i]->mAccumulatedLinImpulse[idx];
+            totalAngImpulse += mRigidBodies[i]->mAccumulatedAngImpulse[idx];
+        }
+        if (mRigidBodies[i]->mAccumulatedLinImpulse.size()>0)
+        {
+            totalLinImpulse = totalLinImpulse ; // / double(mRigidBodies[i]->mAccumulatedLinImpulse.size());
+            totalAngImpulse = totalAngImpulse ; // / double(mRigidBodies[i]->mAccumulatedAngImpulse.size());
+        }
+        mRigidBodies[i]->mLinMomentum += totalLinImpulse;
+        mRigidBodies[i]->mAngMomentum += totalAngImpulse;
     }
 
     if (restingContact)
@@ -264,14 +276,14 @@ void MyWorld::collisionHandling() {
 
             if (rbA)
             {
-                rbA->mAccumulatedLinImpulse += j*n;
-                rbA->mAccumulatedAngImpulse += ra.cross(j*n);
+                rbA->mAccumulatedLinImpulse.push_back( j*n );
+                rbA->mAccumulatedAngImpulse.push_back( ra.cross(j*n));
             }
             
             if (rbB)
             {
-                rbB->mAccumulatedLinImpulse += -j*n;
-                rbB->mAccumulatedAngImpulse += rb.cross(-j*n);
+                rbB->mAccumulatedLinImpulse.push_back( -j*n);
+                rbB->mAccumulatedAngImpulse.push_back( rb.cross(-j*n));
             }
         }
     }
@@ -337,6 +349,7 @@ void MyWorld::restingCollisionHandling()
     compute_A(A);
 
     int err = dart::lcpsolver::Lemke(A,b,f);
+    cout<<(*f)<<endl;
     for (size_t idx_RstCnt=0; idx_RstCnt<numContacts; idx_RstCnt++)
     {
         RigidContact ct = mRestingContactList[idx_RstCnt];

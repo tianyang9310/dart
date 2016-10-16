@@ -2,12 +2,14 @@
 #define _RIGIDBODY_
 
 #include <Eigen/Dense>
+#include <valarray>
 #include "dart/dart.h"
 
 class RigidBody {
  public:
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	RigidBody(dart::dynamics::Shape::ShapeType _type, Eigen::Vector3d _dim) {
+	RigidBody(dart::dynamics::Shape::ShapeType _type, Eigen::Vector3d _dim)
+    {
         // Create a default rigid body
         mMass = 1.0;
         mPosition.setZero(); // x = (0, 0, 0)
@@ -33,8 +35,8 @@ class RigidBody {
         
         mAccumulatedForce.setZero();
         mAccumulatedTorque.setZero();
-        mAccumulatedLinImpulse.setZero();
-        mAccumulatedAngImpulse.setZero();
+        mAccumulatedLinImpulse.clear();
+        mAccumulatedAngImpulse.clear();
     }
     virtual ~RigidBody() {}
 
@@ -56,8 +58,8 @@ class RigidBody {
     
 	Eigen::Vector3d mAccumulatedForce;
     Eigen::Vector3d mAccumulatedTorque;
-	Eigen::Vector3d mAccumulatedLinImpulse;
-    Eigen::Vector3d mAccumulatedAngImpulse;
+    std::vector<Eigen::Vector3d> mAccumulatedLinImpulse;
+    std::vector<Eigen::Vector3d> mAccumulatedAngImpulse;
 
     Eigen::Vector4d mColor;
 };
