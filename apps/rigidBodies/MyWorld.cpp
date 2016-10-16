@@ -7,7 +7,7 @@ using namespace Eigen;
 using namespace std;
 
 
-#define COLLISION_EPSILON 1e-3
+#define COLLISION_EPSILON 1e-6
 
 MyWorld::MyWorld() {
     mFrame = 0;
@@ -18,13 +18,13 @@ MyWorld::MyWorld() {
     mCollisionDetector = new CollisionInterface();
     
     // Create and intialize two default rigid bodies
-    RigidBody *rb1 = new RigidBody(dart::dynamics::Shape::BOX, Vector3d(0.05, 0.05, 0.05));
-    mCollisionDetector->addRigidBody(rb1, "box"); // Put rb1 in collision detector
-    rb1->mPosition[0] = -0.3;
-    rb1->mPosition[1] = -0.5;
-    
-    rb1->mAngMomentum = Vector3d(0.0, 0.01, 0.0);
-    mRigidBodies.push_back(rb1);
+    //// RigidBody *rb1 = new RigidBody(dart::dynamics::Shape::BOX, Vector3d(0.05, 0.05, 0.05));
+    //// mCollisionDetector->addRigidBody(rb1, "box"); // Put rb1 in collision detector
+    //// rb1->mPosition[0] = -0.3;
+    //// rb1->mPosition[1] = -0.5;
+    //// 
+    //// // rb1->mAngMomentum = Vector3d(0.0, 0.01, 0.0);
+    //// mRigidBodies.push_back(rb1);
     
     RigidBody *rb2 = new RigidBody(dart::dynamics::Shape::ELLIPSOID, Vector3d(0.06, 0.06, 0.06));
     mCollisionDetector->addRigidBody(rb2, "ellipse"); // Put rb2 in collision detector
@@ -234,7 +234,7 @@ void MyWorld::collisionHandling() {
             double vrn= n.dot(vr); // normal relative velocity (scalar)
             double j;
             
-            cout<<vrn<<endl;
+            // cout<<vrn<<endl;
             if (vrn>=COLLISION_EPSILON)  // contact break away
             {
                 break;
@@ -327,8 +327,8 @@ void MyWorld::addObject(dart::dynamics::Shape::ShapeType _type, Vector3d _dim)
 
 void MyWorld::restingCollisionHandling()
 {
-    cout<<"Handling resting contact..."<<endl;
     int numContacts = mRestingContactList.size();
+    cout<<"Handling resting contact... there are "<<numContacts<<" resting contact points"<<endl;
     MatrixXd A(MatrixXd::Zero(numContacts,numContacts));
     VectorXd b(VectorXd::Zero(numContacts));
     VectorXd* f = new VectorXd(VectorXd::Zero(numContacts));
@@ -337,10 +337,25 @@ void MyWorld::restingCollisionHandling()
     compute_A(A);
 
     int err = dart::lcpsolver::Lemke(A,b,f);
-    cout<<"resting contact force: "<<endl;
-    cout<<(*f)<<endl;
+    for (size_t idx_RstCnt=0; idx_RstCnt<numContacts; idx_RstCnt++)
+    {
+        RigidContact ct = mRestingContactList[idx_RstCnt];
+        if (ct.rb1)
+        {
+            ct.rb1->mAccumulatedForce += (*f)(idx_RstCnt)*ct.normal;
+            ct.rb1->mAccumulatedTorque += (ct.point - ct.rb1->mPosition).cross((*f)(idx_RstCnt)*ct.normal);
+        }
+        if (ct.rb2)
+        {
+            ct.rb2->mAccumulatedForce += (*f)(idx_RstCnt)*ct.normal;
+            ct.rb2->mAccumulatedTorque += (ct.point - ct.rb2->mPosition).cross((*f)(idx_RstCnt)*ct.normal);
+        }
+    
+    }
 
     // clear Resting flag
+    restingContact = false;
+    mRestingContactList.clear();
 }
 
 void MyWorld::compute_A(Eigen::MatrixXd &A)
@@ -528,8 +543,24 @@ void MyWorld::compute_b(Eigen::VectorXd &b)
         // Supposing we have fixed pinata
         // And rigid body B would always be pinata if it is involved in this contact
         // get the external forces and torques
-        Vector3d f_ext_a = mGravity * rbA->mMass;
-        Vector3d f_ext_b = Vector3d::Zero();
+        Vector3d f_ext_a;
+        Vector3d f_ext_b;
+        if (rbA)
+        {
+            f_ext_a = mGravity * rbA->mMass;
+        }
+        else
+        {
+            f_ext_a = Vector3d::Zero();
+        }
+        if (rbB)
+        {
+            f_ext_b = mGravity * rbB->mMass;
+        }
+        else
+        {
+            f_ext_b = Vector3d::Zero();
+        }
         Vector3d t_ext_a = Vector3d::Zero();
         Vector3d t_ext_b = Vector3d::Zero();
 
