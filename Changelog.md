@@ -1,3 +1,19 @@
+### Version 5.1.4 (2016-10-14)
+
+1. Fixed inconsistent frame rate of GlutWindow
+    * [Pull request #794](https://github.com/dartsim/dart/pull/794)
+
+### Version 5.1.3 (2016-10-07)
+
+1. Updated to support Bullet built with double precision (backport of [#660](https://github.com/dartsim/dart/pull/660))
+    * [Pull request #777](https://github.com/dartsim/dart/pull/777)
+
+1. Modified to use btGImpactMeshShape instead of btConvexTriangleMeshShape for mesh
+    * [Pull request #764](https://github.com/dartsim/dart/pull/764)
+
+1. Updated to support FCL 0.5 and tinyxml 4.0 (backport of [#749](https://github.com/dartsim/dart/pull/749))
+    * [Pull request #759](https://github.com/dartsim/dart/pull/759)
+
 ### Version 5.1.2 (2016-04-25)
 
 1. Fixed inverse kinematics (backporting)
