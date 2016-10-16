@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 #include "dart/dart.h"
+#include "QP.h"
 #include "CollisionInterface.h"
 
 class RigidBody;
@@ -70,6 +71,7 @@ class MyWorld {
 	Eigen::Vector3d mForce;
     bool restingContact;
     std::vector<RigidContact> mRestingContactList;
+    std::shared_ptr<QP> mQP;
 };
 
 #endif

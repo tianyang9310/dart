@@ -1,13 +1,12 @@
 #include "MyWorld.h"
 #include "RigidBody.h"
 #include <iostream>
-#include "dart/lcpsolver/Lemke.h"
 
 using namespace Eigen;
 using namespace std;
 
 
-#define COLLISION_EPSILON 1e-6
+#define COLLISION_EPSILON 0.04
 
 MyWorld::MyWorld() {
     mFrame = 0;
@@ -246,7 +245,7 @@ void MyWorld::collisionHandling() {
             double vrn= n.dot(vr); // normal relative velocity (scalar)
             double j;
             
-            // cout<<vrn<<endl;
+            cout<<vrn<<endl;
             if (vrn>=COLLISION_EPSILON)  // contact break away
             {
                 break;
@@ -346,10 +345,16 @@ void MyWorld::restingCollisionHandling()
     VectorXd* f = new VectorXd(VectorXd::Zero(numContacts));
 
     compute_b(b);
+    cout<<"b is "<<b<<endl;
     compute_A(A);
+    cout<<"A is "<<A<<endl;
 
-    int err = dart::lcpsolver::Lemke(A,b,f);
-    cout<<(*f)<<endl;
+    // int err = dart::lcpsolver::Lemke(A,b,f);
+    // cout<<(*f)<<endl;
+    // cout<<"error is "<<err<<endl;
+    mQP = std::make_shared<QP>(A,b);
+    *f = mQP->mf;
+    cin.get();
     for (size_t idx_RstCnt=0; idx_RstCnt<numContacts; idx_RstCnt++)
     {
         RigidContact ct = mRestingContactList[idx_RstCnt];
@@ -553,9 +558,6 @@ void MyWorld::compute_b(Eigen::VectorXd &b)
             wb = Vector3d::Zero();
         }
 
-        // Supposing we have fixed pinata
-        // And rigid body B would always be pinata if it is involved in this contact
-        // get the external forces and torques
         Vector3d f_ext_a;
         Vector3d f_ext_b;
         if (rbA)
@@ -606,7 +608,7 @@ void MyWorld::compute_b(Eigen::VectorXd &b)
 
 
         double k1 = n.dot((a_ext_part+a_vel_part)-(b_ext_part+b_vel_part));
-        Vector3d ndot = wb.cross(n);
+        Vector3d ndot = wb.cross(n); // here all the contacts should be vertex/face contact
 
         if (rbA && rbB)
         {
