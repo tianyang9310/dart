@@ -144,7 +144,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         dart::math::LinearJacobian J2;
         J1 = cntctconstraint->mBodyNode1->getLinearJacobian(bodyPoint1);
         J2 = cntctconstraint->mBodyNode2->getLinearJacobian(bodyPoint2);
-        assert(J1.rows()=J2.rows());
+        assert(J1.rows()==J2.rows());
 
         Eigen::Vector3d normDirection;
         normDirection = ct->normal;
@@ -202,9 +202,25 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     std::cout<<- __Lemke__b.transpose()<<std::endl;
     std::cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<std::endl;
     std::cin.get();
-    
+
+/*
 //  ---------------------------------------
-    
+//  Another Lemke test
+    Eigen::MatrixXd testA;
+    testA.resize(1,1);
+    testA<< 1;
+    Eigen::VectorXd testb;
+    testb.resize(1);
+    testb<< -1.5;
+    std::cout<<testA<<std::endl;
+    std::cout<<testb<<std::endl;
+    Eigen::VectorXd* f =  new Eigen::VectorXd(1);
+    int err = dart::lcpsolver::Lemke(testA,testb,f);
+    std::cout<<err<<std::endl;
+    std::cout<<(*f)<<std::endl;
+    std::cin.get();
+//  ---------------------------------------
+*/
 /*
 //  ---------------------------------------
     // Borrow A and b for Lemke
