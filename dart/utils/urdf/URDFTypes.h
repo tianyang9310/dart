@@ -1,13 +1,8 @@
 /*
- * Copyright (c) 2014-2015, Georgia Tech Research Corporation
+ * Copyright (c) 2016, Graphics Lab, Georgia Tech Research Corporation
+ * Copyright (c) 2016, Humanoid Lab, Georgia Tech Research Corporation
+ * Copyright (c) 2016, Personal Robotics Lab, Carnegie Mellon University
  * All rights reserved.
- *
- * Author(s): Jeongseok Lee <jslee02@gmail.com>
- *
- * Georgia Tech Graphics Lab and Humanoid Robotics Lab
- *
- * Directed by Prof. C. Karen Liu and Prof. Mike Stilman
- * <karenliu@cc.gatech.edu> <mstilman@cc.gatech.edu>
  *
  * This file is provided under the following "BSD-style" License:
  *   Redistribution and use in source and binary forms, with or
@@ -34,31 +29,30 @@
  *   POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef DART_COLLISION_BULLET_BULLETTYPES_H_
-#define DART_COLLISION_BULLET_BULLETTYPES_H_
+#ifndef DART_UTILS_URDF_URDFTYPES_H_
+#define DART_UTILS_URDF_URDFTYPES_H_
 
-// Must be included before any Bullet headers.
 #include "dart/config.h"
 
-#include <Eigen/Dense>
-#include <btBulletCollisionCommon.h>
+#if URDFDOM_HEADERS_VERSION_AT_LEAST(1,0,0)
+#include <memory>
+#else
+#include "boost/shared_ptr.hpp"
+#include "boost/weak_ptr.hpp"
+#endif
 
 namespace dart {
-namespace collision {
+namespace utils {
 
-/// @brief Convert Bullet vector3 type to Eigen vector3 type
-Eigen::Vector3d convertVector3(const btVector3& _vec);
+#if URDFDOM_HEADERS_VERSION_AT_LEAST(1,0,0)
+template <class T> using urdf_shared_ptr = std::shared_ptr<T>;
+template <class T> using urdf_weak_ptr = std::weak_ptr<T>;
+#else
+template <class T> using urdf_shared_ptr = boost::shared_ptr<T>;
+template <class T> using urdf_weak_ptr = boost::weak_ptr<T>;
+#endif
 
-/// @brief Convert Eigen vector3 type to Bullet vector3 type
-btVector3 convertVector3(const Eigen::Vector3d& _vec);
+} // namespace utils
+} // namespace dart
 
-/// @brief Convert Bullet matrix3x3 type to Eigen matrix3x3 type
-btMatrix3x3 convertMatrix3x3(const Eigen::Matrix3d& _R);
-
-/// @brief Convert Bullet transformation type to Eigen transformation type
-btTransform convertTransform(const Eigen::Isometry3d& _T);
-
-}  // namespace collision
-}  // namespace dart
-
-#endif  // DART_COLLISION_BULLET_BULLETTYPES_H_
+#endif // DART_UTILS_URDF_URDFTYPES_H_

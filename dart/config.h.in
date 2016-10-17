@@ -28,6 +28,18 @@
   (DART_MAJOR_VERSION < x || (DART_MAJOR_VERSION <= x && \
   (DART_MINOR_VERSION < y || (DART_MINOR_VERSION <= y))))
 
+/* urdfdom_headers Version number */
+// We define the version numbers of urdfdom_headers here since it doesn't expose
+// the version numbers itself in source level.
+#define URDFDOM_HEADERS_MAJOR_VERSION @urdfdom_headers_VERSION_MAJOR@
+#define URDFDOM_HEADERS_MINOR_VERSION @urdfdom_headers_VERSION_MINOR@
+#define URDFDOM_HEADERS_PATCH_VERSION @urdfdom_headers_VERSION_PATCH@
+
+#define URDFDOM_HEADERS_VERSION_AT_LEAST(x,y,z) \
+  (URDFDOM_HEADERS_MAJOR_VERSION > x || (URDFDOM_HEADERS_MAJOR_VERSION >= x && \
+  (URDFDOM_HEADERS_MINOR_VERSION > y || (URDFDOM_HEADERS_MINOR_VERSION >= y && \
+  URDFDOM_HEADERS_PATCH_VERSION >= z))))
+
 // Detect the compiler
 #if defined(__clang__)
   #define DART_COMPILER_CLANG
@@ -46,6 +58,7 @@
 #cmakedefine HAVE_IPOPT 1
 #cmakedefine HAVE_SNOPT 1
 #cmakedefine HAVE_BULLET_COLLISION 1
+#cmakedefine HAVE_FLANN 1
 
 #define DART_ROOT_PATH "@CMAKE_SOURCE_DIR@/"
 #define DART_DATA_PATH "@CMAKE_SOURCE_DIR@/data/"
@@ -53,5 +66,13 @@
 // See #451
 #cmakedefine ASSIMP_AISCENE_CTOR_DTOR_DEFINED 1
 #cmakedefine ASSIMP_AIMATERIAL_CTOR_DTOR_DEFINED 1
+
+// Workaround for the fact that Bullet does not add the definition to
+// BULLET_DEFINITIONS or generate a #cmakedefine header.
+#cmakedefine BT_USE_DOUBLE_PRECISION
+
+// Workaround for the fact that Bullet does not add the definition to
+// BULLET_DEFINITIONS or generate a #cmakedefine header.
+#cmakedefine BT_USE_DOUBLE_PRECISION
 
 #endif // #ifndef DART_CONFIG_H_

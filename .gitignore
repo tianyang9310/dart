@@ -1,7 +1,7 @@
+.idea/
 Xcode/
 build/
 build_debug/
-.idea/
 syntax: glob
 *.swp
 *.swo
