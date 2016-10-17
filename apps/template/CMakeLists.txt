@@ -1,7 +1,7 @@
 ###############################################
-# apps/CntctLrnin
-file(GLOB CntctLrnin_srcs "*.cpp")
-file(GLOB CntctLrnin_hdrs "*.h")
-add_executable(CntctLrnin ${CntctLrnin_srcs} ${CntctLrnin_hdrs})
-target_link_libraries(CntctLrnin dart)
-set_target_properties(CntctLrnin PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+# apps/template
+file(GLOB template_srcs "*.cpp")
+file(GLOB template_hdrs "*.h")
+add_executable(template ${template_srcs} ${template_hdrs})
+target_link_libraries(template dart)
+set_target_properties(template PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
