@@ -163,8 +163,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         // TODO: here b matrix should also be computed outside for loop
         Eigen::VectorXd tau1;
         Eigen::VectorXd tau2;
-        tau1 = M1*cntctconstraint->mBodyNode1->getSkeleton()->getVelocities() - mTimeStep*cntctconstraint->mBodyNode1->getSkeleton()->getCoriolisAndGravityForces(); 
-        tau2 = M2*cntctconstraint->mBodyNode2->getSkeleton()->getVelocities() - mTimeStep*cntctconstraint->mBodyNode2->getSkeleton()->getCoriolisAndGravityForces(); 
+        tau1 = M1*mSkeletonVelocitiesLock[cntctconstraint->mBodyNode1->getSkeleton()] - mTimeStep*cntctconstraint->mBodyNode1->getSkeleton()->getCoriolisAndGravityForces(); 
+        tau2 = M2*mSkeletonVelocitiesLock[cntctconstraint->mBodyNode2->getSkeleton()] - mTimeStep*cntctconstraint->mBodyNode2->getSkeleton()->getCoriolisAndGravityForces(); 
         tau.head(tau1.rows()) = tau1;
         tau.tail(tau2.rows()) = tau2;
 
@@ -197,11 +197,12 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     __Lemke__b = N.transpose()*M.ldlt().solve(tau);
 
     std::cout<<"^^^^^^Lemke Preparation ^^^^^"<<std::endl;
+    std::cout<<"Lemke A is "<<std::endl;
     std::cout<<__Lemke__A<<std::endl;
-    std::cout<<"Lemke b is "<<std::endl;
+    std::cout<<"Lemke b is ";
     std::cout<<- __Lemke__b.transpose()<<std::endl;
     std::cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<std::endl;
-    std::cin.get();
+    // std::cin.get();
 
 /*
 //  ---------------------------------------
@@ -478,4 +479,17 @@ Eigen::MatrixXd MyDantzigLCPSolver::getTangentBasisMatrix(
         }
     }
     return T;
+}
+
+
+void MyDantzigLCPSolver::pushVelocities(dart::dynamics::SkeletonPtr mSkeletonPtr, const Eigen::VectorXd& mVelocities)
+{
+    // std::cout<<"Pushing "<<mVelocities.transpose()<<" to "<<mSkeletonPtr->getName()<<std::endl;
+    mSkeletonVelocitiesLock[mSkeletonPtr] = mVelocities;
+}
+
+
+std::map<dart::dynamics::SkeletonPtr,Eigen::VectorXd>& MyDantzigLCPSolver::getSkeletonVelocitiesLock()
+{
+    return mSkeletonVelocitiesLock;
 }

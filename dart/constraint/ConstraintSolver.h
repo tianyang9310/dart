@@ -125,6 +125,8 @@ public:
   void solve();
     
   void setLCPSolver(DantzigLCPSolver* _DantzigLCPSolver);
+  
+  LCPSolver* getLCPSolver();
 
 private:
   /// Check if the skeleton is contained in this solver

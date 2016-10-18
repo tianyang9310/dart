@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
 {
     // create and initialize the world
     dart::simulation::WorldPtr mWorld = dart::utils::SkelParser::readWorld(DART_DATA_PATH"skel/ground.skel");
-    assert(myWorld != nullptr);
+    assert(mWorld != nullptr);
 
     Eigen::Vector3d gravity(0.0, -9.81, 0.0);
     mWorld->setGravity(gravity);

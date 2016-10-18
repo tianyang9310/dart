@@ -33,6 +33,10 @@ public:
     virtual ~MyDantzigLCPSolver(){};
     
     void solve(ConstrainedGroup* _group) override;
+
+    void pushVelocities(dart::dynamics::SkeletonPtr mSkeletonPtr, const Eigen::VectorXd& mVelocities);
+    
+    std::map<dart::dynamics::SkeletonPtr,Eigen::VectorXd>& getSkeletonVelocitiesLock();
 protected:
     void print(size_t _n, double* _A, double* _x, double* _lo, double* _hi, double* _b, double* w, int* _findex);
     
@@ -47,6 +51,8 @@ protected:
     int totalDOF;
 
     int numBasis;
+
+    std::map<dart::dynamics::SkeletonPtr,Eigen::VectorXd> mSkeletonVelocitiesLock;
 };
 
 

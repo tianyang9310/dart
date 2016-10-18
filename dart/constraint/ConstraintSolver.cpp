@@ -278,6 +278,12 @@ void ConstraintSolver::setLCPSolver(DantzigLCPSolver* _DantzigLCPSolver)
 }
 
 //==============================================================================
+LCPSolver* ConstraintSolver::getLCPSolver()
+{
+    return mLCPSolver;
+}
+
+//==============================================================================
 bool ConstraintSolver::containSkeleton(const ConstSkeletonPtr& _skeleton) const
 {
   assert(_skeleton != nullptr && "Not allowed to insert null pointer skeleton.");

@@ -2,6 +2,7 @@
 #define CNTCTLRNIN_MYWINDOW_H
 
 #include "dart/dart.h"
+#include "MyDantzigLCPSolver.h"
 #include "Controller.h"
 
 class MyWindow : public dart::gui::SimWindow

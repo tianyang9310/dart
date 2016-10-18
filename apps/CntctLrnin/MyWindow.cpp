@@ -16,16 +16,30 @@ MyWindow::~MyWindow()
 void MyWindow::timeStepping()
 {
     int numCntct = mCollisionDetector->getNumContacts();
+
+    // lock Skeleton Velocities before stepping function
+    dynamic_cast<MyDantzigLCPSolver*>(mWorld->getConstraintSolver()->getLCPSolver())->pushVelocities(
+            mWorld->getSkeleton("mBox"),
+            mWorld->getSkeleton("mBox")->getVelocities());
+    dynamic_cast<MyDantzigLCPSolver*>(mWorld->getConstraintSolver()->getLCPSolver())->pushVelocities(
+            mWorld->getSkeleton("ground skeleton"),
+            mWorld->getSkeleton("ground skeleton")->getVelocities());
+
     if (numCntct>0)
     {
         cout<<"There are "<<numCntct<<" contact points"<<endl;
         // retrieve A and p in LCP (for only normal part, assuming frictionless)
         
-        // std::cout<<mWorld->getSkeleton("ground skeleton")->getBodyNode("ground")->getArticulatedInertia()<<std::endl;
+        dart::gui::SimWindow::timeStepping();
         // std::cin.get();
     }
+    else
+    {
+        dart::gui::SimWindow::timeStepping();
+    }
     
-    dart::gui::SimWindow::timeStepping();
+    dynamic_cast<MyDantzigLCPSolver*>(mWorld->getConstraintSolver()->getLCPSolver())->getSkeletonVelocitiesLock().clear();
+    // std::cout<<"Clear velocities lock "<<dynamic_cast<MyDantzigLCPSolver*>(mWorld->getConstraintSolver()->getLCPSolver())->getSkeletonVelocitiesLock().size()<<std::endl;
 }
 
 void MyWindow::addExtForce()
