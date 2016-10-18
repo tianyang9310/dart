@@ -193,8 +193,9 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     __Lemke__A.block(numConstraints*(numBasis+1),numConstraints,numConstraints,numConstraints*numBasis) = -E.transpose();
     __Lemke__A.block(numConstraints,numConstraints*(numBasis+1),numConstraints*numBasis,numConstraints) = E;
 
-    Eigen::VectorXd __Lemke__b;
-    __Lemke__b = N.transpose()*M.ldlt().solve(tau);
+    Eigen::VectorXd __Lemke__b(Eigen::VectorXd::Zero(numConstraints*(2+numBasis)));
+    __Lemke__b.head(numConstraints) = N.transpose()*M.ldlt().solve(tau);
+    __Lemke__b.segment(numConstraints,numConstraints*numBasis) = B.transpose()*M.ldlt().solve(tau);
 
     std::cout<<"^^^^^^Lemke Preparation ^^^^^"<<std::endl;
     std::cout<<"Lemke A is "<<std::endl;
