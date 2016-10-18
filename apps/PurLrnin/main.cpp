@@ -171,7 +171,7 @@ void recordLCPSolve(size_t _n, double* _A, double* _x, double* _w,
 
 int main(int argc, char* argv[]) {
 
-  int numContactsToLearn = 2;
+  int numContactsToLearn = 4;
   int n = numContactsToLearn * 3; // with friction
   std::string trainingFile =
   "/tmp/lcp_data" + std::to_string(numContactsToLearn) + ".cvs";
