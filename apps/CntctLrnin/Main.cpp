@@ -1,4 +1,6 @@
 #include <iostream>
+#include <ctime>
+#include <chrono>
 
 #include "dart/dart.h"
 #include "MyWindow.h"
@@ -8,6 +10,7 @@
 
 int main(int argc, char* argv[])
 {
+    std::srand((unsigned) (std::chrono::system_clock::now().time_since_epoch().count()));
     // create and initialize the world
     dart::simulation::WorldPtr mWorld = dart::utils::SkelParser::readWorld(DART_DATA_PATH"skel/ground.skel");
     assert(mWorld != nullptr);
