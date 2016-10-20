@@ -132,29 +132,29 @@ void recordLCPSolve(size_t _n, double* _A, double* _x, double* _w,
   for (size_t i = 0; i < numContacts; ++i)
   {
     int index = i * 3;
-    double w_n = _w[index];
-    double w_f1 = _w[index + 1];
-    double w_f2 = _w[index + 2];
+    double x_n = _x[index];
+    double x_f1 = _x[index + 1];
+    double x_f2 = _x[index + 2];
     
     int val = 0;
-    if (w_n > 0)
+    if (x_n > 0)
       val = 0;
     else {
-      if (w_f1 < 0 && w_f2 == 0)
+      if (x_f1 < 0 && x_f2 == 0)
         val = 1;
-      else if (w_f1 > 0 && w_f2 == 0)
+      else if (x_f1 > 0 && x_f2 == 0)
         val = 2;
-      else if (w_f1 == 0 && w_f2 < 0)
+      else if (x_f1 == 0 && x_f2 < 0)
         val = 3;
-      else if (w_f1 == 0 && w_f2 > 0)
+      else if (x_f1 == 0 && x_f2 > 0)
         val = 4;
-      else if (w_f1 < 0 && w_f2 < 0)
+      else if (x_f1 < 0 && x_f2 < 0)
         val = 5;
-      else if (w_f1 > 0 && w_f2 < 0)
+      else if (x_f1 > 0 && x_f2 < 0)
         val = 6;
-      else if (w_f1 < 0 && w_f2 > 0)
+      else if (x_f1 < 0 && x_f2 > 0)
         val = 7;
-      else if (w_f1 > 0 && w_f2 > 0)
+      else if (x_f1 > 0 && x_f2 > 0)
         val = 8;
       else
         val = 9;
