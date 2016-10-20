@@ -102,10 +102,74 @@ void MyWorld::advectDensity(double *_d, double *_d0, double *_u, double *_v) {
 
 void MyWorld::advectVelocity(double *_u, double *_v, double *_u0, double *_v0) {
     // TODO: Add velocity advection code here
+    double dt0 = mTimeStep * mNumCells;  // h / x 
+    for (int i = 1; i <= mNumCells; i++) {
+        for (int j = 1; j <= mNumCells; j++) {
+            double x = i - dt0 * _u0[IX(i,j)];  // dt0 * _u0[IX(i,j)] computes how many cells can a particle travel in one time step 
+            double y = j - dt0 * _v0[IX(i,j)];
+            if (x < 0.5) 
+                x = 0.5f; 
+            if (x > mNumCells + 0.5) 
+                x = mNumCells + 0.5;
+            int i0 = (int)x;
+            int i1 = i0 + 1;
+            if (y < 0.5) 
+                y = 0.5;
+            if (y > mNumCells + 0.5)
+                y = mNumCells + 0.5;
+            int j0 = (int)y;
+            int j1 = j0 + 1;
+            double s1 = x - i0;
+            double s0 = 1 - s1;
+            double t1 = y - j0;
+            double t0 = 1 - t1;
+            _u[IX(i,j)] = s0 * (t0 * _u0[IX(i0, j0)] + t1 * _u0[IX(i0,j1)])+ s1 * (t0 * _u0[IX(i1, j0)] + t1 * _u0[IX(i1,j1)]);
+            _v[IX(i,j)] = s0 * (t0 * _v0[IX(i0, j0)] + t1 * _v0[IX(i0,j1)])+ s1 * (t0 * _v0[IX(i1, j0)] + t1 * _v0[IX(i1,j1)]);
+	}
+    }
+    setVelocityBoundary(_u,_v);
 }
 
 void MyWorld::project(double *_u, double *_v, double *_u0, double *_v0) {
    // TODO: Add projection code here
+    double *p   = _u0;
+    double *div = _v0;
+
+    int i,j,k;
+    float h;
+
+    h=1.0/mNumCells;
+    for (i=1; i<=mNumCells; i++)
+    {
+        for (j=1; j<=mNumCells; j++)
+        {
+            div[IX(i,j)] = -0.5*h*(_u[IX(i+1,j)]-_u[IX(i-1,j)]+_v[IX(i,j+1)]-_v[IX(i,j-1)]);
+            p[IX(i,j)] = 0;
+        }
+    }
+    setVelocityBoundary(p,div);
+
+    for (k=0; k<20; k++)
+    {
+        for (i=1; i<=mNumCells; i++)
+        {
+            for (j=1; j<=mNumCells; j++)
+            {
+               p[IX(i,j)] = (div[IX(i,j)]+p[IX(i-1,j)]+p[IX(i+1,j)]+ p[IX(i,j-1)]+p[IX(i,j+1)])/4; 
+            }
+        }
+        setVelocityBoundary(p,div);
+    }
+
+    for (i=1; i<=mNumCells; i++)
+    {
+        for (j=1; j<=mNumCells; j++)
+        {
+            _u[IX(i,j)] -= 0.5*(p[IX(i+1,j)]-p[IX(i-1,j)])/h;
+            _v[IX(i,j)] -= 0.5*(p[IX(i,j+1)]-p[IX(i,j-1)])/h; 
+        }
+    }
+    setVelocityBoundary(_u,_v);
 }
 
 void MyWorld::externalForces() {
