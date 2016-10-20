@@ -10,7 +10,12 @@
 
 #include "MyWorld.h"
 #include "Timer.h"
+
+#if defined(__APPLE__) && defined(__MACH__)
 #include <Math.h>
+#elif __linux
+#include <cmath>
+#endif
 
 using namespace std;
 
