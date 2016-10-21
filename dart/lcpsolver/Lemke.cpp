@@ -100,16 +100,16 @@ int Lemke(const Eigen::MatrixXd& _M, const Eigen::VectorXd& _q,
   }
 
   // solve trivial case for n=1
-  if (n==1){
-    if (_M(0)>0){
-        *_z = (- _q(0)/_M(0) )*Eigen::VectorXd::Ones(n);
-        return err;
-    } else {
-        *_z = Eigen::VectorXd::Zero(n);
-        err = 4; // no solution
-        return err;
-    }
-  }
+//   if (n==1){
+//     if (_M(0)>0){
+//         *_z = (- _q(0)/_M(0) )*Eigen::VectorXd::Ones(n);
+//         return err;
+//     } else {
+//         *_z = Eigen::VectorXd::Zero(n);
+//         err = 4; // no solution
+//         return err;
+//     }
+//   }
 
   *_z = Eigen::VectorXd::Zero(2 * n);
   int iter = 0;

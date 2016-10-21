@@ -9,9 +9,12 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
 {
     // If there is no constraint, then just return true.
     size_t numConstraints = _group->getNumConstraints(); // numConstraints is exactly the number of contact points 
-    if (numConstraints == 0)
+    if (numConstraints == 0){
         return;
-    
+    } else {
+        std::cout<<"There are "<<numConstraints<<" contact points"<<std::endl;
+    }
+
     // Build LCP terms by aggregating them from constraints
     size_t n = _group->getTotalDimension(); // n = 3*numConstraints if mIsFrictionOn else numConstraints
     int nSkip = dPAD(n);
@@ -106,10 +109,11 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     assert(isSymmetric(n, A));
     
     // Print LCP formulation
-    // dtdbg << "Before solve:" << std::endl;
-    print(n, A, x, lo, hi, b, w, findex);
+    // std::cout << "Before solve:" << std::endl;
+    // print(n, A, x, lo, hi, b, w, findex);
     // std::cout << std::endl;
 
+/*
 //  ---------------------------------------
     // establish A and b matrix for Lemke algorithm
     ContactConstraint* cntctconstraint; 
@@ -204,6 +208,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     std::cout<<- __Lemke__b.transpose()<<std::endl;
     std::cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<std::endl;
     // std::cin.get();
+*/
 
 /*
 //  ---------------------------------------
@@ -223,6 +228,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     std::cin.get();
 //  ---------------------------------------
 */
+
 /*
 //  ---------------------------------------
     // Borrow A and b for Lemke
@@ -260,21 +266,29 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     std::cout<<"Using Lemke to solve the LCP problem"<<std::endl;
     std::cout<<"error: "<<err<<std::endl;
     std::cout<<"z "<<(*z).transpose()<<std::endl;
-    std::cout<<"-----------------------------"<<std::endl;
     if (!dart::lcpsolver::validate(_eigen_A_cropped, *z, _eigen_b_neg))
     {
         std::cout<<"invalid Lemke solution"<<std::endl;
         // std::cin.get();
     }
+    std::cout<<"-----------------------------"<<std::endl<<std::endl;
 //  ---------------------------------------
 */
+
+    // bookkeeping old A and old b
+    double* old_A = new double[n * nSkip];
+    double* old_b = new double[n];
+    for (int i = 0; i < n * nSkip; i++)
+        old_A[i] = A[i];
+    for (int i = 0; i < n; i++)
+        old_b[i] = b[i];
 
     // Solve LCP using ODE's Dantzig algorithm
     dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
     
     // Print LCP formulation
-    // dtdbg << "After solve:" << std::endl;
-    // print(n, A, x, lo, hi, b, w, findex);
+    // std::cout << "After solve:" << std::endl;
+    // print(n, old_A, x, lo, hi, old_b, w, findex);
     // std::cout << std::endl;
     
     // Apply constraint impulses
@@ -346,12 +360,12 @@ void MyDantzigLCPSolver::print(size_t _n, double* _A, double* _x,
     //  }
     //  std::cout << std::endl;
     
-    std::cout << "frictionIndex: ";
-    for (size_t i = 0; i < _n; ++i)
-    {
-        std::cout << findex[i] << " ";
-    }
-    std::cout << std::endl;
+    // std::cout << "frictionIndex: ";
+    // for (size_t i = 0; i < _n; ++i)
+    // {
+    //     std::cout << findex[i] << " ";
+    // }
+    // std::cout << std::endl;
     
     double* Ax  = new double[_n];
     
