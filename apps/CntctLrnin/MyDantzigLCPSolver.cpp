@@ -229,7 +229,6 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
 //  ---------------------------------------
 */
 
-/*
 //  ---------------------------------------
     // Borrow A and b for Lemke
     std::cout<<"-----------------------------"<<std::endl;
@@ -260,7 +259,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     // A and b are reference
     // z is pointer
     Eigen::VectorXd* z = new Eigen::VectorXd(n);
-    int err = dart::lcpsolver::Lemke(_eigen_A_cropped,_eigen_b_neg,z);
+    int err = dart::lcpsolver::YT::Lemke(_eigen_A_cropped,_eigen_b_neg,z);
     
     // Print LCP formulation
     std::cout<<"Using Lemke to solve the LCP problem"<<std::endl;
@@ -273,7 +272,6 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     }
     std::cout<<"-----------------------------"<<std::endl<<std::endl;
 //  ---------------------------------------
-*/
 
     // bookkeeping old A and old b
     double* old_A = new double[n * nSkip];
@@ -287,9 +285,9 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
     
     // Print LCP formulation
-    // std::cout << "After solve:" << std::endl;
-    // print(n, old_A, x, lo, hi, old_b, w, findex);
-    // std::cout << std::endl;
+    std::cout << "After solve:" << std::endl;
+    print(n, old_A, x, lo, hi, old_b, w, findex);
+    std::cout << std::endl;
     
     // Apply constraint impulses
     for (size_t i = 0; i < numConstraints; ++i)
