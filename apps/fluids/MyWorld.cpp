@@ -1,4 +1,8 @@
 #include "MyWorld.h"
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
 
 MyWorld::MyWorld() {
@@ -27,7 +31,34 @@ void MyWorld::initialize(int _numCells, double _timeStep, double _diffCoef, doub
         mU[i] = mPreU[i] = 0.0;
         mV[i] = mPreV[i] = 0.0;
         mDensity[i] = mPreDensity[i] = 0.0;
-    }            
+    }
+    
+    // Using image as density field
+    std::string imageFile = "yang.csv";
+    std::ifstream file;
+    file.open(imageFile);
+    std::string line;
+    std::vector<double> values;
+    uint rows = 0;
+    while (std::getline(file,line)){
+        std::stringstream lineStream(line);
+        std::string cell;
+        while (std::getline(lineStream, cell, ',')){
+            values.push_back(std::stod(cell));
+        }
+        ++rows;
+    }
+    // for (size_t i=0; i<values.size(); i++) {
+    //     std::cout<<values[i]<<std::endl;
+    // }
+    file.close();
+    
+    for (int i = 0; i<mNumCells; i++) {
+        for (int j =0; j<mNumCells; j++) {
+            mDensity[IX(i,j)] = 1 - values[i*mNumCells+j]/255.0;
+            mPreDensity[IX(i,j)] = mDensity[IX(i,j)];
+        }
+    }
 }
 
 double MyWorld::getTimeStep() {
