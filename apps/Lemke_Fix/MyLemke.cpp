@@ -96,7 +96,7 @@ int n = _q.size();
 
 const double zer_tol = 1e-5;
 const double piv_tol = 1e-8;
-int maxiter = std::min(1000, 25*n);
+int maxiter = 1000;
 int err = 0;
 
 if (_q.minCoeff() >= 0) {
@@ -133,9 +133,9 @@ int entering = t;
 bas.clear();
 nonbas.clear();
 
-// TODO: here suppose initial guess z0 is [1,1,1,...], this responds to ODE's w always initilized as 0
+// TODO: here suppose initial guess z0 is [0,0,0,...], this contradicts to ODE's w always initilized as 0
 for (int i = 0; i < n; ++i) {
-    bas.push_back(i);
+    nonbas.push_back(i);
 }
 
 Eigen::MatrixXd B = -Eigen::MatrixXd::Identity(n, n);
@@ -157,7 +157,7 @@ if (!bas.empty()) {
         err = 3;
         return err;
     }
-    x = -B.ldlt().solve(_q);
+    x = -B.householderQr().solve(_q);
 }
 
 // Check if initial basis provides solution
@@ -203,7 +203,7 @@ for (iter = 0; iter < maxiter; ++iter) {
         Be = _M.col(entering);
     }
 
-    Eigen::VectorXd d = B.ldlt().solve(Be);
+    Eigen::VectorXd d = B.householderQr().solve(Be);
 
     // Find new leaving variable
     std::vector<int> j;
