@@ -34,6 +34,7 @@ void MyWorld::initialize(int _numCells, double _timeStep, double _diffCoef, doub
     }
     
     // Using image as density field
+    std::cout<<"Please put the yang.csv in the same folder of the binary file"<<std::endl;
     std::string imageFile = "yang.csv";
     std::ifstream file;
     file.open(imageFile);
