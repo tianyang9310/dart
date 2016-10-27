@@ -546,6 +546,15 @@ else()
 endif()
 
 #===============================================================================
+# Snopt
+if(CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L${CMAKE_SOURCE_DIR}dependencies/Linux/lib/ -L/usr/lib/gcc/x86_64-linux-gnu-5/")
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -L${CMAKE_SOURCE_DIR}/dependencies/Mac/lib/ -L/usr/local/lib/gcc/6")
+endif()
+#===============================================================================
+
+#===============================================================================
 # Print build summary
 #===============================================================================
 message(STATUS "")
