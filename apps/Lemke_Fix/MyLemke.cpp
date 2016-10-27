@@ -225,11 +225,11 @@ for (iter = 0; iter < maxiter; ++iter) {
     double theta = minRatio.minCoeff();
 
     std::vector<int> tmpJ;
-    std::vector<double> tmpMinRatio;
+    std::vector<double> tmpd;
     for (size_t i = 0; i < jSize; ++i) {
         if (x[j[i]] / d[j[i]] <= theta) {
             tmpJ.push_back(j[i]);
-            tmpMinRatio.push_back(minRatio[i]);
+            tmpd.push_back(d[j[i]]);
         }
     }
 
@@ -261,11 +261,11 @@ for (iter = 0; iter < maxiter; ++iter) {
     if (lvindex != -1) {
         lvindex = j[lvindex]; // Always use artificial if possible
     } else {
-        theta = tmpMinRatio[0];
+        theta = tmpd[0];
         lvindex = 0;
         for (size_t i = 0; i < jSize; ++i) {
-            if (tmpMinRatio[i] - theta > piv_tol) {  // Bubble sorting
-                theta = tmpMinRatio[i];
+            if (tmpd[i] - theta > piv_tol) {  // Bubble sorting
+                theta = tmpd[i];
                 lvindex = i;
             }
         }

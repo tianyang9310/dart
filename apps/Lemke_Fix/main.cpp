@@ -6,6 +6,7 @@
 
 int main(int argc, char* argv[]) 
 {
+    std::cout<<std::boolalpha;
     Eigen::MatrixXd testA;
     Eigen::VectorXd testb;
     Eigen::VectorXd* f;
@@ -31,6 +32,7 @@ int main(int argc, char* argv[])
     std::cout<<(*f)<<std::endl;
     std::cout<<"A*z+b: "<<std::endl;
     std::cout<<testA*(*f) + testb<<std::endl;
+    std::cout<<"LCP validation: "<<dart::lcpsolver::YT::validate(testA,(*f),testb)<<std::endl;
 
     std::cout<<"=========================================="<<std::endl;
     f =  new Eigen::VectorXd(2);
@@ -53,6 +55,7 @@ int main(int argc, char* argv[])
     std::cout<<(*f)<<std::endl;
     std::cout<<"A*z+b: "<<std::endl;
     std::cout<<testA*(*f) + testb<<std::endl;
+    std::cout<<"LCP validation: "<<dart::lcpsolver::YT::validate(testA,(*f),testb)<<std::endl;
 
     std::cout<<"=========================================="<<std::endl;
     f =  new Eigen::VectorXd(2);
@@ -75,6 +78,7 @@ int main(int argc, char* argv[])
     std::cout<<(*f)<<std::endl;
     std::cout<<"A*z+b: "<<std::endl;
     std::cout<<testA*(*f) + testb<<std::endl;
+    std::cout<<"LCP validation: "<<dart::lcpsolver::YT::validate(testA,(*f),testb)<<std::endl;
 
     std::cout<<"=========================================="<<std::endl;
     f =  new Eigen::VectorXd(4);
@@ -109,6 +113,7 @@ int main(int argc, char* argv[])
     std::cout<<(*f)<<std::endl;
     std::cout<<"A*z+b: "<<std::endl;
     std::cout<<testA*(*f) + testb<<std::endl;
+    std::cout<<"LCP validation: "<<dart::lcpsolver::YT::validate(testA,(*f),testb)<<std::endl;
 
     std::cout<<"=========================================="<<std::endl;
     f =  new Eigen::VectorXd(6);
@@ -147,6 +152,7 @@ int main(int argc, char* argv[])
     std::cout<<(*f)<<std::endl;
     std::cout<<"A*z+b: "<<std::endl;
     std::cout<<testA*(*f) + testb<<std::endl;    
+    std::cout<<"LCP validation: "<<dart::lcpsolver::YT::validate(testA,(*f),testb)<<std::endl;
 
     std::cout<<"=========================================="<<std::endl;
     // TODO: find out why this high dimension case not make sense
@@ -196,4 +202,5 @@ int main(int argc, char* argv[])
     std::cout<<(*f)<<std::endl;
     std::cout<<"A*z+b: "<<std::endl;
     std::cout<<testA*(*f) + testb<<std::endl;    
+    std::cout<<"LCP validation: "<<dart::lcpsolver::YT::validate(testA,(*f),testb)<<std::endl;
 }
