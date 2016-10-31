@@ -19,7 +19,7 @@ title('contact 4')
 % clc,clear;
 % close all;
 figure(2);
-lcpdata4=csvread('/tmp/M_lcp_data4.csv');
+lcpdata4=csvread('M_lcp_data4.csv');
 subplot(2,2,1)
 hist(lcpdata4(:,91))
 title('contact 1')
