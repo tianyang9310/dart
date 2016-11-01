@@ -3,6 +3,7 @@
 void AddSkel(WorldPtr world)
 {
     world->addSkeleton(AddBox());
+    world->addSkeleton(AddGround());
 }
 
 SkeletonPtr AddBox()
@@ -52,4 +53,10 @@ SkeletonPtr AddBox()
 //   }
     
     return mBox;
+}
+
+
+SkeletonPtr AddGround()
+{
+    return dart::utils::SkelParser::readSkeleton(DART_DATA_PATH"skel/ground.skel");
 }

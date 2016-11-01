@@ -117,18 +117,20 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
 //  ---------------------------------------
     // establish A and b matrix for Lemke algorithm
     ContactConstraint* cntctconstraint; 
-    Eigen::MatrixXd M(totalDOF,totalDOF); 
-    M.setIdentity();
-    Eigen::MatrixXd N(totalDOF,numConstraints); 
-    N.setZero();
-    Eigen::MatrixXd B(totalDOF,numConstraints*numBasis); 
-    B.setZero();
-    Eigen::MatrixXd mu(numConstraints,numConstraints);
-    mu.setZero();
-    Eigen::MatrixXd E(numConstraints*numBasis,numConstraints);
-    E.setZero();
-    Eigen::VectorXd tau(totalDOF);
-    tau.setZero();
+    Eigen::MatrixXd M(Eigen::MatrixXd::Identity(totalDOF,totalDOF)); 
+    Eigen::MatrixXd N(Eigen::MatrixXd::Zero(totalDOF,numConstraints)); 
+    Eigen::MatrixXd B(Eigen::MatrixXd::Zero(totalDOF,numConstraints*numBasis)); 
+    Eigen::MatrixXd mu(Eigen::MatrixXd::Zero(numConstraints,numConstraints));
+    Eigen::MatrixXd E(Eigen::MatrixXd::Zero(numConstraints*numBasis,numConstraints));
+    Eigen::VectorXd tau(Eigen::VectorXd::Zero(totalDOF));
+
+    // Convention: bodyNode1 ==> cube, bodyNode2 ==> ground
+    dart::dynamics::BodyNodePtr bodyNode1 = nullptr;
+    dart::dynamics::BodyNodePtr bodyNode2 = nullptr;
+    Eigen::MatrixXd M1;
+    Eigen::MatrixXd M2;
+    Eigen::VectorXd tau1;
+    Eigen::VectorXd tau2;
     for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; idx_cnstrnt++)
     {
         cntctconstraint = dynamic_cast<ContactConstraint*>(_group->getConstraint(idx_cnstrnt));
@@ -136,15 +138,38 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         if (cntctconstraint->mContacts.size() > 1)
         {
             dtmsg<<"ERROR: more than one contact for current ContactConstraint"<<std::endl;
+            dtmsg<<"There should always be one contact point for one contact constraint"<<std::endl;
             std::cin.get();
         }
+
         dart::collision::Contact* ct = cntctconstraint->mContacts[0];
+        if (bodyNode1 == nullptr)
+        {
+            bodyNode1 = cntctconstraint->mBodyNode1;
+        }
+        else if (bodyNode1 != cntctconstraint->mBodyNode1 )
+        {
+            dtmsg<<"ERROR: violating convention that bodyNode1 always is cube"<<std::endl;
+            std::cin.get();
+        }
+        if (bodyNode2 == nullptr)
+        {
+            bodyNode2 = cntctconstraint->mBodyNode2;
+        }
+        else if (bodyNode2 != cntctconstraint->mBodyNode2 )
+        {
+            dtmsg<<"ERROR: violating convention that bodyNode2 always is ground"<<std::endl;
+            std::cin.get();
+        }
+
+        // Body point location in the local frame
         Eigen::Vector3d bodyPoint1;
         Eigen::Vector3d bodyPoint2;
         bodyPoint1.noalias() = cntctconstraint->mBodyNode1->getTransform().inverse() * ct->point;
         bodyPoint2.noalias() = cntctconstraint->mBodyNode2->getTransform().inverse() * ct->point;
 
-        dart::math::LinearJacobian J1;  // J1 and BodyNode1 is 
+        // Here only care about normal force and friction force, there is no torques, thus only Linear Jacobian
+        dart::math::LinearJacobian J1;  
         dart::math::LinearJacobian J2;
         J1 = cntctconstraint->mBodyNode1->getLinearJacobian(bodyPoint1);
         J2 = cntctconstraint->mBodyNode2->getLinearJacobian(bodyPoint2);
@@ -152,60 +177,72 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
 
         Eigen::Vector3d normDirection;
         normDirection = ct->normal;
+        // std::cout<<"normal direction is "<<normDirection.transpose()<<std::endl;
 
         N.col(idx_cnstrnt) << J1.transpose()*normDirection,-J2.transpose()*normDirection;
-
-        // TODO: here mass matrix should be computed beforehand
-        Eigen::MatrixXd M1;
-        Eigen::MatrixXd M2;
-        M1 = cntctconstraint->mBodyNode1->getSkeleton()->getMassMatrix();
-        M2 = cntctconstraint->mBodyNode2->getSkeleton()->getMassMatrix();
-        
-        M.block(0,0,M1.rows(),M1.cols()) = M1;
-        M.block(M1.rows(),M1.cols(),M2.rows(),M2.cols()) = M2;
-
-        // TODO: here b matrix should also be computed outside for loop
-        Eigen::VectorXd tau1;
-        Eigen::VectorXd tau2;
-        tau1 = M1*mSkeletonVelocitiesLock[cntctconstraint->mBodyNode1->getSkeleton()] - mTimeStep*cntctconstraint->mBodyNode1->getSkeleton()->getCoriolisAndGravityForces(); 
-        tau2 = M2*mSkeletonVelocitiesLock[cntctconstraint->mBodyNode2->getSkeleton()] - mTimeStep*cntctconstraint->mBodyNode2->getSkeleton()->getCoriolisAndGravityForces(); 
-        tau.head(tau1.rows()) = tau1;
-        tau.tail(tau2.rows()) = tau2;
 
         // B matrix
         Eigen::MatrixXd D = getTangentBasisMatrix(normDirection);
         B.block(0,idx_cnstrnt*numBasis,totalDOF,numBasis) << J1.transpose()*D, -J2.transpose()*D;
 
-        // mu
+        // friction coeff
         // std::cout<<"The friction coeff for the two BodyNodes are: ";
         // std::cout<<cntctconstraint->mBodyNode1->getFrictionCoeff()<<"   ";
         // std::cout<<cntctconstraint->mBodyNode2->getFrictionCoeff()<<std::endl;
         mu(idx_cnstrnt,idx_cnstrnt) = std::min(cntctconstraint->mBodyNode1->getFrictionCoeff(), cntctconstraint->mBodyNode2->getFrictionCoeff());
 
-        // E
+        // Ones matrix
         E.block(idx_cnstrnt*numBasis,idx_cnstrnt,numBasis,1) = Eigen::VectorXd::Ones(numBasis);
     }
-    Eigen::MatrixXd __Lemke__A(Eigen::MatrixXd::Zero(numConstraints*(2+numBasis),numConstraints*(2+numBasis)));
-    __Lemke__A.block(0,0,numConstraints,numConstraints) = N.transpose()*M.ldlt().solve(N);
-    __Lemke__A.block(0,numConstraints,numConstraints,numConstraints*numBasis) 
-                                                        = N.transpose()*M.ldlt().solve(B);
-    __Lemke__A.block(numConstraints,0,numConstraints*numBasis,numConstraints)
-                                                        = B.transpose()*M.ldlt().solve(N);
-    __Lemke__A.block(numConstraints,numConstraints,numConstraints*numBasis,numConstraints*numBasis)
-                                                        = B.transpose()*M.ldlt().solve(B);
-    __Lemke__A.block(numConstraints*(numBasis+1),0,numConstraints,numConstraints) = mu;
-    __Lemke__A.block(numConstraints*(numBasis+1),numConstraints,numConstraints,numConstraints*numBasis) = -E.transpose();
-    __Lemke__A.block(numConstraints,numConstraints*(numBasis+1),numConstraints*numBasis,numConstraints) = E;
 
-    Eigen::VectorXd __Lemke__b(Eigen::VectorXd::Zero(numConstraints*(2+numBasis)));
-    __Lemke__b.head(numConstraints) = N.transpose()*M.ldlt().solve(tau);
-    __Lemke__b.segment(numConstraints,numConstraints*numBasis) = B.transpose()*M.ldlt().solve(tau);
+    // Convention check
+    if (bodyNode1 != nullptr)
+    {
+        M1 = bodyNode1->getSkeleton()->getMassMatrix();
+        M.block(0,0,M1.rows(),M1.cols()) = M1;
+        tau1 = M1*mSkeletonVelocitiesLock[bodyNode1->getSkeleton()] - mTimeStep*bodyNode1->getSkeleton()->getCoriolisAndGravityForces(); 
+        tau.head(tau1.rows()) = tau1;
+    }
+    else 
+    {
+        dtmsg<<"ERROR: violating convention that bodyNode1 always is cube"<<std::endl;
+        std::cin.get();
+    }
+    if (bodyNode2 != nullptr)
+    {
+        M2 = bodyNode2->getSkeleton()->getMassMatrix();
+        M.block(M1.rows(),M1.cols(),M2.rows(),M2.cols()) = M2;
+        tau2 = M2*mSkeletonVelocitiesLock[bodyNode2->getSkeleton()] - mTimeStep*bodyNode2->getSkeleton()->getCoriolisAndGravityForces(); 
+        tau.tail(tau2.rows()) = tau2;
+    }
+    else
+    {
+        dtmsg<<"ERROR: violating convention that bodyNode2 always is ground"<<std::endl;
+        std::cin.get();
+    }
+
+    // using ldlt().solve() since mass matrix is positive definite
+    Eigen::MatrixXd Lemke_A(Eigen::MatrixXd::Zero(numConstraints*(2+numBasis),numConstraints*(2+numBasis)));
+    Lemke_A.block(0,0,numConstraints,numConstraints) = N.transpose()*M.ldlt().solve(N);
+    Lemke_A.block(0,numConstraints,numConstraints,numConstraints*numBasis) 
+                                                     = N.transpose()*M.ldlt().solve(B);
+    Lemke_A.block(numConstraints,0,numConstraints*numBasis,numConstraints)
+                                                     = B.transpose()*M.ldlt().solve(N);
+    Lemke_A.block(numConstraints,numConstraints,numConstraints*numBasis,numConstraints*numBasis)
+                                                     = B.transpose()*M.ldlt().solve(B);
+    Lemke_A.block(numConstraints*(numBasis+1),0,numConstraints,numConstraints) = mu;
+    Lemke_A.block(numConstraints*(numBasis+1),numConstraints,numConstraints,numConstraints*numBasis) = -E.transpose();
+    Lemke_A.block(numConstraints,numConstraints*(numBasis+1),numConstraints*numBasis,numConstraints) = E;
+
+    Eigen::VectorXd Lemke_b(Eigen::VectorXd::Zero(numConstraints*(2+numBasis)));
+    Lemke_b.head(numConstraints) = N.transpose()*M.ldlt().solve(tau);
+    Lemke_b.segment(numConstraints,numConstraints*numBasis) = B.transpose()*M.ldlt().solve(tau);
 
     std::cout<<"^^^^^^Lemke Preparation ^^^^^"<<std::endl;
     std::cout<<"Lemke A is "<<std::endl;
-    std::cout<<__Lemke__A<<std::endl;
+    std::cout<<Lemke_A<<std::endl;
     std::cout<<"Lemke b is ";
-    std::cout<<- __Lemke__b.transpose()<<std::endl;
+    std::cout<<Lemke_b.transpose()<<std::endl;
     std::cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<std::endl;
     std::cin.get();
 // */

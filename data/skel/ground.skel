@@ -1,6 +1,5 @@
 <?xml version="1.0" ?>
 <skel version="1.0">
-  <world name="world 1">
     <skeleton name="ground skeleton">
       <body name="ground">
         <transformation>0 0 0 0 0 0</transformation>
@@ -27,5 +26,4 @@
         <child>ground</child>
       </joint>
     </skeleton>	
-  </world>
 </skel>
