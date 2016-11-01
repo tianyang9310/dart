@@ -243,8 +243,16 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     std::cout<<Lemke_A<<std::endl;
     std::cout<<"Lemke b is ";
     std::cout<<Lemke_b.transpose()<<std::endl;
+    std::cout<<"Solving LCP with Lemke"<<std::endl;
+    Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints*(2+numBasis));
+    int err = dart::lcpsolver::Lemke(Lemke_A, Lemke_b, z);
+    std::cout<<"Solution is ";
+    std::cout<<(*z).transpose()<<std::endl;
+    std::cout<<"err: "<<err<<std::endl;
+    std::cout<<std::boolalpha;
+    std::cout<<"Validation: "<<dart::lcpsolver::validate(Lemke_A, (*z), Lemke_b)<<std::endl;
     std::cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<std::endl;
-    std::cin.get();
+    // std::cin.get();
 // */
 
 /*
@@ -304,10 +312,10 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     // Solve LCP using ODE's Dantzig algorithm
     dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
     
-    // Print LCP formulation
-    std::cout << "After solve:" << std::endl;
-    print(n, old_A, x, lo, hi, old_b, w, findex);
-    std::cout << std::endl;
+    // // Print LCP formulation
+    // std::cout << "After solve:" << std::endl;
+    // print(n, old_A, x, lo, hi, old_b, w, findex);
+    // std::cout << std::endl;
     
     // Apply constraint impulses
     for (size_t i = 0; i < numConstraints; ++i)
