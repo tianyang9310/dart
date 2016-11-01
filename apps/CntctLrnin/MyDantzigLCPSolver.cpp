@@ -113,7 +113,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     // print(n, A, x, lo, hi, b, w, findex);
     // std::cout << std::endl;
 
-/*
+// /*
 //  ---------------------------------------
     // establish A and b matrix for Lemke algorithm
     ContactConstraint* cntctconstraint; 
@@ -207,28 +207,10 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     std::cout<<"Lemke b is ";
     std::cout<<- __Lemke__b.transpose()<<std::endl;
     std::cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<std::endl;
-    // std::cin.get();
-*/
+    std::cin.get();
+// */
 
 /*
-//  ---------------------------------------
-//  Another Lemke test
-    Eigen::MatrixXd testA;
-    testA.resize(1,1);
-    testA<< 1;
-    Eigen::VectorXd testb;
-    testb.resize(1);
-    testb<< -1.5;
-    std::cout<<testA<<std::endl;
-    std::cout<<testb<<std::endl;
-    Eigen::VectorXd* f =  new Eigen::VectorXd(1);
-    int err = dart::lcpsolver::Lemke(testA,testb,f);
-    std::cout<<err<<std::endl;
-    std::cout<<(*f)<<std::endl;
-    std::cin.get();
-//  ---------------------------------------
-*/
-
 //  ---------------------------------------
     // Borrow A and b for Lemke
     std::cout<<"-----------------------------"<<std::endl;
@@ -259,7 +241,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     // A and b are reference
     // z is pointer
     Eigen::VectorXd* z = new Eigen::VectorXd(n);
-    int err = dart::lcpsolver::YT::Lemke(_eigen_A_cropped,_eigen_b_neg,z);
+    int err = dart::lcpsolver::Lemke(_eigen_A_cropped,_eigen_b_neg,z);
     
     // Print LCP formulation
     std::cout<<"Using Lemke to solve the LCP problem"<<std::endl;
@@ -272,6 +254,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     }
     std::cout<<"-----------------------------"<<std::endl<<std::endl;
 //  ---------------------------------------
+*/
 
     // bookkeeping old A and old b
     double* old_A = new double[n * nSkip];

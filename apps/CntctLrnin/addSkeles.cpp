@@ -43,13 +43,13 @@ SkeletonPtr AddBox()
     bn->getParentJoint()->setTransformFromParentBodyNode(tf);
     
    // disable friction
-   bn->setFrictionCoeff(frcton_cff);
-
-   // disable joint friction
-   for (size_t i = 0; i<bn->getParentJoint()->getNumDofs();++i)
-   {
-       bn->getParentJoint()->getDof(i)->setDampingCoefficient(jnt_dmpin);
-   }
+//   bn->setFrictionCoeff(frcton_cff);
+//
+//   // disable joint friction
+//   for (size_t i = 0; i<bn->getParentJoint()->getNumDofs();++i)
+//   {
+//       bn->getParentJoint()->getDof(i)->setDampingCoefficient(jnt_dmpin);
+//   }
     
     return mBox;
 }
