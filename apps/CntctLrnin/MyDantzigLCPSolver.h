@@ -15,7 +15,7 @@
 // #include "dart/config.h"
 // #include "dart/common/Console.h"
 #include "dart/lcpsolver/Lemke.h"
-// #include "../Lemke_Fix/MyLemke.h"
+#include "../Lemke_Fix/MyLemke.h"
 // #include "dart/lcpsolver/lcp.h"
 
 #ifndef DART_CONTACT_CONSTRAINT_EPSILON

@@ -250,7 +250,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     std::cout<<(*z).transpose()<<std::endl;
     std::cout<<"err: "<<err<<std::endl;
     std::cout<<std::boolalpha;
-    std::cout<<"Validation: "<<dart::lcpsolver::validate(Lemke_A, (*z), Lemke_b)<<std::endl;
+    std::cout<<"Validation: "<<dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b)<<std::endl;
     std::cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<std::endl;
     // std::cin.get();
 // */
