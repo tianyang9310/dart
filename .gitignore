@@ -6,6 +6,7 @@ build_debug/
 syntax: glob
 *.swp
 *.swo
+*.csv
 CPack*
 CTest*
 Testing/
