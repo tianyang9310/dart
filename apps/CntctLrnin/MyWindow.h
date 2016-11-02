@@ -13,6 +13,7 @@ public:
     
     
     void addExtForce();
+    void addExtTorque();
     
     void timeStepping() override;
     void keyboard(unsigned char _key, int _x, int _y) override;
@@ -21,6 +22,8 @@ public:
 private:
     std::unique_ptr<Controller> mController;
     std::unique_ptr<dart::collision::CollisionDetector> mCollisionDetector;
+
+    int counter;
 };
 
 #endif  // CNTCTLRNIN_MYWINDOW_H

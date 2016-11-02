@@ -3,6 +3,7 @@
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep,int _totalDOF):DantzigLCPSolver(_timestep),totalDOF(_totalDOF)
 {
     numBasis = 8;
+    dataSize = 30000;
 
     for (int numContactsToLearn = 1; numContactsToLearn <5; numContactsToLearn++)
     {
@@ -11,6 +12,7 @@ MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep,int _totalDOF):DantzigLC
         std::shared_ptr<std::fstream> outputFile = std::make_shared<std::fstream>(trainingFile, std::fstream::out);
         outputFile->precision(10);
         outputFiles.push_back(outputFile);
+        counters.push_back(0);
     }
 }
 
@@ -277,9 +279,17 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     std::cout<<"Lemke M is "<<std::endl<<M<<std::endl;
     std::cout<<"Lemke E is "<<E.transpose()<<std::endl;
     // output to file
-    if (Validation)
+    if (Validation && (counters[numConstraints-1] < dataSize))
     {
         recordLCPSolve(Lemke_A, (*z), Lemke_b);
+    }
+    // early stopping
+    if ((counters[0] == dataSize)&&
+        (counters[1] == dataSize)&&
+        (counters[2] == dataSize)&&
+        (counters[3] == dataSize))
+    {
+        exit(0);
     }
     std::cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<std::endl;
 // */
@@ -573,6 +583,7 @@ void MyDantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A, const Eigen::Ve
     std::cout<<"numContactsToLearn: "<<numContactsToLearn<<std::endl;
 
     std::shared_ptr<std::fstream> outputFile = outputFiles[numContactsToLearn-1];
+    counters[numContactsToLearn-1] +=1;
 
 //  output A, z, and b
 //  // since all friction coeffs are the same, no need to output them

@@ -53,6 +53,8 @@ protected:
 
     int totalDOF;
 
+    int dataSize;
+
     int numBasis;
 
     std::map<dart::dynamics::SkeletonPtr,Eigen::VectorXd> mSkeletonVelocitiesLock;
@@ -60,6 +62,8 @@ protected:
     void recordLCPSolve(const Eigen::MatrixXd A, const Eigen::VectorXd z, const Eigen::VectorXd b);
 
     std::vector<std::shared_ptr<std::fstream>> outputFiles;
+    
+    std::vector<int> counters;
 };
 
 
