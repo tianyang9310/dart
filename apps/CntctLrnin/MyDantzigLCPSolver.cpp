@@ -3,6 +3,23 @@
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep,int _totalDOF):DantzigLCPSolver(_timestep),totalDOF(_totalDOF)
 {
     numBasis = 8;
+
+    for (int numContactsToLearn = 1; numContactsToLearn <5; numContactsToLearn++)
+    {
+        std::string trainingFile =
+        "/tmp/lcp_data" + std::to_string(numContactsToLearn) + ".csv";
+        std::shared_ptr<std::fstream> outputFile = std::make_shared<std::fstream>(trainingFile, std::fstream::out);
+        outputFile->precision(10);
+        outputFiles.push_back(outputFile);
+    }
+}
+
+MyDantzigLCPSolver::~MyDantzigLCPSolver()
+{
+    for (int numContactsToLearn = 1; numContactsToLearn <5; numContactsToLearn++)
+    {
+        outputFiles[numContactsToLearn-1]->close();
+    }
 }
 
 void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
@@ -137,8 +154,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         // std::cout<<cntctconstraint->mContacts.size()<<std::endl;
         if (cntctconstraint->mContacts.size() > 1)
         {
-            dtmsg<<"ERROR: more than one contact for current ContactConstraint"<<std::endl;
-            dtmsg<<"There should always be one contact point for one contact constraint"<<std::endl;
+            dterr<<"ERROR: more than one contact for current ContactConstraint"<<std::endl;
+            dterr<<"There should always be one contact point for one contact constraint"<<std::endl;
             std::cin.get();
         }
 
@@ -149,7 +166,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         }
         else if (bodyNode1 != cntctconstraint->mBodyNode1 )
         {
-            dtmsg<<"ERROR: violating convention that bodyNode1 always is cube"<<std::endl;
+            dterr<<"ERROR: violating convention that bodyNode1 always is cube"<<std::endl;
             std::cin.get();
         }
         if (bodyNode2 == nullptr)
@@ -158,7 +175,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         }
         else if (bodyNode2 != cntctconstraint->mBodyNode2 )
         {
-            dtmsg<<"ERROR: violating convention that bodyNode2 always is ground"<<std::endl;
+            dterr<<"ERROR: violating convention that bodyNode2 always is ground"<<std::endl;
             std::cin.get();
         }
 
@@ -205,7 +222,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     }
     else 
     {
-        dtmsg<<"ERROR: violating convention that bodyNode1 always is cube"<<std::endl;
+        dterr<<"ERROR: violating convention that bodyNode1 always is cube"<<std::endl;
         std::cin.get();
     }
     if (bodyNode2 != nullptr)
@@ -217,19 +234,20 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     }
     else
     {
-        dtmsg<<"ERROR: violating convention that bodyNode2 always is ground"<<std::endl;
+        dterr<<"ERROR: violating convention that bodyNode2 always is ground"<<std::endl;
         std::cin.get();
     }
 
+    double _TimeStep = mTimeStep; // 1.0;
     // using ldlt().solve() since mass matrix is positive definite
     Eigen::MatrixXd Lemke_A(Eigen::MatrixXd::Zero(numConstraints*(2+numBasis),numConstraints*(2+numBasis)));
-    Lemke_A.block(0,0,numConstraints,numConstraints) = N.transpose()*M.ldlt().solve(N);
+    Lemke_A.block(0,0,numConstraints,numConstraints) = _TimeStep*N.transpose()*M.ldlt().solve(N);
     Lemke_A.block(0,numConstraints,numConstraints,numConstraints*numBasis) 
-                                                     = N.transpose()*M.ldlt().solve(B);
+                                                     = _TimeStep*N.transpose()*M.ldlt().solve(B);
     Lemke_A.block(numConstraints,0,numConstraints*numBasis,numConstraints)
-                                                     = B.transpose()*M.ldlt().solve(N);
+                                                     = _TimeStep*B.transpose()*M.ldlt().solve(N);
     Lemke_A.block(numConstraints,numConstraints,numConstraints*numBasis,numConstraints*numBasis)
-                                                     = B.transpose()*M.ldlt().solve(B);
+                                                     = _TimeStep*B.transpose()*M.ldlt().solve(B);
     Lemke_A.block(numConstraints*(numBasis+1),0,numConstraints,numConstraints) = mu;
     Lemke_A.block(numConstraints*(numBasis+1),numConstraints,numConstraints,numConstraints*numBasis) = -E.transpose();
     Lemke_A.block(numConstraints,numConstraints*(numBasis+1),numConstraints*numBasis,numConstraints) = E;
@@ -245,14 +263,25 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     std::cout<<Lemke_b.transpose()<<std::endl;
     std::cout<<"Solving LCP with Lemke"<<std::endl;
     Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints*(2+numBasis));
-    int err = dart::lcpsolver::Lemke(Lemke_A, Lemke_b, z);
+    int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
     std::cout<<"Solution is ";
     std::cout<<(*z).transpose()<<std::endl;
     std::cout<<"err: "<<err<<std::endl;
     std::cout<<std::boolalpha;
-    std::cout<<"Validation: "<<dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b)<<std::endl;
+    bool Validation = dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b);
+    std::cout<<"Validation: "<< Validation<<std::endl;
+    std::cout<<"Lemke N is "<<N.transpose()<<std::endl;
+    std::cout<<"Lemke B is "<<std::endl<<B<<std::endl;
+    std::cout<<"Skeleton 1 is "<<bodyNode1->getSkeleton()->getName()<<std::endl<<" its velocity is"<<mSkeletonVelocitiesLock[bodyNode1->getSkeleton()].transpose()<<std::endl;
+    std::cout<<"Skeleton 2 is "<<bodyNode2->getSkeleton()->getName()<<std::endl<<" its velocity is"<<mSkeletonVelocitiesLock[bodyNode2->getSkeleton()].transpose()<<std::endl;
+    std::cout<<"Lemke M is "<<std::endl<<M<<std::endl;
+    std::cout<<"Lemke E is "<<E.transpose()<<std::endl;
+    // output to file
+    if (Validation)
+    {
+        recordLCPSolve(Lemke_A, (*z), Lemke_b);
+    }
     std::cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<std::endl;
-    // std::cin.get();
 // */
 
 /*
@@ -312,10 +341,10 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     // Solve LCP using ODE's Dantzig algorithm
     dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
     
-    // // Print LCP formulation
-    // std::cout << "After solve:" << std::endl;
-    // print(n, old_A, x, lo, hi, old_b, w, findex);
-    // std::cout << std::endl;
+    // Print LCP formulation
+    std::cout << "After solve:" << std::endl;
+    print(n, old_A, x, lo, hi, old_b, w, findex);
+    std::cout << std::endl;
     
     // Apply constraint impulses
     for (size_t i = 0; i < numConstraints; ++i)
@@ -324,6 +353,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         constraint->applyImpulse(x + offset[i]);
         constraint->excite();
     }
+
+    // std::cin.get();
     
     delete[] offset;
     
@@ -516,7 +547,7 @@ Eigen::MatrixXd MyDantzigLCPSolver::getTangentBasisMatrix(
         T.col(idx_basis) = Eigen::Quaterniond(Eigen::AngleAxisd(DART_PI_HALF/2, _n)) * T.col(idx_basis-1);
         if (T.col(idx_basis).dot(_n) > DART_EPSILON)
         {
-            std::cout<<"Error in constructing basis matrix"<<std::endl; 
+            dterr<<"Error in constructing basis matrix"<<std::endl; 
         }
     }
     return T;
@@ -533,4 +564,97 @@ void MyDantzigLCPSolver::pushVelocities(dart::dynamics::SkeletonPtr mSkeletonPtr
 std::map<dart::dynamics::SkeletonPtr,Eigen::VectorXd>& MyDantzigLCPSolver::getSkeletonVelocitiesLock()
 {
     return mSkeletonVelocitiesLock;
+}
+
+void MyDantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A, const Eigen::VectorXd z, const Eigen::VectorXd b)
+{
+    int nSize = b.rows();
+    int numContactsToLearn = nSize /(numBasis+2);
+    std::cout<<"numContactsToLearn: "<<numContactsToLearn<<std::endl;
+
+    std::shared_ptr<std::fstream> outputFile = outputFiles[numContactsToLearn-1];
+
+//  output A, z, and b
+//  // since all friction coeffs are the same, no need to output them
+    for (int i =0; i < nSize-numContactsToLearn; i++)
+    {
+        for (int j=i; j < nSize-numContactsToLearn; j++)
+        {
+            (*outputFile)<<A(i,j)<<",";
+        }
+    }
+
+    for (int i=0; i < nSize-numContactsToLearn; i++)
+    {
+        (*outputFile)<<b(i)<<",";
+    }
+
+
+    // decompose z
+    Eigen::VectorXd z_fn(z.head(numContactsToLearn));
+    Eigen::VectorXd z_fd(z.segment(numContactsToLearn,numContactsToLearn*numBasis));
+    Eigen::VectorXd z_lambda(z.tail(numContactsToLearn));
+    
+    std::vector<Eigen::VectorXd> each_z(numContactsToLearn);
+    for (int i=0; i<numContactsToLearn; i++)
+    {
+        each_z[i].resize(numBasis+2);
+        each_z[i] << z_fn(i), z_fd.segment(i*numBasis,numBasis), z_lambda(i);
+        std::cout<<i<<"th contact point "<<each_z[i].transpose()<<std::endl;
+        int value = 9;
+
+        // Convention: numbasis = 8, so total 10 elements
+        if (each_z[i](0) < DART_EPSILON)               // fn = 0, break
+        {
+            value = 9;
+        }
+        else if (each_z[i](9) < DART_EPSILON)          // lambda = 0, static
+        {
+            value = 8;
+        }
+        else if (each_z[i](1) > DART_EPSILON)          // fd_1 > 0
+        {
+            value = 0;
+        }
+        else if (each_z[i](2) > DART_EPSILON)          // fd_2 > 0
+        {
+            value = 1;
+        }
+        else if (each_z[i](3) > DART_EPSILON)          // fd_3 > 0
+        {
+            value = 2;
+        }
+        else if (each_z[i](4) > DART_EPSILON)          // fd_4 > 0
+        {
+            value = 3;
+        }
+        else if (each_z[i](5) > DART_EPSILON)          // fd_5 > 0
+        {
+            value = 4;
+        }
+        else if (each_z[i](6) > DART_EPSILON)          // fd_6 > 0
+        {
+            value = 5;
+        }
+        else if (each_z[i](7) > DART_EPSILON)          // fd_7 > 0
+        {
+            value = 6;
+        }
+        else if (each_z[i](8) > DART_EPSILON)          // fd_8 > 0
+        {
+            value = 7;
+        }
+        else
+        {
+            dterr<<"ERROR: unknown LCP solution!!!"<<std::endl;
+            std::cin.get();
+        }
+        (*outputFile) << value;
+        if (i < numContactsToLearn-1)
+        {
+            (*outputFile) << ",";
+        }
+    }
+
+    (*outputFile)<<std::endl;
 }

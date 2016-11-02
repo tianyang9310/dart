@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <iomanip>
 #include <iostream>
+#include <string>
+#include <fstream>
 
 #include "dart/dart.h"
 
@@ -14,7 +16,7 @@
 //
 // #include "dart/config.h"
 // #include "dart/common/Console.h"
-#include "dart/lcpsolver/Lemke.h"
+// #include "dart/lcpsolver/Lemke.h"
 #include "../Lemke_Fix/MyLemke.h"
 // #include "dart/lcpsolver/lcp.h"
 
@@ -31,7 +33,7 @@ class MyDantzigLCPSolver : public DantzigLCPSolver
 {
 public:
     MyDantzigLCPSolver(double _timestep,int _totalDOF);
-    virtual ~MyDantzigLCPSolver(){};
+    virtual ~MyDantzigLCPSolver();
     
     void solve(ConstrainedGroup* _group) override;
 
@@ -54,6 +56,10 @@ protected:
     int numBasis;
 
     std::map<dart::dynamics::SkeletonPtr,Eigen::VectorXd> mSkeletonVelocitiesLock;
+
+    void recordLCPSolve(const Eigen::MatrixXd A, const Eigen::VectorXd z, const Eigen::VectorXd b);
+
+    std::vector<std::shared_ptr<std::fstream>> outputFiles;
 };
 
 

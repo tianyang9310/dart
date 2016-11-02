@@ -31,8 +31,12 @@ void MyWindow::timeStepping()
 
 void MyWindow::addExtForce()
 {
-    mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtTorque(Eigen::Vector3d::Random()*100);
-    mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(Eigen::Vector3d::Random()*3);
+    // mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtTorque(Eigen::Vector3d::Random()*100);
+    
+    Eigen::Vector3d extForce = Eigen::Vector3d::Random() * 5e2;
+    extForce[1] = 0.0;
+    mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce);
+    // mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(Eigen::Vector3d::Random()*3);
 }
 
 void MyWindow::keyboard(unsigned char _key, int _x, int _y)
