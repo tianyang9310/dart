@@ -1950,6 +1950,44 @@ Eigen::Vector2d computeClosestPointOnSupportPolygon(size_t& _index1, size_t& _in
 
   return result;
 }
+  Eigen::Matrix3d eulerToMatrixXDeriv(double x)
+{
+    Eigen::Matrix3d mat = Eigen::Matrix3d::Zero();
+    double cosangle = cos(x);
+    double sinangle = sin(x);
+    mat(0, 0) = 0.0;
+    mat(1, 1) = -sinangle;
+    mat(1, 2) = -cosangle;
+    mat(2, 1) = cosangle;
+    mat(2, 2) = -sinangle;
+    return mat;
+}
+
+Eigen::Matrix3d eulerToMatrixYDeriv(double y)
+{
+    Eigen::Matrix3d mat = Eigen::Matrix3d::Zero();
+    double cosangle = cos(y);
+    double sinangle = sin(y);
+    mat(1, 1) = 0.0;
+    mat(2, 2) = -sinangle;
+    mat(2, 0) = -cosangle;
+    mat(0, 2) = cosangle;
+    mat(0, 0) = -sinangle;
+    return mat;
+}
+
+Eigen::Matrix3d eulerToMatrixZDeriv(double z)
+{
+    Eigen::Matrix3d mat = Eigen::Matrix3d::Zero();
+    double cosangle = cos(z);
+    double sinangle = sin(z);
+    mat(2, 2) = 0.0;
+    mat(0, 0) = -sinangle;
+    mat(0, 1) = -cosangle;
+    mat(1, 0) = cosangle;
+    mat(1, 1) = -sinangle;
+    return mat;
+}
 
 }  // namespace math
 }  // namespace dart

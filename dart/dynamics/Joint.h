@@ -682,6 +682,17 @@ public:
   ///
   void applyGLTransform(renderer::RenderInterface* _ri);
 
+
+  //----------------------------------------------------------------------------
+  // For CS4496
+  //----------------------------------------------------------------------------
+
+  /// @brief Get transformation of _index-th coordinate
+  virtual Eigen::Isometry3d getTransform(size_t _index) const;
+  
+  /// @brief Get derivative of transformation of _index-th coordinate
+  virtual Eigen::Matrix4d getTransformDerivative(size_t _index) const;
+  
   //----------------------------------------------------------------------------
   // Friendship
   //----------------------------------------------------------------------------

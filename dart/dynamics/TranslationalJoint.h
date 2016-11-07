@@ -79,6 +79,12 @@ public:
   Eigen::Matrix<double, 6, 3> getLocalJacobianStatic(
       const Eigen::Vector3d& _positions) const override;
 
+  // Documentation inherited.
+  virtual Eigen::Isometry3d getTransform(size_t _index) const;
+
+  // Documentation inherited.
+  virtual Eigen::Matrix4d getTransformDerivative(size_t _index) const;
+
 protected:
 
   /// Constructor called by Skeleton class

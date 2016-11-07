@@ -533,6 +533,15 @@ Eigen::Vector2d computeClosestPointOnSupportPolygon(
     const Eigen::Vector2d& _p,
     const SupportPolygon& _support);
 
+  /// @brief Get derivative of rotation matrix from Euler angle of axis-x
+Eigen::Matrix3d eulerToMatrixXDeriv(double x);
+
+/// @brief Get derivative of rotation matrix from Euler angle of axis-y
+Eigen::Matrix3d eulerToMatrixYDeriv(double y);
+
+/// @brief Get derivative of rotation matrix from Euler angle of axis-z
+Eigen::Matrix3d eulerToMatrixZDeriv(double z);
+
 }  // namespace math
 }  // namespace dart
 
