@@ -55,7 +55,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     std::memset(w, 0.0, n * sizeof(double));
     std::memset(findex, -1, n * sizeof(int));
     
-    // Compute offset indices
+    // Compute offset indices. If there are more than 1 contact points, 
+    // like say exactly 2 contact points, then we need these indices to access information for 2nd contact point
     size_t* offset = new size_t[n];
     offset[0] = 0;
     //  std::cout << "offset[" << 0 << "]: " << offset[0] << std::endl;
