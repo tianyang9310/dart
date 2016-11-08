@@ -1,4 +1,5 @@
 #include "MyDantzigLCPSolver.h"
+// #define LEMKE_OUTPUT
 
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep,int _totalDOF):DantzigLCPSolver(_timestep),totalDOF(_totalDOF)
 {
@@ -31,7 +32,9 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     if (numConstraints == 0){
         return;
     } else {
+#ifdef LEMKE_OUTPUT
         std::cout<<"There are "<<numConstraints<<" contact points"<<std::endl;
+#endif
     }
 
     // Build LCP terms by aggregating them from constraints
@@ -258,19 +261,24 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     Lemke_b.head(numConstraints) = N.transpose()*M.ldlt().solve(tau);
     Lemke_b.segment(numConstraints,numConstraints*numBasis) = B.transpose()*M.ldlt().solve(tau);
 
+#ifdef LEMKE_OUTPUT
     std::cout<<"^^^^^^Lemke Preparation ^^^^^"<<std::endl;
     std::cout<<"Lemke A is "<<std::endl;
     std::cout<<Lemke_A<<std::endl;
     std::cout<<"Lemke b is ";
     std::cout<<Lemke_b.transpose()<<std::endl;
     std::cout<<"Solving LCP with Lemke"<<std::endl;
+#endif
     Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints*(2+numBasis));
     int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
+#ifdef LEMKE_OUTPUT
     std::cout<<"Solution is ";
     std::cout<<(*z).transpose()<<std::endl;
     std::cout<<"err: "<<err<<std::endl;
     std::cout<<std::boolalpha;
+#endif
     bool Validation = dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b);
+#ifdef LEMKE_OUTPUT
     std::cout<<"Validation: "<< Validation<<std::endl;
     std::cout<<"Lemke N is "<<N.transpose()<<std::endl;
     std::cout<<"Lemke B is "<<std::endl<<B<<std::endl;
@@ -292,6 +300,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         exit(0);
     }
     std::cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<std::endl;
+#endif
 // */
 
 /*
@@ -351,10 +360,12 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     // Solve LCP using ODE's Dantzig algorithm
     dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
     
+#ifdef LEMKE_OUTPUT
     // Print LCP formulation
     std::cout << "After solve:" << std::endl;
     print(n, old_A, x, lo, hi, old_b, w, findex);
     std::cout << std::endl;
+#endif
     
     // Apply constraint impulses
     for (size_t i = 0; i < numConstraints; ++i)
