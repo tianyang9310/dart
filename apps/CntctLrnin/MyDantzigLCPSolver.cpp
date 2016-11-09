@@ -328,6 +328,19 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
 #endif
 
     // Apply constraint impulses
+    if (!Validation)
+    {
+        dterr<<"ERROR: Lemke fails for current time step!!!"<<std::endl;
+        std::cout<<"Lemke A is "<<std::endl;
+        std::cout<<Lemke_A<<std::endl;
+        std::cout<<"Lemke b is ";
+        std::cout<<Lemke_b.transpose()<<std::endl;
+        std::cout<<"Solution is ";
+        std::cout<<(*z).transpose()<<std::endl;
+        std::cout<<"err: "<<err<<std::endl;
+        std::cout<<std::boolalpha;
+        std::cin.get();
+    }
     
     // justify the (*z)
     assert(!(Eigen::isnan((*z).array()).any()));
@@ -421,8 +434,16 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
 //        constraint->applyImpulse(x + offset[i]);
 //        constraint->excite();
 //    }
+    
+//    // Comparing results of ODE with Lemke
+      for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt)
+      {
+          Mycntctconstraint = dynamic_cast<MyContactConstraint*>(_group->getConstraint(idx_cnstrnt));
+          Mycntctconstraint->applyImpulse(x + offset[idx_cnstrnt]);
+          // Mycntctconstraint->excite();
+      }
 
-    // std::cin.get();
+    std::cin.get();
     
     delete[] offset;
     

@@ -21,8 +21,9 @@ MyContactConstraint::~MyContactConstraint()
 
 void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd & fd, const Eigen::VectorXd &  N, const Eigen::MatrixXd & B, int BodyNode1_dim, int BodyNode2_dim)
 {
-//  std::cout<< "[Lemke LCP]Using MyContactConstraint class! "<<std::endl;
-//  std::cin.get();
+  std::cout<<"============================================"<<std::endl;
+  std::cout<< "[Lemke LCP]Using MyContactConstraint class! "<<std::endl;
+  // std::cin.get();
 
     if (mIsFrictionOn)
     {
@@ -39,8 +40,11 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd & fd, 
             mContacts[i]->force = mContacts[i]->normal * fn / mTimeStep;
             mContacts[i]->force += D * fd / mTimeStep;
 
-            // std::cout<<"[Lemke LCP] normal impulsive force is "<<std::endl<<normal_impulsive_force.transpose()<<std::endl;
-            // std::cout<<"[Lemke LCP] tangential directional force is "<<std::endl<<tangential_directional_force.transpose()<<std::endl;
+            std::cout<<"[Lemke LCP] normal impulsive force is "<<normal_impulsive_force.transpose()<<std::endl;
+            std::cout<<"[Lemke LCP] tangential directional force is "<<tangential_directional_force.transpose()<<std::endl;
+            std::cout<<"[Lemke LCP] overall force is "<<mContacts[i]->force.transpose()<<std::endl;
+            // std::cout<<"[Lemke LCP] first force is "<<(mContacts[i]->normal * fn / mTimeStep).transpose()<<std::endl;
+            // std::cout<<"[Lemke LCP] second force is "<<( D * fd / mTimeStep ).transpose()<<std::endl;
             if (mBodyNode1->isReactive())
             {
                 mBodyNode1->addConstraintImpulse(normal_impulsive_force.head(BodyNode1_dim));
@@ -78,8 +82,9 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd & fd, 
 
 void MyContactConstraint::applyImpulse(double* _lambda)
 {
-//  std::cout<< "[ODE LCP]Using MyContactConstraint class! "<<std::endl;
-//  std::cin.get();
+  std::cout<<"============================================"<<std::endl;
+  std::cout<< "[ODE LCP]Using MyContactConstraint class! "<<std::endl;
+  // std::cin.get();
 
   //----------------------------------------------------------------------------
   // Friction case
@@ -90,6 +95,7 @@ void MyContactConstraint::applyImpulse(double* _lambda)
 
     for (size_t i = 0; i < mContacts.size(); ++i)
     {
+/*
 //      std::cout << "_lambda1: " << _lambda[_idx] << std::endl;
 //      std::cout << "_lambda2: " << _lambda[_idx + 1] << std::endl;
 //      std::cout << "_lambda3: " << _lambda[_idx + 2] << std::endl;
@@ -140,12 +146,24 @@ void MyContactConstraint::applyImpulse(double* _lambda)
         mBodyNode2->addConstraintImpulse(mJacobians2[index] * _lambda[index]);
 //      std::cout << "_lambda: " << _lambda[_idx] << std::endl;
       index++;
+*/
 
-      std::cout<<"[ODE LCP] normal impulsive force is "<<std::endl<<(mJacobians1[i]*_lambda[0]).transpose()<<std::endl<<(mJacobians2[i]*_lambda[0]).transpose()<<std::endl;
-      std::cout<<std::boolalpha;
-      std::cout<<"mBodyNode1 isReactive: "<<mBodyNode1->isReactive()<<" mBodyNode2 isReactive: "<<mBodyNode2->isReactive()<<std::endl;
-      std::cout<<"[ODE LCP] tangential directional force is "<<std::endl<<(mJacobians1[1] * _lambda[1]).transpose()<<std::endl<<(mJacobians2[1] * _lambda[1]).transpose()<<std::endl;
-      std::cout<<"[ODE LCP] tangential directional force is "<<std::endl<<(mJacobians1[2] * _lambda[2]).transpose()<<std::endl<<(mJacobians2[2] * _lambda[2]).transpose()<<std::endl;
+      Eigen::VectorXd Myforce = mContacts[i]->normal * _lambda[0] / mTimeStep;
+
+      Eigen::MatrixXd D = getTangentBasisMatrixODE(mContacts[i]->normal);
+      Myforce += D.col(0) * _lambda[1] / mTimeStep;
+      Myforce += D.col(1) * _lambda[2] / mTimeStep;
+
+      std::cout<<"[ODE LCP] normal impulsive force is "<<(mJacobians1[i]*_lambda[0]).transpose()<<std::endl; // <<(mJacobians2[i]*_lambda[0]).transpose()<<std::endl;
+      // std::cout<<std::boolalpha;
+      // std::cout<<"mBodyNode1 isReactive: "<<mBodyNode1->isReactive()<<" mBodyNode2 isReactive: "<<mBodyNode2->isReactive()<<std::endl;
+      // std::cout<<"[ODE LCP] tangential directional force is "<<(mJacobians1[1] * _lambda[1]).transpose()<<std::endl; // <<(mJacobians2[1] * _lambda[1]).transpose()<<std::endl;
+      // std::cout<<"[ODE LCP] tangential directional force is "<<(mJacobians1[2] * _lambda[2]).transpose()<<std::endl; // <<(mJacobians2[2] * _lambda[2]).transpose()<<std::endl;
+      std::cout<<"[ODE LCP] tangential directional force is "<<((mJacobians1[1] * _lambda[1]).transpose() + (mJacobians1[2] * _lambda[2]).transpose())<<std::endl; // <<(mJacobians2[1] * _lambda[1]).transpose()<<std::endl;
+      std::cout<<"[ODE LCP] overall force is "<<Myforce.transpose()<<std::endl;
+      // std::cout<<"[ODE LCP] overall first is "<<( mContacts[i]->normal * _lambda[0] / mTimeStep ).transpose()<<std::endl;
+      // std::cout<<"[ODE LCP] overall second 1 is "<<( D.col(0) * _lambda[1] / mTimeStep).transpose()<<std::endl;
+      // std::cout<<"[ODE LCP] overall second 2 is "<<( D.col(0) * _lambda[2] / mTimeStep).transpose()<<std::endl;
     }
   }
   //----------------------------------------------------------------------------
