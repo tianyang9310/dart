@@ -102,11 +102,14 @@ public:
   friend class ConstraintSolver;
   friend class ConstrainedGroup;
 
-protected:
+public:
   //----------------------------------------------------------------------------
   // Constraint virtual functions
   //----------------------------------------------------------------------------
 
+  // Here applyImpulse is necessary, getInformation, getVelocityChange, applyUnitImpulse
+  // are not since there are only used for gathering information for ODE LCP solver
+    
   // Documentation inherited
   virtual void update();
 

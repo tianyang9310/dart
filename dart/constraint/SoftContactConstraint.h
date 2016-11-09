@@ -107,14 +107,17 @@ public:
 
   friend class ConstraintSolver;
   friend class ConstrainedGroup;
+    
+  // Documentation inherited
+  virtual void update();
+  
+  // Documentation inherited
+  virtual bool isActive() const;
 
 protected:
   //----------------------------------------------------------------------------
   // Constraint virtual functions
   //----------------------------------------------------------------------------
-
-  // Documentation inherited
-  virtual void update();
 
   // Documentation inherited
   virtual void getInformation(ConstraintInfo* _info);
@@ -140,8 +143,7 @@ protected:
   // Documentation inherited
   virtual void uniteSkeletons();
 
-  // Documentation inherited
-  virtual bool isActive() const;
+
 
 private:
   /// Get change in relative velocity at contact point due to external impulse

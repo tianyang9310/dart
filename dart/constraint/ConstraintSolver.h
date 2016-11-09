@@ -128,7 +128,7 @@ public:
   
   LCPSolver* getLCPSolver();
 
-private:
+public:
   /// Check if the skeleton is contained in this solver
   bool containSkeleton(const dynamics::ConstSkeletonPtr& _skeleton) const;
 
@@ -142,7 +142,7 @@ private:
   bool checkAndAddConstraint(ConstraintBase* _constraint);
 
   /// Update constraints
-  void updateConstraints();
+  virtual void updateConstraints();
 
   /// Build constrained groupsContact
   void buildConstrainedGroups();

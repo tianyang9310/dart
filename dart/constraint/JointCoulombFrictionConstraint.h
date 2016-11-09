@@ -74,14 +74,18 @@ public:
 
   friend class ConstraintSolver;
   friend class ConstrainedGroup;
-
+    
+  // Documentation inherited
+  virtual void update();
+    
+  // Documentation inherited
+  virtual bool isActive() const;
+    
 protected:
   //----------------------------------------------------------------------------
   // Constraint virtual functions
   //----------------------------------------------------------------------------
 
-  // Documentation inherited
-  virtual void update();
 
   // Documentation inherited
   virtual void getInformation(ConstraintInfo* _lcp);
@@ -104,8 +108,6 @@ protected:
   // Documentation inherited
   virtual dynamics::SkeletonPtr getRootSkeleton() const;
 
-  // Documentation inherited
-  virtual bool isActive() const;
 
 private:
   ///

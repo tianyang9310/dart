@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include "dart/dart.h"
+#include "MyWorld.h"
 #include "MyWindow.h"
 #include "addSkeles.h"
 #include "MyDantzigLCPSolver.h"
@@ -12,7 +13,7 @@ int main(int argc, char* argv[])
 {
     std::srand((unsigned) (std::chrono::system_clock::now().time_since_epoch().count()));
     // create and initialize the world
-    dart::simulation::WorldPtr mWorld = std::make_shared<dart::simulation::World>();
+    std::shared_ptr<dart::simulation::MyWorld> mWorld = std::make_shared<dart::simulation::MyWorld>();
     assert(mWorld != nullptr);
     AddSkel(mWorld);
     
