@@ -8,6 +8,8 @@
 #include <fstream>
 
 #include "dart/dart.h"
+#include "MyContactConstraint.h"
+#include "utils.h"
 
 // #include "dart/constraint/LCPSolver.h"
 // #include "dart/constraint/DantzigLCPSolver.h"
@@ -20,13 +22,6 @@
 #include "../Lemke_Fix/MyLemke.h"
 // #include "dart/lcpsolver/lcp.h"
 
-#ifndef DART_CONTACT_CONSTRAINT_EPSILON
-#define DART_CONTACT_CONSTRAINT_EPSILON  1e-6
-#endif
-
-#ifndef DART_EPSILON
-#define DART_EPSILON (1.0E-6)
-#endif
 using namespace dart::constraint;
 
 class MyDantzigLCPSolver : public DantzigLCPSolver
@@ -40,6 +35,7 @@ public:
     void pushVelocities(dart::dynamics::SkeletonPtr mSkeletonPtr, const Eigen::VectorXd& mVelocities);
     
     std::map<dart::dynamics::SkeletonPtr,Eigen::VectorXd>& getSkeletonVelocitiesLock();
+
 protected:
     void print(size_t _n, double* _A, double* _x, double* _lo, double* _hi, double* _b, double* w, int* _findex);
     
@@ -48,8 +44,6 @@ protected:
     
     /// Return true if the diagonla block of matrix is symmetric
     bool isSymmetric(size_t _n, double* _A, size_t _begin, size_t _end);
-
-    Eigen::MatrixXd getTangentBasisMatrix(const Eigen::Vector3d& _n);
 
     int totalDOF;
 

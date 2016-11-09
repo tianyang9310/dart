@@ -150,6 +150,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     // Convention: bodyNode1 ==> cube, bodyNode2 ==> ground
     dart::dynamics::BodyNodePtr bodyNode1 = nullptr;
     dart::dynamics::BodyNodePtr bodyNode2 = nullptr;
+    int BodyNode1_dim = -1;
+    int BodyNode2_dim = -1;
     Eigen::MatrixXd M1;
     Eigen::MatrixXd M2;
     Eigen::VectorXd tau1;
@@ -165,6 +167,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
             std::cin.get();
         }
 
+        // Here check the convention and make sure that once bodyNode1 and bodyNode2 have been chosen,
+        // they will not be changed during the following iterations
         dart::collision::Contact* ct = cntctconstraint->mContacts[0];
         if (bodyNode1 == nullptr)
         {
@@ -198,6 +202,26 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         J2 = cntctconstraint->mBodyNode2->getLinearJacobian(bodyPoint2);
         assert(J1.rows()==J2.rows());
 
+        // Determine DOF belongs to each body node, again here we are going to assume the convention
+        if (BodyNode1_dim == -1)
+        {
+            BodyNode1_dim = J1.cols();
+        }
+        else if (BodyNode1_dim != J1.cols())
+        {
+            dterr<<"ERROR: violating convention that bodyNode1 always is cube"<<std::endl;
+            std::cin.get();
+        }
+        if (BodyNode2_dim == -1)
+        {
+            BodyNode2_dim = J2.cols(); 
+        }
+        else if (BodyNode2_dim != J2.cols())
+        {
+            dterr<<"ERROR: violating convention that bodyNode2 always is ground"<<std::endl;
+            std::cin.get();
+        }
+
         Eigen::Vector3d normDirection;
         normDirection = ct->normal;
         // std::cout<<"normal direction is "<<normDirection.transpose()<<std::endl;
@@ -205,7 +229,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         N.col(idx_cnstrnt) << J1.transpose()*normDirection,-J2.transpose()*normDirection;
 
         // B matrix
-        Eigen::MatrixXd D = getTangentBasisMatrix(normDirection);
+        Eigen::MatrixXd D = getTangentBasisMatrixLemke(normDirection, numBasis);
         B.block(0,idx_cnstrnt*numBasis,totalDOF,numBasis) << J1.transpose()*D, -J2.transpose()*D;
 
         // friction coeff
@@ -244,7 +268,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         std::cin.get();
     }
 
-    double _TimeStep = mTimeStep; // 1.0;
+    double _TimeStep = 1.0; //mTimeStep;
     // using ldlt().solve() since mass matrix is positive definite
     Eigen::MatrixXd Lemke_A(Eigen::MatrixXd::Zero(numConstraints*(2+numBasis),numConstraints*(2+numBasis)));
     Lemke_A.block(0,0,numConstraints,numConstraints) = _TimeStep*N.transpose()*M.ldlt().solve(N);
@@ -302,6 +326,28 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     }
     std::cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<std::endl;
 #endif
+
+    // Apply constraint impulses
+    
+    // justify the (*z)
+    assert(!(Eigen::isnan((*z).array()).any()));
+
+    MyContactConstraint* Mycntctconstraint; 
+    // (*z); N; B
+    Eigen::VectorXd fn((*z).head(numConstraints));
+    Eigen::VectorXd fd((*z).segment(numConstraints,numConstraints*numBasis));
+    // Eigen::VectorXd lambda((*z).tail(numConstraints));
+    for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt)
+    {
+        double fn_each = fn(idx_cnstrnt);
+        Eigen::VectorXd fd_each = fd.segment(idx_cnstrnt*numBasis,(idx_cnstrnt+1)*numBasis);
+        Eigen::VectorXd N_each = N.col(idx_cnstrnt);
+        Eigen::MatrixXd B_each = B.block(idx_cnstrnt*numBasis,0,(BodyNode1_dim+BodyNode2_dim),numBasis);
+
+        Mycntctconstraint = dynamic_cast<MyContactConstraint*>(_group->getConstraint(idx_cnstrnt));
+        Mycntctconstraint->MyapplyImpulse(fn_each,fd_each,N_each,B_each,BodyNode1_dim,BodyNode2_dim);
+        Mycntctconstraint->excite();
+    }
 // */
 
 /*
@@ -368,13 +414,13 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     std::cout << std::endl;
 #endif
     
-    // Apply constraint impulses
-    for (size_t i = 0; i < numConstraints; ++i)
-    {
-        constraint = _group->getConstraint(i);
-        constraint->applyImpulse(x + offset[i]);
-        constraint->excite();
-    }
+//    // Apply constraint impulses
+//    for (size_t i = 0; i < numConstraints; ++i)
+//    {
+//        constraint = _group->getConstraint(i);
+//        constraint->applyImpulse(x + offset[i]);
+//        constraint->excite();
+//    }
 
     // std::cin.get();
     
@@ -537,44 +583,6 @@ bool MyDantzigLCPSolver::isSymmetric(size_t _n, double* _A,
     
     return true;
 }
-
-Eigen::MatrixXd MyDantzigLCPSolver::getTangentBasisMatrix(
-    const Eigen::Vector3d& _n)
-{
-    // TODO(JS): Use mNumFrictionConeBases
-    // Check if the number of bases is even number.
-    //  bool isEvenNumBases = mNumFrictionConeBases % 2 ? true : false;
-
-    Eigen::MatrixXd T(Eigen::MatrixXd::Zero(3, numBasis));
-
-    // Pick an arbitrary vector to take the cross product of (in this case,
-    // Z-axis)
-    Eigen::Vector3d tangent = Eigen::Vector3d::UnitZ().cross(_n);
-
-    // TODO(JS): Modify following lines once _updateFirstFrictionalDirection() is
-    //           implemented.
-    // If they're too close, pick another tangent (use X-axis as arbitrary vector)
-    if (tangent.norm() < DART_CONTACT_CONSTRAINT_EPSILON)
-    tangent = Eigen::Vector3d::UnitX().cross(_n);
-
-    tangent.normalize();
-
-    // Rotate the tangent around the normal to compute bases.
-    // Note: a possible speedup is in place for mNumDir % 2 = 0
-    // Each basis and its opposite belong in the matrix, so we iterate half as
-    // many times
-    T.col(0) = tangent;
-    for (size_t idx_basis = 1; idx_basis<numBasis; idx_basis++)
-    {
-        T.col(idx_basis) = Eigen::Quaterniond(Eigen::AngleAxisd(DART_PI_HALF/2, _n)) * T.col(idx_basis-1);
-        if (T.col(idx_basis).dot(_n) > DART_EPSILON)
-        {
-            dterr<<"Error in constructing basis matrix"<<std::endl; 
-        }
-    }
-    return T;
-}
-
 
 void MyDantzigLCPSolver::pushVelocities(dart::dynamics::SkeletonPtr mSkeletonPtr, const Eigen::VectorXd& mVelocities)
 {
