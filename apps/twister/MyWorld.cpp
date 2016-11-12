@@ -13,22 +13,28 @@ MyWorld::MyWorld() {
   
   // Initialize Jacobian assuming that there is only one constraint
   mJ = MatrixXd::Zero(3, mSkel->getNumDofs());
-  mConstrainedMarker = -1;
+  // mConstrainedMarker = -1;
 }
 
 MyWorld::~MyWorld() {
 }
 
 void MyWorld::solve() {
-  if (mConstrainedMarker == -1)
-    return; 
+    if (mMarkerTargetBundle.empty()){
+        return;
+    } 
+//  if (mConstrainedMarker == -1)
+//    return; 
   int numIter = 300;
   double alpha = 0.01;
   int nDof = mSkel->getNumDofs();
   VectorXd gradients(nDof);
   VectorXd newPose(nDof);
   for (int i = 0; i < numIter; i++) {
-    gradients = updateGradients();
+    gradients.setZero();
+    for (int cnstridx = 0 ; cnstridx < mMarkerTargetBundle.size(); cnstridx++){
+        gradients += updateGradients(mMarkerTargetBundle[cnstridx]);
+    }
     newPose = mSkel->getPositions() - alpha * gradients;
     mSkel->setPositions(newPose); 
     mSkel->computeForwardKinematics(true, false, false); // DART updates all the transformations based on newPose
@@ -37,7 +43,49 @@ void MyWorld::solve() {
 }
 
 // Current code only works for the left leg with only one constraint
-VectorXd MyWorld::updateGradients() {
+VectorXd MyWorld::updateGradients(std::pair<int,Eigen::VectorXd> _MarkerTarget) {
+    int markeridx = _MarkerTarget.first;
+    Vector3d markertarget = _MarkerTarget.second;
+    // compute constraint
+    mC = getMarker(markeridx)->getWorldPosition() - markertarget;
+
+    // compute jacobian
+    mJ.setZero();
+    Vector4d offset;
+    offset << getMarker(markeridx)->getLocalPosition(), 1;
+    BodyNode *node = getMarker(markeridx)->getBodyNode();
+    while (node->getParentBodyNode() != nullptr){
+        Joint *joint = node->getParentJoint();
+        Matrix4d world2Parent = node->getParentBodyNode()->getTransform().matrix();
+        Matrix4d parent2Joint = joint->getTransformFromParentBodyNode().matrix();
+        std::vector<Matrix4d> jointDofBundle(joint->getNumDofs());
+        Matrix4d joint2Child = joint->getTransformFromChildBodyNode().inverse().matrix();
+        for (int d_dofidx = 0; d_dofidx < joint->getNumDofs(); d_dofidx++){
+            jointDofBundle[d_dofidx] = joint->getTransformDerivative(d_dofidx);
+            for (int dofidx = 0; dofidx < joint->getNumDofs(); dofidx++){
+                if (dofidx == d_dofidx){
+                    continue;
+                }
+                jointDofBundle[dofidx] = joint->getTransform(dofidx).matrix();
+            }
+            MatrixXd jColBeforeHand = world2Parent * parent2Joint;
+            for (int dofidx = 0; dofidx < joint->getNumDofs(); dofidx++){
+                jColBeforeHand = jColBeforeHand * jointDofBundle[dofidx];
+            }
+            VectorXd jCol = jColBeforeHand * joint2Child * offset;
+            int colIndex = joint->getIndexInSkeleton(d_dofidx);
+            mJ.col(colIndex) = jCol.head(3);
+        }
+        offset = joint2Child * offset;
+        for (int dofidx = joint->getNumDofs()-1; dofidx >= 0; dofidx--){
+            offset = joint->getTransform(dofidx).matrix() * offset; 
+        }
+        offset = parent2Joint * offset;
+        node = node->getParentBodyNode();
+    }
+    VectorXd gradients = 2 * mJ.transpose() * mC;
+    return gradients;
+/*
   // compute c(q)
   mC = getMarker(mConstrainedMarker)->getWorldPosition() - mTarget;
 
@@ -104,25 +152,40 @@ VectorXd MyWorld::updateGradients() {
   // compute gradients
   VectorXd gradients = 2 * mJ.transpose() * mC;
   return gradients;
+*/
 }
 
 // Current code only handlse one constraint on the left foot.
 void MyWorld::createConstraint(int _index) {
-  if (_index == 0) {
-    mTarget = getMarker(_index)->getWorldPosition();
-    mConstrainedMarker = _index;
-  } else {
-    mConstrainedMarker = -1;
-  }
+    Vector3d target = getMarker(_index)->getWorldPosition();
+    mMarkerTargetBundle.push_back(std::make_pair(_index,target));
+//  if (_index == 0) {
+//    mTarget = getMarker(_index)->getWorldPosition();
+//    mConstrainedMarker = _index;
+//  } else {
+//    mConstrainedMarker = -1;
+//  }
 }
 
-void MyWorld::modifyConstraint(Vector3d _deltaP) {
-  if (mConstrainedMarker == 0)
-    mTarget += _deltaP;
+void MyWorld::modifyConstraint(int _index, Vector3d _deltaP) {
+    for (auto it = mMarkerTargetBundle.begin(); it < mMarkerTargetBundle.end(); it++){
+        if ((*it).first == _index){
+            (*it).second += _deltaP;
+            break;
+        }
+    }
+//  if (mConstrainedMarker == 0)
+//    mTarget += _deltaP;
 }
 
 void MyWorld::removeConstraint(int _index) {
-  mConstrainedMarker = -1;
+    for (auto it = mMarkerTargetBundle.begin(); it < mMarkerTargetBundle.end(); it++){
+        if ((*it).first == _index){
+            mMarkerTargetBundle.erase(it);
+            break;
+        }
+    }
+// mConstrainedMarker = -1;
 }
 
 Marker* MyWorld::getMarker(int _index) {

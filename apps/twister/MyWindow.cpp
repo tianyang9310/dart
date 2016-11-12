@@ -79,7 +79,7 @@ void MyWindow::drag(int _x, int _y) {
     mMouseY = _y;
     if (mActiveMarker != -1) {
         Vector3d deltaP = reverseProjection(deltaX, deltaY);
-        mWorld->modifyConstraint(deltaP);
+        mWorld->modifyConstraint(mActiveMarker, deltaP);
     }
 
     if (mRotate) {
