@@ -136,9 +136,14 @@ void MyWorld::solve() {
 
 void MyWorld::computeJacobian(Eigen::Vector4d offset, BodyNode* node, Eigen::MatrixXd& mJ){
     mJ = MatrixXd::Zero(3, mSkel->getNumDofs());
-    while (node->getParentBodyNode() != nullptr){
+    while (node != nullptr){
         Joint *joint = node->getParentJoint();
-        Matrix4d world2Parent = node->getParentBodyNode()->getTransform().matrix();
+        Matrix4d world2Parent;
+        if (node->getParentBodyNode()){
+            world2Parent = node->getParentBodyNode()->getTransform().matrix();
+        } else { // ParentBodyNode == nullptr
+            world2Parent = Eigen::Isometry3d::Identity().matrix();
+        }
         Matrix4d parent2Joint = joint->getTransformFromParentBodyNode().matrix();
         std::vector<Matrix4d> jointDofBundle(joint->getNumDofs());
         Matrix4d joint2Child = joint->getTransformFromChildBodyNode().inverse().matrix();
@@ -159,12 +164,15 @@ void MyWorld::computeJacobian(Eigen::Vector4d offset, BodyNode* node, Eigen::Mat
             mJ.col(colIndex) = jCol.head(3);
         }
 
-        offset = node->getTransform(node->getParentBodyNode()).matrix() * offset;
-        // offset = joint2Child * offset;
-        // for (int dofidx = joint->getNumDofs()-1; dofidx >= 0; dofidx--){
-        //     offset = joint->getTransform(dofidx).matrix() * offset; 
-        // }
-        // offset = parent2Joint * offset;
+        if (node->getParentBodyNode()) {
+            offset = node->getTransform(node->getParentBodyNode()).matrix() * offset;
+        } else {
+            offset = joint2Child * offset;
+            for (int dofidx = joint->getNumDofs()-1; dofidx >= 0; dofidx--){
+                offset = joint->getTransform(dofidx).matrix() * offset; 
+            }
+            offset = parent2Joint * offset;
+        }
         
         node = node->getParentBodyNode();
     }
