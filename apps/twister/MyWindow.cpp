@@ -49,6 +49,9 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y)
         case 'r':
             mWorld->reset();
         break;
+        case 'o':
+            mWorld->setObjective(!mWorld->getObjective());
+        break;
     default:
         Win3D::keyboard(_key, _x, _y);
     }

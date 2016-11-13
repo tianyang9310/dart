@@ -17,9 +17,23 @@ MyWorld::MyWorld() {
   leftRight = false;
   initPos = mSkel->getPositions();
   initVel = mSkel->getVelocities();
+  objective = false;
 }
 
 MyWorld::~MyWorld() {
+}
+
+bool MyWorld::getObjective(){
+    return objective;
+}
+
+void MyWorld::setObjective(bool _objective){
+    objective = _objective;
+    if (objective) {
+        dtmsg<<"[Add] Objective."<<std::endl;
+    } else {
+        dtmsg<<"[Remove] Objective."<<std::endl;
+    }
 }
 
 bool MyWorld::getLeftRight(){
@@ -56,7 +70,7 @@ void MyWorld::reset(){
 }
 
 void MyWorld::solve() {
-    if (mMarkerTargetBundle.empty() && !leftRight){
+    if (mMarkerTargetBundle.empty() && !leftRight && !objective){
         return;
     } 
 //  if (mConstrainedMarker == -1)
@@ -73,6 +87,9 @@ void MyWorld::solve() {
     }
     if (leftRight) {
         gradients += updateGradientsLeftRightHand();
+    }
+    if (objective) {
+        gradients += updateGradientsObjective();
     }
     newPose = mSkel->getPositions() - alpha * gradients;
     mSkel->setPositions(newPose); 
@@ -141,6 +158,12 @@ VectorXd MyWorld::updateGradientsLeftRightHand(){
     MatrixXd mJ = left_mJ - right_mJ;
     double wi = 10.0; // this weight can stress constraint on left and right hand.
     VectorXd gradients = 2 * wi * mJ.transpose() * mC;
+    return gradients;
+}
+
+VectorXd MyWorld::updateGradientsObjective(){
+    double wi = 1.0;
+    VectorXd gradients = 2 * wi * (mSkel->getPositions() - initPos);
     return gradients;
 }
 

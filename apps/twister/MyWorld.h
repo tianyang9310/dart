@@ -24,10 +24,13 @@ class MyWorld {
     bool getLeftRight();
     void setLeftRight(bool _leftRight);
     void reset();
+    bool getObjective();
+    void setObjective(bool _objective);
 
  protected:
     Eigen::VectorXd updateGradients(std::pair<int,Eigen::VectorXd> _MarkerTarget);
     Eigen::VectorXd updateGradientsLeftRightHand();
+    Eigen::VectorXd updateGradientsObjective();
     void createMarkers();
 
     dart::dynamics::SkeletonPtr mSkel;
@@ -38,6 +41,7 @@ class MyWorld {
     // int mConstrainedMarker; // The index of the constrained marker
     std::vector<std::pair<int,Eigen::Vector3d>> mMarkerTargetBundle;
     bool leftRight;
+    bool objective;
     Eigen::VectorXd initPos;
     Eigen::VectorXd initVel;
 };
