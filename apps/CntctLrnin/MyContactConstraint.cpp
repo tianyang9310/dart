@@ -6,6 +6,8 @@
 #include "dart/dynamics/BodyNode.h"
 #include "dart/dynamics/Skeleton.h"
 
+//#define OUTPUT
+
 namespace dart{
 namespace constraint{
 
@@ -19,12 +21,9 @@ MyContactConstraint::~MyContactConstraint()
 
 }
 
-void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd & fd, const Eigen::VectorXd &  N, const Eigen::MatrixXd & B, int BodyNode1_dim, int BodyNode2_dim)
+// my own apply impulse method for using Lemke result to simulate
+void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd & fd, const Eigen::VectorXd &  N, const Eigen::MatrixXd & B, int BodyNode1_dim, int BodyNode2_dim, bool impulse_flag)
 {
-  std::cout<<"============================================"<<std::endl;
-  std::cout<< "[Lemke LCP]Using MyContactConstraint class! "<<std::endl;
-  // std::cin.get();
-
     if (mIsFrictionOn)
     {
         for (size_t i = 0; i < mContacts.size(); ++i)
@@ -33,18 +32,13 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd & fd, 
             Eigen::VectorXd normal_impulsive_force;
             Eigen::VectorXd tangential_directional_force;
 
-            normal_impulsive_force = N*fn;
-            tangential_directional_force = B*fd;
+            normal_impulsive_force = N*fn * (impulse_flag ? 1 : mTimeStep);
+            tangential_directional_force = B*fd * (impulse_flag ? 1 : mTimeStep);
 
             Eigen::MatrixXd D = getTangentBasisMatrixLemke(mContacts[i]->normal,numBasis);
-            mContacts[i]->force = mContacts[i]->normal * fn / mTimeStep;
-            mContacts[i]->force += D * fd / mTimeStep;
+            mContacts[i]->force = mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
+            mContacts[i]->force += D * fd / (impulse_flag ? mTimeStep : 1);
 
-            std::cout<<"[Lemke LCP] normal impulsive force is "<<normal_impulsive_force.transpose()<<std::endl;
-            std::cout<<"[Lemke LCP] tangential directional force is "<<tangential_directional_force.transpose()<<std::endl;
-            std::cout<<"[Lemke LCP] overall force is "<<mContacts[i]->force.transpose()<<std::endl;
-            // std::cout<<"[Lemke LCP] first force is "<<(mContacts[i]->normal * fn / mTimeStep).transpose()<<std::endl;
-            // std::cout<<"[Lemke LCP] second force is "<<( D * fd / mTimeStep ).transpose()<<std::endl;
             if (mBodyNode1->isReactive())
             {
                 mBodyNode1->addConstraintImpulse(normal_impulsive_force.head(BodyNode1_dim));
@@ -64,7 +58,6 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd & fd, 
         {
             Eigen::VectorXd normal_impulsive_force;
             normal_impulsive_force = N*fn;
-            // std::cout<<"[Lemke LCP] normal impulsive force is "<<std::endl<<normal_impulsive_force.transpose()<<std::endl;
             if (mBodyNode1->isReactive())
             {
                 mBodyNode1->addConstraintImpulse(normal_impulsive_force.head(BodyNode1_dim));
@@ -80,10 +73,52 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd & fd, 
     }
 }
 
-void MyContactConstraint::applyImpulse(double* _lambda)
+void MyContactConstraint::My2LemkeapplyImpulse(double fn, const Eigen::VectorXd & fd, const Eigen::VectorXd &  N, const Eigen::MatrixXd & B, int BodyNode1_dim, int BodyNode2_dim, bool impulse_flag)
 {
+#ifndef OUTPUT
+    return;
+#endif
+
   std::cout<<"============================================"<<std::endl;
-  std::cout<< "[ODE LCP]Using MyContactConstraint class! "<<std::endl;
+  std::cout<< "[Lemke LCP] Using MyContactConstraint class! "<<std::endl;
+  // std::cin.get();
+
+    if (mIsFrictionOn)
+    {
+        for (size_t i = 0; i < mContacts.size(); ++i)
+        {
+            // normal impulsive force and tangential direction impulsive force
+            Eigen::VectorXd normal_impulsive_force;
+            Eigen::VectorXd tangential_directional_force;
+
+            normal_impulsive_force = N*fn * (impulse_flag ? 1 : mTimeStep);
+            tangential_directional_force = B*fd * (impulse_flag ? 1 : mTimeStep);
+
+            Eigen::MatrixXd D = getTangentBasisMatrixLemke(mContacts[i]->normal,numBasis);
+            Eigen::Vector3d Myforce;
+            Myforce = mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
+            Myforce += D * fd / (impulse_flag ? mTimeStep : 1);
+
+            std::cout<<"[Lemke LCP] normal impulsive force is "<<normal_impulsive_force.transpose()<<std::endl;
+            std::cout<<"[Lemke LCP] tangential directional force is "<<tangential_directional_force.transpose()<<std::endl;
+            std::cout<<"[Lemke LCP] overall force is "<<Myforce.transpose()<<std::endl;
+            // std::cout<<"[Lemke LCP] first force is "<<(mContacts[i]->normal * fn / mTimeStep).transpose()<<std::endl;
+            // std::cout<<"[Lemke LCP] second force is "<<( D * fd / mTimeStep ).transpose()<<std::endl;
+        }
+    }
+    else
+    {
+        dterr<<"No implementation for frictionless case!"<<std::endl;
+    }
+}
+
+void MyContactConstraint::My2ODEapplyImpulse(double* _lambda)
+{
+#ifndef OUTPUT
+    return;
+#endif
+  std::cout<<"============================================"<<std::endl;
+  std::cout<< "[ODE LCP] Using MyContactConstraint class! "<<std::endl;
   // std::cin.get();
 
   //----------------------------------------------------------------------------
@@ -95,59 +130,6 @@ void MyContactConstraint::applyImpulse(double* _lambda)
 
     for (size_t i = 0; i < mContacts.size(); ++i)
     {
-/*
-//      std::cout << "_lambda1: " << _lambda[_idx] << std::endl;
-//      std::cout << "_lambda2: " << _lambda[_idx + 1] << std::endl;
-//      std::cout << "_lambda3: " << _lambda[_idx + 2] << std::endl;
-
-//      std::cout << "imp1: " << mJacobians2[i * 3 + 0] * _lambda[_idx] << std::endl;
-//      std::cout << "imp2: " << mJacobians2[i * 3 + 1] * _lambda[_idx + 1] << std::endl;
-//      std::cout << "imp3: " << mJacobians2[i * 3 + 2] * _lambda[_idx + 2] << std::endl;
-
-      assert(!math::isNan(_lambda[index]));
-
-      // Store contact impulse (force) toward the normal w.r.t. world frame
-      mContacts[i]->force = mContacts[i]->normal * _lambda[index] / mTimeStep;
-
-      // Normal impulsive force
-//      mContacts[i]->lambda[0] = _lambda[_idx];
-      if (mBodyNode1->isReactive())
-        mBodyNode1->addConstraintImpulse(mJacobians1[index] * _lambda[index]);
-      if (mBodyNode2->isReactive())
-        mBodyNode2->addConstraintImpulse(mJacobians2[index] * _lambda[index]);
-//      std::cout << "_lambda: " << _lambda[_idx] << std::endl;
-      index++;
-
-      assert(!math::isNan(_lambda[index]));
-
-      // Add contact impulse (force) toward the tangential w.r.t. world frame
-      Eigen::MatrixXd D = getTangentBasisMatrixODE(mContacts[i]->normal);
-      mContacts[i]->force += D.col(0) * _lambda[index] / mTimeStep;
-
-      // Tangential direction-1 impulsive force
-//      mContacts[i]->lambda[1] = _lambda[_idx];
-      if (mBodyNode1->isReactive())
-        mBodyNode1->addConstraintImpulse(mJacobians1[index] * _lambda[index]);
-      if (mBodyNode2->isReactive())
-        mBodyNode2->addConstraintImpulse(mJacobians2[index] * _lambda[index]);
-//      std::cout << "_lambda: " << _lambda[_idx] << std::endl;
-      index++;
-
-      assert(!math::isNan(_lambda[index]));
-
-      // Add contact impulse (force) toward the tangential w.r.t. world frame
-      mContacts[i]->force += D.col(1) * _lambda[index] / mTimeStep;
-
-      // Tangential direction-2 impulsive force
-//      mContacts[i]->lambda[2] = _lambda[_idx];
-      if (mBodyNode1->isReactive())
-        mBodyNode1->addConstraintImpulse(mJacobians1[index] * _lambda[index]);
-      if (mBodyNode2->isReactive())
-        mBodyNode2->addConstraintImpulse(mJacobians2[index] * _lambda[index]);
-//      std::cout << "_lambda: " << _lambda[_idx] << std::endl;
-      index++;
-*/
-
       Eigen::VectorXd Myforce = mContacts[i]->normal * _lambda[0] / mTimeStep;
 
       Eigen::MatrixXd D = getTangentBasisMatrixODE(mContacts[i]->normal);
@@ -171,23 +153,7 @@ void MyContactConstraint::applyImpulse(double* _lambda)
   //----------------------------------------------------------------------------
   else
   {
-    for (size_t i = 0; i < mContacts.size(); ++i)
-    {
-      // Normal impulsive force
-//			pContactPts[i]->lambda[0] = _lambda[i];
-      if (mBodyNode1->isReactive())
-        mBodyNode1->addConstraintImpulse(mJacobians1[i] * _lambda[i]);
-
-      if (mBodyNode2->isReactive())
-        mBodyNode2->addConstraintImpulse(mJacobians2[i] * _lambda[i]);
-
-      // Store contact impulse (force) toward the normal w.r.t. world frame
-      mContacts[i]->force = mContacts[i]->normal * _lambda[i] / mTimeStep;
-
-      // std::cout<<"[ODE LCP] normal impulsive force is "<<std::endl<<(mJacobians1[i]*_lambda[i]).transpose()<<std::endl<<(mJacobians2[i]*_lambda[i]).transpose()<<std::endl;
-      // std::cout<<std::boolalpha;
-      // std::cout<<"mBodyNode1 isReactive: "<<mBodyNode1->isReactive()<<" mBodyNode2 isReactive: "<<mBodyNode2->isReactive()<<std::endl;
-    }
+        dterr<<"No implementation for frictionless case!"<<std::endl;
   }
 }
 

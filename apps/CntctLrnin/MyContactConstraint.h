@@ -20,8 +20,9 @@ public:
     virtual ~MyContactConstraint();
 
     // Here applyImpulse is not a virtual function but a function overload
-    void MyapplyImpulse(double fn, const Eigen::VectorXd & fd, const Eigen::VectorXd &  N, const Eigen::MatrixXd & B, int BodyNode1_dim, int BodyNode2_dim);
-    virtual void applyImpulse(double* _lambda);
+    void MyapplyImpulse(double fn, const Eigen::VectorXd & fd, const Eigen::VectorXd &  N, const Eigen::MatrixXd & B, int BodyNode1_dim, int BodyNode2_dim, bool impulse_flag);
+    void My2LemkeapplyImpulse(double fn, const Eigen::VectorXd & fd, const Eigen::VectorXd &  N, const Eigen::MatrixXd & B, int BodyNode1_dim, int BodyNode2_dim, bool impulse_flag);
+    void My2ODEapplyImpulse(double* _lambda);
     int numBasis;
 
 };

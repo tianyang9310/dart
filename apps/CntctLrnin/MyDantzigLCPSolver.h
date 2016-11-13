@@ -23,11 +23,12 @@
 // #include "dart/lcpsolver/lcp.h"
 
 using namespace dart::constraint;
+class MyWindow;
 
 class MyDantzigLCPSolver : public DantzigLCPSolver
 {
 public:
-    MyDantzigLCPSolver(double _timestep,int _totalDOF);
+    MyDantzigLCPSolver(double _timestep,int _totalDOF,MyWindow* mWindow);
     virtual ~MyDantzigLCPSolver();
     
     void solve(ConstrainedGroup* _group) override;
@@ -58,6 +59,8 @@ protected:
     std::vector<std::shared_ptr<std::fstream>> outputFiles;
     
     std::vector<int> counters;
+
+    MyWindow* mWindow;
 };
 
 

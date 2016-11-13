@@ -35,34 +35,27 @@ void MyWindow::timeStepping()
         || (std::abs(mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->getTransform().translation()(2)) > range))  // z direction
     {
         dterr<<"ERROR: runnng out of range, need regularization!!!"<<std::endl;
-        Eigen::Vector3d init_pos(0.0, 1.0, 0.0);
-        Eigen::Quaterniond init_ori_Quat;  // arbitrary initial orientation
-        init_ori_Quat.w() = 1.0;
-        init_ori_Quat.vec() = Eigen::Vector3d::Random();
-        init_ori_Quat.normalize();
-        Eigen::Matrix3d init_ori = init_ori_Quat.toRotationMatrix();
 
-        Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
-        tf.translation() = init_pos;
-        tf.linear() = init_ori;
         mWorld->getSkeleton("mBox")->setPositions(Eigen::VectorXd::Zero(6));
         mWorld->getSkeleton("mBox")->setVelocities(Eigen::VectorXd::Zero(6));
     }
 
     counter = (counter + 1) % 200;
 
-    if (counter == 50)
-    {
-        addExtForce();
-    }
-    else if (counter == 150)
-    {
-        addExtTorque();
-    }
+//    addExtForce();
+//    if (counter == 50)
+//    {
+//          addExtForce();
+//    }
+//    else if (counter == 150)
+//    {
+//        // addExtTorque();
+//    }
 }
 
 void MyWindow::addExtForce()
 {
+    dtmsg<<"Add external force"<<std::endl;
     // mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtTorque(Eigen::Vector3d::Random()*100);
     
     Eigen::Vector3d extForce = Eigen::Vector3d::Random() * 5e2;
@@ -73,6 +66,7 @@ void MyWindow::addExtForce()
 
 void MyWindow::addExtTorque()
 {
+    dtmsg<<"Add external torque"<<std::endl;
     mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtTorque(Eigen::Vector3d::Random()*100);
 }
 
@@ -80,6 +74,9 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y)
 {
     switch (_key)
     {
+        case 'y':
+            mSimulating = !mSimulating;
+            break;
         case 'a':
             addExtForce();
             break;
