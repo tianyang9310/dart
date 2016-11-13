@@ -12,15 +12,51 @@ MyWorld::MyWorld() {
   createMarkers();
   
   // Initialize Jacobian assuming that there is only one constraint
-  mJ = MatrixXd::Zero(3, mSkel->getNumDofs());
+  // mJ = MatrixXd::Zero(3, mSkel->getNumDofs());
   // mConstrainedMarker = -1;
+  leftRight = false;
+  initPos = mSkel->getPositions();
+  initVel = mSkel->getVelocities();
 }
 
 MyWorld::~MyWorld() {
 }
 
+bool MyWorld::getLeftRight(){
+    return leftRight;
+}
+void MyWorld::setLeftRight(bool _leftRight){
+    leftRight = _leftRight;
+    if (leftRight) {
+        dtmsg<<"[Add] Left and right constraint."<<std::endl;
+        Marker* leftMarker = mSkel->getMarker("left_hand");
+        Marker* rightMarker = mSkel->getMarker("right_hand");
+        bool found = false;
+        for (auto it = mMarkerTargetBundle.begin(); it < mMarkerTargetBundle.end(); it++){
+            if (mMarkers[(*it).first] == leftMarker){
+                found = true;
+                break;
+            } else if (mMarkers[(*it).first] == rightMarker){
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            dtwarn<<"Current constraint group contains left hand or right hand. Thus the two hands may not exactly overlap."<<std::endl;
+        }
+    } else {
+        dtmsg<<"[Remove] Left and right hand constraint."<<std::endl;
+    }
+}
+void MyWorld::reset(){
+    mSkel->setPositions(initPos);
+    mSkel->setVelocities(initVel);
+    leftRight = false;
+    mMarkerTargetBundle.clear();
+}
+
 void MyWorld::solve() {
-    if (mMarkerTargetBundle.empty()){
+    if (mMarkerTargetBundle.empty() && !leftRight){
         return;
     } 
 //  if (mConstrainedMarker == -1)
@@ -35,6 +71,9 @@ void MyWorld::solve() {
     for (int cnstridx = 0 ; cnstridx < mMarkerTargetBundle.size(); cnstridx++){
         gradients += updateGradients(mMarkerTargetBundle[cnstridx]);
     }
+    if (leftRight) {
+        gradients += updateGradientsLeftRightHand();
+    }
     newPose = mSkel->getPositions() - alpha * gradients;
     mSkel->setPositions(newPose); 
     mSkel->computeForwardKinematics(true, false, false); // DART updates all the transformations based on newPose
@@ -42,18 +81,8 @@ void MyWorld::solve() {
   
 }
 
-// Current code only works for the left leg with only one constraint
-VectorXd MyWorld::updateGradients(std::pair<int,Eigen::VectorXd> _MarkerTarget) {
-    int markeridx = _MarkerTarget.first;
-    Vector3d markertarget = _MarkerTarget.second;
-    // compute constraint
-    mC = getMarker(markeridx)->getWorldPosition() - markertarget;
-
-    // compute jacobian
-    mJ.setZero();
-    Vector4d offset;
-    offset << getMarker(markeridx)->getLocalPosition(), 1;
-    BodyNode *node = getMarker(markeridx)->getBodyNode();
+void MyWorld::computeJacobian(Eigen::Vector4d offset, BodyNode* node, Eigen::MatrixXd& mJ){
+    mJ = MatrixXd::Zero(3, mSkel->getNumDofs());
     while (node->getParentBodyNode() != nullptr){
         Joint *joint = node->getParentJoint();
         Matrix4d world2Parent = node->getParentBodyNode()->getTransform().matrix();
@@ -76,13 +105,60 @@ VectorXd MyWorld::updateGradients(std::pair<int,Eigen::VectorXd> _MarkerTarget) 
             int colIndex = joint->getIndexInSkeleton(d_dofidx);
             mJ.col(colIndex) = jCol.head(3);
         }
-        offset = joint2Child * offset;
-        for (int dofidx = joint->getNumDofs()-1; dofidx >= 0; dofidx--){
-            offset = joint->getTransform(dofidx).matrix() * offset; 
-        }
-        offset = parent2Joint * offset;
+
+        offset = node->getTransform(node->getParentBodyNode()).matrix() * offset;
+        // offset = joint2Child * offset;
+        // for (int dofidx = joint->getNumDofs()-1; dofidx >= 0; dofidx--){
+        //     offset = joint->getTransform(dofidx).matrix() * offset; 
+        // }
+        // offset = parent2Joint * offset;
+        
         node = node->getParentBodyNode();
     }
+}
+
+VectorXd MyWorld::updateGradientsLeftRightHand(){
+    Marker* leftMarker = mSkel->getMarker("left_hand");
+    Marker* rightMarker = mSkel->getMarker("right_hand");
+    BodyNode* leftBodyNode = mSkel->getBodyNode("h_hand_left");
+    BodyNode* rightBodyNode = mSkel->getBodyNode("h_hand_right");
+
+    // compute constraint
+    Vector3d mC;
+    mC = leftMarker->getWorldPosition() - rightMarker->getWorldPosition();
+
+    // compute jacobian
+    MatrixXd left_mJ;
+    Vector4d left_offset;
+    left_offset << leftMarker->getLocalPosition(), 1;
+    computeJacobian(left_offset, leftBodyNode, left_mJ);
+
+    MatrixXd right_mJ;
+    Vector4d right_offset;
+    right_offset << rightMarker->getLocalPosition(), 1;
+    computeJacobian(right_offset, rightBodyNode, right_mJ);
+
+    MatrixXd mJ = left_mJ - right_mJ;
+    double wi = 10.0; // this weight can stress constraint on left and right hand.
+    VectorXd gradients = 2 * wi * mJ.transpose() * mC;
+    return gradients;
+}
+
+// Current code only works for the left leg with only one constraint
+VectorXd MyWorld::updateGradients(std::pair<int,Eigen::VectorXd> _MarkerTarget) {
+    int markeridx = _MarkerTarget.first;
+    Vector3d markertarget = _MarkerTarget.second;
+    // compute constraint
+    Vector3d mC;
+    mC = getMarker(markeridx)->getWorldPosition() - markertarget;
+
+    // compute jacobian
+    MatrixXd mJ;
+    Vector4d offset;
+    offset << getMarker(markeridx)->getLocalPosition(), 1;
+    BodyNode *node = getMarker(markeridx)->getBodyNode();
+    computeJacobian(offset,node,mJ);
+
     VectorXd gradients = 2 * mJ.transpose() * mC;
     return gradients;
 /*

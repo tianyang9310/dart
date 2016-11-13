@@ -43,6 +43,12 @@ void MyWindow::draw()
 void MyWindow::keyboard(unsigned char _key, int _x, int _y)
 {
     switch(_key){
+        case 'l':
+            mWorld->setLeftRight(!mWorld->getLeftRight());
+        break;
+        case 'r':
+            mWorld->reset();
+        break;
     default:
         Win3D::keyboard(_key, _x, _y);
     }

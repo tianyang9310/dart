@@ -20,18 +20,26 @@ class MyWorld {
     void removeConstraint(int _index);
     dart::dynamics::Marker* getMarker(int _index);
     std::vector<std::pair<int,Eigen::Vector3d>> getMarkerTargetBundle();
+    void computeJacobian(Eigen::Vector4d offset, dart::dynamics::BodyNode* node, Eigen::MatrixXd& mJ);
+    bool getLeftRight();
+    void setLeftRight(bool _leftRight);
+    void reset();
 
  protected:
     Eigen::VectorXd updateGradients(std::pair<int,Eigen::VectorXd> _MarkerTarget);
+    Eigen::VectorXd updateGradientsLeftRightHand();
     void createMarkers();
 
     dart::dynamics::SkeletonPtr mSkel;
     std::vector<dart::dynamics::Marker*> mMarkers;
-    Eigen::Vector3d mC;
-    Eigen::MatrixXd mJ;
+    // Eigen::Vector3d mC;
+    // Eigen::MatrixXd mJ;
     // Eigen::Vector3d mTarget; // The target location of the constriant
     // int mConstrainedMarker; // The index of the constrained marker
     std::vector<std::pair<int,Eigen::Vector3d>> mMarkerTargetBundle;
+    bool leftRight;
+    Eigen::VectorXd initPos;
+    Eigen::VectorXd initVel;
 };
 
 #endif
