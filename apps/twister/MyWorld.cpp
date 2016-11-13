@@ -110,6 +110,11 @@ void MyWorld::solve() {
     if (objective) {
         gradients += updateGradientsObjective();
     }
+    // adaptive alpha
+    if (i%100 == 0) {
+        alpha *= 0.8;
+    }
+
     newPose = mSkel->getPositions() - alpha * gradients;
     // joint limit checking
     if (jointLimit){
