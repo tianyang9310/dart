@@ -18,6 +18,12 @@ MyWorld::MyWorld() {
   initPos = mSkel->getPositions();
   initVel = mSkel->getVelocities();
   objective = false;
+  jointLimit = false;
+  // add joint limit
+  mSkel->getJoint("j_shin_left")->getDof(0)->setPositionUpperLimit(0);
+  mSkel->getJoint("j_shin_left")->getDof(0)->setPositionLowerLimit(-2.355);
+  mSkel->getJoint("j_shin_right")->getDof(0)->setPositionUpperLimit(0);
+  mSkel->getJoint("j_shin_right")->getDof(0)->setPositionLowerLimit(-2.355);
 }
 
 MyWorld::~MyWorld() {
@@ -33,6 +39,19 @@ void MyWorld::setObjective(bool _objective){
         dtmsg<<"[Add] Objective."<<std::endl;
     } else {
         dtmsg<<"[Remove] Objective."<<std::endl;
+    }
+}
+
+bool MyWorld::getJointLimit(){
+    return jointLimit;
+}
+
+void MyWorld::setJointLimit(bool _jointLimit){
+    jointLimit = _jointLimit;
+    if (jointLimit) {
+        dtmsg<<"[Add] Joint limit."<<std::endl;
+    } else {
+        dtmsg<<"[Remove] Joint limit."<<std::endl;
     }
 }
 
@@ -92,6 +111,18 @@ void MyWorld::solve() {
         gradients += updateGradientsObjective();
     }
     newPose = mSkel->getPositions() - alpha * gradients;
+    // joint limit checking
+    if (jointLimit){
+        for (int dofidx = 3; dofidx < mSkel->getNumDofs(); dofidx++) {
+            double lowerLimit = mSkel->getDof(dofidx)->getPositionLowerLimit();
+            double upperLimit = mSkel->getDof(dofidx)->getPositionUpperLimit();
+            if (newPose(dofidx) > upperLimit) {
+                newPose(dofidx) = upperLimit;
+            } else if (newPose[dofidx] < lowerLimit ) {
+                newPose(dofidx) = lowerLimit;
+            }
+        }
+    }
     mSkel->setPositions(newPose); 
     mSkel->computeForwardKinematics(true, false, false); // DART updates all the transformations based on newPose
   }

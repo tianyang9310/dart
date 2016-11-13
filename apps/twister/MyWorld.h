@@ -26,6 +26,8 @@ class MyWorld {
     void reset();
     bool getObjective();
     void setObjective(bool _objective);
+    bool getJointLimit();
+    void setJointLimit(bool _jointLimit);
 
  protected:
     Eigen::VectorXd updateGradients(std::pair<int,Eigen::VectorXd> _MarkerTarget);
@@ -42,6 +44,7 @@ class MyWorld {
     std::vector<std::pair<int,Eigen::Vector3d>> mMarkerTargetBundle;
     bool leftRight;
     bool objective;
+    bool jointLimit;
     Eigen::VectorXd initPos;
     Eigen::VectorXd initVel;
 };

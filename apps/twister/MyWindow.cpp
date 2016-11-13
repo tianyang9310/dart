@@ -52,6 +52,9 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y)
         case 'o':
             mWorld->setObjective(!mWorld->getObjective());
         break;
+        case 'j':
+            mWorld->setJointLimit(!mWorld->getJointLimit());
+        break;
     default:
         Win3D::keyboard(_key, _x, _y);
     }
