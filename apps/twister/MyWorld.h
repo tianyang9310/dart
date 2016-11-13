@@ -19,6 +19,7 @@ class MyWorld {
     void modifyConstraint(int _index, Eigen::Vector3d _deltaP);
     void removeConstraint(int _index);
     dart::dynamics::Marker* getMarker(int _index);
+    std::vector<std::pair<int,Eigen::Vector3d>> getMarkerTargetBundle();
 
  protected:
     Eigen::VectorXd updateGradients(std::pair<int,Eigen::VectorXd> _MarkerTarget);

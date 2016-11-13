@@ -157,8 +157,21 @@ VectorXd MyWorld::updateGradients(std::pair<int,Eigen::VectorXd> _MarkerTarget) 
 
 // Current code only handlse one constraint on the left foot.
 void MyWorld::createConstraint(int _index) {
-    Vector3d target = getMarker(_index)->getWorldPosition();
-    mMarkerTargetBundle.push_back(std::make_pair(_index,target));
+    bool found = false;
+    for (auto it = mMarkerTargetBundle.begin(); it < mMarkerTargetBundle.end(); it++){
+        if ((*it).first == _index){
+            found = true;
+            break;
+        }
+    }
+    if (!found){
+        Vector3d target = getMarker(_index)->getWorldPosition();
+        mMarkerTargetBundle.push_back(std::make_pair(_index,target));
+        dtmsg<<"[Add] "<<getMarker(_index)->getName()<<" constraint as "<<target.transpose()<<std::endl;
+    } else {
+        dtwarn<<"[Warning] already have this constraint!"<<std::endl;
+    }
+
 //  if (_index == 0) {
 //    mTarget = getMarker(_index)->getWorldPosition();
 //    mConstrainedMarker = _index;
@@ -171,6 +184,7 @@ void MyWorld::modifyConstraint(int _index, Vector3d _deltaP) {
     for (auto it = mMarkerTargetBundle.begin(); it < mMarkerTargetBundle.end(); it++){
         if ((*it).first == _index){
             (*it).second += _deltaP;
+            dtmsg<<"[Modify] "<<getMarker(_index)->getName()<<" constraint as "<<(*it).second.transpose()<<std::endl;
             break;
         }
     }
@@ -181,6 +195,7 @@ void MyWorld::modifyConstraint(int _index, Vector3d _deltaP) {
 void MyWorld::removeConstraint(int _index) {
     for (auto it = mMarkerTargetBundle.begin(); it < mMarkerTargetBundle.end(); it++){
         if ((*it).first == _index){
+            dtmsg<<"[Remove] "<<getMarker(_index)->getName()<<" constraint."<<std::endl;
             mMarkerTargetBundle.erase(it);
             break;
         }
@@ -190,6 +205,10 @@ void MyWorld::removeConstraint(int _index) {
 
 Marker* MyWorld::getMarker(int _index) {
   return mMarkers[_index];
+}
+
+std::vector<std::pair<int,Eigen::Vector3d>> MyWorld::getMarkerTargetBundle(){
+  return mMarkerTargetBundle;
 }
 
 void MyWorld::createMarkers() {
