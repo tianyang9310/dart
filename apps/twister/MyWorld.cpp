@@ -300,6 +300,9 @@ VectorXd MyWorld::updateGradients(std::pair<int,Eigen::VectorXd> _MarkerTarget) 
 
 // Current code only handlse one constraint on the left foot.
 void MyWorld::createConstraint(int _index) {
+    if (_index >= mMarkers.size()) {
+        return;
+    }
     bool found = false;
     for (auto it = mMarkerTargetBundle.begin(); it < mMarkerTargetBundle.end(); it++){
         if ((*it).first == _index){
@@ -311,6 +314,12 @@ void MyWorld::createConstraint(int _index) {
         Vector3d target = getMarker(_index)->getWorldPosition();
         mMarkerTargetBundle.push_back(std::make_pair(_index,target));
         dtmsg<<"[Add] "<<getMarker(_index)->getName()<<" constraint as "<<target.transpose()<<std::endl;
+
+        Vector3d localTarget = getMarker(_index)->getLocalPosition();
+        BodyNode* bn = getMarker(_index)->getBodyNode();
+        Marker* m = new Marker(std::to_string(_index), localTarget, bn);
+        bn->addMarker(m);
+
     } else {
         dtwarn<<"[Warning] already have this constraint!"<<std::endl;
     }
@@ -328,6 +337,12 @@ void MyWorld::modifyConstraint(int _index, Vector3d _deltaP) {
         if ((*it).first == _index){
             (*it).second += _deltaP;
             dtmsg<<"[Modify] "<<getMarker(_index)->getName()<<" constraint as "<<(*it).second.transpose()<<std::endl;
+
+            Vector3d localTarget;
+            Matrix4d bodyNode2World = getMarker(_index)->getBodyNode()->getTransform().inverse().matrix();
+            localTarget =(bodyNode2World * (Vector4d() << (*it).second, 1).finished()).head(3);
+            mSkel->getMarker(std::to_string(_index))->setLocalPosition(localTarget);
+
             break;
         }
     }

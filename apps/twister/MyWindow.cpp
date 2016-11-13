@@ -20,22 +20,25 @@ void MyWindow::draw()
     Vector4d color;
     color << 0.95, 0.25, 0.25, 1.0;
     mWorld->getSkel()->drawMarkers(mRI, color, false);
+    color << 0.25, 0.95, 0.25 , 1.0;
     std::vector<std::pair<int,Eigen::Vector3d>> mMarkerTargetBundle = mWorld->getMarkerTargetBundle();
     if (!mMarkerTargetBundle.empty()){
         for (std::vector<std::pair<int,Eigen::Vector3d>>::iterator it = mMarkerTargetBundle.begin(); it < mMarkerTargetBundle.end(); ++it){
             mRI->pushMatrix();
-            // mWorld->getMarker((*it).first)->getBodyNode()->getParentJoint()->applyGLTransform(mRI);
             std::vector<Joint*> ancesterJoints;
             BodyNode* node = mWorld->getMarker((*it).first)->getBodyNode();
             while (node != nullptr) {
                 ancesterJoints.push_back(node->getParentJoint());
                 node = node->getParentBodyNode();
             }
-            for (auto it = ancesterJoints.rbegin(); it != ancesterJoints.rend(); it++){
-                (*it)->applyGLTransform(mRI);
+            for (auto it_ance = ancesterJoints.rbegin(); it_ance != ancesterJoints.rend(); it_ance++){
+                (*it_ance)->applyGLTransform(mRI);
             }
             mWorld->getMarker((*it).first)->draw(mRI,true,color,true);
+            mWorld->getSkel()->getMarker(std::to_string((*it).first))->draw(mRI,true,color,false);
             mRI->popMatrix();
+
+            // draw target marker
         }
     }
 }
