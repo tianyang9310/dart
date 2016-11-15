@@ -273,7 +273,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         std::cin.get();
     }
 
-    double _TimeStep = mTimeStep; // 1.0; 
+    double _TimeStep = 1.0; // mTimeStep; // 1.0; 
     // using ldlt().solve() since mass matrix is positive definite
     Eigen::MatrixXd Lemke_A(Eigen::MatrixXd::Zero(numConstraints*(2+numBasis),numConstraints*(2+numBasis)));
     Lemke_A.block(0,0,numConstraints,numConstraints) = _TimeStep*N.transpose()*M.ldlt().solve(N);

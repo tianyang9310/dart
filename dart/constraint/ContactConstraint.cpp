@@ -652,8 +652,6 @@ void ContactConstraint::unexcite()
 //==============================================================================
 void ContactConstraint::applyImpulse(double* _lambda)
 {
-  std::cout<<"============================================"<<std::endl;
-  std::cout<<"[ODE LCP] Using DART contact constraint class!"<<std::endl;
   //----------------------------------------------------------------------------
   // Friction case
   //----------------------------------------------------------------------------
