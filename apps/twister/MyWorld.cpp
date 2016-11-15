@@ -24,9 +24,25 @@ MyWorld::MyWorld() {
   mSkel->getJoint("j_shin_left")->getDof(0)->setPositionLowerLimit(-2.355);
   mSkel->getJoint("j_shin_right")->getDof(0)->setPositionUpperLimit(0);
   mSkel->getJoint("j_shin_right")->getDof(0)->setPositionLowerLimit(-2.355);
+  wiLeftRight = 10.0; // this weight can stress constraint on left and right hand.
+  wiObjective = 1.0;
+  adaptivelr = false;
 }
 
 MyWorld::~MyWorld() {
+}
+
+bool MyWorld::getAdaptivelr(){
+    return adaptivelr;
+}
+
+void MyWorld::setAdaptivelr(bool _adaptivelr){
+    adaptivelr = _adaptivelr;
+    if (adaptivelr) {
+        dtmsg<<"[Using] Adaptive learning rate."<<std::endl;
+    } else {
+        dtmsg<<"[Remove] Adaptive learning rate."<<std::endl;
+    }
 }
 
 bool MyWorld::getObjective(){
@@ -88,6 +104,56 @@ void MyWorld::reset(){
     mMarkerTargetBundle.clear();
 }
 
+bool MyWorld::isImproving(const VectorXd & newPose)
+{
+    bool isImproving = false;
+    double objOldValue = 0.0;
+    double objNewValue = 0.0;
+
+    objOldValue = evaluate();
+
+    // new poses
+    VectorXd poseStack = mSkel->getPositions();
+    mSkel->setPositions(newPose);
+    mSkel->computeForwardKinematics(true,false,false);
+
+    objNewValue = evaluate();
+
+    mSkel->setPositions(poseStack);
+    mSkel->computeForwardKinematics(true,false,false);
+
+    isImproving = (objNewValue <= objOldValue);
+    // std::cout<<std::boolalpha;
+    // std::cout<<"Old: "<<objOldValue<<" New: "<<objNewValue<<std::endl;
+    // std::cout<<isImproving<<std::endl;
+    return isImproving;
+}
+
+double MyWorld::evaluate() {
+    double objValue = 0.0;
+    Vector3d mC;
+    // calculating constraint
+    for (const auto & _MarkerTarget : mMarkerTargetBundle) {
+        mC = getMarker(_MarkerTarget.first)->getWorldPosition() - _MarkerTarget.second;
+        objValue += mC.squaredNorm();
+    }   
+    // calculating objective
+    if (objective) {
+        objValue += wiObjective * (mSkel->getPositions() - initPos).squaredNorm();
+    }
+    // calculating leftRight
+    if (leftRight) {
+        Marker* leftMarker = mSkel->getMarker("left_hand");
+        Marker* rightMarker = mSkel->getMarker("right_hand");
+        BodyNode* leftBodyNode = mSkel->getBodyNode("h_hand_left");
+        BodyNode* rightBodyNode = mSkel->getBodyNode("h_hand_right");
+
+        mC = leftMarker->getWorldPosition() - rightMarker->getWorldPosition();
+        objValue += wiLeftRight * mC.squaredNorm();
+    }
+    return objValue;
+}
+
 void MyWorld::solve() {
     if (mMarkerTargetBundle.empty() && !leftRight && !objective){
         return;
@@ -110,12 +176,20 @@ void MyWorld::solve() {
     if (objective) {
         gradients += updateGradientsObjective();
     }
+
     // adaptive alpha
-    if (i%100 == 0) {
-        alpha *= 0.8;
+    double lr = alpha;
+    if (adaptivelr) {
+        for (int lridx = 0; lridx < 10; lridx++) {
+            if (isImproving(mSkel->getPositions() - lr * gradients)) {
+                break;
+            } else {
+                lr *= 0.9;
+            }
+        }
     }
 
-    newPose = mSkel->getPositions() - alpha * gradients;
+    newPose = mSkel->getPositions() - lr * gradients;
     // joint limit checking
     if (jointLimit){
         for (int dofidx = 3; dofidx < mSkel->getNumDofs(); dofidx++) {
@@ -131,7 +205,6 @@ void MyWorld::solve() {
     mSkel->setPositions(newPose); 
     mSkel->computeForwardKinematics(true, false, false); // DART updates all the transformations based on newPose
   }
-  
 }
 
 void MyWorld::computeJacobian(Eigen::Vector4d offset, BodyNode* node, Eigen::MatrixXd& mJ){
@@ -200,14 +273,12 @@ VectorXd MyWorld::updateGradientsLeftRightHand(){
     computeJacobian(right_offset, rightBodyNode, right_mJ);
 
     MatrixXd mJ = left_mJ - right_mJ;
-    double wi = 10.0; // this weight can stress constraint on left and right hand.
-    VectorXd gradients = 2 * wi * mJ.transpose() * mC;
+    VectorXd gradients = 2 * wiLeftRight * mJ.transpose() * mC;
     return gradients;
 }
 
 VectorXd MyWorld::updateGradientsObjective(){
-    double wi = 1.0;
-    VectorXd gradients = 2 * wi * (mSkel->getPositions() - initPos);
+    VectorXd gradients = 2 * wiObjective * (mSkel->getPositions() - initPos);
     return gradients;
 }
 

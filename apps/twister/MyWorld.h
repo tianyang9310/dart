@@ -28,8 +28,12 @@ class MyWorld {
     void setObjective(bool _objective);
     bool getJointLimit();
     void setJointLimit(bool _jointLimit);
+    bool getAdaptivelr();
+    void setAdaptivelr(bool _adaptivelr);
 
  protected:
+    double evaluate();
+    bool isImproving(const Eigen::VectorXd & newPose);
     Eigen::VectorXd updateGradients(std::pair<int,Eigen::VectorXd> _MarkerTarget);
     Eigen::VectorXd updateGradientsLeftRightHand();
     Eigen::VectorXd updateGradientsObjective();
@@ -45,6 +49,9 @@ class MyWorld {
     bool leftRight;
     bool objective;
     bool jointLimit;
+    double wiObjective;
+    double wiLeftRight;
+    bool adaptivelr;
     Eigen::VectorXd initPos;
     Eigen::VectorXd initVel;
 };

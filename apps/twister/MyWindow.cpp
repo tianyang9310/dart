@@ -21,6 +21,7 @@ void MyWindow::draw()
     color << 0.95, 0.25, 0.25, 1.0;
     mWorld->getSkel()->drawMarkers(mRI, color, false);
     color << 0.25, 0.95, 0.25 , 1.0;
+    // Here I need to set a local variable who is set by getMarkerTargetBundle(), otherwise it would be changed later on 
     std::vector<std::pair<int,Eigen::Vector3d>> mMarkerTargetBundle = mWorld->getMarkerTargetBundle();
     if (!mMarkerTargetBundle.empty()){
         for (std::vector<std::pair<int,Eigen::Vector3d>>::iterator it = mMarkerTargetBundle.begin(); it < mMarkerTargetBundle.end(); ++it){
@@ -57,6 +58,9 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y)
         break;
         case 'j':
             mWorld->setJointLimit(!mWorld->getJointLimit());
+        break;
+        case 'a':
+            mWorld->setAdaptivelr(!mWorld->getAdaptivelr());
         break;
     default:
         Win3D::keyboard(_key, _x, _y);
