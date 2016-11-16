@@ -42,20 +42,19 @@ void MyWindow::timeStepping()
 
     counter = (counter + 1) % 200;
 
-//    addExtForce();
-//    if (counter == 50)
-//    {
-//          addExtForce();
-//    }
-//    else if (counter == 150)
-//    {
-//        // addExtTorque();
-//    }
+    if (counter == 50)
+    {
+         addExtForce();
+    }
+    else if (counter == 150)
+    {
+         addExtTorque();
+    }
 }
 
 void MyWindow::addExtForce()
 {
-    dtmsg<<"Add external force"<<std::endl;
+    // dtmsg<<"Add external force"<<std::endl;
     // mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtTorque(Eigen::Vector3d::Random()*100);
     
     Eigen::Vector3d extForce = Eigen::Vector3d::Random() * 5e2;
@@ -66,7 +65,7 @@ void MyWindow::addExtForce()
 
 void MyWindow::addExtTorque()
 {
-    dtmsg<<"Add external torque"<<std::endl;
+    // dtmsg<<"Add external torque"<<std::endl;
     mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtTorque(Eigen::Vector3d::Random()*100);
 }
 

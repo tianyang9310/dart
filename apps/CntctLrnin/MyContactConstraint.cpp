@@ -6,7 +6,7 @@
 #include "dart/dynamics/BodyNode.h"
 #include "dart/dynamics/Skeleton.h"
 
-//#define OUTPUT
+// #define OUTPUT
 
 namespace dart{
 namespace constraint{

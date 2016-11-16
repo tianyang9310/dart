@@ -5,6 +5,7 @@
 // #define LEMKE_OUTPUT
 // // #define LEMKE_OUTPUT_DETAILS
 // #define ODE_OUTPUT
+// #define RECORD_OUTPUT
 
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep,int _totalDOF,MyWindow* mWindow):DantzigLCPSolver(_timestep),totalDOF(_totalDOF),mWindow(mWindow)
 {
@@ -141,7 +142,6 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     // print(n, A, x, lo, hi, b, w, findex);
     // std::cout << std::endl;
 
-// /*
 //  ---------------------------------------
     // establish A and b matrix for Lemke algorithm
     ContactConstraint* cntctconstraint; 
@@ -319,26 +319,16 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
     std::cout<<"Skeleton 2 is "<<bodyNode2->getSkeleton()->getName()<<std::endl<<" its velocity is"<<mSkeletonVelocitiesLock[bodyNode2->getSkeleton()].transpose()<<std::endl;
     std::cout<<"Lemke M is "<<std::endl<<M<<std::endl;
     std::cout<<"Lemke E is "<<E.transpose()<<std::endl;
-    // output to file
-    if (Validation && (counters[numConstraints-1] < dataSize))
-    {
-        recordLCPSolve(Lemke_A, (*z), Lemke_b);
-    }
-    // early stopping
-    if ((counters[0] == dataSize)&&
-        (counters[1] == dataSize)&&
-        (counters[2] == dataSize)&&
-        (counters[3] == dataSize))
-    {
-        exit(0);
-    }
     std::cout<<"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"<<std::endl;
 #endif
+
+//  ---------------------------------------
 
     // Apply constraint impulses
     if (!Validation)
     {
         dterr<<"ERROR: Lemke fails for current time step!!!"<<std::endl;
+        dterr<<"Resort ODE LCP solver to solve the problem!!!"<<std::endl;
         std::cout<<"Lemke A is "<<std::endl;
         std::cout<<Lemke_A<<std::endl;
         std::cout<<"Lemke b is ";
@@ -347,9 +337,31 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         std::cout<<(*z).transpose()<<std::endl;
         std::cout<<"err: "<<err<<std::endl;
         std::cout<<std::boolalpha;
-        std::cin.get();
+        // std::cin.get();
+    }
+
+    // bookkeeping old A and old b
+    double* old_A = new double[n * nSkip];
+    double* old_b = new double[n];
+    for (int i = 0; i < n * nSkip; i++)
+        old_A[i] = A[i];
+    for (int i = 0; i < n; i++)
+        old_b[i] = b[i];
+
+    // Solve LCP using ODE's Dantzig algorithm when Lemke cannot solve the problem
+    if (!Validation) {
+        dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
     }
     
+#ifdef ODE_OUTPUT
+    // Print LCP formulation
+    std::cout << "After solve:" << std::endl;
+    print(n, old_A, x, lo, hi, old_b, w, findex);
+    std::cout << std::endl;
+#endif
+    
+    if (Validation) {
+//  ---------------------------------------
     // justify the (*z)
     // assert(!(Eigen::isnan((*z).array()).any()));
 
@@ -373,58 +385,57 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group)
         Mycntctconstraint->excite();
     }
 
-    // print out Lemke apply impulse
-    for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt)
-    {
-        double fn_each = fn(idx_cnstrnt);
-        Eigen::VectorXd fd_each = fd.segment(idx_cnstrnt*numBasis,numBasis);
-        Eigen::VectorXd N_each = N.col(idx_cnstrnt);
-        Eigen::MatrixXd B_each = B.block(0,idx_cnstrnt*numBasis,(BodyNode1_dim+BodyNode2_dim),numBasis);
+    // // print out Lemke apply impulse
+    // for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt)
+    // {
+    //     double fn_each = fn(idx_cnstrnt);
+    //     Eigen::VectorXd fd_each = fd.segment(idx_cnstrnt*numBasis,numBasis);
+    //     Eigen::VectorXd N_each = N.col(idx_cnstrnt);
+    //     Eigen::MatrixXd B_each = B.block(0,idx_cnstrnt*numBasis,(BodyNode1_dim+BodyNode2_dim),numBasis);
         
-        Mycntctconstraint = dynamic_cast<MyContactConstraint*>(_group->getConstraint(idx_cnstrnt));
-        Mycntctconstraint->My2LemkeapplyImpulse(fn_each,fd_each,N_each,B_each,BodyNode1_dim,BodyNode2_dim, (_TimeStep == 1.0));
-        // Mycntctconstraint->excite();
+    //     Mycntctconstraint = dynamic_cast<MyContactConstraint*>(_group->getConstraint(idx_cnstrnt));
+    //     Mycntctconstraint->My2LemkeapplyImpulse(fn_each,fd_each,N_each,B_each,BodyNode1_dim,BodyNode2_dim, (_TimeStep == 1.0));
+    //     // Mycntctconstraint->excite();
+    // }
+
+    } else {    
+//  ---------------------------------------
+    // Using ODE LCP to simulate
+    for (size_t i = 0; i < numConstraints; ++i)
+    {
+       constraint = _group->getConstraint(i);
+       constraint->applyImpulse(x + offset[i]);
+       constraint->excite();
     }
-
-// */
-
-    // bookkeeping old A and old b
-    double* old_A = new double[n * nSkip];
-    double* old_b = new double[n];
-    for (int i = 0; i < n * nSkip; i++)
-        old_A[i] = A[i];
-    for (int i = 0; i < n; i++)
-        old_b[i] = b[i];
-
-    // Solve LCP using ODE's Dantzig algorithm
-    dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
     
-#ifdef ODE_OUTPUT
-    // Print LCP formulation
-    std::cout << "After solve:" << std::endl;
-    print(n, old_A, x, lo, hi, old_b, w, findex);
-    std::cout << std::endl;
-#endif
-    
-//    // Using ODE LCP to simulate
-//    for (size_t i = 0; i < numConstraints; ++i)
-//    {
-//        constraint = _group->getConstraint(i);
-//        constraint->applyImpulse(x + offset[i]);
-//        constraint->excite();
-//    }
-    
-    // print out ODE apply impulse
-      for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt)
-      {
-          Mycntctconstraint = dynamic_cast<MyContactConstraint*>(_group->getConstraint(idx_cnstrnt));
-          Mycntctconstraint->My2ODEapplyImpulse(x + offset[idx_cnstrnt]);
-          // Mycntctconstraint->excite();
-      }
+    // // print out ODE apply impulse
+    //   for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt)
+    //   {
+    //       Mycntctconstraint = dynamic_cast<MyContactConstraint*>(_group->getConstraint(idx_cnstrnt));
+    //       Mycntctconstraint->My2ODEapplyImpulse(x + offset[idx_cnstrnt]);
+    //       // Mycntctconstraint->excite();
+    //   }
+    //
+    }
 
     // std::cin.get();
     // mWindow->keyboard('y',0,0);
     
+//  ---------------------------------------
+    // output to file after all necessary computation and valid Lemke results
+    if (Validation && (counters[numConstraints-1] < dataSize) && err == 0)
+    {
+        recordLCPSolve(Lemke_A, (*z), Lemke_b);
+    }
+    // early stopping
+    if ((counters[0] == dataSize)&&
+        (counters[1] == dataSize)&&
+        (counters[2] == dataSize)&&
+        (counters[3] == dataSize))
+    {
+        exit(0);
+    }
+
     delete[] offset;
     
     delete[] A;
@@ -601,7 +612,9 @@ void MyDantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A, const Eigen::Ve
 {
     int nSize = b.rows();
     int numContactsToLearn = nSize /(numBasis+2);
+#ifdef RECORD_OUTPUT
     std::cout<<"numContactsToLearn: "<<numContactsToLearn<<std::endl;
+#endif 
 
     std::shared_ptr<std::fstream> outputFile = outputFiles[numContactsToLearn-1];
     counters[numContactsToLearn-1] +=1;
@@ -632,7 +645,9 @@ void MyDantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A, const Eigen::Ve
     {
         each_z[i].resize(numBasis+2);
         each_z[i] << z_fn(i), z_fd.segment(i*numBasis,numBasis), z_lambda(i);
+#ifdef RECORD_OUTPUT
         std::cout<<i<<"th contact point "<<each_z[i].transpose()<<std::endl;
+#endif
         int value = 9;
 
         // Convention: numbasis = 8, so total 10 elements
