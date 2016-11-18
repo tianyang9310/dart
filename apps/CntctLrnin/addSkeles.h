@@ -10,4 +10,4 @@ void AddSkel(dart::simulation::WorldPtr world);
 SkeletonPtr AddBox();
 SkeletonPtr AddGround();
 
-#endif // CNTCTLRNIN_ADDSKEL_H
+#endif  // CNTCTLRNIN_ADDSKEL_H

@@ -1,17 +1,17 @@
 #ifndef MYCONSTRAINTSOLVER
 #define MYCONSTRAINTSOLVER
 
-#include "dart/constraint/ConstraintSolver.h"
 #include "MyContactConstraint.h"
+#include "dart/constraint/ConstraintSolver.h"
 // #include "dart/constraint/SoftContactConstraint.h"
 
-namespace dart{
+namespace dart {
 
-namespace dynamics{
+namespace dynamics {
 class Skeleton;
 }
 
-namespace constraint{
+namespace constraint {
 
 class ConstrainedGroup;
 class ConstraintBase;
@@ -23,16 +23,14 @@ class JointCoulombFrictionConstraint;
 class JointConstraint;
 class LCPSolver;
 
-class MyConstraintSolver : public ConstraintSolver
-{
-public:
-    MyConstraintSolver(double _timeStep);
-    virtual ~MyConstraintSolver();
+class MyConstraintSolver : public ConstraintSolver {
+  public:
+  MyConstraintSolver(double _timeStep);
+  virtual ~MyConstraintSolver();
 
-    void updateConstraints();
+  void updateConstraints();
 };
-
 }
 }
 
-#endif // MYCONSTRAINTSOLVER
+#endif  // MYCONSTRAINTSOLVER

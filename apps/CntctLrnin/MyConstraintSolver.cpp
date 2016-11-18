@@ -1,44 +1,37 @@
 #include "MyConstraintSolver.h"
 
+#include "dart/collision/dart/DARTCollisionDetector.h"
+#include "dart/collision/fcl_mesh/FCLMeshCollisionDetector.h"
 #include "dart/common/Console.h"
 #include "dart/dynamics/BodyNode.h"
-#include "dart/dynamics/SoftBodyNode.h"
 #include "dart/dynamics/Joint.h"
 #include "dart/dynamics/Skeleton.h"
-#include "dart/collision/fcl_mesh/FCLMeshCollisionDetector.h"
-#include "dart/collision/dart/DARTCollisionDetector.h"
+#include "dart/dynamics/SoftBodyNode.h"
 #ifdef HAVE_BULLET_COLLISION
-  #include "dart/collision/bullet/BulletCollisionDetector.h"
+#include "dart/collision/bullet/BulletCollisionDetector.h"
 #endif
 #include "dart/constraint/ConstrainedGroup.h"
 #include "dart/constraint/ContactConstraint.h"
-#include "dart/constraint/SoftContactConstraint.h"
-#include "dart/constraint/JointLimitConstraint.h"
 #include "dart/constraint/JointCoulombFrictionConstraint.h"
+#include "dart/constraint/JointLimitConstraint.h"
+#include "dart/constraint/SoftContactConstraint.h"
 
-namespace dart{
-namespace constraint{
+namespace dart {
+namespace constraint {
 
-MyConstraintSolver::MyConstraintSolver(double _timeStep):ConstraintSolver(_timeStep)
-{
+MyConstraintSolver::MyConstraintSolver(double _timeStep)
+    : ConstraintSolver(_timeStep) {}
 
-}
+MyConstraintSolver::~MyConstraintSolver() {}
 
-MyConstraintSolver::~MyConstraintSolver()
-{
-
-}
-
-void MyConstraintSolver::updateConstraints()
-{
+void MyConstraintSolver::updateConstraints() {
   // Clear previous active constraint list
   mActiveConstraints.clear();
 
   //----------------------------------------------------------------------------
   // Update manual constraints
   //----------------------------------------------------------------------------
-  for (auto& manualConstraint : mManualConstraints)
-  {
+  for (auto& manualConstraint : mManualConstraints) {
     manualConstraint->update();
 
     if (manualConstraint->isActive())
@@ -62,24 +55,19 @@ void MyConstraintSolver::updateConstraints()
   mSoftContactConstraints.clear();
 
   // Create new contact constraints
-  for (size_t i = 0; i < mCollisionDetector->getNumContacts(); ++i)
-  {
+  for (size_t i = 0; i < mCollisionDetector->getNumContacts(); ++i) {
     collision::Contact& ct = mCollisionDetector->getContact(i);
 
-    if (isSoftContact(ct))
-    {
+    if (isSoftContact(ct)) {
       mSoftContactConstraints.push_back(
-            new SoftContactConstraint(ct, mTimeStep));
-    }
-    else
-    {
+          new SoftContactConstraint(ct, mTimeStep));
+    } else {
       mContactConstraints.push_back(new MyContactConstraint(ct, mTimeStep));
     }
   }
 
   // Add the new contact constraints to dynamic constraint list
-  for (const auto& contactConstraint : mContactConstraints)
-  {
+  for (const auto& contactConstraint : mContactConstraints) {
     contactConstraint->update();
 
     if (contactConstraint->isActive())
@@ -87,8 +75,7 @@ void MyConstraintSolver::updateConstraints()
   }
 
   // Add the new soft contact constraints to dynamic constraint list
-  for (const auto& softContactConstraint : mSoftContactConstraints)
-  {
+  for (const auto& softContactConstraint : mSoftContactConstraints) {
     softContactConstraint->update();
 
     if (softContactConstraint->isActive())
@@ -104,11 +91,9 @@ void MyConstraintSolver::updateConstraints()
   mJointLimitConstraints.clear();
 
   // Create new joint limit constraints
-  for (const auto& skel : mSkeletons)
-  {
+  for (const auto& skel : mSkeletons) {
     const size_t numBodyNodes = skel->getNumBodyNodes();
-    for (size_t i = 0; i < numBodyNodes; i++)
-    {
+    for (size_t i = 0; i < numBodyNodes; i++) {
       dynamics::Joint* joint = skel->getBodyNode(i)->getParentJoint();
 
       if (joint->isDynamic() && joint->isPositionLimitEnforced())
@@ -117,8 +102,7 @@ void MyConstraintSolver::updateConstraints()
   }
 
   // Add active joint limit
-  for (auto& jointLimitConstraint : mJointLimitConstraints)
-  {
+  for (auto& jointLimitConstraint : mJointLimitConstraints) {
     jointLimitConstraint->update();
 
     if (jointLimitConstraint->isActive())
@@ -134,22 +118,17 @@ void MyConstraintSolver::updateConstraints()
   mJointCoulombFrictionConstraints.clear();
 
   // Create new joint limit constraints
-  for (const auto& skel : mSkeletons)
-  {
+  for (const auto& skel : mSkeletons) {
     const size_t numBodyNodes = skel->getNumBodyNodes();
-    for (size_t i = 0; i < numBodyNodes; i++)
-    {
+    for (size_t i = 0; i < numBodyNodes; i++) {
       dynamics::Joint* joint = skel->getBodyNode(i)->getParentJoint();
 
-      if (joint->isDynamic())
-      {
+      if (joint->isDynamic()) {
         const size_t dof = joint->getNumDofs();
-        for (size_t i = 0; i < dof; ++i)
-        {
-          if (joint->getCoulombFriction(i) != 0.0)
-          {
+        for (size_t i = 0; i < dof; ++i) {
+          if (joint->getCoulombFriction(i) != 0.0) {
             mJointCoulombFrictionConstraints.push_back(
-                  new JointCoulombFrictionConstraint(joint));
+                new JointCoulombFrictionConstraint(joint));
             break;
           }
         }
@@ -158,14 +137,12 @@ void MyConstraintSolver::updateConstraints()
   }
 
   // Add active joint limit
-  for (auto& jointFrictionConstraint : mJointCoulombFrictionConstraints)
-  {
+  for (auto& jointFrictionConstraint : mJointCoulombFrictionConstraints) {
     jointFrictionConstraint->update();
 
     if (jointFrictionConstraint->isActive())
       mActiveConstraints.push_back(jointFrictionConstraint);
   }
 }
-
 }
 }

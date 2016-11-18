@@ -2,13 +2,13 @@
 #define MYDANTZIGLCPSOLVER
 
 #include <cstddef>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
-#include <fstream>
 
-#include "dart/dart.h"
 #include "MyContactConstraint.h"
+#include "dart/dart.h"
 #include "utils.h"
 
 // #include "dart/constraint/LCPSolver.h"
@@ -25,43 +25,46 @@
 using namespace dart::constraint;
 class MyWindow;
 
-class MyDantzigLCPSolver : public DantzigLCPSolver
-{
-public:
-    MyDantzigLCPSolver(double _timestep,int _totalDOF,MyWindow* mWindow);
-    virtual ~MyDantzigLCPSolver();
-    
-    void solve(ConstrainedGroup* _group) override;
+class MyDantzigLCPSolver : public DantzigLCPSolver {
+  public:
+  MyDantzigLCPSolver(double _timestep, int _totalDOF, MyWindow* mWindow);
+  virtual ~MyDantzigLCPSolver();
 
-    void pushVelocities(dart::dynamics::SkeletonPtr mSkeletonPtr, const Eigen::VectorXd& mVelocities);
-    
-    std::map<dart::dynamics::SkeletonPtr,Eigen::VectorXd>& getSkeletonVelocitiesLock();
+  void solve(ConstrainedGroup* _group) override;
 
-protected:
-    void print(size_t _n, double* _A, double* _x, double* _lo, double* _hi, double* _b, double* w, int* _findex);
-    
-    /// Return true if the matrix is symmetric
-    bool isSymmetric(size_t _n, double* _A);
-    
-    /// Return true if the diagonla block of matrix is symmetric
-    bool isSymmetric(size_t _n, double* _A, size_t _begin, size_t _end);
+  void pushVelocities(dart::dynamics::SkeletonPtr mSkeletonPtr,
+                      const Eigen::VectorXd& mVelocities);
 
-    int totalDOF;
+  std::map<dart::dynamics::SkeletonPtr, Eigen::VectorXd>&
+  getSkeletonVelocitiesLock();
 
-    int dataSize;
+  protected:
+  void print(size_t _n, double* _A, double* _x, double* _lo, double* _hi,
+             double* _b, double* w, int* _findex);
 
-    int numBasis;
+  /// Return true if the matrix is symmetric
+  bool isSymmetric(size_t _n, double* _A);
 
-    std::map<dart::dynamics::SkeletonPtr,Eigen::VectorXd> mSkeletonVelocitiesLock;
+  /// Return true if the diagonla block of matrix is symmetric
+  bool isSymmetric(size_t _n, double* _A, size_t _begin, size_t _end);
 
-    void recordLCPSolve(const Eigen::MatrixXd A, const Eigen::VectorXd z, const Eigen::VectorXd b);
+  int totalDOF;
 
-    std::vector<std::shared_ptr<std::fstream>> outputFiles;
-    
-    std::vector<int> counters;
+  int dataSize;
 
-    MyWindow* mWindow;
+  int numBasis;
+
+  std::map<dart::dynamics::SkeletonPtr, Eigen::VectorXd>
+      mSkeletonVelocitiesLock;
+
+  void recordLCPSolve(const Eigen::MatrixXd A, const Eigen::VectorXd z,
+                      const Eigen::VectorXd b);
+
+  std::vector<std::shared_ptr<std::fstream>> outputFiles;
+
+  std::vector<int> counters;
+
+  MyWindow* mWindow;
 };
 
-
-#endif // MYDANTZIGLCPSOLVER
+#endif  // MYDANTZIGLCPSOLVER
