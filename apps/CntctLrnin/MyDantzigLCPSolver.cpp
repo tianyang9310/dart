@@ -3,6 +3,7 @@
 
 // #define LEMKE_OUTPUT          // Lemke A, b, err, z, w
 // #define LEMKE_OUTPUT_DETAILS  // Lemke N, B, Skeletons velocities, M, E
+// #define LEMKE_FAIL_PRINT
 // #define ODE_OUTPUT // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
 // #define OUTPUT2FILE  // output data to file
 // #define ALWAYS_ODE         // always solve ode whether Lemke is valid or not
@@ -319,13 +320,22 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
 
   // Corner case where fn==0, fd>0 and lambda>0
-  if (numConstraints == 1) {
-    if ((*z)(0) == 0 && (*z)(9) > 0 && ((*z).segment(1, 8).maxCoeff() > 0)) {
-      std::cout << "[z]" << (*z).transpose() << std::endl;
-      std::cout << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose() << std::endl;
-      std::cin.get();
-    }
+  if (((*z).head(numConstraints).array() == 0).all() &&
+      ((*z).tail(numConstraints).array().maxCoeff() > 0) &&
+      ((*z).segment(numConstraints, numConstraints * numBasis)
+           .array()
+           .maxCoeff() > 0)) {
+    std::cout << "[z]" << (*z).transpose() << std::endl;
+    std::cout << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose() << std::endl;
+    std::cout << "[z].*[w]"
+              << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
+              << std::endl;
+    std::cin.get();
   }
+  // if (numConstraints == 1) {
+  //   Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
+  //   std::cout << (*z).transpose().format(CSVFmt) << std::endl;
+  // }
 
 #ifdef LEMKE_OUTPUT
   std::cout << "err: " << err << std::endl;
@@ -355,8 +365,9 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
 #endif
 
-  //  ---------------------------------------
-  // Apply constraint impulses
+//  ---------------------------------------
+// Apply constraint impulses
+#ifdef LEMKE_FAIL_PRINT
   if (!Validation) {
     dterr << "ERROR: Lemke fails for current time step!!!" << std::endl;
     dterr << "Resort ODE LCP solver to solve the problem!!!" << std::endl;
@@ -370,6 +381,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     std::cout << std::boolalpha;
     // std::cin.get();
   }
+#endif
 
   // bookkeeping old A and old b
   double* old_A = new double[n * nSkip];
