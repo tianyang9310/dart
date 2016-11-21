@@ -6,7 +6,7 @@
 #include "dart/dynamics/Skeleton.h"
 #include "dart/math/Helpers.h"
 
-// #define OUTPUT
+#define OUTPUT
 
 namespace dart {
 namespace constraint {

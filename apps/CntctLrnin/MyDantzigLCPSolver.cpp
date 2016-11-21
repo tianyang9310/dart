@@ -1,13 +1,13 @@
 #include "MyDantzigLCPSolver.h"
 #include "MyWindow.h"
 
-#define LEMKE_OUTPUT          // Lemke A, b, err, z, w
-#define LEMKE_OUTPUT_DETAILS  // Lemke N, B, Skeletons velocities, M, E
+// #define LEMKE_OUTPUT          // Lemke A, b, err, z, w
+// #define LEMKE_OUTPUT_DETAILS  // Lemke N, B, Skeletons velocities, M, E
 // #define ODE_OUTPUT // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
 // #define OUTPUT2FILE  // output data to file
-// #define ALWAYS_ODE  // alywas solve ode whethe Lemke is valid or not
-// #define LEMKE_APPLY_PRINT // print applying Lemke constraint
-// #define ODE_APPLY_PRINT // print applying ODE constraint
+// #define ALWAYS_ODE         // always solve ode whether Lemke is valid or not
+// #define LEMKE_APPLY_PRINT  // print applying Lemke constraint
+// #define ODE_APPLY_PRINT    // print applying ODE constraint
 
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
                                        MyWindow* mWindow)
@@ -277,7 +277,9 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     std::cin.get();
   }
 
-  double _TimeStep = 1.0;  // mTimeStep; // 1.0;
+  // _TimeStep =  1.0 means using calculating impulse in Lemke
+  // otherwise _TimeStep  = mTimeStep means calculating force in Lemke
+  double _TimeStep = 1.0;  // mTimeStep;
   // using ldlt().solve() since mass matrix is positive definite
   Eigen::MatrixXd Lemke_A(Eigen::MatrixXd::Zero(
       numConstraints * (2 + numBasis), numConstraints * (2 + numBasis)));
