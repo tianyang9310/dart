@@ -1,14 +1,15 @@
 #include "MyDantzigLCPSolver.h"
 #include "MyWindow.h"
 
-// #define LEMKE_OUTPUT          // Lemke A, b, err, z, w
+// #define LEMKE_OUTPUT  // Lemke A, b, err, z, w
 // #define LEMKE_OUTPUT_DETAILS  // Lemke N, B, Skeletons velocities, M, E
-// #define LEMKE_FAIL_PRINT
+// #define LEMKE_FAIL_PRINT // print lemke fail prompt information
 // #define ODE_OUTPUT // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
 // #define OUTPUT2FILE  // output data to file
 // #define ALWAYS_ODE         // always solve ode whether Lemke is valid or not
 // #define LEMKE_APPLY_PRINT  // print applying Lemke constraint
 // #define ODE_APPLY_PRINT    // print applying ODE constraint
+// #define REGULARIZED_PRINT // print regularized info
 
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
                                        MyWindow* mWindow)
@@ -319,12 +320,29 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
   int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
 
+  // ---------------------------------------------------------------------------
+  // manually regularize Lemke solution
+  Eigen::VectorXd oldZ = (*z);
+  Eigen::VectorXd myZero = Eigen::VectorXd::Zero((*z).rows());
+  (*z) = ((*z).array() > -MY_DART_ZERO && (*z).array() < MY_DART_ZERO)
+             .select(myZero, (*z));
+#ifdef REGULARIZED_PRINT
+  std::cout << "Before regularized: z is " << oldZ.transpose() << std::endl;
+  std::cout << "After regularized: z is " << (*z).transpose() << std::endl;
+#endif
+  // ---------------------------------------------------------------------------
+
   // Corner case where fn==0, fd>0 and lambda>0
-  if (((*z).head(numConstraints).array() == 0).all() &&
-      ((*z).tail(numConstraints).array().maxCoeff() > 0) &&
+  if ((((*z).array() > -MY_DART_ZERO) && ((*z).array() < MY_DART_ZERO)).all() &&
+      ((*z).tail(numConstraints).array().maxCoeff() > MY_DART_ZERO) &&
       ((*z).segment(numConstraints, numConstraints * numBasis)
            .array()
-           .maxCoeff() > 0)) {
+           .maxCoeff() > MY_DART_ZERO)) {
+    dterr << "ERROR: fn==0, fd>0 and lambda>0" << std::endl;
+    std::cout << "Lemke A is " << std::endl;
+    std::cout << Lemke_A << std::endl;
+    std::cout << "Lemke b is ";
+    std::cout << Lemke_b.transpose() << std::endl;
     std::cout << "[z]" << (*z).transpose() << std::endl;
     std::cout << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose() << std::endl;
     std::cout << "[z].*[w]"
@@ -332,10 +350,10 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
               << std::endl;
     std::cin.get();
   }
-  // if (numConstraints == 1) {
-  //   Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
-  //   std::cout << (*z).transpose().format(CSVFmt) << std::endl;
-  // }
+  if (numConstraints == 1) {
+    Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
+    std::cout << (*z).transpose().format(CSVFmt) << std::endl;
+  }
 
 #ifdef LEMKE_OUTPUT
   std::cout << "err: " << err << std::endl;
@@ -681,34 +699,34 @@ void MyDantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
     int value = 9;
 
     // Convention: numbasis = 8, so total 10 elements
-    if (each_z[i](0) < DART_EPSILON)  // fn = 0, break
+    if (each_z[i](0) < MY_DART_ZERO)  // fn = 0, break
     {
       value = 9;
-    } else if (each_z[i](9) < DART_EPSILON)  // lambda = 0, static
+    } else if (each_z[i](9) < MY_DART_ZERO)  // lambda = 0, static
     {
       value = 8;
-    } else if (each_z[i](1) > DART_EPSILON)  // fd_1 > 0
+    } else if (each_z[i](1) > MY_DART_ZERO)  // fd_1 > 0
     {
       value = 0;
-    } else if (each_z[i](2) > DART_EPSILON)  // fd_2 > 0
+    } else if (each_z[i](2) > MY_DART_ZERO)  // fd_2 > 0
     {
       value = 1;
-    } else if (each_z[i](3) > DART_EPSILON)  // fd_3 > 0
+    } else if (each_z[i](3) > MY_DART_ZERO)  // fd_3 > 0
     {
       value = 2;
-    } else if (each_z[i](4) > DART_EPSILON)  // fd_4 > 0
+    } else if (each_z[i](4) > MY_DART_ZERO)  // fd_4 > 0
     {
       value = 3;
-    } else if (each_z[i](5) > DART_EPSILON)  // fd_5 > 0
+    } else if (each_z[i](5) > MY_DART_ZERO)  // fd_5 > 0
     {
       value = 4;
-    } else if (each_z[i](6) > DART_EPSILON)  // fd_6 > 0
+    } else if (each_z[i](6) > MY_DART_ZERO)  // fd_6 > 0
     {
       value = 5;
-    } else if (each_z[i](7) > DART_EPSILON)  // fd_7 > 0
+    } else if (each_z[i](7) > MY_DART_ZERO)  // fd_7 > 0
     {
       value = 6;
-    } else if (each_z[i](8) > DART_EPSILON)  // fd_8 > 0
+    } else if (each_z[i](8) > MY_DART_ZERO)  // fd_8 > 0
     {
       value = 7;
     } else {

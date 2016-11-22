@@ -28,10 +28,10 @@ int main(int argc, char* argv[]) {
   int totalDOF = 0;
   totalDOF += mWorld->getSkeleton("ground skeleton")->getNumDofs();
   totalDOF += mWorld->getSkeleton("mBox")->getNumDofs();
-  std::cout << "Ground Skeleton: "
-            << mWorld->getSkeleton("ground skeleton")->isMobile() << std::endl;
-  std::cout << "mBox: " << mWorld->getSkeleton("mBox")->isMobile() << std::endl;
-  ;
+  // std::cout << "Ground Skeleton: "
+  // << mWorld->getSkeleton("ground skeleton")->isMobile() << std::endl;
+  // std::cout << "mBox: " << mWorld->getSkeleton("mBox")->isMobile() <<
+  // std::endl;
 
   // create a window and link it to the world
   MyWindow window(mWorld);

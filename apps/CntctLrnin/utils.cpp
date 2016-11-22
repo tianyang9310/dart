@@ -29,7 +29,7 @@ Eigen::MatrixXd getTangentBasisMatrixLemke(const Eigen::Vector3d& _n,
     T.col(idx_basis) =
         Eigen::Quaterniond(Eigen::AngleAxisd(DART_PI_HALF / 2, _n)) *
         T.col(idx_basis - 1);
-    if (T.col(idx_basis).dot(_n) > DART_EPSILON) {
+    if (T.col(idx_basis).dot(_n) > MY_DART_ZERO) {
       dterr << "Error in constructing basis matrix" << std::endl;
     }
   }
