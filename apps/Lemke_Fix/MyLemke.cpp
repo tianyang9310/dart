@@ -332,7 +332,7 @@ return err;
 
 bool validate(const Eigen::MatrixXd &_M, const Eigen::VectorXd &_z,
           const Eigen::VectorXd &_q) {
-const double threshold = 1e-6;
+const double threshold = 1e-5;
 int n = _z.size();
 
 Eigen::VectorXd w = _M * _z + _q;

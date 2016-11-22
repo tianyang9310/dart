@@ -3,13 +3,12 @@
 
 // #define LEMKE_OUTPUT  // Lemke A, b, err, z, w
 // #define LEMKE_OUTPUT_DETAILS  // Lemke N, B, Skeletons velocities, M, E
-// #define LEMKE_FAIL_PRINT // print lemke fail prompt information
+// #define LEMKE_FAIL_PRINT  // print lemke fail prompt information
 // #define ODE_OUTPUT // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
 // #define OUTPUT2FILE  // output data to file
 // #define ALWAYS_ODE         // always solve ode whether Lemke is valid or not
 // #define LEMKE_APPLY_PRINT  // print applying Lemke constraint
 // #define ODE_APPLY_PRINT    // print applying ODE constraint
-// #define REGULARIZED_PRINT // print regularized info
 
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
                                        MyWindow* mWindow)
@@ -321,17 +320,6 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
 
   // ---------------------------------------------------------------------------
-  // manually regularize Lemke solution
-  Eigen::VectorXd oldZ = (*z);
-  Eigen::VectorXd myZero = Eigen::VectorXd::Zero((*z).rows());
-  (*z) = ((*z).array() > -MY_DART_ZERO && (*z).array() < MY_DART_ZERO)
-             .select(myZero, (*z));
-#ifdef REGULARIZED_PRINT
-  std::cout << "Before regularized: z is " << oldZ.transpose() << std::endl;
-  std::cout << "After regularized: z is " << (*z).transpose() << std::endl;
-#endif
-  // ---------------------------------------------------------------------------
-
   // Corner case where fn==0, fd>0 and lambda>0
   if ((((*z).array() > -MY_DART_ZERO) && ((*z).array() < MY_DART_ZERO)).all() &&
       ((*z).tail(numConstraints).array().maxCoeff() > MY_DART_ZERO) &&
@@ -349,10 +337,6 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
               << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
               << std::endl;
     std::cin.get();
-  }
-  if (numConstraints == 1) {
-    Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
-    std::cout << (*z).transpose().format(CSVFmt) << std::endl;
   }
 
 #ifdef LEMKE_OUTPUT
@@ -383,23 +367,27 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
 #endif
 
-//  ---------------------------------------
-// Apply constraint impulses
-#ifdef LEMKE_FAIL_PRINT
+  //  ---------------------------------------
+  // Apply constraint impulses
   if (!Validation) {
     dterr << "ERROR: Lemke fails for current time step!!!" << std::endl;
     dterr << "Resort ODE LCP solver to solve the problem!!!" << std::endl;
+#ifdef LEMKE_FAIL_PRINT
     std::cout << "Lemke A is " << std::endl;
     std::cout << Lemke_A << std::endl;
     std::cout << "Lemke b is ";
     std::cout << Lemke_b.transpose() << std::endl;
-    std::cout << "Solution is ";
-    std::cout << (*z).transpose() << std::endl;
+    std::cout << "[z]" << (*z).transpose() << std::endl;
+    std::cout << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose() << std::endl;
+    std::cout << "[z].*[w]"
+              << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
+              << std::endl;
     std::cout << "err: " << err << std::endl;
     std::cout << std::boolalpha;
+    std::cout << "Validation: " << Validation << std::endl;
+#endif
     // std::cin.get();
   }
-#endif
 
   // bookkeeping old A and old b
   double* old_A = new double[n * nSkip];
@@ -422,6 +410,45 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   print(n, old_A, x, lo, hi, old_b, w, findex);
   std::cout << std::endl;
 #endif
+
+  // ---------------------------------------------------------------------------
+  // manually regularize Lemke solution right before apply impulse
+  // after regularization, w might not satisfy LCP condition
+  //
+  // Zero regularization
+  Eigen::VectorXd oldZ = (*z);
+  Eigen::VectorXd myZero = Eigen::VectorXd::Zero((*z).rows());
+  (*z) = ((*z).array() > -MY_DART_ZERO && (*z).array() < MY_DART_ZERO)
+             .select(myZero, (*z));
+  if (((oldZ).array() > -MY_DART_ZERO && (oldZ).array() < MY_DART_ZERO &&
+       (oldZ).array() != 0)
+          .any()) {
+    dtwarn << "Before zero regularized: z is " << oldZ.transpose() << std::endl;
+    dtwarn << "After zero regularized: z is " << (*z).transpose() << std::endl;
+  }
+  // Negative regularization
+  if (Validation) {
+    oldZ = (*z);
+    (*z) = ((*z).array() < -MY_DART_ZERO).select(myZero, (*z));
+    if (((oldZ).array() < -MY_DART_ZERO).any()) {
+      dtwarn << "Before negative regularized: z is " << oldZ.transpose()
+             << std::endl;
+      dtwarn << "After negative regularized: z is" << (*z).transpose()
+             << std::endl;
+    }
+  }
+  // ---------------------------------------------------------------------------
+
+  // ---------------------------------------------------------------------------
+  // print out Lemke solution to investigate the pattern
+  if (Validation) {
+    if (numConstraints == 1) {
+      Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
+      std::cout << (*z).transpose().format(CSVFmt) << std::endl;
+    }
+  }
+  // ---------------------------------------------------------------------------
+
   // ---------------------------------------------------------------------------
   // If Lemke solution is valid, then use Lemke solution to simulate,
   // otherwise use ODE to simulate
