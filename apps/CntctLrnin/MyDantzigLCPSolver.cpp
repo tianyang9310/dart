@@ -441,12 +441,14 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
   // ---------------------------------------------------------------------------
   // print out Lemke solution to investigate the pattern
-  if (Validation) {
-    if (numConstraints == 1) {
-      Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
-      std::cout << (*z).transpose().format(CSVFmt) << std::endl;
-    }
-  }
+  /*
+   *if (Validation) {
+   *  if (numConstraints == 1) {
+   *    Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
+   *    std::cout << (*z).transpose().format(CSVFmt) << std::endl;
+   *  }
+   *}
+   */
   // ---------------------------------------------------------------------------
 
   // ---------------------------------------------------------------------------
