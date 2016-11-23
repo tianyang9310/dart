@@ -12,6 +12,8 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) {
 MyWindow::~MyWindow() {}
 
 void MyWindow::timeStepping() {
+
+#ifndef ODE_VANILLA
   // lock Skeleton Velocities before stepping function
   dynamic_cast<MyDantzigLCPSolver*>(
       mWorld->getConstraintSolver()->getLCPSolver())
@@ -21,15 +23,18 @@ void MyWindow::timeStepping() {
       mWorld->getConstraintSolver()->getLCPSolver())
       ->pushVelocities(mWorld->getSkeleton("ground skeleton"),
                        mWorld->getSkeleton("ground skeleton")->getVelocities());
+#endif
 
   dart::gui::SimWindow::timeStepping();
 
+#ifndef ODE_VANILLA
   dynamic_cast<MyDantzigLCPSolver*>(
       mWorld->getConstraintSolver()->getLCPSolver())
       ->getSkeletonVelocitiesLock()
       .clear();
   // std::cout<<"Clear velocities lock
   // "<<dynamic_cast<MyDantzigLCPSolver*>(mWorld->getConstraintSolver()->getLCPSolver())->getSkeletonVelocitiesLock().size()<<std::endl;
+#endif
 
   // regularization the positive of cube
   double range = 12.5;

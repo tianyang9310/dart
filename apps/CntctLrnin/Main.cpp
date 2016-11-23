@@ -37,8 +37,10 @@ int main(int argc, char* argv[]) {
   MyWindow window(mWorld);
   MyWindow* mWindow = &window;
 
+#ifndef ODE_VANILLA
   mWorld->getConstraintSolver()->setLCPSolver(
       new MyDantzigLCPSolver(mWorld->getTimeStep(), totalDOF, mWindow));
+#endif
 
   glutInit(&argc, argv);
   window.initWindow(640, 480, "Balance");

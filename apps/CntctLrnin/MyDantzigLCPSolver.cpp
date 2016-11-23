@@ -9,6 +9,7 @@
 // #define ALWAYS_ODE         // always solve ode whether Lemke is valid or not
 // #define LEMKE_APPLY_PRINT  // print applying Lemke constraint
 // #define ODE_APPLY_PRINT    // print applying ODE constraint
+// #define REGULARIZED_PRINT // print regularized info
 
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
                                        MyWindow* mWindow)
@@ -370,9 +371,9 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   //  ---------------------------------------
   // Apply constraint impulses
   if (!Validation) {
+#ifdef LEMKE_FAIL_PRINT
     dterr << "ERROR: Lemke fails for current time step!!!" << std::endl;
     dterr << "Resort ODE LCP solver to solve the problem!!!" << std::endl;
-#ifdef LEMKE_FAIL_PRINT
     std::cout << "Lemke A is " << std::endl;
     std::cout << Lemke_A << std::endl;
     std::cout << "Lemke b is ";
@@ -423,18 +424,22 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   if (((oldZ).array() > -MY_DART_ZERO && (oldZ).array() < MY_DART_ZERO &&
        (oldZ).array() != 0)
           .any()) {
+#ifdef REGULARIZED_PRINT
     dtwarn << "Before zero regularized: z is " << oldZ.transpose() << std::endl;
     dtwarn << "After zero regularized: z is " << (*z).transpose() << std::endl;
+#endif
   }
   // Negative regularization
   if (Validation) {
     oldZ = (*z);
     (*z) = ((*z).array() < -MY_DART_ZERO).select(myZero, (*z));
     if (((oldZ).array() < -MY_DART_ZERO).any()) {
+#ifdef REGULARIZED_PRINT
       dtwarn << "Before negative regularized: z is " << oldZ.transpose()
              << std::endl;
       dtwarn << "After negative regularized: z is" << (*z).transpose()
              << std::endl;
+#endif
     }
   }
   // ---------------------------------------------------------------------------
