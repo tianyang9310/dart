@@ -4,11 +4,11 @@
 // #define LEMKE_OUTPUT  // Lemke A, b, err, z, w
 // #define LEMKE_OUTPUT_DETAILS  // Lemke N, B, Skeletons velocities, M, E
 // #define LEMKE_FAIL_PRINT  // print lemke fail prompt information
-// #define ODE_OUTPUT // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
+// #define ODE_OUTPUT   // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
 // #define OUTPUT2FILE  // output data to file
-// #define ALWAYS_ODE         // always solve ode whether Lemke is valid or not
-// #define LEMKE_APPLY_PRINT  // print applying Lemke constraint
-// #define ODE_APPLY_PRINT    // print applying ODE constraint
+#define ALWAYS_ODE         // always solve ode whether Lemke is valid or not
+#define LEMKE_APPLY_PRINT  // print applying Lemke constraint
+#define ODE_APPLY_PRINT    // print applying ODE constraint
 // #define REGULARIZED_PRINT // print regularized info
 
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
@@ -412,49 +412,58 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   std::cout << std::endl;
 #endif
 
-  // ---------------------------------------------------------------------------
-  // manually regularize Lemke solution right before apply impulse
-  // after regularization, w might not satisfy LCP condition
-  //
-  // Zero regularization
-  Eigen::VectorXd oldZ = (*z);
-  Eigen::VectorXd myZero = Eigen::VectorXd::Zero((*z).rows());
-  (*z) = ((*z).array() > -MY_DART_ZERO && (*z).array() < MY_DART_ZERO)
-             .select(myZero, (*z));
-  if (((oldZ).array() > -MY_DART_ZERO && (oldZ).array() < MY_DART_ZERO &&
-       (oldZ).array() != 0)
-          .any()) {
-#ifdef REGULARIZED_PRINT
-    dtwarn << "Before zero regularized: z is " << oldZ.transpose() << std::endl;
-    dtwarn << "After zero regularized: z is " << (*z).transpose() << std::endl;
-#endif
-  }
-  // Negative regularization
-  if (Validation) {
-    oldZ = (*z);
-    (*z) = ((*z).array() < -MY_DART_ZERO).select(myZero, (*z));
-    if (((oldZ).array() < -MY_DART_ZERO).any()) {
-#ifdef REGULARIZED_PRINT
-      dtwarn << "Before negative regularized: z is " << oldZ.transpose()
-             << std::endl;
-      dtwarn << "After negative regularized: z is" << (*z).transpose()
-             << std::endl;
-#endif
-    }
-  }
-  // ---------------------------------------------------------------------------
+  /*
+   *  //
+   *---------------------------------------------------------------------------
+   *  // manually regularize Lemke solution right before apply impulse
+   *  // after regularization, w might not satisfy LCP condition
+   *  //
+   *  // Zero regularization
+   *  Eigen::VectorXd oldZ = (*z);
+   *  Eigen::VectorXd myZero = Eigen::VectorXd::Zero((*z).rows());
+   *  (*z) = ((*z).array() > -MY_DART_ZERO && (*z).array() < MY_DART_ZERO)
+   *             .select(myZero, (*z));
+   *  if (((oldZ).array() > -MY_DART_ZERO && (oldZ).array() < MY_DART_ZERO &&
+   *       (oldZ).array() != 0)
+   *          .any()) {
+   *#ifdef REGULARIZED_PRINT
+   *    dtwarn << "Before zero regularized: z is " << oldZ.transpose() <<
+   *std::endl;
+   *    dtwarn << "After zero regularized: z is " << (*z).transpose() <<
+   *std::endl;
+   *#endif
+   *  }
+   *  // Negative regularization
+   *  if (Validation) {
+   *    oldZ = (*z);
+   *    (*z) = ((*z).array() < -MY_DART_ZERO).select(myZero, (*z));
+   *    if (((oldZ).array() < -MY_DART_ZERO).any()) {
+   *#ifdef REGULARIZED_PRINT
+   *      dtwarn << "Before negative regularized: z is " << oldZ.transpose()
+   *             << std::endl;
+   *      dtwarn << "After negative regularized: z is" << (*z).transpose()
+   *             << std::endl;
+   *#endif
+   *    }
+   *  }
+   *  //
+   *---------------------------------------------------------------------------
+   */
 
   // ---------------------------------------------------------------------------
   // print out Lemke solution to investigate the pattern
   /*
    *if (Validation) {
    *  if (numConstraints == 1) {
-   *    Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
+   *    Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols,
+   *",\t");
    *    std::cout << (*z).transpose().format(CSVFmt) << std::endl;
    *  }
    *}
    */
   // ---------------------------------------------------------------------------
+
+  // Validation = false;
 
   // ---------------------------------------------------------------------------
   // If Lemke solution is valid, then use Lemke solution to simulate,
@@ -495,9 +504,12 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     }
   }
 
-// ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  Eigen::Vector3d allForce;
+  Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
 // print out Lemke apply impulse
 #ifdef LEMKE_APPLY_PRINT
+  allForce = Eigen::Vector3d::Zero();
   for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt) {
     MyContactConstraint* Mycntctconstraint;
     // (*z); N; B
@@ -512,24 +524,33 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
     Mycntctconstraint =
         dynamic_cast<MyContactConstraint*>(_group->getConstraint(idx_cnstrnt));
+    Eigen::Vector3d indForce(Eigen::Vector3d::Zero());
     Mycntctconstraint->My2LemkeapplyImpulse(fn_each, fd_each, N_each, B_each,
                                             BodyNode1_dim, BodyNode2_dim,
-                                            (_TimeStep == 1.0));
+                                            (_TimeStep == 1.0), indForce);
+    allForce += indForce;
   }
+  std::cout << "[Lemke] all contact forces: " << allForce.transpose().format(CSVFmt)
+            << std::endl;
 #endif
 // ---------------------------------------------------------------------------
 // print out ODE apply impulse
 #ifdef ODE_APPLY_PRINT
+  allForce = Eigen::Vector3d::Zero();
   for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt) {
     MyContactConstraint* Mycntctconstraint;
     Mycntctconstraint =
         dynamic_cast<MyContactConstraint*>(_group->getConstraint(idx_cnstrnt));
-    Mycntctconstraint->My2ODEapplyImpulse(x + offset[idx_cnstrnt]);
+    Eigen::Vector3d indForce(Eigen::Vector3d::Zero());
+    Mycntctconstraint->My2ODEapplyImpulse(x + offset[idx_cnstrnt], indForce);
+    allForce += indForce;
   }
+  std::cout << "[ODE]   all contact forces: " << allForce.transpose().format(CSVFmt)
+            << std::endl;
 #endif
-// ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 
-// std::cin.get();
+  // std::cin.get();
 // mWindow->keyboard('y',0,0);
 
 //  ---------------------------------------

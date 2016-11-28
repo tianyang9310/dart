@@ -12,7 +12,6 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) {
 MyWindow::~MyWindow() {}
 
 void MyWindow::timeStepping() {
-
 #ifndef ODE_VANILLA
   // lock Skeleton Velocities before stepping function
   dynamic_cast<MyDantzigLCPSolver*>(
@@ -32,8 +31,12 @@ void MyWindow::timeStepping() {
       mWorld->getConstraintSolver()->getLCPSolver())
       ->getSkeletonVelocitiesLock()
       .clear();
-  // std::cout<<"Clear velocities lock
-  // "<<dynamic_cast<MyDantzigLCPSolver*>(mWorld->getConstraintSolver()->getLCPSolver())->getSkeletonVelocitiesLock().size()<<std::endl;
+// std::cout << "Clear velocities lock"
+//           << dynamic_cast<MyDantzigLCPSolver*>(
+//                  mWorld->getConstraintSolver()->getLCPSolver())
+//                  ->getSkeletonVelocitiesLock()
+//                  .size()
+//           << std::endl;
 #endif
 
   // regularization the positive of cube
@@ -56,20 +59,33 @@ void MyWindow::timeStepping() {
   counter = (counter + 1) % 200;
 
   if (counter == 50) {
-    addExtForce();
+    // addExtForce();
   } else if (counter == 150) {
-    addExtTorque();
+    // addExtTorque();
+  }
+  addExtForce();
+  if (mWorld->getSimFrames() == 1500) {
+    std::cout << "Time is " << mWorld->getTime() << std::endl;
+    std::cout << mWorld->getSkeleton("mBox")->getPositions().transpose()
+              << std::endl;
+    std::cin.get();
   }
 }
 
 void MyWindow::addExtForce() {
   // dtmsg<<"Add external force"<<std::endl;
-  // mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtTorque(Eigen::Vector3d::Random()*100);
+  // mWorld->getSkeleton("mBox")
+  //     ->getBodyNode("BodyNode_1")
+  //     ->addExtTorque(Eigen::Vector3d::Random() * 100);
 
-  Eigen::Vector3d extForce = Eigen::Vector3d::Random() * 5e2;
+  // Eigen::Vector3d extForce = Eigen::Vector3d::Random() * 5e2;
+  Eigen::Vector3d extForce = Eigen::Vector3d::Identity() * 1e1;
   extForce[1] = 0.0;
+  extForce[2] = 0.0;
   mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce);
-  // mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(Eigen::Vector3d::Random()*3);
+  // mWorld->getSkeleton("mBox")
+  //     ->getBodyNode("BodyNode_1")
+  //     ->addExtForce(Eigen::Vector3d::Random() * 3);
 }
 
 void MyWindow::addExtTorque() {

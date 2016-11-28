@@ -76,14 +76,13 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
 void MyContactConstraint::My2LemkeapplyImpulse(
     double fn, const Eigen::VectorXd& fd, const Eigen::VectorXd& N,
     const Eigen::MatrixXd& B, int BodyNode1_dim, int BodyNode2_dim,
-    bool impulse_flag) {
-#ifndef OUTPUT
-  return;
-#endif
+    bool impulse_flag, Eigen::Vector3d &allForce) {
 
+#ifdef OUTPUT
   std::cout << "============================================" << std::endl;
   std::cout << "[Lemke LCP] Using MyContactConstraint class! " << std::endl;
   // std::cin.get();
+#endif
 
   if (mIsFrictionOn) {
     for (size_t i = 0; i < mContacts.size(); ++i) {
@@ -100,29 +99,34 @@ void MyContactConstraint::My2LemkeapplyImpulse(
       Myforce = mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
       Myforce += D * fd / (impulse_flag ? mTimeStep : 1);
 
+#ifdef OUTPUT
       std::cout << "[Lemke LCP] normal impulsive force is "
                 << normal_impulsive_force.transpose() << std::endl;
       std::cout << "[Lemke LCP] tangential directional force is "
                 << tangential_directional_force.transpose() << std::endl;
       std::cout << "[Lemke LCP] overall force is " << Myforce.transpose()
                 << std::endl;
-      // std::cout<<"[Lemke LCP] first force is "<<(mContacts[i]->normal * fn /
-      // mTimeStep).transpose()<<std::endl;
-      // std::cout<<"[Lemke LCP] second force is "<<( D * fd / mTimeStep
-      // ).transpose()<<std::endl;
+      std::cout << "[Lemke LCP] first force is "
+                << (mContacts[i]->normal * fn / mTimeStep).transpose()
+                << std::endl;
+      std::cout << "[Lemke LCP] second force is "
+                << (D * fd / mTimeStep).transpose() << std::endl;
+#endif
+      allForce.resize(Myforce.rows());
+      allForce = Myforce;
     }
   } else {
     dterr << "No implementation for frictionless case!" << std::endl;
   }
 }
 
-void MyContactConstraint::My2ODEapplyImpulse(double* _lambda) {
-#ifndef OUTPUT
-  return;
-#endif
+void MyContactConstraint::My2ODEapplyImpulse(double* _lambda,
+                                             Eigen::Vector3d& allForce) {
+#ifdef OUTPUT
   std::cout << "============================================" << std::endl;
   std::cout << "[ODE LCP] Using MyContactConstraint class! " << std::endl;
   // std::cin.get();
+#endif
 
   //----------------------------------------------------------------------------
   // Friction case
@@ -137,6 +141,7 @@ void MyContactConstraint::My2ODEapplyImpulse(double* _lambda) {
       Myforce += D.col(0) * _lambda[1] / mTimeStep;
       Myforce += D.col(1) * _lambda[2] / mTimeStep;
 
+#ifdef OUTPUT
       std::cout
           << "[ODE LCP] normal impulsive force is "
           << (mJacobians1[i] * _lambda[0]).transpose()
@@ -158,12 +163,16 @@ void MyContactConstraint::My2ODEapplyImpulse(double* _lambda) {
                                // _lambda[1]).transpose()<<std::endl;
       std::cout << "[ODE LCP] overall force is " << Myforce.transpose()
                 << std::endl;
-      // std::cout<<"[ODE LCP] overall first is "<<( mContacts[i]->normal *
-      // _lambda[0] / mTimeStep ).transpose()<<std::endl;
-      // std::cout<<"[ODE LCP] overall second 1 is "<<( D.col(0) * _lambda[1] /
-      // mTimeStep).transpose()<<std::endl;
-      // std::cout<<"[ODE LCP] overall second 2 is "<<( D.col(0) * _lambda[2] /
-      // mTimeStep).transpose()<<std::endl;
+      std::cout << "[ODE LCP] overall first is "
+                << (mContacts[i]->normal * _lambda[0] / mTimeStep).transpose()
+                << std::endl;
+      std::cout << "[ODE LCP] overall second 1 is "
+                << (D.col(0) * _lambda[1] / mTimeStep).transpose() << std::endl;
+      std::cout << "[ODE LCP] overall second 2 is "
+                << (D.col(0) * _lambda[2] / mTimeStep).transpose() << std::endl;
+#endif
+      allForce.resize(Myforce.rows());
+      allForce = Myforce;
     }
   }
   //----------------------------------------------------------------------------
