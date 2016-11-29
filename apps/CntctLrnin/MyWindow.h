@@ -5,7 +5,7 @@
 #include "MyDantzigLCPSolver.h"
 #include "dart/dart.h"
 
-#define ODE_VANILLA  // decide to use MyDantizig or Danzig
+// #define ODE_VANILLA  // decide to use MyDantizig or Danzig
 
 class MyWindow : public dart::gui::SimWindow {
   public:

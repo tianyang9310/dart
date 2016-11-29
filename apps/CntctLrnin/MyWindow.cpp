@@ -12,6 +12,9 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) {
 MyWindow::~MyWindow() {}
 
 void MyWindow::timeStepping() {
+    // int numContacts = mCollisionDetector->getNumContacts();
+    // std::cout<<"num of contact points is: "<<numContacts<<std::endl;
+    // std::cout<<std::endl;
 #ifndef ODE_VANILLA
   // lock Skeleton Velocities before stepping function
   dynamic_cast<MyDantzigLCPSolver*>(
@@ -70,6 +73,10 @@ void MyWindow::timeStepping() {
               << std::endl;
     std::cin.get();
   }
+    // mCollisionDetector->detectCollision(true,true);
+    // numContacts = mCollisionDetector->getNumContacts();
+    // std::cout<<"num of contact points is: "<<numContacts<<std::endl;
+    // std::cout<<std::endl;
 }
 
 void MyWindow::addExtForce() {

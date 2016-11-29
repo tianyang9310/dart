@@ -4,7 +4,7 @@
 // #define LEMKE_OUTPUT  // Lemke A, b, err, z, w
 // #define LEMKE_OUTPUT_DETAILS  // Lemke N, B, Skeletons velocities, M, E
 // #define LEMKE_FAIL_PRINT  // print lemke fail prompt information
-// #define ODE_OUTPUT   // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
+// #define ODE_OUTPUT  // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
 // #define OUTPUT2FILE  // output data to file
 #define ALWAYS_ODE         // always solve ode whether Lemke is valid or not
 #define LEMKE_APPLY_PRINT  // print applying Lemke constraint
@@ -259,8 +259,32 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   if (bodyNode1 != nullptr) {
     M1 = bodyNode1->getSkeleton()->getMassMatrix();
     M.block(0, 0, M1.rows(), M1.cols()) = M1;
-    tau1 = M1 * mSkeletonVelocitiesLock[bodyNode1->getSkeleton()] -
-           mTimeStep * bodyNode1->getSkeleton()->getCoriolisAndGravityForces();
+    // get internal forces
+    Eigen::VectorXd mInternalForces(bodyNode1->getSkeleton()->getNumDofs());
+    mInternalForces.setZero();
+    int dofCounter = 0;
+    for (size_t idxJoint = 0;
+         idxJoint < bodyNode1->getSkeleton()->getNumJoints(); idxJoint++) {
+      int DofofThisJoint =
+          bodyNode1->getSkeleton()->getJoint(idxJoint)->getNumDofs();
+      mInternalForces.segment(dofCounter, DofofThisJoint) =
+          bodyNode1->getSkeleton()->getJoint(idxJoint)->getForces();
+      dofCounter += DofofThisJoint;
+    }
+    // std::cout << "Internal forces are " << mInternalForces.transpose()
+    //           << std::endl;
+    
+    // get external forces
+    Eigen::VectorXd mExternalForces(bodyNode1->getSkeleton()->getNumDofs());
+    mExternalForces = bodyNode1->getSkeleton()->getExternalForces();
+    // std::cout << "mBox external forces are: "
+    //           << bodyNode1->getSkeleton()->getExternalForces().transpose()
+    //           << std::endl;
+
+    tau1 =
+        M1 * mSkeletonVelocitiesLock[bodyNode1->getSkeleton()] -
+        mTimeStep * (bodyNode1->getSkeleton()->getCoriolisAndGravityForces() -
+                     mInternalForces - mExternalForces);
     tau.head(tau1.rows()) = tau1;
   } else {
     dterr << "ERROR: violating convention that bodyNode1 always is cube"
@@ -270,8 +294,32 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   if (bodyNode2 != nullptr) {
     M2 = bodyNode2->getSkeleton()->getMassMatrix();
     M.block(M1.rows(), M1.cols(), M2.rows(), M2.cols()) = M2;
-    tau2 = M2 * mSkeletonVelocitiesLock[bodyNode2->getSkeleton()] -
-           mTimeStep * bodyNode2->getSkeleton()->getCoriolisAndGravityForces();
+    // get internal forces
+    Eigen::VectorXd mInternalForces(bodyNode2->getSkeleton()->getNumDofs());
+    mInternalForces.setZero();
+    int dofCounter = 0;
+    for (size_t idxJoint = 0;
+         idxJoint < bodyNode2->getSkeleton()->getNumJoints(); idxJoint++) {
+      int DofofThisJoint =
+          bodyNode2->getSkeleton()->getJoint(idxJoint)->getNumDofs();
+      mInternalForces.segment(dofCounter, DofofThisJoint) =
+          bodyNode2->getSkeleton()->getJoint(idxJoint)->getForces();
+      dofCounter += DofofThisJoint;
+    }
+    // std::cout << "Internal forces are " << mInternalForces.transpose()
+    //           << std::endl;
+
+    // get external forces
+    Eigen::VectorXd mExternalForces(bodyNode2->getSkeleton()->getNumDofs());
+    mExternalForces = bodyNode2->getSkeleton()->getExternalForces();
+    // std::cout << "mBox external forces are: "
+    //           << bodyNode2->getSkeleton()->getExternalForces().transpose()
+    //           << std::endl;
+
+    tau2 =
+        M2 * mSkeletonVelocitiesLock[bodyNode2->getSkeleton()] -
+        mTimeStep * (bodyNode2->getSkeleton()->getCoriolisAndGravityForces() -
+                     mInternalForces - mExternalForces);
     tau.tail(tau2.rows()) = tau2;
   } else {
     dterr << "ERROR: violating convention that bodyNode2 always is ground"
@@ -530,8 +578,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
                                             (_TimeStep == 1.0), indForce);
     allForce += indForce;
   }
-  std::cout << "[Lemke] all contact forces: " << allForce.transpose().format(CSVFmt)
-            << std::endl;
+  dtmsg << "[Lemke] all contact forces: " << allForce.transpose().format(CSVFmt)
+        << std::endl;
 #endif
 // ---------------------------------------------------------------------------
 // print out ODE apply impulse
@@ -545,8 +593,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     Mycntctconstraint->My2ODEapplyImpulse(x + offset[idx_cnstrnt], indForce);
     allForce += indForce;
   }
-  std::cout << "[ODE]   all contact forces: " << allForce.transpose().format(CSVFmt)
-            << std::endl;
+  dtmsg << "[ODE]   all contact forces: " << allForce.transpose().format(CSVFmt)
+        << std::endl;
 #endif
   // ---------------------------------------------------------------------------
 
