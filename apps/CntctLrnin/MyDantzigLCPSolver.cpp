@@ -460,43 +460,39 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   std::cout << std::endl;
 #endif
 
-  /*
-   *  //
-   *---------------------------------------------------------------------------
-   *  // manually regularize Lemke solution right before apply impulse
-   *  // after regularization, w might not satisfy LCP condition
-   *  //
-   *  // Zero regularization
-   *  Eigen::VectorXd oldZ = (*z);
-   *  Eigen::VectorXd myZero = Eigen::VectorXd::Zero((*z).rows());
-   *  (*z) = ((*z).array() > -MY_DART_ZERO && (*z).array() < MY_DART_ZERO)
-   *             .select(myZero, (*z));
-   *  if (((oldZ).array() > -MY_DART_ZERO && (oldZ).array() < MY_DART_ZERO &&
-   *       (oldZ).array() != 0)
-   *          .any()) {
-   *#ifdef REGULARIZED_PRINT
-   *    dtwarn << "Before zero regularized: z is " << oldZ.transpose() <<
-   *std::endl;
-   *    dtwarn << "After zero regularized: z is " << (*z).transpose() <<
-   *std::endl;
-   *#endif
-   *  }
-   *  // Negative regularization
-   *  if (Validation) {
-   *    oldZ = (*z);
-   *    (*z) = ((*z).array() < -MY_DART_ZERO).select(myZero, (*z));
-   *    if (((oldZ).array() < -MY_DART_ZERO).any()) {
-   *#ifdef REGULARIZED_PRINT
-   *      dtwarn << "Before negative regularized: z is " << oldZ.transpose()
-   *             << std::endl;
-   *      dtwarn << "After negative regularized: z is" << (*z).transpose()
-   *             << std::endl;
-   *#endif
-   *    }
-   *  }
-   *  //
-   *---------------------------------------------------------------------------
-   */
+  // ---------------------------------------------------------------------------
+  // manually regularize Lemke solution right before apply impulse
+  // after regularization, w might not satisfy LCP condition
+  //
+  // Zero regularization
+  Eigen::VectorXd oldZ = (*z);
+  Eigen::VectorXd myZero = Eigen::VectorXd::Zero((*z).rows());
+  (*z) = ((*z).array() > -MY_DART_ZERO && (*z).array() < MY_DART_ZERO)
+             .select(myZero, (*z));
+  if (((oldZ).array() > -MY_DART_ZERO && (oldZ).array() < MY_DART_ZERO &&
+       (oldZ).array() != 0)
+          .any()) {
+#ifdef REGULARIZED_PRINT
+    dtwarn << "Before zero regularized: z is " << oldZ.transpose() <<
+std::endl;
+    dtwarn << "After zero regularized: z is " << (*z).transpose() <<
+std::endl;
+#endif
+  }
+  // Negative regularization
+  if (Validation) {
+    oldZ = (*z);
+    (*z) = ((*z).array() < -MY_DART_ZERO).select(myZero, (*z));
+    if (((oldZ).array() < -MY_DART_ZERO).any()) {
+#ifdef REGULARIZED_PRINT
+      dtwarn << "Before negative regularized: z is " << oldZ.transpose()
+             << std::endl;
+      dtwarn << "After negative regularized: z is" << (*z).transpose()
+             << std::endl;
+#endif
+    }
+  }
+  // ---------------------------------------------------------------------------
 
   // ---------------------------------------------------------------------------
   // print out Lemke solution to investigate the pattern
