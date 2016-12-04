@@ -73,10 +73,19 @@ void MyWindow::timeStepping() {
               << std::endl;
     std::cin.get();
   }
-    // mCollisionDetector->detectCollision(true,true);
-    // numContacts = mCollisionDetector->getNumContacts();
-    // std::cout<<"num of contact points is: "<<numContacts<<std::endl;
-    // std::cout<<std::endl;
+  mCollisionDetector->detectCollision(true, true);
+  numContacts = mCollisionDetector->getNumContacts();
+
+  std::cout << "Current frame is " << mWorld->getSimFrames() << std::endl;
+  if (numContacts != 4) {
+    dterr << "numContacts: " << numContacts
+          << " current frame: " << mWorld->getSimFrames() << std::endl;
+    keyboard('y', 0, 0);
+  }
+  /*
+   *std::cout<<"num of contact points is: "<<numContacts<<std::endl;
+   *std::cout<<std::endl;
+   */
 }
 
 void MyWindow::addExtForce() {
@@ -107,6 +116,9 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
     case 'y':
       mSimulating = !mSimulating;
       break;
+    case 'o':
+      mPlay = !mPlay;
+      break;
     case 'a':
       addExtForce();
       break;
@@ -124,4 +136,127 @@ void MyWindow::drawSkels() {
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   dart::gui::SimWindow::drawSkels();
+}
+
+void MyWindow::draw() {
+  glDisable(GL_LIGHTING);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  if (!mSimulating) {
+    if (mPlay) {
+      if (mPlayFrame < mWorld->getRecording()->getNumFrames()) {
+        size_t nSkels = mWorld->getNumSkeletons();
+        for (size_t i = 0; i < nSkels; i++) {
+          // size_t start = mWorld->getIndex(i);
+          // size_t size = mWorld->getSkeleton(i)->getNumDofs();
+          mWorld->getSkeleton(i)->setPositions(
+              mWorld->getRecording()->getConfig(mPlayFrame, i));
+        }
+        if (mShowMarkers) {
+          // size_t sumDofs = mWorld->getIndex(nSkels);
+          int nContact = mWorld->getRecording()->getNumContacts(mPlayFrame);
+          for (int i = 0; i < nContact; i++) {
+            Eigen::Vector3d v =
+                mWorld->getRecording()->getContactPoint(mPlayFrame, i);
+            Eigen::Vector3d f =
+                mWorld->getRecording()->getContactForce(mPlayFrame, i);
+
+            glBegin(GL_LINES);
+            glVertex3f(v[0], v[1], v[2]);
+            glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
+            glEnd();
+            mRI->setPenColor(Eigen::Vector3d(0.2, 0.2, 0.8));
+            mRI->pushMatrix();
+            glTranslated(v[0], v[1], v[2]);
+            mRI->drawEllipsoid(Eigen::Vector3d(0.02, 0.02, 0.02));
+            mRI->popMatrix();
+          }
+        }
+      }
+    } else {
+      if (mShowMarkers) {
+        dart::collision::CollisionDetector* cd =
+            mWorld->getConstraintSolver()->getCollisionDetector();
+        for (size_t k = 0; k < cd->getNumContacts(); k++) {
+          Eigen::Vector3d v = cd->getContact(k).point;
+          Eigen::Vector3d f = cd->getContact(k).force / 10.0;
+          glBegin(GL_LINES);
+          glVertex3f(v[0], v[1], v[2]);
+          glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
+          glEnd();
+          mRI->setPenColor(Eigen::Vector3d(0.2, 0.2, 0.8));
+          mRI->pushMatrix();
+          glTranslated(v[0], v[1], v[2]);
+          mRI->drawEllipsoid(Eigen::Vector3d(0.02, 0.02, 0.02));
+          mRI->popMatrix();
+        }
+      }
+    }
+  } else {
+    if (mShowMarkers) {
+      dart::collision::CollisionDetector* cd =
+          mWorld->getConstraintSolver()->getCollisionDetector();
+      for (size_t k = 0; k < cd->getNumContacts(); k++) {
+        Eigen::Vector3d v = cd->getContact(k).point;
+        Eigen::Vector3d f = cd->getContact(k).force / 10.0;
+        glBegin(GL_LINES);
+        glVertex3f(v[0], v[1], v[2]);
+        glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
+        glEnd();
+        mRI->setPenColor(Eigen::Vector3d(0.2, 0.2, 0.8));
+        mRI->pushMatrix();
+        glTranslated(v[0], v[1], v[2]);
+        mRI->drawEllipsoid(Eigen::Vector3d(0.02, 0.02, 0.02));
+        mRI->popMatrix();
+      }
+    }
+  }
+  drawSkels();
+  drawEntities();
+
+  // display the frame count in 2D text
+  char buff[64];
+  if (!mSimulating)
+    if (!mPlay)
+#ifdef _WIN32
+      _snprintf(buff, sizeof(buff), "%d", mWorld->getSimFrames());
+#else
+      std::snprintf(buff, sizeof(buff), "%d", mWorld->getSimFrames());
+#endif
+    else
+#ifdef _WIN32
+      _snprintf(buff, sizeof(buff), "%d", mPlayFrame);
+#else
+      std::snprintf(buff, sizeof(buff), "%d", mPlayFrame);
+#endif
+  else
+#ifdef _WIN32
+    _snprintf(buff, sizeof(buff), "%d", mWorld->getSimFrames());
+#else
+    std::snprintf(buff, sizeof(buff), "%d", mWorld->getSimFrames());
+#endif
+  std::string frame(buff);
+  glColor3f(0.0, 0.0, 0.0);
+  dart::gui::drawStringOnScreen(0.02f, 0.02f, frame);
+  glEnable(GL_LIGHTING);
+}
+
+void MyWindow::displayTimer(int _val) {
+  int numIter = mDisplayTimeout / (mWorld->getTimeStep() * 1000);
+  if (mPlay) {
+    mPlayFrame += 4;
+    if (mPlayFrame >= mWorld->getRecording()->getNumFrames()) {
+      mPlayFrame = 0;
+      mPlay = false;
+    }
+  } else if (mSimulating) {
+    for (int i = 0; i < numIter; i++) {
+      timeStepping();
+      mWorld->bake();
+      if (!mSimulating) {
+        break;
+      }
+    }
+  }
+  glutPostRedisplay();
+  glutTimerFunc(mDisplayTimeout, refreshTimer, _val);
 }

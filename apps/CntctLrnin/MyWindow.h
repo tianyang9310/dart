@@ -18,6 +18,8 @@ class MyWindow : public dart::gui::SimWindow {
   void timeStepping() override;
   void keyboard(unsigned char _key, int _x, int _y) override;
   void drawSkels() override;
+  void draw() override;
+  void displayTimer(int _val); 
 
   private:
   std::unique_ptr<Controller> mController;
