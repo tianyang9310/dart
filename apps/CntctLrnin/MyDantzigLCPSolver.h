@@ -37,6 +37,7 @@ class MyDantzigLCPSolver : public DantzigLCPSolver {
 
   std::map<dart::dynamics::SkeletonPtr, Eigen::VectorXd>&
   getSkeletonVelocitiesLock();
+  int getLemkeFailCounter();
 
   protected:
   void print(size_t _n, double* _A, double* _x, double* _lo, double* _hi,
@@ -53,6 +54,8 @@ class MyDantzigLCPSolver : public DantzigLCPSolver {
   int dataSize;
 
   int numBasis;
+
+  int LemkeFailCounter;
 
   std::map<dart::dynamics::SkeletonPtr, Eigen::VectorXd>
       mSkeletonVelocitiesLock;

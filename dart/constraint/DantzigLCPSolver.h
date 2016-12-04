@@ -58,6 +58,8 @@ public:
 
   // Documentation inherited
   virtual void solve(ConstrainedGroup* _group);
+    
+  int numContactsCallBack;
 
 #ifndef NDEBUG
 private:

@@ -6,6 +6,18 @@
 #include "dart/dynamics/Skeleton.h"
 #include "dart/math/Helpers.h"
 
+#define DART_ERROR_ALLOWANCE 0.0
+#define DART_ERP 0.01
+#define DART_MAX_ERV 1e-3
+#define DART_CFM 1e-5
+// #define DART_MAX_NUMBER_OF_CONTACTS 32
+
+#define DART_RESTITUTION_COEFF_THRESHOLD 1e-3
+#define DART_FRICTION_COEFF_THRESHOLD 1e-3
+#define DART_BOUNCING_VELOCITY_THRESHOLD 1e-1
+#define DART_MAX_BOUNCING_VELOCITY 1e+2
+// #define DART_CONTACT_CONSTRAINT_EPSILON  1e-6
+
 #define OUTPUT
 
 namespace dart {
@@ -57,7 +69,7 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
   } else {
     for (size_t i = 0; i < mContacts.size(); ++i) {
       Eigen::VectorXd normal_impulsive_force;
-      normal_impulsive_force = N * fn;
+      normal_impulsive_force = N * fn * (impulse_flag ? 1 : mTimeStep);
       if (mBodyNode1->isReactive()) {
         mBodyNode1->addConstraintImpulse(
             normal_impulsive_force.head(BodyNode1_dim));
@@ -68,7 +80,8 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
             normal_impulsive_force.tail(BodyNode2_dim));
       }
 
-      mContacts[i]->force = mContacts[i]->normal * fn / mTimeStep;
+      mContacts[i]->force =
+          mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
     }
   }
 }
@@ -76,12 +89,13 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
 void MyContactConstraint::My2LemkeapplyImpulse(
     double fn, const Eigen::VectorXd& fd, const Eigen::VectorXd& N,
     const Eigen::MatrixXd& B, int BodyNode1_dim, int BodyNode2_dim,
-    bool impulse_flag, Eigen::Vector3d &allForce) {
-
+    bool impulse_flag, Eigen::Vector3d& allForce) {
 #ifdef OUTPUT
   std::cout << "============================================" << std::endl;
   std::cout << "[Lemke LCP] Using MyContactConstraint class! " << std::endl;
-  // std::cin.get();
+  std::cout << "[Lemke LCP] fn: " << fn << std::endl;
+  std::cout << "[Lemke LCP] fd: " << fd.transpose() << std::endl;
+// std::cin.get();
 #endif
 
   if (mIsFrictionOn) {
@@ -125,7 +139,9 @@ void MyContactConstraint::My2ODEapplyImpulse(double* _lambda,
 #ifdef OUTPUT
   std::cout << "============================================" << std::endl;
   std::cout << "[ODE LCP] Using MyContactConstraint class! " << std::endl;
-  // std::cin.get();
+  std::cout << "[ODE LCP] fn: " << _lambda[0] << std::endl;
+  std::cout << "[ODE LCP] fd: " << _lambda[1] << " " << _lambda[2] << std::endl;
+// std::cin.get();
 #endif
 
   //----------------------------------------------------------------------------
@@ -180,6 +196,146 @@ void MyContactConstraint::My2ODEapplyImpulse(double* _lambda,
   //----------------------------------------------------------------------------
   else {
     dterr << "No implementation for frictionless case!" << std::endl;
+  }
+}
+
+void MyContactConstraint::getInformation(ConstraintInfo* _info) {
+  // Fill w, where the LCP form is Ax = b + w (x >= 0, w >= 0, x^T w = 0)
+  getRelVelocity(_info->b);
+
+  //----------------------------------------------------------------------------
+  // Friction case
+  //----------------------------------------------------------------------------
+  if (mIsFrictionOn) {
+    size_t index = 0;
+    for (size_t i = 0; i < mContacts.size(); ++i) {
+      // Bias term, w, should be zero
+      assert(_info->w[index] == 0.0);
+      assert(_info->w[index + 1] == 0.0);
+      assert(_info->w[index + 2] == 0.0);
+
+      // Upper and lower bounds of normal impulsive force
+      _info->lo[index] = 0.0;
+      _info->hi[index] = dInfinity;
+      assert(_info->findex[index] == -1);
+
+      // Upper and lower bounds of tangential direction-1 impulsive force
+      _info->lo[index + 1] = -mFrictionCoeff;
+      _info->hi[index + 1] = mFrictionCoeff;
+      _info->findex[index + 1] = index;
+
+      // Upper and lower bounds of tangential direction-2 impulsive force
+      _info->lo[index + 2] = -mFrictionCoeff;
+      _info->hi[index + 2] = mFrictionCoeff;
+      _info->findex[index + 2] = index;
+
+      //      std::cout << "_frictionalCoff: " << _frictionalCoff << std::endl;
+
+      //      std::cout << "_lcp->ub[_idx + 1]: " << _lcp->ub[_idx + 1] <<
+      //      std::endl;
+      //      std::cout << "_lcp->ub[_idx + 2]: " << _lcp->ub[_idx + 2] <<
+      //      std::endl;
+
+      //------------------------------------------------------------------------
+      // Bouncing
+      //------------------------------------------------------------------------
+      // A. Penetration correction
+      double bouncingVelocity =
+          mContacts[i]->penetrationDepth - mErrorAllowance;
+      if (bouncingVelocity < 0.0) {
+        bouncingVelocity = 0.0;
+      } else {
+        bouncingVelocity *= mErrorReductionParameter * _info->invTimeStep;
+        if (bouncingVelocity > mMaxErrorReductionVelocity)
+          bouncingVelocity = mMaxErrorReductionVelocity;
+      }
+
+      // B. Restitution
+      if (mIsBounceOn) {
+        double& negativeRelativeVel = _info->b[index];
+        double restitutionVel = negativeRelativeVel * mRestitutionCoeff;
+
+        if (restitutionVel > DART_BOUNCING_VELOCITY_THRESHOLD) {
+          if (restitutionVel > bouncingVelocity) {
+            bouncingVelocity = restitutionVel;
+
+            if (bouncingVelocity > DART_MAX_BOUNCING_VELOCITY) {
+              bouncingVelocity = DART_MAX_BOUNCING_VELOCITY;
+            }
+          }
+        }
+      }
+
+      //
+      //      _lcp->b[_idx] = _lcp->b[_idx] * 1.1;
+      //      std::cout << "_lcp->b[_idx]: " << _lcp->b[_idx] << std::endl;
+      _info->b[index] += bouncingVelocity;
+      //      std::cout << "_lcp->b[_idx]: " << _lcp->b[_idx] << std::endl;
+
+      // TODO(JS): Initial guess
+      // x
+      _info->x[index] = 0.0;
+      _info->x[index + 1] = 0.0;
+      _info->x[index + 2] = 0.0;
+
+      // Increase index
+      index += 3;
+    }
+  }
+  //----------------------------------------------------------------------------
+  // Frictionless case
+  //----------------------------------------------------------------------------
+  else {
+    for (size_t i = 0; i < mContacts.size(); ++i) {
+      // Bias term, w, should be zero
+      _info->w[i] = 0.0;
+
+      // Upper and lower bounds of normal impulsive force
+      _info->lo[i] = 0.0;
+      _info->hi[i] = dInfinity;
+      assert(_info->findex[i] == -1);
+
+      //------------------------------------------------------------------------
+      // Bouncing
+      //------------------------------------------------------------------------
+      // A. Penetration correction
+      double bouncingVelocity =
+          mContacts[i]->penetrationDepth - DART_ERROR_ALLOWANCE;
+      if (bouncingVelocity < 0.0) {
+        bouncingVelocity = 0.0;
+      } else {
+        bouncingVelocity *= mErrorReductionParameter * _info->invTimeStep;
+        if (bouncingVelocity > mMaxErrorReductionVelocity)
+          bouncingVelocity = mMaxErrorReductionVelocity;
+      }
+
+      // B. Restitution
+      if (mIsBounceOn) {
+        double& negativeRelativeVel = _info->b[i];
+        double restitutionVel = negativeRelativeVel * mRestitutionCoeff;
+
+        if (restitutionVel > DART_BOUNCING_VELOCITY_THRESHOLD) {
+          if (restitutionVel > bouncingVelocity) {
+            bouncingVelocity = restitutionVel;
+
+            if (bouncingVelocity > DART_MAX_BOUNCING_VELOCITY)
+              bouncingVelocity = DART_MAX_BOUNCING_VELOCITY;
+          }
+        }
+      }
+
+      //
+      //      _lcp->b[_idx] = _lcp->b[_idx] * 1.1;
+      //      std::cout << "_lcp->b[_idx]: " << _lcp->b[_idx] << std::endl;
+      // _info->b[i] += bouncingVelocity;
+      //      std::cout << "_lcp->b[_idx]: " << _lcp->b[_idx] << std::endl;
+
+      // TODO(JS): Initial guess
+      // x
+      _info->x[i] = 0.0;
+
+      // Increase index
+    }
   }
 }
 }

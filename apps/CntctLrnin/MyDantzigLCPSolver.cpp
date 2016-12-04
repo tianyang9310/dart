@@ -1,14 +1,16 @@
 #include "MyDantzigLCPSolver.h"
 #include "MyWindow.h"
 
-// #define LEMKE_OUTPUT  // Lemke A, b, err, z, w
+#define LEMKE_OUTPUT  // Lemke A, b, err, z, w
 // #define LEMKE_OUTPUT_DETAILS  // Lemke N, B, Skeletons velocities, M, E
 // #define LEMKE_FAIL_PRINT  // print lemke fail prompt information
-// #define ODE_OUTPUT  // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
+#define ODE_OUTPUT        // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
 // #define OUTPUT2FILE  // output data to file
+
 #define ALWAYS_ODE         // always solve ode whether Lemke is valid or not
 #define LEMKE_APPLY_PRINT  // print applying Lemke constraint
 #define ODE_APPLY_PRINT    // print applying ODE constraint
+
 // #define REGULARIZED_PRINT // print regularized info
 
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
@@ -16,6 +18,7 @@ MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
     : DantzigLCPSolver(_timestep), totalDOF(_totalDOF), mWindow(mWindow) {
   numBasis = 8;
   dataSize = 30000;
+  LemkeFailCounter = 0;
 
 #ifdef OUTPUT2FILE
   for (int numContactsToLearn = 1; numContactsToLearn < 5;
@@ -42,6 +45,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   // If there is no constraint, then just return true.
   // numConstraints is exactly the number of contact points
   size_t numConstraints = _group->getNumConstraints();
+  numContactsCallBack = numConstraints;
   if (numConstraints == 0) {
     return;
   } else {
@@ -271,16 +275,54 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
           bodyNode1->getSkeleton()->getJoint(idxJoint)->getForces();
       dofCounter += DofofThisJoint;
     }
-    // std::cout << "Internal forces are " << mInternalForces.transpose()
-    //           << std::endl;
-    
+    /*
+     *std::cout << "Internal forces are " << mInternalForces.transpose()
+     *          << std::endl;
+     */
+
     // get external forces
     Eigen::VectorXd mExternalForces(bodyNode1->getSkeleton()->getNumDofs());
     mExternalForces = bodyNode1->getSkeleton()->getExternalForces();
-    // std::cout << "mBox external forces are: "
-    //           << bodyNode1->getSkeleton()->getExternalForces().transpose()
-    //           << std::endl;
+    /*
+     *std::cout << "mBox external forces are: "
+     *          << bodyNode1->getSkeleton()->getExternalForces().transpose()
+     *          << std::endl;
+     */
 
+    // print out Coriolis and Gravity forces
+    /*
+     *std::cout
+     *    << "Coriolis and gravity forces are "
+     *    << bodyNode1->getSkeleton()->getCoriolisAndGravityForces().transpose()
+     *    << std::endl;
+     */
+
+    // print out tau1
+    /*
+     *std::cout << "current velocity is "
+     *          << mSkeletonVelocitiesLock[bodyNode1->getSkeleton()].transpose()
+     *          << std::endl;
+     *std::cout << "[No ExtForces] tau1 is "
+     *          << (M1 * mSkeletonVelocitiesLock[bodyNode1->getSkeleton()] -
+     *              mTimeStep *
+     *                  (bodyNode1->getSkeleton()->getCoriolisAndGravityForces()
+     *-
+     *                   mInternalForces))
+     *                 .transpose()
+     *          << std::endl;
+     *std::cout << "[Full] tau1 is "
+     *          << (M1 * mSkeletonVelocitiesLock[bodyNode1->getSkeleton()] -
+     *              mTimeStep *
+     *                  (bodyNode1->getSkeleton()->getCoriolisAndGravityForces()
+     *-
+     *                   mInternalForces - mExternalForces))
+     *                 .transpose()
+     *          << std::endl;
+     */
+
+    // Disable external force when computing tau, in this case this should be
+    // exactly as the equation of LCP paper
+    // mExternalForces.setZero();
     tau1 =
         M1 * mSkeletonVelocitiesLock[bodyNode1->getSkeleton()] -
         mTimeStep * (bodyNode1->getSkeleton()->getCoriolisAndGravityForces() -
@@ -306,15 +348,19 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
           bodyNode2->getSkeleton()->getJoint(idxJoint)->getForces();
       dofCounter += DofofThisJoint;
     }
-    // std::cout << "Internal forces are " << mInternalForces.transpose()
-    //           << std::endl;
+    /*
+     *std::cout << "Internal forces are " << mInternalForces.transpose()
+     *          << std::endl;
+     */
 
     // get external forces
     Eigen::VectorXd mExternalForces(bodyNode2->getSkeleton()->getNumDofs());
     mExternalForces = bodyNode2->getSkeleton()->getExternalForces();
-    // std::cout << "mBox external forces are: "
-    //           << bodyNode2->getSkeleton()->getExternalForces().transpose()
-    //           << std::endl;
+    /*
+     *std::cout << "mBox external forces are: "
+     *          << bodyNode2->getSkeleton()->getExternalForces().transpose()
+     *          << std::endl;
+     */
 
     tau2 =
         M2 * mSkeletonVelocitiesLock[bodyNode2->getSkeleton()] -
@@ -419,9 +465,11 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   //  ---------------------------------------
   // Apply constraint impulses
   if (!Validation) {
+    LemkeFailCounter++;
 #ifdef LEMKE_FAIL_PRINT
     dterr << "ERROR: Lemke fails for current time step!!!" << std::endl;
     dterr << "Resort ODE LCP solver to solve the problem!!!" << std::endl;
+    dterr << "Current frame is " << mWindow->getWorld()->getSimFrames() << std::endl;
     std::cout << "Lemke A is " << std::endl;
     std::cout << Lemke_A << std::endl;
     std::cout << "Lemke b is ";
@@ -435,7 +483,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     std::cout << std::boolalpha;
     std::cout << "Validation: " << Validation << std::endl;
 #endif
-    // std::cin.get();
+    // mWindow->keyboard('y',0,0);
   }
 
   // bookkeeping old A and old b
@@ -473,25 +521,25 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
        (oldZ).array() != 0)
           .any()) {
 #ifdef REGULARIZED_PRINT
-    dtwarn << "Before zero regularized: z is " << oldZ.transpose() <<
-std::endl;
-    dtwarn << "After zero regularized: z is " << (*z).transpose() <<
-std::endl;
+    dtwarn << "Before zero regularized: z is " << oldZ.transpose() << std::endl;
+    dtwarn << "After zero regularized: z is " << (*z).transpose() << std::endl;
 #endif
   }
-  // Negative regularization
-  if (Validation) {
-    oldZ = (*z);
-    (*z) = ((*z).array() < -MY_DART_ZERO).select(myZero, (*z));
-    if (((oldZ).array() < -MY_DART_ZERO).any()) {
-#ifdef REGULARIZED_PRINT
-      dtwarn << "Before negative regularized: z is " << oldZ.transpose()
-             << std::endl;
-      dtwarn << "After negative regularized: z is" << (*z).transpose()
-             << std::endl;
-#endif
-    }
-  }
+/*
+ *  // Negative regularization
+ *  if (Validation) {
+ *    oldZ = (*z);
+ *    (*z) = ((*z).array() < -MY_DART_ZERO).select(myZero, (*z));
+ *    if (((oldZ).array() < -MY_DART_ZERO).any()) {
+ *#ifdef REGULARIZED_PRINT
+ *      dtwarn << "Before negative regularized: z is " << oldZ.transpose()
+ *             << std::endl;
+ *      dtwarn << "After negative regularized: z is" << (*z).transpose()
+ *             << std::endl;
+ *#endif
+ *    }
+ *  }
+ */
   // ---------------------------------------------------------------------------
 
   // ---------------------------------------------------------------------------
@@ -592,10 +640,9 @@ std::endl;
   dtmsg << "[ODE]   all contact forces: " << allForce.transpose().format(CSVFmt)
         << std::endl;
 #endif
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
   // std::cin.get();
-// mWindow->keyboard('y',0,0);
 
 //  ---------------------------------------
 #ifdef OUTPUT2FILE
@@ -761,6 +808,10 @@ void MyDantzigLCPSolver::pushVelocities(
 std::map<dart::dynamics::SkeletonPtr, Eigen::VectorXd>&
 MyDantzigLCPSolver::getSkeletonVelocitiesLock() {
   return mSkeletonVelocitiesLock;
+}
+
+int MyDantzigLCPSolver::getLemkeFailCounter() {
+  return LemkeFailCounter;
 }
 
 void MyDantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,

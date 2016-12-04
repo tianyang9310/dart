@@ -53,6 +53,7 @@ namespace constraint {
 //==============================================================================
 DantzigLCPSolver::DantzigLCPSolver(double _timestep) : LCPSolver(_timestep)
 {
+    numContactsCallBack = 0;
 }
 
 //==============================================================================
@@ -65,6 +66,7 @@ void DantzigLCPSolver::solve(ConstrainedGroup* _group)
 {
   // If there is no constraint, then just return true.
   size_t numConstraints = _group->getNumConstraints();
+  numContactsCallBack = numConstraints;
   if (numConstraints == 0)
     return;
 

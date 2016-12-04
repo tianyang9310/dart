@@ -7,14 +7,21 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) {
   mCollisionDetector = std::unique_ptr<dart::collision::CollisionDetector>(
       mWorld->getConstraintSolver()->getCollisionDetector());
   counter = 0;
+  episodeLength = 1500;
+  mColor.push_back(Eigen::Vector3d(0.8, 0.2, 0.2));  // red
+  mColor.push_back(Eigen::Vector3d(0.2, 0.8, 0.2));  // green
+  mColor.push_back(Eigen::Vector3d(0.2, 0.2, 0.8));  // blue
+  mColor.push_back(Eigen::Vector3d(0.2, 0.2, 0.2));  // black
 }
 
 MyWindow::~MyWindow() {}
 
 void MyWindow::timeStepping() {
-    // int numContacts = mCollisionDetector->getNumContacts();
-    // std::cout<<"num of contact points is: "<<numContacts<<std::endl;
-    // std::cout<<std::endl;
+  int numContacts = mCollisionDetector->getNumContacts();
+/*
+ *std::cout << "num of contact points is: " << numContacts << std::endl;
+ *std::cout << std::endl;
+ */
 #ifndef ODE_VANILLA
   // lock Skeleton Velocities before stepping function
   dynamic_cast<MyDantzigLCPSolver*>(
@@ -67,20 +74,37 @@ void MyWindow::timeStepping() {
     // addExtTorque();
   }
   addExtForce();
-  if (mWorld->getSimFrames() == 1500) {
+  // addExtTorque();
+  if (mWorld->getSimFrames() == episodeLength) {
     std::cout << "Time is " << mWorld->getTime() << std::endl;
     std::cout << mWorld->getSkeleton("mBox")->getPositions().transpose()
               << std::endl;
-    std::cin.get();
+#ifndef ODE_VANILLA
+    std::cout << "Lemke fail ratio: "
+              << dynamic_cast<MyDantzigLCPSolver*>(
+                     mWorld->getConstraintSolver()->getLCPSolver())
+                         ->getLemkeFailCounter() /
+                     double(episodeLength)
+              << std::endl;
+#endif
+    keyboard('y', 0, 0);
   }
-  mCollisionDetector->detectCollision(true, true);
-  numContacts = mCollisionDetector->getNumContacts();
+// mCollisionDetector->detectCollision(true, true);
+#ifndef ODE_VANILLA
+  numContacts = dynamic_cast<MyDantzigLCPSolver*>(
+                    mWorld->getConstraintSolver()->getLCPSolver())
+                    ->numContactsCallBack;
+#else
+  numContacts = dynamic_cast<DantzigLCPSolver*>(
+                    mWorld->getConstraintSolver()->getLCPSolver())
+                    ->numContactsCallBack;
+#endif
 
   std::cout << "Current frame is " << mWorld->getSimFrames() << std::endl;
   if (numContacts != 4) {
     dterr << "numContacts: " << numContacts
           << " current frame: " << mWorld->getSimFrames() << std::endl;
-    keyboard('y', 0, 0);
+    // keyboard('y', 0, 0);
   }
   /*
    *std::cout<<"num of contact points is: "<<numContacts<<std::endl;
@@ -95,7 +119,7 @@ void MyWindow::addExtForce() {
   //     ->addExtTorque(Eigen::Vector3d::Random() * 100);
 
   // Eigen::Vector3d extForce = Eigen::Vector3d::Random() * 5e2;
-  Eigen::Vector3d extForce = Eigen::Vector3d::Identity() * 1e1;
+  Eigen::Vector3d extForce = Eigen::Vector3d::Identity() * 1.2e1;
   extForce[1] = 0.0;
   extForce[2] = 0.0;
   mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce);
@@ -106,9 +130,14 @@ void MyWindow::addExtForce() {
 
 void MyWindow::addExtTorque() {
   // dtmsg<<"Add external torque"<<std::endl;
+  Eigen::Vector3d extTorque = Eigen::Vector3d::Identity() * 0.8;
   mWorld->getSkeleton("mBox")
       ->getBodyNode("BodyNode_1")
-      ->addExtTorque(Eigen::Vector3d::Random() * 100);
+      ->addExtTorque(extTorque);
+
+  // mWorld->getSkeleton("mBox")
+  //     ->getBodyNode("BodyNode_1")
+  //     ->addExtTorque(Eigen::Vector3d::Random() * 100);
 }
 
 void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
@@ -158,13 +187,13 @@ void MyWindow::draw() {
             Eigen::Vector3d v =
                 mWorld->getRecording()->getContactPoint(mPlayFrame, i);
             Eigen::Vector3d f =
-                mWorld->getRecording()->getContactForce(mPlayFrame, i);
+                mWorld->getRecording()->getContactForce(mPlayFrame, i) / 10.0;
 
             glBegin(GL_LINES);
             glVertex3f(v[0], v[1], v[2]);
             glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
             glEnd();
-            mRI->setPenColor(Eigen::Vector3d(0.2, 0.2, 0.8));
+            mRI->setPenColor(mColor[i]);
             mRI->pushMatrix();
             glTranslated(v[0], v[1], v[2]);
             mRI->drawEllipsoid(Eigen::Vector3d(0.02, 0.02, 0.02));
@@ -174,16 +203,18 @@ void MyWindow::draw() {
       }
     } else {
       if (mShowMarkers) {
-        dart::collision::CollisionDetector* cd =
-            mWorld->getConstraintSolver()->getCollisionDetector();
-        for (size_t k = 0; k < cd->getNumContacts(); k++) {
-          Eigen::Vector3d v = cd->getContact(k).point;
-          Eigen::Vector3d f = cd->getContact(k).force / 10.0;
+        /*
+         *dart::collision::CollisionDetector* cd =
+         *    mWorld->getConstraintSolver()->getCollisionDetector();
+         */
+        for (size_t k = 0; k < mCollisionDetector->getNumContacts(); k++) {
+          Eigen::Vector3d v = mCollisionDetector->getContact(k).point;
+          Eigen::Vector3d f = mCollisionDetector->getContact(k).force / 10.0;
           glBegin(GL_LINES);
           glVertex3f(v[0], v[1], v[2]);
           glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
           glEnd();
-          mRI->setPenColor(Eigen::Vector3d(0.2, 0.2, 0.8));
+          mRI->setPenColor(mColor[k]);
           mRI->pushMatrix();
           glTranslated(v[0], v[1], v[2]);
           mRI->drawEllipsoid(Eigen::Vector3d(0.02, 0.02, 0.02));
@@ -193,16 +224,14 @@ void MyWindow::draw() {
     }
   } else {
     if (mShowMarkers) {
-      dart::collision::CollisionDetector* cd =
-          mWorld->getConstraintSolver()->getCollisionDetector();
-      for (size_t k = 0; k < cd->getNumContacts(); k++) {
-        Eigen::Vector3d v = cd->getContact(k).point;
-        Eigen::Vector3d f = cd->getContact(k).force / 10.0;
+      for (size_t k = 0; k < mCollisionDetector->getNumContacts(); k++) {
+        Eigen::Vector3d v = mCollisionDetector->getContact(k).point;
+        Eigen::Vector3d f = mCollisionDetector->getContact(k).force / 10.0;
         glBegin(GL_LINES);
         glVertex3f(v[0], v[1], v[2]);
         glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
         glEnd();
-        mRI->setPenColor(Eigen::Vector3d(0.2, 0.2, 0.8));
+        mRI->setPenColor(mColor[k]);
         mRI->pushMatrix();
         glTranslated(v[0], v[1], v[2]);
         mRI->drawEllipsoid(Eigen::Vector3d(0.02, 0.02, 0.02));
@@ -243,7 +272,7 @@ void MyWindow::draw() {
 void MyWindow::displayTimer(int _val) {
   int numIter = mDisplayTimeout / (mWorld->getTimeStep() * 1000);
   if (mPlay) {
-    mPlayFrame += 4;
+    mPlayFrame += 1;
     if (mPlayFrame >= mWorld->getRecording()->getNumFrames()) {
       mPlayFrame = 0;
       mPlay = false;
@@ -257,6 +286,23 @@ void MyWindow::displayTimer(int _val) {
       }
     }
   }
+
+  /*
+   *std::cout << "################################################" <<
+   *std::endl;
+   *if (mCollisionDetector->getNumContacts() > 0) {
+   *  for (int idx_cnt = 0; idx_cnt < mCollisionDetector->getNumContacts();
+   *       idx_cnt++) {
+   *    std::cout << mCollisionDetector->getContact(idx_cnt).force.transpose()
+   *              << std::endl;
+   *  }
+   *}
+   *std::cout << "################################################" <<
+   *std::endl;
+   */
+
   glutPostRedisplay();
   glutTimerFunc(mDisplayTimeout, refreshTimer, _val);
 }
+
+dart::simulation::WorldPtr MyWindow::getWorld() { return mWorld; }

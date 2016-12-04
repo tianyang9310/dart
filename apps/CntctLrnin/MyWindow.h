@@ -20,12 +20,15 @@ class MyWindow : public dart::gui::SimWindow {
   void drawSkels() override;
   void draw() override;
   void displayTimer(int _val); 
+  dart::simulation::WorldPtr getWorld();
 
   private:
   std::unique_ptr<Controller> mController;
   std::unique_ptr<dart::collision::CollisionDetector> mCollisionDetector;
+  std::vector<Eigen::Vector3d> mColor;
 
   int counter;
+  int episodeLength;
 };
 
 #endif  // CNTCTLRNIN_MYWINDOW_H
