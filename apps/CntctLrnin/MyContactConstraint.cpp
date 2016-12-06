@@ -89,7 +89,7 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
 void MyContactConstraint::My2LemkeapplyImpulse(
     double fn, const Eigen::VectorXd& fd, const Eigen::VectorXd& N,
     const Eigen::MatrixXd& B, int BodyNode1_dim, int BodyNode2_dim,
-    bool impulse_flag, Eigen::Vector3d& allForce) {
+    bool impulse_flag, Eigen::Vector3d& allForce, Eigen::Vector3d& allTorque) {
 #ifdef OUTPUT
   std::cout << "============================================" << std::endl;
   std::cout << "[Lemke LCP] Using MyContactConstraint class! " << std::endl;
@@ -113,6 +113,33 @@ void MyContactConstraint::My2LemkeapplyImpulse(
       Myforce = mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
       Myforce += D * fd / (impulse_flag ? mTimeStep : 1);
 
+      Eigen::Vector3d bodyPoint1;
+      bodyPoint1.noalias() =
+          mBodyNode1->getTransform().inverse() * mContacts[i]->point;
+
+      allTorque.setZero();
+      if (mBodyNode1->isReactive()) {
+        allTorque += bodyPoint1.cross(mContacts[i]->normal * fn /
+                                      (impulse_flag ? mTimeStep : 1));
+        Eigen::Vector3d friction_force_tmp =
+            D * fd / (impulse_flag ? mTimeStep : 1);
+        allTorque += bodyPoint1.cross(friction_force_tmp);
+      }
+
+/*
+ * Eigen::Vector3d bodyPoint2;
+ * bodyPoint2.noalias() =
+ *     mBodyNode2->getTransform().inverse() * mContacts[i]->point;
+ * // Here still suppose contact convention
+ * if (mBodyNode2->isReactive()) {
+ *  allTorque += bodyPoint2.cross(
+ *      (mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1))
+ *          .eval());
+ *  allTorque +=
+ *      bodypoint2.cross((D * fd / (impulse_flag ? mTimeStep : 1)).eval());
+ * }
+ */
+
 #ifdef OUTPUT
       std::cout << "[Lemke LCP] normal impulsive force is "
                 << normal_impulsive_force.transpose() << std::endl;
@@ -126,7 +153,6 @@ void MyContactConstraint::My2LemkeapplyImpulse(
       std::cout << "[Lemke LCP] second force is "
                 << (D * fd / mTimeStep).transpose() << std::endl;
 #endif
-      allForce.resize(Myforce.rows());
       allForce = Myforce;
     }
   } else {
@@ -135,7 +161,8 @@ void MyContactConstraint::My2LemkeapplyImpulse(
 }
 
 void MyContactConstraint::My2ODEapplyImpulse(double* _lambda,
-                                             Eigen::Vector3d& allForce) {
+                                             Eigen::Vector3d& allForce,
+                                             Eigen::Vector3d& allTorque) {
 #ifdef OUTPUT
   std::cout << "============================================" << std::endl;
   std::cout << "[ODE LCP] Using MyContactConstraint class! " << std::endl;
@@ -156,6 +183,33 @@ void MyContactConstraint::My2ODEapplyImpulse(double* _lambda,
       Eigen::MatrixXd D = getTangentBasisMatrixODE(mContacts[i]->normal);
       Myforce += D.col(0) * _lambda[1] / mTimeStep;
       Myforce += D.col(1) * _lambda[2] / mTimeStep;
+
+      Eigen::Vector3d bodyPoint1;
+      bodyPoint1.noalias() =
+          mBodyNode1->getTransform().inverse() * mContacts[i]->point;
+
+      allTorque.setZero();
+      if (mBodyNode1->isReactive()) {
+        allTorque +=
+            bodyPoint1.cross(mContacts[i]->normal * _lambda[0] / mTimeStep);
+        Eigen::Vector3d friction_force_tmp = D.col(0) * _lambda[1] / mTimeStep +
+                                             D.col(1) * _lambda[2] / mTimeStep;
+        allTorque += bodyPoint1.cross(friction_force_tmp);
+      }
+
+/*
+ * Eigen::Vector3d bodyPoint2;
+ * bodyPoint2.noalias() =
+ *     mBodyNode2->getTransform().inverse() * mContacts[i]->point;
+ * // Here still suppose contact convention
+ * if (mBodyNode2->isReactive()) {
+ *  allTorque += bodyPoint2.cross(
+ *      (mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1))
+ *          .eval());
+ *  allTorque +=
+ *      bodypoint2.cross((D * fd / (impulse_flag ? mTimeStep : 1)).eval());
+ * }
+ */
 
 #ifdef OUTPUT
       std::cout
@@ -187,7 +241,6 @@ void MyContactConstraint::My2ODEapplyImpulse(double* _lambda,
       std::cout << "[ODE LCP] overall second 2 is "
                 << (D.col(0) * _lambda[2] / mTimeStep).transpose() << std::endl;
 #endif
-      allForce.resize(Myforce.rows());
       allForce = Myforce;
     }
   }

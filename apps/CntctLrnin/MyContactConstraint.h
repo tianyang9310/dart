@@ -25,8 +25,10 @@ class MyContactConstraint : public ContactConstraint {
   void My2LemkeapplyImpulse(double fn, const Eigen::VectorXd& fd,
                             const Eigen::VectorXd& N, const Eigen::MatrixXd& B,
                             int BodyNode1_dim, int BodyNode2_dim,
-                            bool impulse_flag, Eigen::Vector3d& allForce);
-  void My2ODEapplyImpulse(double* _lambda, Eigen::Vector3d& allForce);
+                            bool impulse_flag, Eigen::Vector3d& allForce,
+                            Eigen::Vector3d& allTorque);
+  void My2ODEapplyImpulse(double* _lambda, Eigen::Vector3d& allForce,
+                          Eigen::Vector3d& allTorque);
   void getInformation(ConstraintInfo* _info);
   int numBasis;
 };
