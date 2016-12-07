@@ -8,7 +8,7 @@ void AddSkel(WorldPtr world) {
 SkeletonPtr AddBox() {
   double jnt_dmpin = 0.0;
   double frcton_cff = 0.0;
-  double mass = 0.8;
+  double mass = 0.4;
   Eigen::Vector3d length_tuple(0.1, 0.1, 0.1);
   Eigen::Vector3d init_pos(0.0, 0.075, 0.0);
   Eigen::Quaterniond init_ori_Quat;  // arbitrary initial orientation

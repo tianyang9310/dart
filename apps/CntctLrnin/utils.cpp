@@ -35,3 +35,5 @@ Eigen::MatrixXd getTangentBasisMatrixLemke(const Eigen::Vector3d& _n,
   }
   return T;
 }
+
+

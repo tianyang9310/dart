@@ -104,7 +104,7 @@ void MyWindow::timeStepping() {
   if (numContacts != 4) {
     dterr << "numContacts: " << numContacts
           << " current frame: " << mWorld->getSimFrames() << std::endl;
-    // keyboard('y', 0, 0);
+    keyboard('y', 0, 0);
   }
   /*
    *std::cout<<"num of contact points is: "<<numContacts<<std::endl;
@@ -189,11 +189,11 @@ void MyWindow::draw() {
             Eigen::Vector3d f =
                 mWorld->getRecording()->getContactForce(mPlayFrame, i) / 10.0;
 
+            mRI->setPenColor(mColor[i]);
             glBegin(GL_LINES);
             glVertex3f(v[0], v[1], v[2]);
             glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
             glEnd();
-            mRI->setPenColor(mColor[i]);
             mRI->pushMatrix();
             glTranslated(v[0], v[1], v[2]);
             mRI->drawEllipsoid(Eigen::Vector3d(0.02, 0.02, 0.02));
@@ -210,11 +210,11 @@ void MyWindow::draw() {
         for (size_t k = 0; k < mCollisionDetector->getNumContacts(); k++) {
           Eigen::Vector3d v = mCollisionDetector->getContact(k).point;
           Eigen::Vector3d f = mCollisionDetector->getContact(k).force / 10.0;
+          mRI->setPenColor(mColor[k]);
           glBegin(GL_LINES);
           glVertex3f(v[0], v[1], v[2]);
           glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
           glEnd();
-          mRI->setPenColor(mColor[k]);
           mRI->pushMatrix();
           glTranslated(v[0], v[1], v[2]);
           mRI->drawEllipsoid(Eigen::Vector3d(0.02, 0.02, 0.02));
@@ -227,11 +227,11 @@ void MyWindow::draw() {
       for (size_t k = 0; k < mCollisionDetector->getNumContacts(); k++) {
         Eigen::Vector3d v = mCollisionDetector->getContact(k).point;
         Eigen::Vector3d f = mCollisionDetector->getContact(k).force / 10.0;
+        mRI->setPenColor(mColor[k]);
         glBegin(GL_LINES);
         glVertex3f(v[0], v[1], v[2]);
         glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
         glEnd();
-        mRI->setPenColor(mColor[k]);
         mRI->pushMatrix();
         glTranslated(v[0], v[1], v[2]);
         mRI->drawEllipsoid(Eigen::Vector3d(0.02, 0.02, 0.02));

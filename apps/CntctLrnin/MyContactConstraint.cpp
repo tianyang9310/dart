@@ -20,6 +20,8 @@
 
 #define OUTPUT
 
+#define CLAMP_CONTACT_CONSTRAINT
+
 namespace dart {
 namespace constraint {
 
@@ -51,6 +53,13 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
       mContacts[i]->force =
           mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
       mContacts[i]->force += D * fd / (impulse_flag ? mTimeStep : 1);
+
+#ifdef  CLAMP_CONTACT_CONSTRAINT
+      // Clamp zero
+      clampZero(normal_impulsive_force);
+      clampZero(tangential_directional_force);
+      clampZero(mContacts[i]->force);
+#endif
 
       if (mBodyNode1->isReactive()) {
         mBodyNode1->addConstraintImpulse(
@@ -113,16 +122,31 @@ void MyContactConstraint::My2LemkeapplyImpulse(
       Myforce = mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
       Myforce += D * fd / (impulse_flag ? mTimeStep : 1);
 
+#ifdef  CLAMP_CONTACT_CONSTRAINT
+      // Clamp zero
+      clampZero(normal_impulsive_force);
+      clampZero(tangential_directional_force);
+      clampZero(Myforce);
+#endif
+      
       Eigen::Vector3d bodyPoint1;
       bodyPoint1.noalias() =
           mBodyNode1->getTransform().inverse() * mContacts[i]->point;
 
       allTorque.setZero();
       if (mBodyNode1->isReactive()) {
-        allTorque += bodyPoint1.cross(mContacts[i]->normal * fn /
-                                      (impulse_flag ? mTimeStep : 1));
-        Eigen::Vector3d friction_force_tmp =
-            D * fd / (impulse_flag ? mTimeStep : 1);
+        Eigen::Vector3d normal_force_tmp;
+        normal_force_tmp =
+            mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
+#ifdef  CLAMP_CONTACT_CONSTRAINT
+        clampZero(normal_force_tmp);
+#endif
+        allTorque += bodyPoint1.cross(normal_force_tmp);
+        Eigen::Vector3d friction_force_tmp;
+        friction_force_tmp = D * fd / (impulse_flag ? mTimeStep : 1);
+#ifdef  CLAMP_CONTACT_CONSTRAINT
+        clampZero(friction_force_tmp);
+#endif
         allTorque += bodyPoint1.cross(friction_force_tmp);
       }
 
