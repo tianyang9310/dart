@@ -4,7 +4,8 @@
 // #define LEMKE_OUTPUT  // Lemke A, b, err, z, w
 // #define LEMKE_OUTPUT_DETAILS  // Lemke N, B, Skeletons velocities, M, E
 // #define LEMKE_FAIL_PRINT  // print lemke fail prompt information
-// #define ODE_OUTPUT        // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
+// #define ODE_OUTPUT        // ODE A, b, x, w (true if ALWAYS_ODE or
+// !validation)
 // #define OUTPUT2FILE  // output data to file
 
 #define ALWAYS_ODE         // always solve ode whether Lemke is valid or not
@@ -32,6 +33,12 @@ MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
     counters.push_back(0);
   }
 #endif
+
+  ODE_FILE = std::make_shared<std::fstream>("/tmp/ODE.txt", std::fstream::out);
+  ODE_FILE->precision(10);
+  Lemke_FILE =
+      std::make_shared<std::fstream>("/tmp/Lemke.txt", std::fstream::out);
+  Lemke_FILE->precision(10);
 }
 
 MyDantzigLCPSolver::~MyDantzigLCPSolver() {
@@ -39,6 +46,9 @@ MyDantzigLCPSolver::~MyDantzigLCPSolver() {
        numContactsToLearn++) {
     outputFiles[numContactsToLearn - 1]->close();
   }
+
+  ODE_FILE->close();
+  Lemke_FILE->close();
 }
 
 void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
@@ -50,8 +60,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     return;
   } else {
 #ifdef LEMKE_OUTPUT
-    std::cout << "There are " << numConstraints << " contact points"
-              << std::endl;
+    (*Lemke_FILE) << "There are " << numConstraints << " contact points"
+                  << std::endl;
 #endif
   }
 
@@ -136,13 +146,13 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
       }
     }
 
-    assert(isSymmetric(n, A, offset[i],
-                       offset[i] + constraint->getDimension() - 1));
+    // assert(isSymmetric(n, A, offset[i],
+    //                    offset[i] + constraint->getDimension() - 1));
 
     constraint->unexcite();
   }
 
-  assert(isSymmetric(n, A));
+  // assert(isSymmetric(n, A));
 
   // Print LCP formulation
   // std::cout << "Before solve:" << std::endl;
@@ -404,12 +414,12 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
       B.transpose() * M.ldlt().solve(tau);
 
 #ifdef LEMKE_OUTPUT
-  std::cout << "^^^^^^Lemke Preparation ^^^^^" << std::endl;
-  std::cout << "Lemke A is " << std::endl;
-  std::cout << Lemke_A << std::endl;
-  std::cout << "Lemke b is ";
-  std::cout << Lemke_b.transpose() << std::endl;
-  std::cout << "Solving LCP with Lemke" << std::endl;
+  (*Lemke_FILE) << "^^^^^^Lemke Preparation ^^^^^" << std::endl;
+  (*Lemke_FILE) << "Lemke A is " << std::endl;
+  (*Lemke_FILE) << Lemke_A << std::endl;
+  (*Lemke_FILE) << "Lemke b is ";
+  (*Lemke_FILE) << Lemke_b.transpose() << std::endl;
+  (*Lemke_FILE) << "Solving LCP with Lemke" << std::endl;
 #endif
   Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
   int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
@@ -422,44 +432,46 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
            .array()
            .maxCoeff() > MY_DART_ZERO)) {
     dterr << "ERROR: fn==0, fd>0 and lambda>0" << std::endl;
-    std::cout << "Lemke A is " << std::endl;
-    std::cout << Lemke_A << std::endl;
-    std::cout << "Lemke b is ";
-    std::cout << Lemke_b.transpose() << std::endl;
-    std::cout << "[z]" << (*z).transpose() << std::endl;
-    std::cout << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose() << std::endl;
-    std::cout << "[z].*[w]"
-              << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
-              << std::endl;
+    (*Lemke_FILE) << "Lemke A is " << std::endl;
+    (*Lemke_FILE) << Lemke_A << std::endl;
+    (*Lemke_FILE) << "Lemke b is ";
+    (*Lemke_FILE) << Lemke_b.transpose() << std::endl;
+    (*Lemke_FILE) << "[z]" << (*z).transpose() << std::endl;
+    (*Lemke_FILE) << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
+                  << std::endl;
+    (*Lemke_FILE)
+        << "[z].*[w]"
+        << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
+        << std::endl;
     std::cin.get();
   }
 
 #ifdef LEMKE_OUTPUT
-  std::cout << "err: " << err << std::endl;
-  std::cout << std::boolalpha;
-  std::cout << "LCP manually validation" << std::endl;
-  std::cout << "[z]" << (*z).transpose() << std::endl;
-  std::cout << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose() << std::endl;
-  std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
+  (*Lemke_FILE) << "err: " << err << std::endl;
+  (*Lemke_FILE) << std::boolalpha;
+  (*Lemke_FILE) << "LCP manually validation" << std::endl;
+  (*Lemke_FILE) << "[z]" << (*z).transpose() << std::endl;
+  (*Lemke_FILE) << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose() << std::endl;
+  (*Lemke_FILE) << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
 #endif
   bool Validation = dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b);
 #ifdef LEMKE_OUTPUT_DETAILS
-  std::cout << "Validation: " << Validation << std::endl;
-  std::cout << "Lemke N is " << N.transpose() << std::endl;
-  std::cout << "Lemke B is " << std::endl << B << std::endl;
-  std::cout << "Skeleton 1 is " << bodyNode1->getSkeleton()->getName()
-            << std::endl
-            << " its velocity is"
-            << mSkeletonVelocitiesLock[bodyNode1->getSkeleton()].transpose()
-            << std::endl;
-  std::cout << "Skeleton 2 is " << bodyNode2->getSkeleton()->getName()
-            << std::endl
-            << " its velocity is"
-            << mSkeletonVelocitiesLock[bodyNode2->getSkeleton()].transpose()
-            << std::endl;
-  std::cout << "Lemke M is " << std::endl << M << std::endl;
-  std::cout << "Lemke E is " << E.transpose() << std::endl;
-  std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
+  (*Lemke_FILE) << "Validation: " << Validation << std::endl;
+  (*Lemke_FILE) << "Lemke N is " << N.transpose() << std::endl;
+  (*Lemke_FILE) << "Lemke B is " << std::endl << B << std::endl;
+  (*Lemke_FILE) << "Skeleton 1 is " << bodyNode1->getSkeleton()->getName()
+                << std::endl
+                << " its velocity is"
+                << mSkeletonVelocitiesLock[bodyNode1->getSkeleton()].transpose()
+                << std::endl;
+  (*Lemke_FILE) << "Skeleton 2 is " << bodyNode2->getSkeleton()->getName()
+                << std::endl
+                << " its velocity is"
+                << mSkeletonVelocitiesLock[bodyNode2->getSkeleton()].transpose()
+                << std::endl;
+  (*Lemke_FILE) << "Lemke M is " << std::endl << M << std::endl;
+  (*Lemke_FILE) << "Lemke E is " << E.transpose() << std::endl;
+  (*Lemke_FILE) << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
 #endif
 
   //  ---------------------------------------
@@ -471,18 +483,20 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     dterr << "Resort ODE LCP solver to solve the problem!!!" << std::endl;
     dterr << "Current frame is " << mWindow->getWorld()->getSimFrames()
           << std::endl;
-    std::cout << "Lemke A is " << std::endl;
-    std::cout << Lemke_A << std::endl;
-    std::cout << "Lemke b is ";
-    std::cout << Lemke_b.transpose() << std::endl;
-    std::cout << "[z]" << (*z).transpose() << std::endl;
-    std::cout << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose() << std::endl;
-    std::cout << "[z].*[w]"
-              << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
-              << std::endl;
-    std::cout << "err: " << err << std::endl;
-    std::cout << std::boolalpha;
-    std::cout << "Validation: " << Validation << std::endl;
+    (*Lemke_FILE) << "Lemke A is " << std::endl;
+    (*Lemke_FILE) << Lemke_A << std::endl;
+    (*Lemke_FILE) << "Lemke b is ";
+    (*Lemke_FILE) << Lemke_b.transpose() << std::endl;
+    (*Lemke_FILE) << "[z]" << (*z).transpose() << std::endl;
+    (*Lemke_FILE) << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
+                  << std::endl;
+    (*Lemke_FILE)
+        << "[z].*[w]"
+        << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
+        << std::endl;
+    (*Lemke_FILE) << "err: " << err << std::endl;
+    (*Lemke_FILE) << std::boolalpha;
+    (*Lemke_FILE) << "Validation: " << Validation << std::endl;
 #endif
     // mWindow->keyboard('y',0,0);
   }
@@ -504,9 +518,9 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
 #ifdef ODE_OUTPUT
   // Print LCP formulation
-  std::cout << "After solve:" << std::endl;
-  print(n, old_A, x, lo, hi, old_b, w, findex);
-  std::cout << std::endl;
+  (*ODE_FILE) << "After solve:" << std::endl;
+  print(n, old_A, x, lo, hi, old_b, w, findex, ODE_FILE);
+  (*ODE_FILE) << std::endl;
 #endif
 
   /*
@@ -561,7 +575,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
       Mycntctconstraint->excite();
     }
 #ifdef CLAMP_DANTZIG
-    // It is very important to clamp to zero in this step 
+    // It is very important to clamp to zero in this step
     clampZero(bodyNode1->mConstraintImpulse);
 #endif
   } else {
@@ -603,14 +617,14 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     Eigen::Vector3d indTorque(Eigen::Vector3d::Zero());
     Mycntctconstraint->My2LemkeapplyImpulse(
         fn_each, fd_each, N_each, B_each, BodyNode1_dim, BodyNode2_dim,
-        (_TimeStep == 1.0), indForce, indTorque);
+        (_TimeStep == 1.0), indForce, indTorque, Lemke_FILE);
     allForce += indForce;
     allTorque += indTorque;
   }
-  dtmsg << "[Lemke] all contact forces: " << allForce.transpose().format(CSVFmt)
-        << std::endl;
-  dtmsg << "[Lemke] all contact torques: "
-        << allTorque.transpose().format(CSVFmt) << std::endl;
+  (*Lemke_FILE) << "[Lemke] all contact forces: "
+                << allForce.transpose().format(CSVFmt) << std::endl;
+  (*Lemke_FILE) << "[Lemke] all contact torques: "
+                << allTorque.transpose().format(CSVFmt) << std::endl;
 #endif
 // ---------------------------------------------------------------------------
 // print out ODE apply impulse
@@ -624,14 +638,14 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     Eigen::Vector3d indForce(Eigen::Vector3d::Zero());
     Eigen::Vector3d indTorque(Eigen::Vector3d::Zero());
     Mycntctconstraint->My2ODEapplyImpulse(x + offset[idx_cnstrnt], indForce,
-                                          indTorque);
+                                          indTorque, ODE_FILE);
     allForce += indForce;
     allTorque += indTorque;
   }
-  dtmsg << "[ODE]   all contact forces: " << allForce.transpose().format(CSVFmt)
-        << std::endl;
-  dtmsg << "[ODE] all contact torques: " << allTorque.transpose().format(CSVFmt)
-        << std::endl;
+  (*ODE_FILE) << "[ODE]   all contact forces: "
+              << allForce.transpose().format(CSVFmt) << std::endl;
+  (*ODE_FILE) << "[ODE] all contact torques: "
+              << allTorque.transpose().format(CSVFmt) << std::endl;
 #endif
 // ---------------------------------------------------------------------------
 
@@ -662,54 +676,55 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
 }
 
 void MyDantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
-                               double* hi, double* b, double* w, int* findex) {
+                               double* hi, double* b, double* w, int* findex,
+                               std::shared_ptr<std::fstream> ODE_FILE) {
   size_t nSkip = dPAD(_n);
-  std::cout << "A: " << std::endl;
+  (*ODE_FILE) << "A: " << std::endl;
   for (size_t i = 0; i < _n; ++i) {
     for (size_t j = 0; j < nSkip; ++j) {
-      std::cout << std::setprecision(4) << _A[i * nSkip + j] << " ";
+      (*ODE_FILE) << std::setprecision(4) << _A[i * nSkip + j] << " ";
     }
-    std::cout << std::endl;
+    (*ODE_FILE) << std::endl;
   }
 
-  std::cout << "b: ";
+  (*ODE_FILE) << "b: ";
   for (size_t i = 0; i < _n; ++i) {
-    std::cout << std::setprecision(4) << b[i] << " ";
+    (*ODE_FILE) << std::setprecision(4) << b[i] << " ";
   }
-  std::cout << std::endl;
+  (*ODE_FILE) << std::endl;
 
-  std::cout << "w: ";
+  (*ODE_FILE) << "w: ";
   for (size_t i = 0; i < _n; ++i) {
-    std::cout << w[i] << " ";
+    (*ODE_FILE) << w[i] << " ";
   }
-  std::cout << std::endl;
+  (*ODE_FILE) << std::endl;
 
-  std::cout << "x: ";
+  (*ODE_FILE) << "x: ";
   for (size_t i = 0; i < _n; ++i) {
-    std::cout << _x[i] << " ";
+    (*ODE_FILE) << _x[i] << " ";
   }
-  std::cout << std::endl;
+  (*ODE_FILE) << std::endl;
 
-  //  std::cout << "lb: ";
+  //  (*ODE_FILE) << "lb: ";
   //  for (int i = 0; i < dim; ++i)
   //  {
-  //    std::cout << lb[i] << " ";
+  //    (*ODE_FILE) << lb[i] << " ";
   //  }
-  //  std::cout << std::endl;
+  //  (*ODE_FILE) << std::endl;
 
-  //  std::cout << "ub: ";
+  //  (*ODE_FILE) << "ub: ";
   //  for (int i = 0; i < dim; ++i)
   //  {
-  //    std::cout << ub[i] << " ";
+  //    (*ODE_FILE) << ub[i] << " ";
   //  }
-  //  std::cout << std::endl;
+  //  (*ODE_FILE) << std::endl;
 
-  // std::cout << "frictionIndex: ";
+  // (*ODE_FILE) << "frictionIndex: ";
   // for (size_t i = 0; i < _n; ++i)
   // {
-  //     std::cout << findex[i] << " ";
+  //     (*ODE_FILE) << findex[i] << " ";
   // }
-  // std::cout << std::endl;
+  // (*ODE_FILE) << std::endl;
 
   double* Ax = new double[_n];
 
@@ -723,17 +738,17 @@ void MyDantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
     }
   }
 
-  std::cout << "Ax   : ";
+  (*ODE_FILE) << "Ax   : ";
   for (size_t i = 0; i < _n; ++i) {
-    std::cout << Ax[i] << " ";
+    (*ODE_FILE) << Ax[i] << " ";
   }
-  std::cout << std::endl;
+  (*ODE_FILE) << std::endl;
 
-  std::cout << "b + w: ";
+  (*ODE_FILE) << "b + w: ";
   for (size_t i = 0; i < _n; ++i) {
-    std::cout << b[i] + w[i] << " ";
+    (*ODE_FILE) << b[i] + w[i] << " ";
   }
-  std::cout << std::endl;
+  (*ODE_FILE) << std::endl;
 
   delete[] Ax;
 }

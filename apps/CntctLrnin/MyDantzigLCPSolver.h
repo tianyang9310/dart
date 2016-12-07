@@ -41,7 +41,8 @@ class MyDantzigLCPSolver : public DantzigLCPSolver {
 
   protected:
   void print(size_t _n, double* _A, double* _x, double* _lo, double* _hi,
-             double* _b, double* w, int* _findex);
+             double* _b, double* w, int* _findex,
+             std::shared_ptr<std::fstream> ODE_FILE);
 
   /// Return true if the matrix is symmetric
   bool isSymmetric(size_t _n, double* _A);
@@ -64,6 +65,8 @@ class MyDantzigLCPSolver : public DantzigLCPSolver {
                       const Eigen::VectorXd b);
 
   std::vector<std::shared_ptr<std::fstream>> outputFiles;
+  std::shared_ptr<std::fstream> ODE_FILE;
+  std::shared_ptr<std::fstream> Lemke_FILE;
 
   std::vector<int> counters;
 

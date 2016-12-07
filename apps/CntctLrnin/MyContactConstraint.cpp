@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 
 #include "MyContactConstraint.h"
 #include "dart/common/Console.h"
@@ -54,7 +55,7 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
           mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
       mContacts[i]->force += D * fd / (impulse_flag ? mTimeStep : 1);
 
-#ifdef  CLAMP_CONTACT_CONSTRAINT
+#ifdef CLAMP_CONTACT_CONSTRAINT
       // Clamp zero
       clampZero(normal_impulsive_force);
       clampZero(tangential_directional_force);
@@ -98,12 +99,13 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
 void MyContactConstraint::My2LemkeapplyImpulse(
     double fn, const Eigen::VectorXd& fd, const Eigen::VectorXd& N,
     const Eigen::MatrixXd& B, int BodyNode1_dim, int BodyNode2_dim,
-    bool impulse_flag, Eigen::Vector3d& allForce, Eigen::Vector3d& allTorque) {
+    bool impulse_flag, Eigen::Vector3d& allForce, Eigen::Vector3d& allTorque,
+    std::shared_ptr<std::fstream> Lemke_FILE) {
 #ifdef OUTPUT
-  std::cout << "============================================" << std::endl;
-  std::cout << "[Lemke LCP] Using MyContactConstraint class! " << std::endl;
-  std::cout << "[Lemke LCP] fn: " << fn << std::endl;
-  std::cout << "[Lemke LCP] fd: " << fd.transpose() << std::endl;
+  (*Lemke_FILE) << "============================================" << std::endl;
+  (*Lemke_FILE) << "[Lemke LCP] Using MyContactConstraint class! " << std::endl;
+  (*Lemke_FILE) << "[Lemke LCP] fn: " << fn << std::endl;
+  (*Lemke_FILE) << "[Lemke LCP] fd: " << fd.transpose() << std::endl;
 // std::cin.get();
 #endif
 
@@ -122,13 +124,13 @@ void MyContactConstraint::My2LemkeapplyImpulse(
       Myforce = mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
       Myforce += D * fd / (impulse_flag ? mTimeStep : 1);
 
-#ifdef  CLAMP_CONTACT_CONSTRAINT
+#ifdef CLAMP_CONTACT_CONSTRAINT
       // Clamp zero
       clampZero(normal_impulsive_force);
       clampZero(tangential_directional_force);
       clampZero(Myforce);
 #endif
-      
+
       Eigen::Vector3d bodyPoint1;
       bodyPoint1.noalias() =
           mBodyNode1->getTransform().inverse() * mContacts[i]->point;
@@ -138,13 +140,13 @@ void MyContactConstraint::My2LemkeapplyImpulse(
         Eigen::Vector3d normal_force_tmp;
         normal_force_tmp =
             mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
-#ifdef  CLAMP_CONTACT_CONSTRAINT
+#ifdef CLAMP_CONTACT_CONSTRAINT
         clampZero(normal_force_tmp);
 #endif
         allTorque += bodyPoint1.cross(normal_force_tmp);
         Eigen::Vector3d friction_force_tmp;
         friction_force_tmp = D * fd / (impulse_flag ? mTimeStep : 1);
-#ifdef  CLAMP_CONTACT_CONSTRAINT
+#ifdef CLAMP_CONTACT_CONSTRAINT
         clampZero(friction_force_tmp);
 #endif
         allTorque += bodyPoint1.cross(friction_force_tmp);
@@ -165,17 +167,20 @@ void MyContactConstraint::My2LemkeapplyImpulse(
  */
 
 #ifdef OUTPUT
-      std::cout << "[Lemke LCP] normal impulsive force is "
-                << normal_impulsive_force.transpose() << std::endl;
-      std::cout << "[Lemke LCP] tangential directional force is "
-                << tangential_directional_force.transpose() << std::endl;
-      std::cout << "[Lemke LCP] overall force is " << Myforce.transpose()
-                << std::endl;
-      std::cout << "[Lemke LCP] first force is "
-                << (mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1)).transpose()
-                << std::endl;
-      std::cout << "[Lemke LCP] second force is "
-                << (D * fd / (impulse_flag ? mTimeStep : 1)).transpose() << std::endl;
+      (*Lemke_FILE) << "[Lemke LCP] normal impulsive force is "
+                    << normal_impulsive_force.transpose() << std::endl;
+      (*Lemke_FILE) << "[Lemke LCP] tangential directional force is "
+                    << tangential_directional_force.transpose() << std::endl;
+      (*Lemke_FILE) << "[Lemke LCP] overall force is " << Myforce.transpose()
+                    << std::endl;
+      (*Lemke_FILE) << "[Lemke LCP] first force is "
+                    << (mContacts[i]->normal * fn /
+                        (impulse_flag ? mTimeStep : 1))
+                           .transpose()
+                    << std::endl;
+      (*Lemke_FILE) << "[Lemke LCP] second force is "
+                    << (D * fd / (impulse_flag ? mTimeStep : 1)).transpose()
+                    << std::endl;
 #endif
       allForce = Myforce;
     }
@@ -184,14 +189,15 @@ void MyContactConstraint::My2LemkeapplyImpulse(
   }
 }
 
-void MyContactConstraint::My2ODEapplyImpulse(double* _lambda,
-                                             Eigen::Vector3d& allForce,
-                                             Eigen::Vector3d& allTorque) {
+void MyContactConstraint::My2ODEapplyImpulse(
+    double* _lambda, Eigen::Vector3d& allForce, Eigen::Vector3d& allTorque,
+    std::shared_ptr<std::fstream> ODE_FILE) {
 #ifdef OUTPUT
-  std::cout << "============================================" << std::endl;
-  std::cout << "[ODE LCP] Using MyContactConstraint class! " << std::endl;
-  std::cout << "[ODE LCP] fn: " << _lambda[0] << std::endl;
-  std::cout << "[ODE LCP] fd: " << _lambda[1] << " " << _lambda[2] << std::endl;
+  (*ODE_FILE) << "============================================" << std::endl;
+  (*ODE_FILE) << "[ODE LCP] Using MyContactConstraint class! " << std::endl;
+  (*ODE_FILE) << "[ODE LCP] fn: " << _lambda[0] << std::endl;
+  (*ODE_FILE) << "[ODE LCP] fd: " << _lambda[1] << " " << _lambda[2]
+              << std::endl;
 // std::cin.get();
 #endif
 
@@ -236,34 +242,36 @@ void MyContactConstraint::My2ODEapplyImpulse(double* _lambda,
  */
 
 #ifdef OUTPUT
-      std::cout
+      (*ODE_FILE)
           << "[ODE LCP] normal impulsive force is "
           << (mJacobians1[i] * _lambda[0]).transpose()
           << std::
                  endl;  // <<(mJacobians2[i]*_lambda[0]).transpose()<<std::endl;
-      // std::cout<<std::boolalpha;
-      // std::cout<<"mBodyNode1 isReactive: "<<mBodyNode1->isReactive()<<"
+      // (*ODE_FILE)<<std::boolalpha;
+      // (*ODE_FILE)<<"mBodyNode1 isReactive: "<<mBodyNode1->isReactive()<<"
       // mBodyNode2 isReactive: "<<mBodyNode2->isReactive()<<std::endl;
-      // std::cout<<"[ODE LCP] tangential directional force is
+      // (*ODE_FILE)<<"[ODE LCP] tangential directional force is
       // "<<(mJacobians1[1] * _lambda[1]).transpose()<<std::endl; //
       // <<(mJacobians2[1] * _lambda[1]).transpose()<<std::endl;
-      // std::cout<<"[ODE LCP] tangential directional force is
+      // (*ODE_FILE)<<"[ODE LCP] tangential directional force is
       // "<<(mJacobians1[2] * _lambda[2]).transpose()<<std::endl; //
       // <<(mJacobians2[2] * _lambda[2]).transpose()<<std::endl;
-      std::cout << "[ODE LCP] tangential directional force is "
-                << ((mJacobians1[1] * _lambda[1]).transpose() +
-                    (mJacobians1[2] * _lambda[2]).transpose())
-                << std::endl;  // <<(mJacobians2[1] *
-                               // _lambda[1]).transpose()<<std::endl;
-      std::cout << "[ODE LCP] overall force is " << Myforce.transpose()
-                << std::endl;
-      std::cout << "[ODE LCP] overall first is "
-                << (mContacts[i]->normal * _lambda[0] / mTimeStep).transpose()
-                << std::endl;
-      std::cout << "[ODE LCP] overall second 1 is "
-                << (D.col(0) * _lambda[1] / mTimeStep).transpose() << std::endl;
-      std::cout << "[ODE LCP] overall second 2 is "
-                << (D.col(0) * _lambda[2] / mTimeStep).transpose() << std::endl;
+      (*ODE_FILE) << "[ODE LCP] tangential directional force is "
+                  << ((mJacobians1[1] * _lambda[1]).transpose() +
+                      (mJacobians1[2] * _lambda[2]).transpose())
+                  << std::endl;  // <<(mJacobians2[1] *
+                                 // _lambda[1]).transpose()<<std::endl;
+      (*ODE_FILE) << "[ODE LCP] overall force is " << Myforce.transpose()
+                  << std::endl;
+      (*ODE_FILE) << "[ODE LCP] overall first is "
+                  << (mContacts[i]->normal * _lambda[0] / mTimeStep).transpose()
+                  << std::endl;
+      (*ODE_FILE) << "[ODE LCP] overall second 1 is "
+                  << (D.col(0) * _lambda[1] / mTimeStep).transpose()
+                  << std::endl;
+      (*ODE_FILE) << "[ODE LCP] overall second 2 is "
+                  << (D.col(0) * _lambda[2] / mTimeStep).transpose()
+                  << std::endl;
 #endif
       allForce = Myforce;
     }

@@ -26,9 +26,9 @@ class MyContactConstraint : public ContactConstraint {
                             const Eigen::VectorXd& N, const Eigen::MatrixXd& B,
                             int BodyNode1_dim, int BodyNode2_dim,
                             bool impulse_flag, Eigen::Vector3d& allForce,
-                            Eigen::Vector3d& allTorque);
+                            Eigen::Vector3d& allTorque,std::shared_ptr<std::fstream> Lemke_FILE);
   void My2ODEapplyImpulse(double* _lambda, Eigen::Vector3d& allForce,
-                          Eigen::Vector3d& allTorque);
+                          Eigen::Vector3d& allTorque, std::shared_ptr<std::fstream> ODE_FILE);
   void getInformation(ConstraintInfo* _info);
   int numBasis;
 };
