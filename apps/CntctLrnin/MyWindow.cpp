@@ -7,7 +7,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) {
   mCollisionDetector = std::unique_ptr<dart::collision::CollisionDetector>(
       mWorld->getConstraintSolver()->getCollisionDetector());
   counter = 0;
-  episodeLength = 1500;
+  episodeLength = 5500;
   mColor.push_back(Eigen::Vector3d(0.8, 0.2, 0.2));  // red
   mColor.push_back(Eigen::Vector3d(0.2, 0.8, 0.2));  // green
   mColor.push_back(Eigen::Vector3d(0.2, 0.2, 0.8));  // blue
@@ -49,22 +49,25 @@ void MyWindow::timeStepping() {
 //           << std::endl;
 #endif
 
-  // regularization the positive of cube
-  double range = 12.5;
-  if ((std::abs(mWorld->getSkeleton("mBox")
-                    ->getBodyNode("BodyNode_1")
-                    ->getTransform()
-                    .translation()(0)) > range)  // x direction
-      || (std::abs(mWorld->getSkeleton("mBox")
-                       ->getBodyNode("BodyNode_1")
-                       ->getTransform()
-                       .translation()(2)) > range))  // z direction
-  {
-    dterr << "ERROR: runnng out of range, need regularization!!!" << std::endl;
-
-    mWorld->getSkeleton("mBox")->setPositions(Eigen::VectorXd::Zero(6));
-    mWorld->getSkeleton("mBox")->setVelocities(Eigen::VectorXd::Zero(6));
-  }
+  /*
+   *  // regularization the positive of cube
+   *  double range = 12.5;
+   *  if ((std::abs(mWorld->getSkeleton("mBox")
+   *                    ->getBodyNode("BodyNode_1")
+   *                    ->getTransform()
+   *                    .translation()(0)) > range)  // x direction
+   *      || (std::abs(mWorld->getSkeleton("mBox")
+   *                       ->getBodyNode("BodyNode_1")
+   *                       ->getTransform()
+   *                       .translation()(2)) > range))  // z direction
+   *  {
+   *    dterr << "ERROR: runnng out of range, need regularization!!!" <<
+   * std::endl;
+   *
+   *    mWorld->getSkeleton("mBox")->setPositions(Eigen::VectorXd::Zero(6));
+   *    mWorld->getSkeleton("mBox")->setVelocities(Eigen::VectorXd::Zero(6));
+   *  }
+   */
 
   counter = (counter + 1) % 200;
 
@@ -104,6 +107,8 @@ void MyWindow::timeStepping() {
   if (numContacts != 4) {
     dterr << "numContacts: " << numContacts
           << " current frame: " << mWorld->getSimFrames() << std::endl;
+    dterr << mWorld->getSkeleton("mBox")->getPositions().transpose()
+          << std::endl;
     keyboard('y', 0, 0);
   }
   /*

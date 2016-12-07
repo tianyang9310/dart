@@ -1,16 +1,15 @@
 #include "MyDantzigLCPSolver.h"
 #include "MyWindow.h"
 
-#define LEMKE_OUTPUT  // Lemke A, b, err, z, w
+// #define LEMKE_OUTPUT  // Lemke A, b, err, z, w
 // #define LEMKE_OUTPUT_DETAILS  // Lemke N, B, Skeletons velocities, M, E
 // #define LEMKE_FAIL_PRINT  // print lemke fail prompt information
-#define ODE_OUTPUT  // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
+// #define ODE_OUTPUT        // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
 // #define OUTPUT2FILE  // output data to file
 
 #define ALWAYS_ODE         // always solve ode whether Lemke is valid or not
 #define LEMKE_APPLY_PRINT  // print applying Lemke constraint
 #define ODE_APPLY_PRINT    // print applying ODE constraint
-
 
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
                                        MyWindow* mWindow)
@@ -556,8 +555,11 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
       Mycntctconstraint->MyapplyImpulse(fn_each, fd_each, N_each, B_each,
                                         BodyNode1_dim, BodyNode2_dim,
                                         (_TimeStep == 1.0));
+
       Mycntctconstraint->excite();
     }
+    // It is very important to clamp to zero in this step 
+    clampZero(bodyNode1->mConstraintImpulse);
   } else {
     //  ---------------------------------------
     // Using ODE LCP to simulate
@@ -567,6 +569,9 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
       constraint->excite();
     }
   }
+
+  // dterr << "bodyNode1 constraint impulse: "
+  //       << bodyNode1->mConstraintImpulse.transpose() << std::endl;
 
   // ---------------------------------------------------------------------------
   Eigen::Vector3d allForce;
@@ -621,8 +626,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   }
   dtmsg << "[ODE]   all contact forces: " << allForce.transpose().format(CSVFmt)
         << std::endl;
-  dtmsg << "[ODE] all contact torques: "
-        << allTorque.transpose().format(CSVFmt) << std::endl;
+  dtmsg << "[ODE] all contact torques: " << allTorque.transpose().format(CSVFmt)
+        << std::endl;
 #endif
 // ---------------------------------------------------------------------------
 

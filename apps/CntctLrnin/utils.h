@@ -4,11 +4,15 @@
 #include "dart/dart.h"
 
 #ifndef DART_CONTACT_CONSTRAINT_EPSILON
-#define DART_CONTACT_CONSTRAINT_EPSILON 1.0e-6
+#define DART_CONTACT_CONSTRAINT_EPSILON 1e-6
 #endif
 
 #ifndef MY_DART_ZERO
-#define MY_DART_ZERO 1.0e-7
+#define MY_DART_ZERO 1e-6
+#endif
+
+#ifndef CLAMP_ZERO
+#define CLAMP_ZERO 1e-6
 #endif
 
 // #define REGULARIZED_PRINT // print regularized info
@@ -24,9 +28,9 @@ void clampZero(T& z) {
   // Zero regularization
   Eigen::VectorXd oldZ = z;
   Eigen::VectorXd myZero = Eigen::VectorXd::Zero(z.rows());
-  z = (z.array() > -MY_DART_ZERO && z.array() < MY_DART_ZERO)
+  z = (z.array() > -CLAMP_ZERO && z.array() < CLAMP_ZERO)
              .select(myZero, z);
-  if (((oldZ).array() > -MY_DART_ZERO && (oldZ).array() < MY_DART_ZERO &&
+  if (((oldZ).array() > -CLAMP_ZERO && (oldZ).array() < CLAMP_ZERO &&
        (oldZ).array() != 0)
           .any()) {
 #ifdef REGULARIZED_PRINT
@@ -43,8 +47,8 @@ void clampNeg(T1& z, T2 Validation) {
   Eigen::VectorXd myZero = Eigen::VectorXd::Zero(z.rows());
   if (Validation) {
     oldZ = z;
-    z = (z.array() < -MY_DART_ZERO).select(myZero, z);
-    if (((oldZ).array() < -MY_DART_ZERO).any()) {
+    z = (z.array() < -CLAMP_ZERO).select(myZero, z);
+    if (((oldZ).array() < -CLAMP_ZERO).any()) {
 #ifdef REGULARIZED_PRINT
       dtwarn << "Before negative regularized: z is " << oldZ.transpose()
              << std::endl;

@@ -1140,9 +1140,11 @@ protected:
   ///        bodies of the parent skeleton.
   Eigen::Vector6d mBiasImpulse;
 
+public:
   /// Constraint impulse: contact impulse, dynamic joint impulse
   Eigen::Vector6d mConstraintImpulse;
 
+protected:
   // TODO(JS): rename with more informative one
   /// Generalized impulsive body force w.r.t. body frame.
   Eigen::Vector6d mImpF;

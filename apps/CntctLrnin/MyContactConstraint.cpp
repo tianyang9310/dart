@@ -20,7 +20,7 @@
 
 #define OUTPUT
 
-#define CLAMP_CONTACT_CONSTRAINT
+// #define CLAMP_CONTACT_CONSTRAINT
 
 namespace dart {
 namespace constraint {
@@ -172,10 +172,10 @@ void MyContactConstraint::My2LemkeapplyImpulse(
       std::cout << "[Lemke LCP] overall force is " << Myforce.transpose()
                 << std::endl;
       std::cout << "[Lemke LCP] first force is "
-                << (mContacts[i]->normal * fn / mTimeStep).transpose()
+                << (mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1)).transpose()
                 << std::endl;
       std::cout << "[Lemke LCP] second force is "
-                << (D * fd / mTimeStep).transpose() << std::endl;
+                << (D * fd / (impulse_flag ? mTimeStep : 1)).transpose() << std::endl;
 #endif
       allForce = Myforce;
     }
