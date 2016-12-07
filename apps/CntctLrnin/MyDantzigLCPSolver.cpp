@@ -11,6 +11,8 @@
 #define LEMKE_APPLY_PRINT  // print applying Lemke constraint
 #define ODE_APPLY_PRINT    // print applying ODE constraint
 
+#define CLAMP_DANTZIG
+
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
                                        MyWindow* mWindow)
     : DantzigLCPSolver(_timestep), totalDOF(_totalDOF), mWindow(mWindow) {
@@ -558,8 +560,10 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
       Mycntctconstraint->excite();
     }
+#ifdef CLAMP_DANTZIG
     // It is very important to clamp to zero in this step 
     clampZero(bodyNode1->mConstraintImpulse);
+#endif
   } else {
     //  ---------------------------------------
     // Using ODE LCP to simulate

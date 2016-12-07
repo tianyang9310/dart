@@ -1,6 +1,7 @@
 #ifndef CNTCTLRNIN_MYWINDOW_H
 #define CNTCTLRNIN_MYWINDOW_H
 
+#include <random>
 #include "Controller.h"
 #include "MyDantzigLCPSolver.h"
 #include "dart/dart.h"

@@ -7,11 +7,12 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) {
   mCollisionDetector = std::unique_ptr<dart::collision::CollisionDetector>(
       mWorld->getConstraintSolver()->getCollisionDetector());
   counter = 0;
-  episodeLength = 5500;
+  episodeLength = 1500;
   mColor.push_back(Eigen::Vector3d(0.8, 0.2, 0.2));  // red
   mColor.push_back(Eigen::Vector3d(0.2, 0.8, 0.2));  // green
   mColor.push_back(Eigen::Vector3d(0.2, 0.2, 0.8));  // blue
   mColor.push_back(Eigen::Vector3d(0.2, 0.2, 0.2));  // black
+  srand(0);
 }
 
 MyWindow::~MyWindow() {}
@@ -109,7 +110,7 @@ void MyWindow::timeStepping() {
           << " current frame: " << mWorld->getSimFrames() << std::endl;
     dterr << mWorld->getSkeleton("mBox")->getPositions().transpose()
           << std::endl;
-    keyboard('y', 0, 0);
+    // keyboard('y', 0, 0);
   }
   /*
    *std::cout<<"num of contact points is: "<<numContacts<<std::endl;
@@ -121,16 +122,13 @@ void MyWindow::addExtForce() {
   // dtmsg<<"Add external force"<<std::endl;
   // mWorld->getSkeleton("mBox")
   //     ->getBodyNode("BodyNode_1")
-  //     ->addExtTorque(Eigen::Vector3d::Random() * 100);
+  //     ->addExtForce(Eigen::Vector3d::Random() * 3);
 
-  // Eigen::Vector3d extForce = Eigen::Vector3d::Random() * 5e2;
+  // Eigen::Vector3d extForce = Eigen::Vector3d::Random() * 1e2;
   Eigen::Vector3d extForce = Eigen::Vector3d::Identity() * 1.2e1;
   extForce[1] = 0.0;
   extForce[2] = 0.0;
   mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce);
-  // mWorld->getSkeleton("mBox")
-  //     ->getBodyNode("BodyNode_1")
-  //     ->addExtForce(Eigen::Vector3d::Random() * 3);
 }
 
 void MyWindow::addExtTorque() {
