@@ -56,6 +56,7 @@ public:
   virtual void keyboard(unsigned char _key, int _x, int _y);
 
   void setController(Controller *_controller);
+  void render();
   
 private:
   void movePlatforms();
@@ -68,6 +69,7 @@ private:
   std::vector<unsigned char> mScreenshotTemp;
   bool mDumpImages;
   double mTotalEffort;
+  bool CameraView;
 };
 
 #endif  // APPS_SWING_MYWINDOW_H_

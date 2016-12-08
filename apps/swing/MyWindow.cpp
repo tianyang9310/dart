@@ -51,6 +51,7 @@ MyWindow::MyWindow(): SimWindow() {
   mSpeed = PLATFORM_SPEED;
   mDumpImages = false;
   mTotalEffort = 0;
+  CameraView = false;
 }
 
 MyWindow::~MyWindow() {
@@ -145,6 +146,9 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
     case 'm':  // release
       mController->setState("RELEASE");
       break;
+    case 'w':
+      CameraView = !CameraView;
+      break;
     default:
       Win3D::keyboard(_key, _x, _y);
   }
@@ -232,4 +236,70 @@ bool MyWindow::dumpImages() {
     std::cout << "wrote screenshot " << fileName << "\n";
     return true;
   }
+}
+
+void MyWindow::render() {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(mPersp,
+                   static_cast<double>(mWinWidth)/static_cast<double>(mWinHeight),
+                   0.1, 10.0);
+    gluLookAt(mEye[0], mEye[1], mEye[2], 0.0, 0.0, -1.0, mUp[0], mUp[1], mUp[2]);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    initGL();
+    
+    mTrackBall.applyGLRotation();
+    
+    // Draw world origin indicator
+    if (!mCapture)
+    {
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_LIGHTING);
+        glLineWidth(2.0);
+        if (mRotate || mTranslate || mZooming) {
+            glColor3f(1.0f, 0.0f, 0.0f);
+            glBegin(GL_LINES);
+            glVertex3f(-0.1f, 0.0f, -0.0f);
+            glVertex3f(0.15f, 0.0f, -0.0f);
+            glEnd();
+            
+            glColor3f(0.0f, 1.0f, 0.0f);
+            glBegin(GL_LINES);
+            glVertex3f(0.0f, -0.1f, 0.0f);
+            glVertex3f(0.0f, 0.15f, 0.0f);
+            glEnd();
+            
+            glColor3f(0.0f, 0.0f, 1.0f);
+            glBegin(GL_LINES);
+            glVertex3f(0.0f, 0.0f, -0.1f);
+            glVertex3f(0.0f, 0.0f, 0.15f);
+            glEnd();
+        }
+    }
+    
+    if (CameraView) {
+      Eigen::Quaterniond q(0.6426, 0.3047, 0.6307, 0.3103);
+      Eigen::Transform<double, 3, Eigen::Affine> t(q);
+      glMultMatrixd(t.data());
+      glScalef(2*mZoom, 2*mZoom, 2*mZoom);
+      glTranslatef(-1.68962, 0.00920964, -0.00350334);
+    } else {
+      glScalef(mZoom, mZoom, mZoom);
+      glTranslatef(mTrans[0]*0.001, mTrans[1]*0.001, mTrans[2]*0.001);
+    }
+    
+    initLights();
+    draw();
+    
+    // Draw trackball indicator
+    if (mRotate && !mCapture)
+        mTrackBall.draw(mWinWidth, mWinHeight);
+    
+    glutSwapBuffers();
+    
+    if (mCapture)
+        screenshot();
 }
