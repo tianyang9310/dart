@@ -70,6 +70,9 @@ int main(int argc, char* argv[]) {
   dart::dynamics::SkeletonPtr platform = myWorld->getSkeleton("landing1");
   platform->getJoint("joint")->setActuatorType(dart::dynamics::Joint::VELOCITY);
 
+  // Print out Bar position
+  dart::dynamics::SkeletonPtr bar = myWorld->getSkeleton("bar1");
+
   // Create controller
   Controller* myController = new Controller(biped,
                                             myWorld->getConstraintSolver(),
@@ -86,6 +89,7 @@ int main(int argc, char* argv[]) {
   std::cout << "'v': visualization on/off" << std::endl;
   std::cout << "'d': dump sensor images into files on/off" << std::endl;
   std::cout << "'m': command the character to dismount" << std::endl;
+  std::cout << "COM of bar is at "<<bar->getCOM().transpose()<<std::endl;
 
   glutInit(&argc, argv);
   window.initWindow(640, 480, "Swing");

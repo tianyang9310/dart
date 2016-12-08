@@ -36,6 +36,7 @@
  */
 
 #include "Controller.h"
+#define USING_COM_CHEKC_SWING_PHASE
 
 Controller::Controller(dart::dynamics::SkeletonPtr _skel, dart::constraint::ConstraintSolver* _constrSolver, double _t) {
   mSkel = _skel;
@@ -313,30 +314,43 @@ void Controller::grab() {
 }  
 
 void Controller::CheckSwingPhase() {
-  double wrist_pos_mean = -0.3675;
-  double wrist_pos = mSkel->getPositions().transpose()(mSkel->getDof("j_hand_left_1")->getIndexInSkeleton()) - wrist_pos_mean;
-  double wrist_vel = mSkel->getVelocities().transpose()(mSkel->getDof("j_hand_left_1")->getIndexInSkeleton());
+#ifdef USING_COM_CHEKC_SWING_PHASE
+  // using COM to check phase
+  double bias = 0.85;
+  double pos = mSkel->getCOM()(0) - bias;
+  double vel = mSkel->getCOMLinearVelocity()(0);
+  std::cout<<"COM pos: "<<pos<<" COM vel: "<<vel<<std::endl;
 
-  if (wrist_pos < 0 && wrist_vel <0) {
+  if ( pos > 0 &&  vel >0) {
     mSwingState = "Fwd_Pos_Fwd_Vel";
-  } else if (wrist_pos <0 && wrist_vel >0) {
+  } else if ( pos >0 &&  vel <0) {
     mSwingState = "Fwd_Pos_Bwd_Vel";
-  } else if (wrist_pos >0 && wrist_vel >0) {
+  } else if ( pos <0 &&  vel <0) {
     mSwingState = "Bwd_Pos_Bwd_Vel";
-  } else if (wrist_pos >0 && wrist_vel <0) {
+  } else if ( pos <0 &&  vel >0) {
     mSwingState = "Bwd_Pos_Fwd_Vel";
   } else {
     mSwingState = "NULL";
   }
-  // std::cout<<"mSwingState: "<<mSwingState<<std::endl;
-  // std::cin.get();
-  // if (wrist_pos > -0.3675 && wrist_vel<0 ){
-  //   Eigen::Vector3d vf(-5100.0, 0.0, 0.0);
-  //   virtualForce(vf, mSkel->getBodyNode("h_pelvis"));
-  // } else if (wrist_pos < -0.3675 && wrist_vel >0) {
-  //   Eigen::Vector3d vf(5100.0, 0.0, 0.0);
-  //   virtualForce(vf, mSkel->getBodyNode("h_pelvis"));
-  // }
+#else 
+ // using wrist to check phase
+  double bias = -0.3675;
+  double pos = mSkel->getPositions().transpose()(mSkel->getDof("j_hand_left_1")->getIndexInSkeleton()) - bias;
+  double vel = mSkel->getVelocities().transpose()(mSkel->getDof("j_hand_left_1")->getIndexInSkeleton());
+  std::cout<<"wrist pos: "<<pos<<" wrist vel: "<<vel<<std::endl;
+
+  if ( pos < 0 &&  vel <0) {
+    mSwingState = "Fwd_Pos_Fwd_Vel";
+  } else if ( pos <0 &&  vel >0) {
+    mSwingState = "Fwd_Pos_Bwd_Vel";
+  } else if ( pos >0 &&  vel >0) {
+    mSwingState = "Bwd_Pos_Bwd_Vel";
+  } else if ( pos >0 &&  vel <0) {
+    mSwingState = "Bwd_Pos_Fwd_Vel";
+  } else {
+    mSwingState = "NULL";
+  }
+#endif
 }
 
 void Controller::swing() {
@@ -353,10 +367,12 @@ void Controller::swing() {
   CheckSwingPhase();
   if (mSwingState == "Fwd_Pos_Fwd_Vel") {
     mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -1.57;
+    mDesiredDofs[mSkel->getDof("j_head_1")->getIndexInSkeleton()] = -0.5233;
   } else if (mSwingState == "Fwd_Pos_Bwd_Vel") {
     // pass
   } else if (mSwingState == "Bwd_Pos_Bwd_Vel") {
     mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = 1.57;
+    mDesiredDofs[mSkel->getDof("j_head_1")->getIndexInSkeleton()] = 0.785;
   } else if (mSwingState == "Bwd_Pos_Fwd_Vel") {
     // pass
   } else {
