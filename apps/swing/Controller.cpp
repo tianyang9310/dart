@@ -354,6 +354,16 @@ void Controller::CheckSwingPhase() {
 }
 
 void Controller::swing() {
+  // ===========================================================================
+  // change forearm Kp and Kd
+  int forearm_left_idx =  mSkel->getDof("j_forearm_left")->getIndexInSkeleton();
+  int forearm_right_idx =  mSkel->getDof("j_forearm_right")->getIndexInSkeleton();
+  mKp(forearm_left_idx, forearm_left_idx) = 100.0;
+  mKp(forearm_right_idx, forearm_right_idx) = 100.0;
+  mKd(forearm_left_idx, forearm_left_idx) = 10.0;
+  mKd(forearm_right_idx, forearm_right_idx) = 10.0;
+  // ===========================================================================
+
   // TODO: Need a better controller to increase the speed
   // and land at the right moment
   mDesiredDofs = mDefaultPose;
@@ -364,6 +374,7 @@ void Controller::swing() {
   mDesiredDofs[mSkel->getDof("j_forearm_left")->getIndexInSkeleton()] = 0.4;
   mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = 0.4;
   
+
   CheckSwingPhase();
   if (mSwingState == "Fwd_Pos_Fwd_Vel") {
     mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -1.57;
@@ -373,6 +384,8 @@ void Controller::swing() {
   } else if (mSwingState == "Bwd_Pos_Bwd_Vel") {
     mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = 1.57;
     mDesiredDofs[mSkel->getDof("j_head_1")->getIndexInSkeleton()] = 0.785;
+    mDesiredDofs[mSkel->getDof("j_forearm_left")->getIndexInSkeleton()] = 1.57;
+    mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = 1.57;
   } else if (mSwingState == "Bwd_Pos_Fwd_Vel") {
     // pass
   } else {
@@ -381,6 +394,13 @@ void Controller::swing() {
   }
 
   stablePD();
+
+  // ===========================================================================
+  mKp(forearm_left_idx, forearm_left_idx) = 20.0;
+  mKp(forearm_right_idx, forearm_right_idx) = 20.0;
+  mKd(forearm_left_idx, forearm_left_idx) = 2.0;
+  mKd(forearm_right_idx, forearm_right_idx) = 2.0;
+  // ===========================================================================
 
   // TODO: Figure out the condition to release the bar
   if (false) {
@@ -394,9 +414,9 @@ void Controller::release() {
   rightHandRelease();
 
   mDesiredDofs = mDefaultPose;
-  // mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -1.5;
-  // mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = -1.5;
-  // mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = -1.5;
+  mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -1.5;
+  mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = -1.5;
+  mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = -1.5;
   stablePD();
 }
   

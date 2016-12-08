@@ -144,6 +144,7 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
       mDumpImages = !mDumpImages;
       break;
     case 'm':  // release
+      // mDumpImages = !mDumpImages;
       mController->setState("RELEASE");
       break;
     case 'w':
@@ -210,7 +211,7 @@ bool MyWindow::dumpImages() {
     mScreenshotTemp.resize(4 * mWinWidth * mWinHeight);
 
   static int count = 0;
-  char fileBase[32] = "Image";
+  char fileBase[32] = "CameraImage/Image";
   char fileName[64];
   // png
 #ifdef _WIN32
@@ -218,7 +219,7 @@ bool MyWindow::dumpImages() {
 #else
   std::snprintf(fileName, sizeof(fileName), "%s%.4d.png", fileBase, count++);
 #endif
-  
+ 
   for (int row = 0; row < mWinHeight; row++) {
     memcpy(&mScreenshotTemp[row * mWinWidth * 4],
            &mInputSensor[(mWinHeight - row - 1) * mWinWidth * 4], mWinWidth * 4);
