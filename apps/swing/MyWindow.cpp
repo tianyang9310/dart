@@ -79,6 +79,14 @@ void MyWindow::drawSkels() {
   for (unsigned int i = 0; i < mWorld->getNumSkeletons(); i++)
     mWorld->getSkeleton(i)->draw(mRI);
   
+  // draw Biped COM
+  Eigen::Vector3d COM = mWorld->getSkeleton("fullbody1")->getCOM();
+  mRI->setPenColor(Eigen::Vector3d(0.8,0.8,0.2));
+  mRI->pushMatrix();
+  mRI->translate(COM);
+  mRI->drawEllipsoid(Eigen::Vector3d(0.2,0.2,0.2));
+  mRI->popMatrix();
+
   // display the frame count in 2D text
   char buff[64];
 #ifdef _WIN32
