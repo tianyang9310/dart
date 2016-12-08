@@ -105,6 +105,7 @@ Controller::Controller(dart::dynamics::SkeletonPtr _skel, dart::constraint::Cons
   mRightHandContact = NULL;
   mTimer = 300;
   mState = "STAND";
+  mSwingState = "NULL";
   mVision = NULL;
 }
 
@@ -311,6 +312,33 @@ void Controller::grab() {
   }
 }  
 
+void Controller::CheckSwingPhase() {
+  double wrist_pos_mean = -0.3675;
+  double wrist_pos = mSkel->getPositions().transpose()(mSkel->getDof("j_hand_left_1")->getIndexInSkeleton()) - wrist_pos_mean;
+  double wrist_vel = mSkel->getVelocities().transpose()(mSkel->getDof("j_hand_left_1")->getIndexInSkeleton());
+
+  if (wrist_pos < 0 && wrist_vel <0) {
+    mSwingState = "Fwd_Pos_Fwd_Vel";
+  } else if (wrist_pos <0 && wrist_vel >0) {
+    mSwingState = "Fwd_Pos_Bwd_Vel";
+  } else if (wrist_pos >0 && wrist_vel >0) {
+    mSwingState = "Bwd_Pos_Bwd_Vel";
+  } else if (wrist_pos >0 && wrist_vel <0) {
+    mSwingState = "Bwd_Pos_Fwd_Vel";
+  } else {
+    mSwingState = "NULL";
+  }
+  // std::cout<<"mSwingState: "<<mSwingState<<std::endl;
+  // std::cin.get();
+  // if (wrist_pos > -0.3675 && wrist_vel<0 ){
+  //   Eigen::Vector3d vf(-5100.0, 0.0, 0.0);
+  //   virtualForce(vf, mSkel->getBodyNode("h_pelvis"));
+  // } else if (wrist_pos < -0.3675 && wrist_vel >0) {
+  //   Eigen::Vector3d vf(5100.0, 0.0, 0.0);
+  //   virtualForce(vf, mSkel->getBodyNode("h_pelvis"));
+  // }
+}
+
 void Controller::swing() {
   // TODO: Need a better controller to increase the speed
   // and land at the right moment
@@ -322,6 +350,20 @@ void Controller::swing() {
   mDesiredDofs[mSkel->getDof("j_forearm_left")->getIndexInSkeleton()] = 0.4;
   mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = 0.4;
   
+  CheckSwingPhase();
+  if (mSwingState == "Fwd_Pos_Fwd_Vel") {
+    mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -1.57;
+  } else if (mSwingState == "Fwd_Pos_Bwd_Vel") {
+    // pass
+  } else if (mSwingState == "Bwd_Pos_Bwd_Vel") {
+    mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = 1.57;
+  } else if (mSwingState == "Bwd_Pos_Fwd_Vel") {
+    // pass
+  } else {
+    // NULL mSwingState 
+    // pass
+  }
+
   stablePD();
 
   // TODO: Figure out the condition to release the bar
@@ -336,9 +378,9 @@ void Controller::release() {
   rightHandRelease();
 
   mDesiredDofs = mDefaultPose;
-  mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -1.5;
-  mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = -1.5;
-  mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = -1.5;
+  // mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -1.5;
+  // mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = -1.5;
+  // mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = -1.5;
   stablePD();
 }
   
@@ -383,6 +425,7 @@ void Controller::ankleStrategy() {
 
 void Controller::virtualForce(Eigen::Vector3d _force, dart::dynamics::BodyNode* _bodyNode, Eigen::Vector3d _offset) {
   Eigen::MatrixXd jacobian = mSkel->getLinearJacobian(_bodyNode, _offset);
+  // std::cout<<(jacobian.transpose() * _force).transpose()<<std::endl;
   mTorques += jacobian.transpose() * _force;
 }
 

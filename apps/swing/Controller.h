@@ -73,9 +73,10 @@ protected:
   // Basic control building blocks
   void stablePD();
   void ankleStrategy();
-  void virtualForce(Eigen::Vector3d _force, dart::dynamics::BodyNode* _bodyNode, Eigen::Vector3d _offset);
+  void virtualForce(Eigen::Vector3d _force, dart::dynamics::BodyNode* _bodyNode, Eigen::Vector3d _offset = Eigen::Vector3d::Zero());
   // Contact states
   void checkContactState();
+  void CheckSwingPhase(); 
   void leftHandGrab();
   void rightHandGrab();
   void leftHandRelease();
@@ -92,6 +93,7 @@ protected:
   double mPreOffset;
   int mTimer;
   std::string mState;
+  std::string mSwingState;
   dart::constraint::JointConstraint* mLeftHandHold;
   dart::constraint::JointConstraint* mRightHandHold;
   dart::dynamics::BodyNode* mFootContact;
