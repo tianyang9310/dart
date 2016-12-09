@@ -2,7 +2,7 @@
 
 using namespace std;
 
-MyWindow::MyWindow(dart::simulation::WorldPtr world) {
+MyWindow::MyWindow(dart::simulation::WorldPtr world):SimWindow() {
   setWorld(world);
   mCollisionDetector = std::unique_ptr<dart::collision::CollisionDetector>(
       mWorld->getConstraintSolver()->getCollisionDetector());
@@ -13,6 +13,13 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) {
   mColor.push_back(Eigen::Vector3d(0.2, 0.2, 0.8));  // blue
   mColor.push_back(Eigen::Vector3d(0.2, 0.2, 0.2));  // black
   srand(0);
+
+  mZoom = 0.50f;
+  mTrans[1] = 15.0f; 
+  Eigen::Quaterniond initTrackBallQuat;
+  initTrackBallQuat.w() = 0.895342;
+  initTrackBallQuat.vec() = Eigen::Vector3d(0.180079,0.406869,0.0198165);
+  mTrackBall.setQuaternion(initTrackBallQuat);
 }
 
 MyWindow::~MyWindow() {}
