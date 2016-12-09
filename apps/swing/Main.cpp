@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
   dart::dynamics::SkeletonPtr bar = myWorld->getSkeleton("bar1");
 
   // Create controller
-  Controller* myController = new Controller(biped,
+  Controller* myController = new Controller(biped, platform,
                                             myWorld->getConstraintSolver(),
                                             myWorld->getTimeStep());
 

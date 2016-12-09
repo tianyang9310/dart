@@ -38,8 +38,9 @@
 #include "Controller.h"
 #define USING_COM_CHEKC_SWING_PHASE
 
-Controller::Controller(dart::dynamics::SkeletonPtr _skel, dart::constraint::ConstraintSolver* _constrSolver, double _t) {
+Controller::Controller(dart::dynamics::SkeletonPtr _skel, dart::dynamics::SkeletonPtr _platform, dart::constraint::ConstraintSolver* _constrSolver, double _t) {
   mSkel = _skel;
+  mPlatform = _platform;
   mConstraintSolver = _constrSolver;
   mTimestep = _t;
 
@@ -321,7 +322,9 @@ void Controller::CheckSwingPhase() {
   double bias = 0.85;
   double pos = mSkel->getCOM()(0) - bias;
   double vel = mSkel->getCOMLinearVelocity()(0);
-  std::cout<<"COM pos: "<<pos<<" COM vel: "<<vel<<std::endl;
+  // std::cout<<"COM pos: "<<pos<<" COM vel: "<<vel<<std::endl;
+  // std::cout << "COM pos " << mSkel->getCOM().transpose() << std::endl;
+  std::cout << "COM vel " << mSkel->getCOMLinearVelocity().transpose() << std::endl;
 
   if ( pos > 0 &&  vel >0) {
     mSwingState = "Fwd_Pos_Fwd_Vel";
@@ -339,7 +342,7 @@ void Controller::CheckSwingPhase() {
   double bias = -0.3675;
   double pos = mSkel->getPositions().transpose()(mSkel->getDof("j_hand_left_1")->getIndexInSkeleton()) - bias;
   double vel = mSkel->getVelocities().transpose()(mSkel->getDof("j_hand_left_1")->getIndexInSkeleton());
-  std::cout<<"wrist pos: "<<pos<<" wrist vel: "<<vel<<std::endl;
+  // std::cout<<"wrist pos: "<<pos<<" wrist vel: "<<vel<<std::endl;
 
   if ( pos < 0 &&  vel <0) {
     mSwingState = "Fwd_Pos_Fwd_Vel";
@@ -405,7 +408,7 @@ void Controller::swing() {
   // ===========================================================================
 
   // TODO: Figure out the condition to release the bar
-  if (false) {
+  if ((mSkel->getCOM()(0)-0.85) > 0.25 && mSkel->getCOMLinearVelocity()(0) > 2.9) {
     mState = "RELEASE";
     std::cout << mCurrentFrame << ": " << "SWING -> RELEASE" << std::endl;
   }

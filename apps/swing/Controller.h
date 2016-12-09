@@ -47,7 +47,7 @@
 
 class Controller {
 public:
-  Controller(dart::dynamics::SkeletonPtr _skel, dart::constraint::ConstraintSolver* _constrSolver,
+  Controller(dart::dynamics::SkeletonPtr _skel, dart::dynamics::SkeletonPtr _platform, dart::constraint::ConstraintSolver* _constrSolver,
              double _t);
   virtual ~Controller();
 
@@ -85,6 +85,7 @@ protected:
   void rightHandRelease();
 
   dart::dynamics::SkeletonPtr mSkel;
+  dart::dynamics::SkeletonPtr mPlatform;
   dart::constraint::ConstraintSolver* mConstraintSolver;
   Eigen::VectorXd mTorques;
   Eigen::VectorXd mDefaultPose;
