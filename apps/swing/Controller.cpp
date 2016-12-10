@@ -107,10 +107,12 @@ Controller::Controller(dart::dynamics::SkeletonPtr _skel, dart::constraint::Cons
   mTimer = 300;
   mState = "STAND";
   mSwingState = "NULL";
-  mVision = NULL;
+  mVision = new Eigen::MatrixXi(480,640);
+  (*mVision).setZero();
 }
 
 Controller::~Controller() {
+  delete mVision;
 }
 
 Eigen::VectorXd Controller::getTorques() {

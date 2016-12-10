@@ -71,6 +71,12 @@ void MyWindow::timeStepping() {
   // Update the sensor at 60Hz; pixel values (RGBA) are stored in mInputSensor
   if (mWorld->getSimFrames() % 17 == 0)
     updateSensor();
+
+  // // print out mVision
+  // if (CameraView) {
+  //   std::cerr << (*(mController->mVision)) << std::endl;
+  //   std::cin.get();
+  // }
 }
 
 void MyWindow::drawSkels() {
@@ -197,7 +203,6 @@ void MyWindow::movePlatforms() {
 void MyWindow::updateSensor() {
   if (mInputSensor.size() == 0) {
     mInputSensor.resize(4 * mWinWidth * mWinHeight);
-    mController->mVision = &mInputSensor;
   }
     
   glMatrixMode(GL_PROJECTION);
@@ -226,6 +231,30 @@ void MyWindow::updateSensor() {
   glReadPixels(0, 0, mWinWidth, mWinHeight,
                GL_RGBA, GL_UNSIGNED_BYTE, &mInputSensor[0]);
 
+
+  // ---------------------------------------------------------------------------
+  // Pass image to controll
+  std::vector<unsigned char> mVisionTemp;
+  if (mVisionTemp.size() == 0) {
+    mVisionTemp.resize(4 * mWinWidth * mWinHeight);
+  }
+
+  for (int row = 0; row < mWinHeight; row++) {
+    memcpy(&mVisionTemp[row * mWinWidth * 4],
+           &mInputSensor[(mWinHeight - row - 1) * mWinWidth * 4], mWinWidth * 4);
+  }
+
+  for (int row = 0; row < mWinHeight; row++) {
+      for (int col = 0; col < mWinWidth; col++) {
+        (*(mController->mVision))(row,col) = 
+          static_cast<unsigned>(mVisionTemp[row * mWinWidth * 4 + col * 4]);
+          // std::cerr << static_cast<unsigned>(mVisionTemp[row * mWinWidth * 4 + col * 4])<<",";
+      }
+      // std::cerr << std::endl;
+  }
+  // std::cin.get();
+  // ---------------------------------------------------------------------------
+
   if (mDumpImages)
     dumpImages();
 }
@@ -251,7 +280,7 @@ bool MyWindow::dumpImages() {
   
   unsigned result = lodepng::encode(fileName,
                                     mScreenshotTemp, mWinWidth, mWinHeight);
-  
+
   // if there's an error, display it
   if (result) {
     std::cout << "lodepng error " << result << ": "

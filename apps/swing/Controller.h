@@ -61,7 +61,7 @@ public:
   Eigen::VectorXd getDesiredDofs();
   Eigen::MatrixXd getKp();
   Eigen::MatrixXd getKd();
-  std::vector<unsigned char>* mVision;
+  Eigen::MatrixXi* mVision;
 
 protected:
   void stand();
