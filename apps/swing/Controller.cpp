@@ -534,3 +534,19 @@ Eigen::MatrixXd Controller::getKd() {
   return mKd;
 }
 
+double Controller::getPlatformDis() {
+  // using col(395) col(255)
+  Eigen::VectorXi mBeam(480);
+  mBeam = (*mVision).col(395);
+  int BlackIdx=0;
+  for (BlackIdx=0; BlackIdx<480; BlackIdx++) {
+    if (mBeam(BlackIdx) < 128) {
+      break;
+    }
+  }
+  // std::cout<< "image boundary pos: " << BlackIdx << ",1" << std::endl;
+  double PlatformDis;
+  PlatformDis = -0.0164 * BlackIdx + 4.9659;
+  return PlatformDis;
+}
+

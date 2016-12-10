@@ -62,6 +62,7 @@ public:
   Eigen::MatrixXd getKp();
   Eigen::MatrixXd getKd();
   Eigen::MatrixXi* mVision;
+  double getPlatformDis();
 
 protected:
   void stand();

@@ -74,8 +74,10 @@ void MyWindow::timeStepping() {
 
   // // print out mVision
   // if (CameraView) {
-  //   std::cerr << (*(mController->mVision)) << std::endl;
-  //   std::cin.get();
+  //   // std::cerr << (*(mController->mVision)) << std::endl;
+  //   // std::cout<< "image boundary pos: " << mController->getPlatformDis() << std::endl;
+  //   // std::cerr <<"ground truth pos: "<< mWorld->getSkeleton("landing1")->getCOM()(0)<<std::endl;
+  //   // std::cin.get();
   // }
 }
 
