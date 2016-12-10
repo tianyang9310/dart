@@ -87,6 +87,22 @@ void MyWindow::drawSkels() {
   mRI->drawEllipsoid(Eigen::Vector3d(0.2,0.2,0.2));
   mRI->popMatrix();
 
+  // draw Biped COM trajectory
+  if (mController->getState() == "SWING") {
+    COMtraj.push_back(COM);
+    if (COMtraj.size() > 1) {
+      for (int i = 0; i < COMtraj.size()-1; i++) {
+        glBegin(GL_LINES);
+        glVertex3f(COMtraj[i](0),COMtraj[i](1),COMtraj[i](2));
+        glVertex3f(COMtraj[i+1](0),COMtraj[i+1](1),COMtraj[i+1](2));
+        glEnd();
+      }
+    }
+    if (COMtraj.size() > 2e2) {
+      COMtraj.pop_front();
+    }
+  }
+
   // display the frame count in 2D text
   char buff[64];
 #ifdef _WIN32

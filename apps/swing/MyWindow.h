@@ -70,6 +70,7 @@ private:
   bool mDumpImages;
   double mTotalEffort;
   bool CameraView;
+  std::deque<Eigen::Vector3d> COMtraj;
 };
 
 #endif  // APPS_SWING_MYWINDOW_H_

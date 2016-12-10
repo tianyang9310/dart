@@ -56,6 +56,7 @@ public:
   void setDesiredDof(int _index, double _val);
   void computeTorques(int _currentFrame);
   void setState(std::string _state);
+  std::string getState();
   dart::dynamics::SkeletonPtr getSkel();
   Eigen::VectorXd getDesiredDofs();
   Eigen::MatrixXd getKp();

@@ -512,6 +512,10 @@ void Controller::setState(std::string _state) {
   mState = _state;
 }
 
+std::string Controller::getState() {
+  return mState;
+}
+
 dart::dynamics::SkeletonPtr Controller::getSkel() {
   return mSkel;
 }
