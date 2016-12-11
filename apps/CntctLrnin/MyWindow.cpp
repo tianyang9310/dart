@@ -20,6 +20,12 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world):SimWindow() {
   initTrackBallQuat.w() = 0.895342;
   initTrackBallQuat.vec() = Eigen::Vector3d(0.180079,0.406869,0.0198165);
   mTrackBall.setQuaternion(initTrackBallQuat);
+
+  extForce.setZero();
+  // Eigen::Vector3d extForce = Eigen::Vector3d::Random() * 1e2;
+  extForce = Eigen::Vector3d::Ones() * 1.2e1;
+  extForce[1] = 0.0;
+  extForce[2] = 0.0;
 }
 
 MyWindow::~MyWindow() {}
@@ -69,7 +75,7 @@ void MyWindow::timeStepping() {
    *                       ->getTransform()
    *                       .translation()(2)) > range))  // z direction
    *  {
-   *    dterr << "ERROR: runnng out of range, need regularization!!!" <<
+   *    std::cerr << "ERROR: runnng out of range, need regularization!!!" <<
    * std::endl;
    *
    *    mWorld->getSkeleton("mBox")->setPositions(Eigen::VectorXd::Zero(6));
@@ -111,18 +117,29 @@ void MyWindow::timeStepping() {
                     ->numContactsCallBack;
 #endif
 
-  std::cout << "Current frame is " << mWorld->getSimFrames() << std::endl;
+  // std::cout << "Current frame is " << mWorld->getSimFrames() << std::endl;
   if (numContacts != 4) {
-    dterr << "numContacts: " << numContacts
+    std::cerr << "numContacts: " << numContacts
           << " current frame: " << mWorld->getSimFrames() << std::endl;
-    dterr << mWorld->getSkeleton("mBox")->getPositions().transpose()
+    std::cerr << "mBox Position: " << mWorld->getSkeleton("mBox")->getPositions().transpose()
           << std::endl;
-    // keyboard('y', 0, 0);
+    keyboard('y', 0, 0);
   }
+
+  std::cerr << "mBox Position: " << mWorld->getSkeleton("mBox")->getPositions().transpose()
+        << std::endl;
+  // keyboard('y', 0, 0);
+
   /*
    *std::cout<<"num of contact points is: "<<numContacts<<std::endl;
    *std::cout<<std::endl;
    */
+
+  // std::cout<<std::setprecision(10)<<"Jacobian artificial"<<std::endl<<mWorld->getSkeleton("mBox")->getBodyNode(0)->getLinearJacobian(Eigen::Vector3d::Zero())<<std::endl;
+  // std::cout<<std::setprecision(10)<<"Mass matrix"<<std::endl<<
+  //          mWorld->getSkeleton("mBox")->getMassMatrix()<<std::endl;
+  // std::cout<<std::setprecision(10)<<"AugMass matrix"<<std::endl<<
+  //          mWorld->getSkeleton("mBox")->getAugMassMatrix()<<std::endl;
 }
 
 void MyWindow::addExtForce() {
@@ -131,10 +148,6 @@ void MyWindow::addExtForce() {
   //     ->getBodyNode("BodyNode_1")
   //     ->addExtForce(Eigen::Vector3d::Random() * 3);
 
-  // Eigen::Vector3d extForce = Eigen::Vector3d::Random() * 1e2;
-  Eigen::Vector3d extForce = Eigen::Vector3d::Identity() * 1.2e1;
-  extForce[1] = 0.0;
-  extForce[2] = 0.0;
   mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce);
 }
 
@@ -173,6 +186,11 @@ void MyWindow::drawSkels() {
   // Make sure lighting is turned on and that polygons get filled in
   glEnable(GL_LIGHTING);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+  // draw Ext force arrow
+  Eigen::Vector3d poa = mWorld->getSkeleton("mBox")->getCOM();
+  double len = extForce.norm() / 100.0;
+  dart::gui::drawArrow3D(poa, extForce, len, 0.005,0.01);
 
   dart::gui::SimWindow::drawSkels();
 }

@@ -99,7 +99,7 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
 void MyContactConstraint::My2LemkeapplyImpulse(
     double fn, const Eigen::VectorXd& fd, const Eigen::VectorXd& N,
     const Eigen::MatrixXd& B, int BodyNode1_dim, int BodyNode2_dim,
-    bool impulse_flag, Eigen::Vector3d& allForce, Eigen::Vector3d& allTorque,
+    bool impulse_flag, Eigen::Vector3d& allForce, Eigen::Vector3d& allTorque,Eigen::VectorXd& GeneralizedForces,
     std::shared_ptr<std::fstream> Lemke_FILE) {
 #ifdef OUTPUT
   (*Lemke_FILE) << "============================================" << std::endl;
@@ -136,6 +136,7 @@ void MyContactConstraint::My2LemkeapplyImpulse(
           mBodyNode1->getTransform().inverse() * mContacts[i]->point;
 
       allTorque.setZero();
+      GeneralizedForces.setZero();
       if (mBodyNode1->isReactive()) {
         Eigen::Vector3d normal_force_tmp;
         normal_force_tmp =
@@ -144,12 +145,14 @@ void MyContactConstraint::My2LemkeapplyImpulse(
         clampZero(normal_force_tmp);
 #endif
         allTorque += bodyPoint1.cross(normal_force_tmp);
+        GeneralizedForces += normal_impulsive_force;
         Eigen::Vector3d friction_force_tmp;
         friction_force_tmp = D * fd / (impulse_flag ? mTimeStep : 1);
 #ifdef CLAMP_CONTACT_CONSTRAINT
         clampZero(friction_force_tmp);
 #endif
         allTorque += bodyPoint1.cross(friction_force_tmp);
+        GeneralizedForces += tangential_directional_force;
       }
 
 /*
@@ -190,7 +193,7 @@ void MyContactConstraint::My2LemkeapplyImpulse(
 }
 
 void MyContactConstraint::My2ODEapplyImpulse(
-    double* _lambda, Eigen::Vector3d& allForce, Eigen::Vector3d& allTorque,
+    double* _lambda, Eigen::Vector3d& allForce, Eigen::Vector3d& allTorque, Eigen::VectorXd& GeneralizedForces,
     std::shared_ptr<std::fstream> ODE_FILE) {
 #ifdef OUTPUT
   (*ODE_FILE) << "============================================" << std::endl;
@@ -219,12 +222,17 @@ void MyContactConstraint::My2ODEapplyImpulse(
           mBodyNode1->getTransform().inverse() * mContacts[i]->point;
 
       allTorque.setZero();
+      GeneralizedForces.setZero();
       if (mBodyNode1->isReactive()) {
         allTorque +=
             bodyPoint1.cross(mContacts[i]->normal * _lambda[0] / mTimeStep);
+        GeneralizedForces += (mJacobians1[i] * _lambda[0]);
         Eigen::Vector3d friction_force_tmp = D.col(0) * _lambda[1] / mTimeStep +
                                              D.col(1) * _lambda[2] / mTimeStep;
         allTorque += bodyPoint1.cross(friction_force_tmp);
+        GeneralizedForces += ((mJacobians1[1] * _lambda[1]) +
+                      (mJacobians1[2] * _lambda[2])).eval();
+
       }
 
 /*

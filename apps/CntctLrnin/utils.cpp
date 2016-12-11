@@ -33,6 +33,9 @@ Eigen::MatrixXd getTangentBasisMatrixLemke(const Eigen::Vector3d& _n,
       dterr << "Error in constructing basis matrix" << std::endl;
     }
   }
+  // Here it should also be unnecessary to clamp the data
+  // But in order to eliminate the error introduced here, clamp it
+  clampZero(T);
   return T;
 }
 

@@ -50,6 +50,8 @@ class MyDantzigLCPSolver : public DantzigLCPSolver {
   /// Return true if the diagonla block of matrix is symmetric
   bool isSymmetric(size_t _n, double* _A, size_t _begin, size_t _end);
 
+  void decompose(const Eigen::VectorXd& z, std::vector<Eigen::VectorXd>& z_groups);
+
   int totalDOF;
 
   int dataSize;

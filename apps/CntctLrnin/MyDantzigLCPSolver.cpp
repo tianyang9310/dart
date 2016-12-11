@@ -1,18 +1,28 @@
 #include "MyDantzigLCPSolver.h"
 #include "MyWindow.h"
 
-// #define LEMKE_OUTPUT  // Lemke A, b, err, z, w
-// #define LEMKE_OUTPUT_DETAILS  // Lemke N, B, Skeletons velocities, M, E
-// #define LEMKE_FAIL_PRINT  // print lemke fail prompt information
-// #define ODE_OUTPUT        // ODE A, b, x, w (true if ALWAYS_ODE or
-// !validation)
+#define LEMKE_OUTPUT  // Lemke A, b, err, z, w
+#define LEMKE_OUTPUT_DETAILS  // Lemke N, B, Skeletons velocities, M, E
+#define LEMKE_FAIL_PRINT  // print lemke fail prompt information
+#define ODE_OUTPUT        // ODE A, b, x, w (true if ALWAYS_ODE or !validation)
 // #define OUTPUT2FILE  // output data to file
 
 #define ALWAYS_ODE         // always solve ode whether Lemke is valid or not
 #define LEMKE_APPLY_PRINT  // print applying Lemke constraint
 #define ODE_APPLY_PRINT    // print applying ODE constraint
 
-#define CLAMP_DANTZIG
+// #define CLAMP_DANTZIG
+
+/*
+ *  * fn=0, fd=0, lambda=0		contact break
+ *  * fn=0, fd=0, lambda>0		has relative tangential velocities but no friction
+ *  * fn=0, fd>0, lambda=0 		X
+ *  * fn=0, fd>0, lambda>0		X
+ *  * fn>0, fd=0, lambda=0		static, no relative tangential velocities, no relative tangential acc
+ *  * fn>0, fd=0, lambda>0		X
+ *  * fn>0, fd>0, lambda=0		static friction, no relative tangential velocities, relative tangential acc
+ *  * fn>0, fd>0, lambda>0		slide
+ */
 
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
                                        MyWindow* mWindow)
@@ -179,15 +189,18 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   Eigen::MatrixXd M2;
   Eigen::VectorXd tau1;
   Eigen::VectorXd tau2;
+  dart::math::LinearJacobian J1;
+  dart::math::LinearJacobian J2;
+  Eigen::MatrixXd D(3, numBasis);
   for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; idx_cnstrnt++) {
     cntctconstraint =
         dynamic_cast<ContactConstraint*>(_group->getConstraint(idx_cnstrnt));
     if (cntctconstraint->mContacts.size() > 1) {
-      dterr << "ERROR: more than one contact for current ContactConstraint"
-            << std::endl;
-      dterr << "There should always be one contact point for one contact "
-               "constraint"
-            << std::endl;
+      std::cerr << "ERROR: more than one contact for current ContactConstraint"
+                << std::endl;
+      std::cerr << "There should always be one contact point for one contact "
+                   "constraint"
+                << std::endl;
       std::cin.get();
     }
 
@@ -198,15 +211,15 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     if (bodyNode1 == nullptr) {
       bodyNode1 = cntctconstraint->mBodyNode1;
     } else if (bodyNode1 != cntctconstraint->mBodyNode1) {
-      dterr << "ERROR: violating convention that bodyNode1 always is cube"
-            << std::endl;
+      std::cerr << "ERROR: violating convention that bodyNode1 always is cube"
+                << std::endl;
       std::cin.get();
     }
     if (bodyNode2 == nullptr) {
       bodyNode2 = cntctconstraint->mBodyNode2;
     } else if (bodyNode2 != cntctconstraint->mBodyNode2) {
-      dterr << "ERROR: violating convention that bodyNode2 always is ground"
-            << std::endl;
+      std::cerr << "ERROR: violating convention that bodyNode2 always is ground"
+                << std::endl;
       std::cin.get();
     }
 
@@ -214,16 +227,15 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     Eigen::Vector3d bodyPoint1;
     Eigen::Vector3d bodyPoint2;
     bodyPoint1.noalias() =
-        cntctconstraint->mBodyNode1->getTransform().inverse() * ct->point;
+        bodyNode1->getTransform().inverse() * ct->point;
     bodyPoint2.noalias() =
-        cntctconstraint->mBodyNode2->getTransform().inverse() * ct->point;
+        bodyNode2->getTransform().inverse() * ct->point;
 
     // Here only care about normal force and friction force, there is no
     // torques, thus only Linear Jacobian
-    dart::math::LinearJacobian J1;
-    dart::math::LinearJacobian J2;
-    J1 = cntctconstraint->mBodyNode1->getLinearJacobian(bodyPoint1);
-    J2 = cntctconstraint->mBodyNode2->getLinearJacobian(bodyPoint2);
+
+    J1 = bodyNode1->getLinearJacobian(bodyPoint1);
+    J2 = bodyNode2->getLinearJacobian(bodyPoint2);
     assert(J1.rows() == J2.rows());
 
     // Determine DOF belongs to each body node, again here we are going to
@@ -231,47 +243,74 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     if (BodyNode1_dim == -1) {
       BodyNode1_dim = J1.cols();
     } else if (BodyNode1_dim != J1.cols()) {
-      dterr << "ERROR: violating convention that bodyNode1 always is cube"
-            << std::endl;
+      std::cerr << "ERROR: violating convention that bodyNode1 always is cube"
+                << std::endl;
       std::cin.get();
     }
     if (BodyNode2_dim == -1) {
       BodyNode2_dim = J2.cols();
     } else if (BodyNode2_dim != J2.cols()) {
-      dterr << "ERROR: violating convention that bodyNode2 always is ground"
-            << std::endl;
+      std::cerr << "ERROR: violating convention that bodyNode2 always is ground"
+                << std::endl;
       std::cin.get();
     }
 
     Eigen::Vector3d normDirection;
     normDirection = ct->normal;
-    // std::cout<<"normal direction is "<<normDirection.transpose()<<std::endl;
+#ifdef LEMKE_OUTPUT_DETAILS
+    (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " bodyNode1 transform: "<< std::endl << bodyNode1->getTransform().matrix() <<std::endl;
+    (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " artificial Jacobian is "<< std::endl << bodyNode1->getLinearJacobian(Eigen::Vector3d(0.05,-0.05,0.05)) <<std::endl;
+    (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " ct->point is "<< std::endl << ct->point.transpose() <<std::endl;
+    (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " bodypoint1 is "<< std::endl << bodyPoint1.transpose() <<std::endl;
+    (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " Jacobian1 is "<< std::endl << J1 <<std::endl;
+    (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " Jacobian2 is " << std::endl << J2 <<std::endl;
+#endif
 
+#ifdef LEMKE_OUTPUT_DETAILS
+    (*Lemke_FILE) <<"Contact "<<idx_cnstrnt<<" normal direction is "<<normDirection.transpose()<<std::endl;
+#endif
     N.col(idx_cnstrnt) << J1.transpose() * normDirection,
         -J2.transpose() * normDirection;
-
+#ifdef LEMKE_OUTPUT_DETAILS
+    (*Lemke_FILE) <<"Contact "<<idx_cnstrnt<<" N is "<<N.transpose()<<std::endl;
+#endif
     // B matrix
-    Eigen::MatrixXd D = getTangentBasisMatrixLemke(normDirection, numBasis);
+    D = getTangentBasisMatrixLemke(normDirection, numBasis);
+#ifdef LEMKE_OUTPUT_DETAILS
+    (*Lemke_FILE) <<"Contact "<<idx_cnstrnt<<" D matrix is "<<std::endl<<D<<std::endl;
+#endif
     B.block(0, idx_cnstrnt * numBasis, totalDOF, numBasis)
         << J1.transpose() * D,
         -J2.transpose() * D;
 
     // friction coeff
     // std::cout<<"The friction coeff for the two BodyNodes are: ";
-    // std::cout<<cntctconstraint->mBodyNode1->getFrictionCoeff()<<"   ";
-    // std::cout<<cntctconstraint->mBodyNode2->getFrictionCoeff()<<std::endl;
+    // std::cout<<bodyNode1->getFrictionCoeff()<<"   ";
+    // std::cout<<bodyNode2->getFrictionCoeff()<<std::endl;
     mu(idx_cnstrnt, idx_cnstrnt) =
-        std::min(cntctconstraint->mBodyNode1->getFrictionCoeff(),
-                 cntctconstraint->mBodyNode2->getFrictionCoeff());
+        std::min(bodyNode1->getFrictionCoeff(),
+                 bodyNode2->getFrictionCoeff());
 
     // Ones matrix
     E.block(idx_cnstrnt * numBasis, idx_cnstrnt, numBasis, 1) =
         Eigen::VectorXd::Ones(numBasis);
   }
+#ifdef LEMKE_OUTPUT_DETAILS
+  (*Lemke_FILE) << "mBodyNode1 Jacobian" << std::endl << J1 <<std::endl;
+  (*Lemke_FILE) << "mBodyNode2 Jacobian" << std::endl << J2 <<std::endl;
+#endif
 
   // Convention check
   if (bodyNode1 != nullptr) {
     M1 = bodyNode1->getSkeleton()->getMassMatrix();
+    // std::cout << "mass: " << std::endl;
+    // Eigen::Matrix3d R =  ((dart::dynamics::FreeJoint*)bodyNode1->getParentJoint())->convertToTransform(bodyNode1->getSkeleton()->getPositions()).linear();
+    // std::cout<< "Before" <<std::endl;
+    // std::cout << M1 <<std::endl;
+    // M1.block(0,0,3,3) = R.transpose() * M1.block(0,0,3,3) * R;
+    // std::cout <<((dart::dynamics::FreeJoint*)bodyNode1->getParentJoint())->convertToTransform(bodyNode1->getSkeleton()->getPositions()).linear() <<std::endl;
+    // std::cout<< "After" <<std::endl;
+    // std::cout << M1 <<std::endl;
     M.block(0, 0, M1.rows(), M1.cols()) = M1;
     // get internal forces
     Eigen::VectorXd mInternalForces(bodyNode1->getSkeleton()->getNumDofs());
@@ -339,8 +378,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
                      mInternalForces - mExternalForces);
     tau.head(tau1.rows()) = tau1;
   } else {
-    dterr << "ERROR: violating convention that bodyNode1 always is cube"
-          << std::endl;
+    std::cerr << "ERROR: violating convention that bodyNode1 always is cube"
+              << std::endl;
     std::cin.get();
   }
   if (bodyNode2 != nullptr) {
@@ -378,8 +417,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
                      mInternalForces - mExternalForces);
     tau.tail(tau2.rows()) = tau2;
   } else {
-    dterr << "ERROR: violating convention that bodyNode2 always is ground"
-          << std::endl;
+    std::cerr << "ERROR: violating convention that bodyNode2 always is ground"
+              << std::endl;
     std::cin.get();
   }
 
@@ -425,36 +464,109 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
 
   // ---------------------------------------------------------------------------
-  // Corner case where fn==0, fd>0 and lambda>0
-  if ((((*z).array() > -MY_DART_ZERO) && ((*z).array() < MY_DART_ZERO)).all() &&
-      ((*z).tail(numConstraints).array().maxCoeff() > MY_DART_ZERO) &&
-      ((*z).segment(numConstraints, numConstraints * numBasis)
-           .array()
-           .maxCoeff() > MY_DART_ZERO)) {
-    dterr << "ERROR: fn==0, fd>0 and lambda>0" << std::endl;
-    (*Lemke_FILE) << "Lemke A is " << std::endl;
-    (*Lemke_FILE) << Lemke_A << std::endl;
-    (*Lemke_FILE) << "Lemke b is ";
-    (*Lemke_FILE) << Lemke_b.transpose() << std::endl;
-    (*Lemke_FILE) << "[z]" << (*z).transpose() << std::endl;
-    (*Lemke_FILE) << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
-                  << std::endl;
-    (*Lemke_FILE)
-        << "[z].*[w]"
-        << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
-        << std::endl;
-    std::cin.get();
+  double CornerZero = 1e-16;
+  std::vector<Eigen::VectorXd> z_groups;
+  decompose((*z), z_groups);
+  for (int i = 0; i < numConstraints; i++) {
+    // Corner case where fn==0, fd>0 and lambda>0
+    if (z_groups[i][0] > -CornerZero && z_groups[i][0] < CornerZero &&
+        z_groups[i].segment(1, numBasis).array().maxCoeff() > CornerZero &&
+        z_groups[i][9] > CornerZero) {
+      std::cerr << "ERROR: fn==0, fd>0 and lambda>0" << std::endl;
+      (*Lemke_FILE) << "Lemke A is " << std::endl;
+      (*Lemke_FILE) << Lemke_A << std::endl;
+      (*Lemke_FILE) << "Lemke b is ";
+      (*Lemke_FILE) << Lemke_b.transpose() << std::endl;
+      (*Lemke_FILE) << "[z]" << (*z).transpose() << std::endl;
+      (*Lemke_FILE) << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
+                    << std::endl;
+      (*Lemke_FILE)
+          << "[z].*[w]"
+          << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
+          << std::endl;
+      std::cerr << z_groups[i] << std::endl;
+      std::cin.get();
+    }
+    // Corner case where fn==0, fd>0 and lambda=0
+    if (z_groups[i][0] > -CornerZero && z_groups[i][0] < CornerZero &&
+        z_groups[i].segment(1, numBasis).array().maxCoeff() > CornerZero &&
+        z_groups[i][9] > -CornerZero && z_groups[i][9] < CornerZero) {
+      std::cerr << "ERROR: fn==0, fd>0 and lambda==0" << std::endl;
+      (*Lemke_FILE) << "Lemke A is " << std::endl;
+      (*Lemke_FILE) << Lemke_A << std::endl;
+      (*Lemke_FILE) << "Lemke b is ";
+      (*Lemke_FILE) << Lemke_b.transpose() << std::endl;
+      (*Lemke_FILE) << "[z]" << (*z).transpose() << std::endl;
+      (*Lemke_FILE) << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
+                    << std::endl;
+      (*Lemke_FILE)
+          << "[z].*[w]"
+          << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
+          << std::endl;
+      std::cerr << z_groups[i] << std::endl;
+      std::cin.get();
+    }
+    // Corner case where fn>0, fd=0 and lambda>0
+    if (z_groups[i][0] > CornerZero &&
+        (z_groups[i].segment(1, numBasis).array() > -CornerZero &&
+         z_groups[i].segment(1, numBasis).array() < CornerZero)
+            .all() &&
+        z_groups[i][9] > CornerZero) {
+      std::cerr << "ERROR: fn>0, fd==0 and lambda>0" << std::endl;
+      (*Lemke_FILE) << "Lemke A is " << std::endl;
+      (*Lemke_FILE) << Lemke_A << std::endl;
+      (*Lemke_FILE) << "Lemke b is ";
+      (*Lemke_FILE) << Lemke_b.transpose() << std::endl;
+      (*Lemke_FILE) << "[z]" << (*z).transpose() << std::endl;
+      (*Lemke_FILE) << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
+                    << std::endl;
+      (*Lemke_FILE)
+          << "[z].*[w]"
+          << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
+          << std::endl;
+      std::cerr << z_groups[i] << std::endl;
+      std::cin.get();
+    }
   }
 
 #ifdef LEMKE_OUTPUT
   (*Lemke_FILE) << "err: " << err << std::endl;
   (*Lemke_FILE) << std::boolalpha;
   (*Lemke_FILE) << "LCP manually validation" << std::endl;
-  (*Lemke_FILE) << "[z]" << (*z).transpose() << std::endl;
-  (*Lemke_FILE) << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose() << std::endl;
+  (*Lemke_FILE) << "[z]" << std::endl
+                << (*z).transpose().head(numConstraints) << std::endl;
+  for (int i = 0; i < numConstraints; i++) {
+    (*Lemke_FILE) << (*z).transpose().segment(numConstraints + i * numBasis,
+                                              numBasis)
+                  << std::endl;
+  }
+  (*Lemke_FILE)  << (*z).transpose().tail(numConstraints) << std::endl;
+
+  Eigen::VectorXd mW = (Lemke_A * (*z) + Lemke_b).eval();
+  (*Lemke_FILE) << "[w]" << std::endl
+                << (mW).transpose().head(numConstraints) << std::endl;
+  for (int i = 0; i < numConstraints; i++) {
+    (*Lemke_FILE) << (mW).transpose().segment(numConstraints + i * numBasis,
+                                              numBasis)
+                  << std::endl;
+  }
+  (*Lemke_FILE)  << (mW).transpose().tail(numConstraints) << std::endl;
+
+  Eigen::VectorXd mWZ = ((*z).array() * mW.array()).eval();
+  (*Lemke_FILE) << "[z].*[w]" << std::endl
+                << (mWZ).transpose().head(numConstraints) << std::endl;
+  for (int i = 0; i < numConstraints; i++) {
+    (*Lemke_FILE) << (mWZ).transpose().segment(numConstraints + i * numBasis,
+                                              numBasis)
+                  << std::endl;
+  }
+  (*Lemke_FILE)  << (mWZ).transpose().tail(numConstraints) << std::endl;
   (*Lemke_FILE) << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
 #endif
-  bool Validation = dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b);
+  double err_dist = 0.0;
+  bool Validation =
+      dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
+  std::cout << "err distance: " << err_dist << std::endl;
 #ifdef LEMKE_OUTPUT_DETAILS
   (*Lemke_FILE) << "Validation: " << Validation << std::endl;
   (*Lemke_FILE) << "Lemke N is " << N.transpose() << std::endl;
@@ -479,10 +591,10 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   if (!Validation) {
     LemkeFailCounter++;
 #ifdef LEMKE_FAIL_PRINT
-    dterr << "ERROR: Lemke fails for current time step!!!" << std::endl;
-    dterr << "Resort ODE LCP solver to solve the problem!!!" << std::endl;
-    dterr << "Current frame is " << mWindow->getWorld()->getSimFrames()
-          << std::endl;
+    std::cerr << "ERROR: Lemke fails for current time step!!!" << std::endl;
+    std::cerr << "Resort ODE LCP solver to solve the problem!!!" << std::endl;
+    std::cerr << "Current frame is " << mWindow->getWorld()->getSimFrames()
+              << std::endl;
     (*Lemke_FILE) << "Lemke A is " << std::endl;
     (*Lemke_FILE) << Lemke_A << std::endl;
     (*Lemke_FILE) << "Lemke b is ";
@@ -547,6 +659,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   // ---------------------------------------------------------------------------
   // If Lemke solution is valid, then use Lemke solution to simulate,
   // otherwise use ODE to simulate
+  (*Lemke_FILE) << "[Lemke] before I use: "
+                << bodyNode1->mConstraintImpulse.transpose()<< std::endl;
   if (Validation) {
     //  ---------------------------------------
     // justify the (*z)
@@ -574,6 +688,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
       Mycntctconstraint->excite();
     }
+    (*Lemke_FILE) << "[Lemke] what I use: "
+                  << bodyNode1->mConstraintImpulse.transpose()<< std::endl;
 #ifdef CLAMP_DANTZIG
     // It is very important to clamp to zero in this step
     clampZero(bodyNode1->mConstraintImpulse);
@@ -588,17 +704,19 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     }
   }
 
-  // dterr << "bodyNode1 constraint impulse: "
+  // std::cerr << "bodyNode1 constraint impulse: "
   //       << bodyNode1->mConstraintImpulse.transpose() << std::endl;
 
   // ---------------------------------------------------------------------------
   Eigen::Vector3d allForce;
   Eigen::Vector3d allTorque;
+  Eigen::VectorXd GeneralizedForces(6);
   Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
 // print out Lemke apply impulse
 #ifdef LEMKE_APPLY_PRINT
   allForce = Eigen::Vector3d::Zero();
   allTorque = Eigen::Vector3d::Zero();
+  GeneralizedForces.setZero();
   for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt) {
     MyContactConstraint* Mycntctconstraint;
     // (*z); N; B
@@ -615,37 +733,50 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
         dynamic_cast<MyContactConstraint*>(_group->getConstraint(idx_cnstrnt));
     Eigen::Vector3d indForce(Eigen::Vector3d::Zero());
     Eigen::Vector3d indTorque(Eigen::Vector3d::Zero());
+    Eigen::VectorXd indGeneralized(6);
+    indGeneralized.setZero();
     Mycntctconstraint->My2LemkeapplyImpulse(
         fn_each, fd_each, N_each, B_each, BodyNode1_dim, BodyNode2_dim,
-        (_TimeStep == 1.0), indForce, indTorque, Lemke_FILE);
+        (_TimeStep == 1.0), indForce, indTorque,indGeneralized, Lemke_FILE);
     allForce += indForce;
     allTorque += indTorque;
+    GeneralizedForces += indGeneralized;
+    (*Lemke_FILE) << "[Lemke] all contact GeneralizedForces counter: "
+                  << GeneralizedForces.transpose().format(CSVFmt) << std::endl;
   }
   (*Lemke_FILE) << "[Lemke] all contact forces: "
                 << allForce.transpose().format(CSVFmt) << std::endl;
   (*Lemke_FILE) << "[Lemke] all contact torques: "
                 << allTorque.transpose().format(CSVFmt) << std::endl;
+  (*Lemke_FILE) << "[Lemke] all contact GeneralizedForces: "
+                << GeneralizedForces.transpose().format(CSVFmt) << std::endl;
 #endif
 // ---------------------------------------------------------------------------
 // print out ODE apply impulse
 #ifdef ODE_APPLY_PRINT
   allForce = Eigen::Vector3d::Zero();
   allTorque = Eigen::Vector3d::Zero();
+  GeneralizedForces.setZero();
   for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt) {
     MyContactConstraint* Mycntctconstraint;
     Mycntctconstraint =
         dynamic_cast<MyContactConstraint*>(_group->getConstraint(idx_cnstrnt));
     Eigen::Vector3d indForce(Eigen::Vector3d::Zero());
     Eigen::Vector3d indTorque(Eigen::Vector3d::Zero());
+    Eigen::VectorXd indGeneralized(6);
+    indGeneralized.setZero();
     Mycntctconstraint->My2ODEapplyImpulse(x + offset[idx_cnstrnt], indForce,
-                                          indTorque, ODE_FILE);
+                                          indTorque,indGeneralized, ODE_FILE);
     allForce += indForce;
     allTorque += indTorque;
+    GeneralizedForces += indGeneralized;
   }
-  (*ODE_FILE) << "[ODE]   all contact forces: "
+  (*ODE_FILE) << "[ODE] all contact forces: "
               << allForce.transpose().format(CSVFmt) << std::endl;
   (*ODE_FILE) << "[ODE] all contact torques: "
               << allTorque.transpose().format(CSVFmt) << std::endl;
+  (*ODE_FILE) << "[ODE] all contact GeneralizedForces: "
+              << GeneralizedForces.transpose().format(CSVFmt) << std::endl;
 #endif
 // ---------------------------------------------------------------------------
 
@@ -843,10 +974,12 @@ void MyDantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
   }
 
   // decompose z
-  Eigen::VectorXd z_fn(z.head(numContactsToLearn));
-  Eigen::VectorXd z_fd(
-      z.segment(numContactsToLearn, numContactsToLearn * numBasis));
-  Eigen::VectorXd z_lambda(z.tail(numContactsToLearn));
+  Eigen::VectorXd z_fn(numContactsToLearn);
+  z_fn = z.head(numContactsToLearn);
+  Eigen::VectorXd z_fd(numContactsToLearn * numBasis);
+  z_fd = z.segment(numContactsToLearn, numContactsToLearn * numBasis);
+  Eigen::VectorXd z_lambda(numContactsToLearn);
+  z_lambda = z.tail(numContactsToLearn);
 
   std::vector<Eigen::VectorXd> each_z(numContactsToLearn);
   for (int i = 0; i < numContactsToLearn; i++) {
@@ -886,7 +1019,7 @@ void MyDantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
     {
       value = 7;
     } else {
-      dterr << "ERROR: unknown LCP solution!!!" << std::endl;
+      std::cerr << "ERROR: unknown LCP solution!!!" << std::endl;
       std::cin.get();
     }
     (*outputFile) << value;
@@ -896,4 +1029,24 @@ void MyDantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
   }
 
   (*outputFile) << std::endl;
+}
+
+void MyDantzigLCPSolver::decompose(const Eigen::VectorXd& z,
+                                   std::vector<Eigen::VectorXd>& z_groups) {
+  int numContactsToLearn = z.rows() / (numBasis + 2);
+  // decompose z
+  Eigen::VectorXd z_fn(numContactsToLearn);
+  z_fn = z.head(numContactsToLearn);
+  Eigen::VectorXd z_fd(numContactsToLearn * numBasis);
+  z_fd = z.segment(numContactsToLearn, numContactsToLearn * numBasis);
+  Eigen::VectorXd z_lambda(numContactsToLearn);
+  z_lambda = z.tail(numContactsToLearn);
+
+  z_groups.clear();
+  for (int i = 0; i < numContactsToLearn; i++) {
+    Eigen::VectorXd each_z;
+    each_z.resize(numBasis + 2);
+    each_z << z_fn(i), z_fd.segment(i * numBasis, numBasis), z_lambda(i);
+    z_groups.push_back(each_z);
+  }
 }

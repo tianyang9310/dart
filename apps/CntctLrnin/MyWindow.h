@@ -30,6 +30,7 @@ class MyWindow : public dart::gui::SimWindow {
 
   int counter;
   int episodeLength;
+  Eigen::Vector3d extForce;
 };
 
 #endif  // CNTCTLRNIN_MYWINDOW_H

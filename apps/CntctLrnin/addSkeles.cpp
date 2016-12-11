@@ -25,7 +25,7 @@ SkeletonPtr AddBox() {
   bn->setName("BodyNode_1");
 
   std::shared_ptr<BoxShape> boxshpe = std::make_shared<BoxShape>(length_tuple);
-  boxshpe->setColor(dart::Color::Red(1));
+  boxshpe->setColor(dart::Color::Red(0.6));
   bn->addVisualizationShape(boxshpe);
   bn->addCollisionShape(boxshpe);
 

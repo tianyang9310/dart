@@ -12,7 +12,7 @@
 #endif
 
 #ifndef CLAMP_ZERO
-#define CLAMP_ZERO 1e-6
+#define CLAMP_ZERO 1e-12
 #endif
 
 // #define REGULARIZED_PRINT // print regularized info
@@ -26,8 +26,9 @@ void clampZero(T& z) {
   // after regularization, w might not satisfy LCP condition
   //
   // Zero regularization
-  Eigen::VectorXd oldZ = z;
-  Eigen::VectorXd myZero = Eigen::VectorXd::Zero(z.rows());
+  auto oldZ = z;
+  auto myZero = z;
+  myZero.setZero();
   z = (z.array() > -CLAMP_ZERO && z.array() < CLAMP_ZERO)
              .select(myZero, z);
   if (((oldZ).array() > -CLAMP_ZERO && (oldZ).array() < CLAMP_ZERO &&
@@ -43,8 +44,9 @@ void clampZero(T& z) {
 template <typename T1, typename T2>
 void clampNeg(T1& z, T2 Validation) {
   // Negative regularization
-  Eigen::VectorXd oldZ = z;
-  Eigen::VectorXd myZero = Eigen::VectorXd::Zero(z.rows());
+  auto oldZ = z;
+  auto myZero = z;
+  myZero.setZero();
   if (Validation) {
     oldZ = z;
     z = (z.array() < -CLAMP_ZERO).select(myZero, z);

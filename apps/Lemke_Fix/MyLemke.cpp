@@ -95,7 +95,7 @@ int Lemke(const Eigen::MatrixXd &_M, const Eigen::VectorXd &_q,
 int n = _q.size();
 
 const double zer_tol = 1e-6;
-const double piv_tol = 1e-8;
+const double piv_tol = 1e-16;
 int maxiter = 1000;
 int err = 0;
 
@@ -342,6 +342,35 @@ for (int i = 0; i < n; ++i) {
     if (std::abs(w(i) * _z(i)) > threshold)
         return false;
 }
+return true;
+}
+
+bool validate(const Eigen::MatrixXd &_M, const Eigen::VectorXd &_z,
+          const Eigen::VectorXd &_q, double & err_dist) {
+const double threshold = 1e-6;
+int n = _z.size();
+err_dist = 0.0;
+
+Eigen::VectorXd w = _M * _z + _q;
+for (int i = 0; i < n; ++i) {
+    if (w(i) < 0) {
+      err_dist += -w(i);
+    }
+    if (w(i) < -threshold) {
+        return false;
+    } 
+    if (_z(i) < 0) {
+      err_dist += -_z(i);
+    }
+    if (_z(i) < -threshold) {
+        return false;
+    }
+    err_dist += std::abs(w(i)*_z(i));
+    if (std::abs(w(i) * _z(i)) > threshold) {
+        return false;
+    }
+}
+
 return true;
 }
 
