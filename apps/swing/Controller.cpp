@@ -324,7 +324,7 @@ void Controller::CheckSwingPhase() {
   double vel = mSkel->getCOMLinearVelocity()(0);
   // std::cout<<"COM pos: "<<pos<<" COM vel: "<<vel<<std::endl;
   // std::cout << "COM pos " << mSkel->getCOM().transpose() << std::endl;
-  std::cout << "COM vel " << mSkel->getCOMLinearVelocity().transpose() << std::endl;
+  // std::cout << "COM vel " << mSkel->getCOMLinearVelocity().transpose() << std::endl;
 
   if ( pos > 0 &&  vel >0) {
     mSwingState = "Fwd_Pos_Fwd_Vel";
@@ -393,6 +393,7 @@ void Controller::swing() {
     mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = 1.57;
   } else if (mSwingState == "Bwd_Pos_Fwd_Vel") {
     // pass
+    mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -1.57;
   } else {
     // NULL mSwingState 
     // pass
