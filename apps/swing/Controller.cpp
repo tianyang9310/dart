@@ -43,6 +43,9 @@ Controller::Controller(dart::dynamics::SkeletonPtr _skel, dart::constraint::Cons
   mConstraintSolver = _constrSolver;
   mTimestep = _t;
 
+  mNN = std::make_shared<cNNSolver>();
+  mNN->buildSolver("/tmp/CaffeNet.prototxt");
+
   int nDof = mSkel->getNumDofs();
   mKp = Eigen::MatrixXd::Identity(nDof, nDof);
   mKd = Eigen::MatrixXd::Identity(nDof, nDof);

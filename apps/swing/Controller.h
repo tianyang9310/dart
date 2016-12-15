@@ -41,8 +41,10 @@
 #include <vector>
 
 #include <Eigen/Dense>
+#include <caffe/caffe.hpp>
 
 #include "dart/dart.h"
+#include "cNNsolver.h"
 
 
 class Controller {
@@ -102,6 +104,7 @@ protected:
   dart::dynamics::BodyNodePtr mLeftHandContact;
   dart::dynamics::BodyNodePtr mRightHandContact;
   int mCurrentFrame;
+  std::shared_ptr<cNNSolver> mNN;
 };
 
 #endif  // APPS_SWING_CONTROLLER_H_
