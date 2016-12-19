@@ -47,7 +47,7 @@
 
 class Controller {
 public:
-  Controller(dart::dynamics::SkeletonPtr _skel, dart::dynamics::SkeletonPtr _platform, dart::constraint::ConstraintSolver* _constrSolver,
+  Controller(dart::dynamics::SkeletonPtr _skel, dart::constraint::ConstraintSolver* _constrSolver,
              double _t);
   virtual ~Controller();
 
@@ -62,7 +62,18 @@ public:
   Eigen::MatrixXd getKp();
   Eigen::MatrixXd getKd();
   Eigen::MatrixXi* mVision;
+  void GeneratePose();
+
+  Eigen::Vector3d TargetAngs;
+
   double getPlatformDis();
+  double getPlatformVel();
+  double LastplatformP = 0;
+  double LastplatformV;
+  void setUpperBodyPD(double kp, double kd);
+  void setLowerBodyPD(double kp, double kd);
+
+
 
 protected:
   void stand();
@@ -72,9 +83,14 @@ protected:
   void grab();
   void swing();
   void release();
+  void fly();
+  void ReachingGround();
+  void StandingUp();
   // Basic control building blocks
   void stablePD();
   void ankleStrategy();
+  void anklehipStrategy();
+
   void virtualForce(Eigen::Vector3d _force, dart::dynamics::BodyNode* _bodyNode, Eigen::Vector3d _offset = Eigen::Vector3d::Zero());
   // Contact states
   void checkContactState();
@@ -85,7 +101,6 @@ protected:
   void rightHandRelease();
 
   dart::dynamics::SkeletonPtr mSkel;
-  dart::dynamics::SkeletonPtr mPlatform;
   dart::constraint::ConstraintSolver* mConstraintSolver;
   Eigen::VectorXd mTorques;
   Eigen::VectorXd mDefaultPose;
@@ -100,9 +115,12 @@ protected:
   dart::constraint::JointConstraint* mLeftHandHold;
   dart::constraint::JointConstraint* mRightHandHold;
   dart::dynamics::BodyNode* mFootContact;
+  dart::dynamics::BodyNode* mToeContact;
+
   dart::dynamics::BodyNodePtr mLeftHandContact;
   dart::dynamics::BodyNodePtr mRightHandContact;
   int mCurrentFrame;
+  int mSwingFrame;
 };
 
 #endif  // APPS_SWING_CONTROLLER_H_

@@ -37,9 +37,9 @@
 
 #include "MyWindow.h"
 
-#define RIGHT_BOUNDARY (0.6+dart::math::random(0.0, 0.15))
-#define LEFT_BOUNDARY (-0.6+dart::math::random(0.0,0.15))
-#define PLATFORM_SPEED (0.75+dart::math::random(-0.4,0.4)) //0.75
+#define RIGHT_BOUNDARY 0.6
+#define LEFT_BOUNDARY -0.6
+#define PLATFORM_SPEED 0.75
 
 MyWindow::MyWindow(): SimWindow() {
   mController = NULL;

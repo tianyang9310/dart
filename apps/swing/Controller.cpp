@@ -38,9 +38,8 @@
 #include "Controller.h"
 #define USING_COM_CHEKC_SWING_PHASE
 
-Controller::Controller(dart::dynamics::SkeletonPtr _skel, dart::dynamics::SkeletonPtr _platform, dart::constraint::ConstraintSolver* _constrSolver, double _t) {
+Controller::Controller(dart::dynamics::SkeletonPtr _skel, dart::constraint::ConstraintSolver* _constrSolver, double _t) {
   mSkel = _skel;
-  mPlatform = _platform;
   mConstraintSolver = _constrSolver;
   mTimestep = _t;
 
@@ -145,6 +144,12 @@ void Controller::computeTorques(int _currentFrame) {
     release();
   } else if (mState == "SWING") {
     swing();
+  } else if (mState == "ReachingGround") {
+    ReachingGround();
+  } else if (mState =="StandingUp") {
+    StandingUp();
+  } else if (mState =="fly"){
+    fly();
   } else {
     std::cout << "Illegal state: " << mState << std::endl;
   }
@@ -157,6 +162,7 @@ void Controller::computeTorques(int _currentFrame) {
 
 void Controller::checkContactState() {
   mFootContact = NULL;
+  mToeContact = NULL;
   mLeftHandContact = NULL;
   mRightHandContact = NULL;
   dart::collision::CollisionDetector* cd = mConstraintSolver->getCollisionDetector();
@@ -165,12 +171,21 @@ void Controller::checkContactState() {
     dart::dynamics::BodyNodePtr body1 = cd->getContact(i).bodyNode1.lock().get();
     dart::dynamics::BodyNodePtr body2 = cd->getContact(i).bodyNode2.lock().get();
   
-    if (body1 == mSkel->getBodyNode("h_heel_left") || body1 == mSkel->getBodyNode("h_heel_left")
-        || body1 == mSkel->getBodyNode("h_heel_right") || body1 == mSkel->getBodyNode("h_heel_right"))
+    if (body1 == mSkel->getBodyNode("h_heel_left") || body1 == mSkel->getBodyNode("h_toe_left")
+        || body1 == mSkel->getBodyNode("h_heel_right") || body1 == mSkel->getBodyNode("h_toe_right"))
       mFootContact = body2;
-    if (body2 == mSkel->getBodyNode("h_heel_left") || body2 == mSkel->getBodyNode("h_heel_left")
-        || body2 == mSkel->getBodyNode("h_heel_right") || body2 == mSkel->getBodyNode("h_heel_right"))
+
+    if (body2 == mSkel->getBodyNode("h_heel_left") || body2 == mSkel->getBodyNode("h_toe_left")
+        || body2 == mSkel->getBodyNode("h_heel_right") || body2 == mSkel->getBodyNode("h_toe_right"))
       mFootContact = body1;
+
+    // check toe contact
+    if (body1 == mSkel->getBodyNode("h_toe_left") || body1 == mSkel->getBodyNode("h_toe_right"))
+      mToeContact = body2;
+
+    if (body2 == mSkel->getBodyNode("h_toe_left") || body2 == mSkel->getBodyNode("h_toe_right"))
+      mToeContact = body1;
+
     if (body1->isCollidable() && body1 == mSkel->getBodyNode("h_hand_left"))
       mLeftHandContact = body2;
     if (body2->isCollidable() && body2 == mSkel->getBodyNode("h_hand_left"))
@@ -282,7 +297,7 @@ void Controller::reach() {
     std::cout << mCurrentFrame << ": " << "REACH -> JUMP" << std::endl;
   } else if (mLeftHandContact || mRightHandContact) {
     mState = "GRAB";
-    mTimer = 500;
+    mTimer = 500;  // changed from 500 to 5;
     std::cout << mCurrentFrame << ": " << "REACH -> GRAB" << std::endl;
   } else {
     mState = "REACH";
@@ -294,24 +309,43 @@ void Controller::grab() {
   rightHandGrab();
 
   mDesiredDofs = mDefaultPose;
+  mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -0.2;
   mDesiredDofs[mSkel->getDof("j_thigh_left_z")->getIndexInSkeleton()] = 0.2;
   mDesiredDofs[mSkel->getDof("j_thigh_right_z")->getIndexInSkeleton()] = 0.2;
   mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = -0.2;
   mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = -0.2;
+
   mDesiredDofs[mSkel->getDof("j_heel_left_1")->getIndexInSkeleton()] = -0.2;
   mDesiredDofs[mSkel->getDof("j_heel_right_1")->getIndexInSkeleton()] = -0.2;
-  mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -0.2;
   mDesiredDofs[mSkel->getDof("j_bicep_left_z")->getIndexInSkeleton()] = 0.7;
   mDesiredDofs[mSkel->getDof("j_bicep_left_y")->getIndexInSkeleton()] = -2.3;
   mDesiredDofs[mSkel->getDof("j_bicep_right_z")->getIndexInSkeleton()] = 0.7;
   mDesiredDofs[mSkel->getDof("j_bicep_right_y")->getIndexInSkeleton()] = 2.3;
   mDesiredDofs[mSkel->getDof("j_forearm_left")->getIndexInSkeleton()] = 0.4;
   mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = 0.4;
+  /*
+  Eigen::Vector3d FlyTargetLow;
+  FlyTargetLow << 0.8,-0.5,-1.3;
+  mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = FlyTargetLow(0);
+  mDesiredDofs[mSkel->getDof("j_thigh_left_z")->getIndexInSkeleton()] = FlyTargetLow(1);
+  mDesiredDofs[mSkel->getDof("j_thigh_right_z")->getIndexInSkeleton()] = FlyTargetLow(1);
+  mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = FlyTargetLow(2);
+  mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = FlyTargetLow(2);
+  */
+  //setUpperBodyPD(25,5);
+  //setLowerBodyPD(300,30);
   stablePD();
   mTimer--;
-
+  if (LastplatformP != 0) {
+    double temp = getPlatformVel();
+    if (temp != 0)
+  LastplatformV = temp;
+  }
+  LastplatformP = getPlatformDis(); // initialize pos so that can call vel.
   if (mTimer == 0) {
     mState = "SWING";
+
+    mSwingFrame = mCurrentFrame;
     std::cout << mCurrentFrame << ": " << "GRAB -> SWING" << std::endl;
   }
 }  
@@ -322,14 +356,15 @@ void Controller::CheckSwingPhase() {
   double bias = 0.85;
   double pos = mSkel->getCOM()(0) - bias;
   double vel = mSkel->getCOMLinearVelocity()(0);
-  // std::cout<<"COM pos: "<<pos<<" COM vel: "<<vel<<std::endl;
-  // std::cout << "COM pos " << mSkel->getCOM().transpose() << std::endl;
-  // std::cout << "COM vel " << mSkel->getCOMLinearVelocity().transpose() << std::endl;
+  //std::cout << "j_abdomen_2: " << mSkel->getPosition(mSkel->getDof("j_abdomen_2")->getIndexInSkeleton())<<std::endl;
+  // std::cout<<"mCurrentFrame: "<< mCurrentFrame<<" COM pos: "<<pos<<" COM vel: "<<vel<<std::endl;
 
   if ( pos > 0 &&  vel >0) {
     mSwingState = "Fwd_Pos_Fwd_Vel";
   } else if ( pos >0 &&  vel <0) {
     mSwingState = "Fwd_Pos_Bwd_Vel";
+    // std::cout << "mSwingFrame: " << mSwingFrame <<std::endl;
+    // std::cin.get();
   } else if ( pos <0 &&  vel <0) {
     mSwingState = "Bwd_Pos_Bwd_Vel";
   } else if ( pos <0 &&  vel >0) {
@@ -342,7 +377,7 @@ void Controller::CheckSwingPhase() {
   double bias = -0.3675;
   double pos = mSkel->getPositions().transpose()(mSkel->getDof("j_hand_left_1")->getIndexInSkeleton()) - bias;
   double vel = mSkel->getVelocities().transpose()(mSkel->getDof("j_hand_left_1")->getIndexInSkeleton());
-  // std::cout<<"wrist pos: "<<pos<<" wrist vel: "<<vel<<std::endl;
+  std::cout<<"wrist pos: "<<pos<<" wrist vel: "<<vel<<std::endl;
 
   if ( pos < 0 &&  vel <0) {
     mSwingState = "Fwd_Pos_Fwd_Vel";
@@ -358,74 +393,234 @@ void Controller::CheckSwingPhase() {
 #endif
 }
 
+void Controller::GeneratePose(){
+  //generate joint angles for swing phase
+  double posX = mSkel->getCOM()(0) - 0.85;
+  double posY = 1- mSkel->getCOM()(1) ;
+  //Ball Angle;
+  double ang = atan(posX/posY);
+  //std::cout<<"comPx "<< posX << "comPy "<< posY<<std::endl;
+  //std::cout<< "ang " << ang<< std::endl;
+  Eigen::Vector3d TargetAngs;
+  // generate 3 actuation angles based on com angle
+  TargetAngs(0) = -2.0*ang; // abdom
+  TargetAngs(1) = 2.0*ang; // thigh
+  TargetAngs(2) = 2.0*ang; // ankle
+  mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = TargetAngs(0);//-1.2;
+  mDesiredDofs[mSkel->getDof("j_thigh_left_z")->getIndexInSkeleton()] = TargetAngs(1);
+  mDesiredDofs[mSkel->getDof("j_thigh_right_z")->getIndexInSkeleton()] = TargetAngs(1);
+  mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = TargetAngs(2);
+  mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = TargetAngs(2);
+}
+
 void Controller::swing() {
   // ===========================================================================
   // change forearm Kp and Kd
-  int forearm_left_idx =  mSkel->getDof("j_forearm_left")->getIndexInSkeleton();
-  int forearm_right_idx =  mSkel->getDof("j_forearm_right")->getIndexInSkeleton();
-  mKp(forearm_left_idx, forearm_left_idx) = 100.0;
-  mKp(forearm_right_idx, forearm_right_idx) = 100.0;
-  mKd(forearm_left_idx, forearm_left_idx) = 10.0;
-  mKd(forearm_right_idx, forearm_right_idx) = 10.0;
+  setUpperBodyPD(2,.5);
+  setLowerBodyPD(20,2);
   // ===========================================================================
 
   // TODO: Need a better controller to increase the speed
-  // and land at the right moment
   mDesiredDofs = mDefaultPose;
-  mDesiredDofs[mSkel->getDof("j_bicep_left_z")->getIndexInSkeleton()] = 1;
+  mDesiredDofs[mSkel->getDof("j_bicep_left_z")->getIndexInSkeleton()] = -1;
   mDesiredDofs[mSkel->getDof("j_bicep_left_y")->getIndexInSkeleton()] = -2.6;
-  mDesiredDofs[mSkel->getDof("j_bicep_right_z")->getIndexInSkeleton()] = 1;
+  mDesiredDofs[mSkel->getDof("j_bicep_right_z")->getIndexInSkeleton()] = -1;
   mDesiredDofs[mSkel->getDof("j_bicep_right_y")->getIndexInSkeleton()] = 2.6;
-  mDesiredDofs[mSkel->getDof("j_forearm_left")->getIndexInSkeleton()] = 0.4;
-  mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = 0.4;
-  
+
+  //forearm ...> 0
+  mDesiredDofs[mSkel->getDof("j_forearm_left")->getIndexInSkeleton()] = 1.4;
+  mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = 1.4;
+
+  //GeneratePose();
 
   CheckSwingPhase();
+  double posX = mSkel->getCOM()(0) - 0.85;
+  double posY = 1 - mSkel->getCOM()(1) ;
+  double ang = atan(posX/posY);
+  Eigen::Vector3d ComVel = mSkel->getCOMLinearVelocity(); //idx0 is forward, idx1 is upward
+
   if (mSwingState == "Fwd_Pos_Fwd_Vel") {
-    mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -1.57;
-    mDesiredDofs[mSkel->getDof("j_head_1")->getIndexInSkeleton()] = -0.5233;
+    //TargetAngs<< 0,0,0;
+    TargetAngs<< -1.5,1.3,-0.2;
   } else if (mSwingState == "Fwd_Pos_Bwd_Vel") {
-    // pass
+    TargetAngs<<0,0,0;
   } else if (mSwingState == "Bwd_Pos_Bwd_Vel") {
-    mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = 1.57;
-    mDesiredDofs[mSkel->getDof("j_head_1")->getIndexInSkeleton()] = 0.785;
-    mDesiredDofs[mSkel->getDof("j_forearm_left")->getIndexInSkeleton()] = 1.57;
-    mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = 1.57;
+    //TargetAngs<<0,0,0;
+    TargetAngs<<1.5,-1.3,-1.2;
   } else if (mSwingState == "Bwd_Pos_Fwd_Vel") {
-    // pass
-    mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -1.57;
+    TargetAngs<< 0,0,0;
   } else {
     // NULL mSwingState 
     // pass
   }
 
+  mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = TargetAngs(0);
+  mDesiredDofs[mSkel->getDof("j_thigh_left_z")->getIndexInSkeleton()] = TargetAngs(1);
+  mDesiredDofs[mSkel->getDof("j_thigh_right_z")->getIndexInSkeleton()] = TargetAngs(1);
+  mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = TargetAngs(2);
+  mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = TargetAngs(2);
   stablePD();
 
-  // ===========================================================================
-  mKp(forearm_left_idx, forearm_left_idx) = 20.0;
-  mKp(forearm_right_idx, forearm_right_idx) = 20.0;
-  mKd(forearm_left_idx, forearm_left_idx) = 2.0;
-  mKd(forearm_right_idx, forearm_right_idx) = 2.0;
-  // ===========================================================================
 
   // TODO: Figure out the condition to release the bar
-  if ((mSkel->getCOM()(0)-0.85) > 0.25 && mSkel->getCOMLinearVelocity()(0) > 2.9) {
+  double angle = atan(ComVel(0)/ComVel(1));
+  // std::cout << "ang "<< ang<< std::endl;
+  //std::cout<<"angle "<< angle<< std::endl;
+  double platform_vel = getPlatformVel();
+   if (platform_vel == 0) platform_vel = LastplatformV; // low sampling 60HZ vision
+  LastplatformV = platform_vel;
+  //std::cout<<"platPos"<<LastplatformP<< "platVel " << platform_vel<< std::endl;
+
+  bool nearEnough = LastplatformP < 2.78;
+  bool coming = platform_vel < 0;
+
+  bool RightState = (mSwingState == "Fwd_Pos_Fwd_Vel");
+
+  bool goodAng1 = (ang > 20.0/180.0*3.14);
+  bool goodAng2 = (ang < 10.0/180.0*3.14);
+  if (nearEnough && coming && RightState && goodAng1){// && goodAng1 && goodAng2) { // condition about platPos platVel, and Character States
     mState = "RELEASE";
+    mTimer = 32;
+    setUpperBodyPD(400,40);
+    setLowerBodyPD(400,40);
     std::cout << mCurrentFrame << ": " << "SWING -> RELEASE" << std::endl;
   }
 }
 
 void Controller::release() {
-  leftHandRelease();
-  rightHandRelease();
 
-  mDesiredDofs = mDefaultPose;
-  mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = -1.5;
-  mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = -1.5;
-  mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = -1.5;
+  Eigen::Vector3d vf(-800,-800,0); //make sure upper body lose
+  Eigen::Vector3d offset(0, 0, 0.);
+  virtualForce(vf, mSkel->getBodyNode("h_hand_right"), offset);
+  virtualForce(vf, mSkel->getBodyNode("h_hand_left"), offset);
+
+  setUpperBodyPD(400,40);
+  setLowerBodyPD(400,40);
+  // mDesiredDofs = mDefaultPose;
+  Eigen::Vector3d FlyTargetLow;
+  FlyTargetLow << 0,0,-1.3;
+  mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = FlyTargetLow(0);
+  mDesiredDofs[mSkel->getDof("j_thigh_left_z")->getIndexInSkeleton()] = FlyTargetLow(1);
+  mDesiredDofs[mSkel->getDof("j_thigh_right_z")->getIndexInSkeleton()] = FlyTargetLow(1);
+  mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = FlyTargetLow(2);
+  mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = FlyTargetLow(2);
   stablePD();
+  mTimer --;
+
+  double platform_vel = getPlatformVel();
+  if (platform_vel == 0) platform_vel = LastplatformV; // low sampling 60HZ vision
+  LastplatformV = platform_vel;
+  //std::cout<<"platPos"<<LastplatformP<< "platVel " << platform_vel<< std::endl;
+  bool coming = platform_vel < 0;
+
+  if (mTimer ==0) {
+    if  (LastplatformP < 3 ) {// dummy var
+      mState = "fly";
+      std::cout << "last pos: " << LastplatformP << std::endl;
+      std::cout << mCurrentFrame << ": " << "Release -> fly" << std::endl;
+      leftHandRelease();
+      rightHandRelease();
+    } else {
+      mState = "SWING";
+      mSwingFrame = mCurrentFrame;
+      std::cout << "last pos: " << LastplatformP << std::endl;
+      std::cout << mCurrentFrame << ": " << "Release -> SWING" << std::endl;
+    }
+  }
 }
-  
+
+void Controller::fly() {
+  setUpperBodyPD(400,40);
+  setLowerBodyPD(400,40);
+  // mDesiredDofs = mDefaultPose;
+  Eigen::Vector3d FlyTargetLow;
+  FlyTargetLow << 0,1.5,-1.3;
+  mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = FlyTargetLow(0);
+  mDesiredDofs[mSkel->getDof("j_thigh_left_z")->getIndexInSkeleton()] = FlyTargetLow(1);
+  mDesiredDofs[mSkel->getDof("j_thigh_right_z")->getIndexInSkeleton()] = FlyTargetLow(1);
+  mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = FlyTargetLow(2);
+  mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = FlyTargetLow(2);
+
+  Eigen::Vector4d FlyTargetUp;
+  FlyTargetUp << 0.3,1.45,0,0;
+  mDesiredDofs[mSkel->getDof("j_bicep_left_z")->getIndexInSkeleton()] = FlyTargetUp(0);
+  mDesiredDofs[mSkel->getDof("j_bicep_right_z")->getIndexInSkeleton()] = FlyTargetUp(0);
+  mDesiredDofs[mSkel->getDof("j_bicep_left_y")->getIndexInSkeleton()] = -FlyTargetUp(1);
+  mDesiredDofs[mSkel->getDof("j_bicep_right_y")->getIndexInSkeleton()] = FlyTargetUp(1);
+
+  mDesiredDofs[mSkel->getDof("j_bicep_left_x")->getIndexInSkeleton()] = FlyTargetUp(2);
+  mDesiredDofs[mSkel->getDof("j_bicep_right_x")->getIndexInSkeleton()] = -FlyTargetUp(2);
+
+  mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = FlyTargetUp(3);
+  mDesiredDofs[mSkel->getDof("j_forearm_left")->getIndexInSkeleton()] = FlyTargetUp(3);
+
+  stablePD();
+
+  checkContactState();
+  if (mFootContact) {
+    mState = "ReachingGround";
+    std::cout << mCurrentFrame << ": " << "fly -> ReachingGround" << std::endl;
+  }
+
+}
+void Controller::ReachingGround(){
+  checkContactState();
+
+  setUpperBodyPD(200,20);
+  setLowerBodyPD(200,20);
+  Eigen::Vector4d FlyTargetLow;
+  FlyTargetLow << 0,0.5,-1.3,0.5;
+  mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = FlyTargetLow(0);
+  mDesiredDofs[mSkel->getDof("j_thigh_left_z")->getIndexInSkeleton()] = FlyTargetLow(1);
+  mDesiredDofs[mSkel->getDof("j_thigh_right_z")->getIndexInSkeleton()] = FlyTargetLow(1);
+  mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = FlyTargetLow(2);
+  mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = FlyTargetLow(2);
+  mDesiredDofs[mSkel->getDof("j_heel_left_1")->getIndexInSkeleton()] = FlyTargetLow(3);
+  mDesiredDofs[mSkel->getDof("j_heel_right_1")->getIndexInSkeleton()] = FlyTargetLow(3);
+
+  int idx1 = mSkel->getDof("j_toe_left")->getIndexInSkeleton();
+  int idx2 = mSkel->getDof("j_toe_right")->getIndexInSkeleton();
+  mKp(idx1, idx1) = 300;  mKd(idx1, idx1) = 100;
+  mKp(idx2, idx2) = 300;  mKd(idx2, idx2) = 100;
+  stablePD();
+
+  if (mFootContact && mToeContact) {
+    mState = "StandingUp";
+    std::cout << mCurrentFrame << ": " << "ReachingGround->StandingUp" << std::endl;
+  }
+}
+
+void Controller::StandingUp(){
+
+  setUpperBodyPD(400,40);
+  setLowerBodyPD(200,40);
+  Eigen::Vector4d FlyTargetLow;
+
+  FlyTargetLow << -1.6,1.4,-2.7,0.9;
+  //FlyTargetLow << -1.1,1.2,-2.4,0.8;
+  mDesiredDofs[mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()] = FlyTargetLow(0);
+  mDesiredDofs[mSkel->getDof("j_thigh_left_z")->getIndexInSkeleton()] = FlyTargetLow(1);
+  mDesiredDofs[mSkel->getDof("j_thigh_right_z")->getIndexInSkeleton()] = FlyTargetLow(1);
+  mDesiredDofs[mSkel->getDof("j_shin_left")->getIndexInSkeleton()] = FlyTargetLow(2);
+  mDesiredDofs[mSkel->getDof("j_shin_right")->getIndexInSkeleton()] = FlyTargetLow(2);
+  mDesiredDofs[mSkel->getDof("j_heel_left_1")->getIndexInSkeleton()] = FlyTargetLow(3);
+  mDesiredDofs[mSkel->getDof("j_heel_right_1")->getIndexInSkeleton()] = FlyTargetLow(3);
+  mDesiredDofs[mSkel->getDof("j_toe_left")->getIndexInSkeleton()] = 0;
+  mDesiredDofs[mSkel->getDof("j_toe_right")->getIndexInSkeleton()] = 0;
+
+  mDesiredDofs[mSkel->getDof("j_forearm_right")->getIndexInSkeleton()] = 1;
+  mDesiredDofs[mSkel->getDof("j_forearm_left")->getIndexInSkeleton()] = 1;
+
+  int idx1 = mSkel->getDof("j_toe_left")->getIndexInSkeleton();
+  int idx2 = mSkel->getDof("j_toe_right")->getIndexInSkeleton();
+  mKp(idx1, idx1) = 500;  mKd(idx1, idx1) = 100;
+  mKp(idx2, idx2) = 500;  mKd(idx2, idx2) = 100;
+  //anklehipStrategy();
+  stablePD();
+
+}
+
+
 void Controller::stablePD() {
   Eigen::VectorXd q = mSkel->getPositions();
   Eigen::VectorXd dq = mSkel->getVelocities();
@@ -463,6 +658,45 @@ void Controller::ankleStrategy() {
     mTorques[mSkel->getDof("j_toe_right")->getIndexInSkeleton()] += -k2 * offset + kd * (mPreOffset - offset);
     mPreOffset = offset;
   }  
+}
+
+void Controller::anklehipStrategy() {
+  Eigen::Vector3d com = mSkel->getCOM();
+  Eigen::Vector3d cop = mSkel->getBodyNode("h_heel_left")->getTransform()
+                        * Eigen::Vector3d(0.05, 0, 0);
+  double offset = com[0] - cop[0];
+  //std::cout<< "offset"<<offset<< std::endl;
+  double leftbound = -0.04; double rightbound = 0.035;
+  double forceX = 200; double forceY = -200;
+  if (offset < rightbound && offset > leftbound) {
+    double k1 = 100.0;
+    double k2 = 50.0;
+    double kd = 10.0;
+    mTorques[mSkel->getDof("j_heel_left_1")->getIndexInSkeleton()] += -k1 * offset + kd * (mPreOffset - offset);
+    mTorques[mSkel->getDof("j_toe_left")->getIndexInSkeleton()] += -k2 * offset + kd * (mPreOffset - offset);
+    mTorques[mSkel->getDof("j_heel_right_1")->getIndexInSkeleton()] += -k1 * offset + kd * (mPreOffset - offset);
+    mTorques[mSkel->getDof("j_toe_right")->getIndexInSkeleton()] += -k2 * offset + kd * (mPreOffset - offset);
+    mPreOffset = offset;
+  }else if (offset > rightbound){
+    //mDesiredDofs[mSkel->getDof("j_thigh_left_z")->getIndexInSkeleton()] = 1.2 - 1.2*(offset>0);
+    //mDesiredDofs[mSkel->getDof("j_thigh_right_z")->getIndexInSkeleton()] = 1.2 - 1.2*(offset>0);
+
+    Eigen::Vector3d vf(forceX,forceY,0);
+    Eigen::Vector3d offset(0.05, -0.025, 0.);
+    virtualForce(vf, mSkel->getBodyNode("h_toe_right"), offset);
+    virtualForce(vf, mSkel->getBodyNode("h_toe_left"), offset);
+
+  }
+ else if (offset > -0.2 && offset < leftbound) {
+    //mDesiredDofs[mSkel->getDof("j_thigh_left_z")->getIndexInSkeleton()] = 1.2-1.2*(offset>0);
+    //mDesiredDofs[mSkel->getDof("j_thigh_right_z")->getIndexInSkeleton()] = 1.2-1.2*(offset>0);
+    Eigen::Vector3d vf(-forceX,forceY,0);
+    Eigen::Vector3d offset(-0.054, -0.027, 0.);
+    virtualForce(1.5*vf, mSkel->getBodyNode("h_heel_right"), offset);
+    virtualForce(1.5*vf, mSkel->getBodyNode("h_heel_left"), offset);
+
+  }
+  mPreOffset = offset;
 }
 
 void Controller::virtualForce(Eigen::Vector3d _force, dart::dynamics::BodyNode* _bodyNode, Eigen::Vector3d _offset) {
@@ -554,3 +788,57 @@ double Controller::getPlatformDis() {
   return PlatformDis;
 }
 
+double Controller::getPlatformVel(){
+  double currentPos = getPlatformDis();
+  double Velocity = currentPos - LastplatformP;
+  LastplatformP = currentPos;
+  return Velocity;
+}
+
+void Controller::setUpperBodyPD(double kp, double kd){
+  std::vector<int> Index;
+  Index.push_back((mSkel->getDof("j_bicep_left_z")->getIndexInSkeleton()));
+  Index.push_back((mSkel->getDof("j_bicep_left_y")->getIndexInSkeleton()));
+  Index.push_back((mSkel->getDof("j_bicep_left_x")->getIndexInSkeleton()));
+  Index.push_back((mSkel->getDof("j_forearm_left")->getIndexInSkeleton()));
+  Index.push_back((mSkel->getDof("j_bicep_right_z")->getIndexInSkeleton()));
+  Index.push_back((mSkel->getDof("j_bicep_right_y")->getIndexInSkeleton()));
+  Index.push_back((mSkel->getDof("j_bicep_right_x")->getIndexInSkeleton()));
+  Index.push_back((mSkel->getDof("j_forearm_right")->getIndexInSkeleton()));
+  Index.push_back((mSkel->getDof("j_hand_left_1")->getIndexInSkeleton()));
+  Index.push_back((mSkel->getDof("j_hand_left_2")->getIndexInSkeleton()));
+  Index.push_back((mSkel->getDof("j_hand_right_1")->getIndexInSkeleton()));
+  Index.push_back((mSkel->getDof("j_hand_right_2")->getIndexInSkeleton()));
+  Index.push_back((mSkel->getDof("j_scapula_right")->getIndexInSkeleton()));
+  Index.push_back((mSkel->getDof("j_scapula_left")->getIndexInSkeleton()));
+  for (int i = 0; i < Index.size(); i++) {
+    int index = Index[i];
+    mKp(index, index) = kp;
+    mKd(index, index) = kd;
+  }
+  Index.clear();
+
+}
+void Controller::setLowerBodyPD(double kp, double kd){
+  std::vector<int> dof_Index;
+
+  dof_Index.push_back((mSkel->getDof("j_abdomen_2")->getIndexInSkeleton()));
+  dof_Index.push_back((mSkel->getDof("j_thigh_left_z")->getIndexInSkeleton()));
+  dof_Index.push_back((mSkel->getDof("j_shin_left")->getIndexInSkeleton()));
+  dof_Index.push_back((mSkel->getDof("j_thigh_right_z")->getIndexInSkeleton()));
+  dof_Index.push_back((mSkel->getDof("j_shin_right")->getIndexInSkeleton()));
+
+  dof_Index.push_back((mSkel->getDof("j_toe_right")->getIndexInSkeleton()));
+  dof_Index.push_back((mSkel->getDof("j_heel_right_1")->getIndexInSkeleton()));
+  dof_Index.push_back((mSkel->getDof("j_heel_right_2")->getIndexInSkeleton()));
+  dof_Index.push_back((mSkel->getDof("j_toe_left")->getIndexInSkeleton()));
+  dof_Index.push_back((mSkel->getDof("j_heel_left_1")->getIndexInSkeleton()));
+  dof_Index.push_back((mSkel->getDof("j_heel_left_2")->getIndexInSkeleton()));
+  for (int i = 0; i < dof_Index.size(); i++) {
+    int index = dof_Index[i];
+    mKp(index, index) = kp;
+    mKd(index, index) = kd;
+  }
+  dof_Index.clear();
+
+}

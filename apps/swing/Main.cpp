@@ -64,7 +64,8 @@ int main(int argc, char* argv[]) {
   biped->getDof("j_thigh_right_z")->setPosition( 0.15);
   biped->getDof("j_shin_right")->setPosition(   -0.40);
   biped->getDof("j_heel_right_1")->setPosition(  0.25);
-  
+
+
   // Set the moving platform is kinematically controlled;
   // its movement is not affected by external forces
   dart::dynamics::SkeletonPtr platform = myWorld->getSkeleton("landing1");
@@ -74,7 +75,7 @@ int main(int argc, char* argv[]) {
   dart::dynamics::SkeletonPtr bar = myWorld->getSkeleton("bar1");
 
   // Create controller
-  Controller* myController = new Controller(biped, platform,
+  Controller* myController = new Controller(biped,
                                             myWorld->getConstraintSolver(),
                                             myWorld->getTimeStep());
 
