@@ -234,8 +234,8 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     // Here only care about normal force and friction force, there is no
     // torques, thus only Linear Jacobian
 
-    J1 = bodyNode1->getLinearJacobian(bodyPoint1);
-    J2 = bodyNode2->getLinearJacobian(bodyPoint2);
+    J1 = bodyNode1->getLinearJacobian(bodyPoint1,bodyNode1);
+    J2 = bodyNode2->getLinearJacobian(bodyPoint2,bodyNode2);
     assert(J1.rows() == J2.rows());
 
     // Determine DOF belongs to each body node, again here we are going to
