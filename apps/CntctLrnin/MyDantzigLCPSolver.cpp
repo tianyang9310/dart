@@ -14,14 +14,14 @@
 // #define CLAMP_DANTZIG
 
 /*
- *  * fn=0, fd=0, lambda=0		contact break
- *  * fn=0, fd=0, lambda>0		has relative tangential velocities but no friction
- *  * fn=0, fd>0, lambda=0 		X
- *  * fn=0, fd>0, lambda>0		X
- *  * fn>0, fd=0, lambda=0		static, no relative tangential velocities, no relative tangential acc
- *  * fn>0, fd=0, lambda>0		X
- *  * fn>0, fd>0, lambda=0		static friction, no relative tangential velocities, relative tangential acc
- *  * fn>0, fd>0, lambda>0		slide
+ * * fn=0, fd=0, lambda=0		contact break
+ * * fn=0, fd=0, lambda>0		has relative tangential velocities but no friction
+ * * fn=0, fd>0, lambda=0 	X
+ * * fn=0, fd>0, lambda>0		X
+ * * fn>0, fd=0, lambda=0		static, no relative tangential velocities, no relative tangential acc
+ * * fn>0, fd=0, lambda>0		X
+ * * fn>0, fd>0, lambda=0		static friction, no relative tangential velocities, relative tangential acc
+ * * fn>0, fd>0, lambda>0		slide
  */
 
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
@@ -191,7 +191,6 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   Eigen::VectorXd tau2;
   dart::math::LinearJacobian J1;
   dart::math::LinearJacobian J2;
-  Eigen::MatrixXd D(3, numBasis);
   for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; idx_cnstrnt++) {
     cntctconstraint =
         dynamic_cast<ContactConstraint*>(_group->getConstraint(idx_cnstrnt));
@@ -231,13 +230,20 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     bodyPoint2.noalias() =
         bodyNode2->getTransform().inverse() * ct->point;
 
+// -----------------------------------------------------------------------------
     // Here only care about normal force and friction force, there is no
     // torques, thus only Linear Jacobian
 
+    /*
+     * J1 = bodyNode1->getLinearJacobian(bodyPoint1);
+     * J2 = bodyNode2->getLinearJacobian(bodyPoint2);
+     */
+
     J1 = bodyNode1->getLinearJacobian(bodyPoint1,bodyNode1);
     J2 = bodyNode2->getLinearJacobian(bodyPoint2,bodyNode2);
-    assert(J1.rows() == J2.rows());
 
+    assert(J1.rows() == J2.rows());
+// -----------------------------------------------------------------------------
     // Determine DOF belongs to each body node, again here we are going to
     // assume the convention
     if (BodyNode1_dim == -1) {
@@ -255,33 +261,68 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
       std::cin.get();
     }
 
+// -----------------------------------------------------------------------------
+    // normDirection ==> global
+    // normDirection1 ==> bodyNode1 frame
+    // normDirection2 ==> bodyNode2 frame
     Eigen::Vector3d normDirection;
+    Eigen::Vector3d normDirection1;
+    Eigen::Vector3d normDirection2;
     normDirection = ct->normal;
+
+    // normal direction should also be in the world frame
+    normDirection1 = ct->normal;
+    normDirection2 = - ct->normal;
+
+    /*
+     * normDirection1 = bodyNode1->getTransform().linear().transpose() * ct->normal;
+     * normDirection2 = - bodyNode2->getTransform().linear().transpose() * ct->normal;
+     */
+// -----------------------------------------------------------------------------
+
 #ifdef LEMKE_OUTPUT_DETAILS
     (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " bodyNode1 transform: "<< std::endl << bodyNode1->getTransform().matrix() <<std::endl;
-    (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " artificial Jacobian is "<< std::endl << bodyNode1->getLinearJacobian(Eigen::Vector3d(0.05,-0.05,0.05)) <<std::endl;
+    (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " artificial Jacobian is "<< std::endl << bodyNode1->getLinearJacobian(Eigen::Vector3d(0.05,-0.05,0.05), bodyNode1) <<std::endl;
     (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " ct->point is "<< std::endl << ct->point.transpose() <<std::endl;
     (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " bodypoint1 is "<< std::endl << bodyPoint1.transpose() <<std::endl;
     (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " Jacobian1 is "<< std::endl << J1 <<std::endl;
     (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " Jacobian2 is " << std::endl << J2 <<std::endl;
+    (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " World Jacobian1 is "<< std::endl << bodyNode1->getLinearJacobian(bodyPoint1) <<std::endl;
+    (*Lemke_FILE) << "Contact "<<idx_cnstrnt<< " World Jacobian2 is " << std::endl << bodyNode2->getLinearJacobian(bodyPoint2) <<std::endl;
 #endif
 
 #ifdef LEMKE_OUTPUT_DETAILS
     (*Lemke_FILE) <<"Contact "<<idx_cnstrnt<<" normal direction is "<<normDirection.transpose()<<std::endl;
 #endif
-    N.col(idx_cnstrnt) << J1.transpose() * normDirection,
-        -J2.transpose() * normDirection;
+    N.col(idx_cnstrnt) << J1.transpose() * normDirection1,
+        J2.transpose() * normDirection2;
 #ifdef LEMKE_OUTPUT_DETAILS
     (*Lemke_FILE) <<"Contact "<<idx_cnstrnt<<" N is "<<N.transpose()<<std::endl;
 #endif
+
+// -----------------------------------------------------------------------------
     // B matrix
+    Eigen::MatrixXd D(3, numBasis);
+    Eigen::MatrixXd D1(3, numBasis);
+    Eigen::MatrixXd D2(3, numBasis);
     D = getTangentBasisMatrixLemke(normDirection, numBasis);
+
+    // tangential direction in the world frame
+    D1 = D;
+    D2 = -D;
+
+    /*
+     * D1 = bodyNode1->getTransform().linear().transpose() * D;
+     * D2 =  - bodyNode1->getTransform().linear().transpose() * D;
+     */
+
+// -----------------------------------------------------------------------------
 #ifdef LEMKE_OUTPUT_DETAILS
     (*Lemke_FILE) <<"Contact "<<idx_cnstrnt<<" D matrix is "<<std::endl<<D<<std::endl;
 #endif
     B.block(0, idx_cnstrnt * numBasis, totalDOF, numBasis)
-        << J1.transpose() * D,
-        -J2.transpose() * D;
+        << J1.transpose() * D1,
+        J2.transpose() * D2;
 
     // friction coeff
     // std::cout<<"The friction coeff for the two BodyNodes are: ";
@@ -312,6 +353,10 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     // std::cout<< "After" <<std::endl;
     // std::cout << M1 <<std::endl;
     M.block(0, 0, M1.rows(), M1.cols()) = M1;
+
+// -----------------------------------------------------------------------------
+// It doesn't matter because internal forces are always zero if setForces is
+// never called
     // get internal forces
     Eigen::VectorXd mInternalForces(bodyNode1->getSkeleton()->getNumDofs());
     mInternalForces.setZero();
@@ -325,16 +370,19 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
       dofCounter += DofofThisJoint;
     }
     /*
-     *std::cout << "Internal forces are " << mInternalForces.transpose()
+     * std::cout << "Internal forces are " << mInternalForces.transpose()
      *          << std::endl;
      */
+// -----------------------------------------------------------------------------
 
     // get external forces
     Eigen::VectorXd mExternalForces(bodyNode1->getSkeleton()->getNumDofs());
     mExternalForces = bodyNode1->getSkeleton()->getExternalForces();
+    //  mExternalForces = bodyNode1->getExternalForceLocal();
+
     /*
-     *std::cout << "mBox external forces are: "
-     *          << bodyNode1->getSkeleton()->getExternalForces().transpose()
+     * std::cout << "mBox external forces are: "
+     *          << mExternalForces.transpose() - bodyNode1->getSkeleton()->getExternalForces().transpose()
      *          << std::endl;
      */
 
@@ -372,6 +420,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     // Disable external force when computing tau, in this case this should be
     // exactly as the equation of LCP paper
     // mExternalForces.setZero();
+
     tau1 =
         M1 * mSkeletonVelocitiesLock[bodyNode1->getSkeleton()] -
         mTimeStep * (bodyNode1->getSkeleton()->getCoriolisAndGravityForces() -
@@ -566,7 +615,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
   double err_dist = 0.0;
   bool Validation =
       dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
-  std::cout << "err distance: " << err_dist << std::endl;
+  // std::cout << "err distance: " << err_dist << std::endl;
 #ifdef LEMKE_OUTPUT_DETAILS
   (*Lemke_FILE) << "Validation: " << Validation << std::endl;
   (*Lemke_FILE) << "Lemke N is " << N.transpose() << std::endl;
@@ -654,7 +703,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
    */
   // ---------------------------------------------------------------------------
 
-  // Validation = false;
+  //  Validation = false;
 
   // ---------------------------------------------------------------------------
   // If Lemke solution is valid, then use Lemke solution to simulate,
@@ -743,6 +792,10 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     GeneralizedForces += indGeneralized;
     (*Lemke_FILE) << "[Lemke] all contact GeneralizedForces counter: "
                   << GeneralizedForces.transpose().format(CSVFmt) << std::endl;
+
+    // check mJacobians1 and N relationship
+    (*Lemke_FILE) << "My Computation of N is " << N_each.transpose() << std::endl;
+    (*Lemke_FILE) << "My Computation of B is " << B_each.transpose() << std::endl;
   }
   (*Lemke_FILE) << "[Lemke] all contact forces: "
                 << allForce.transpose().format(CSVFmt) << std::endl;
@@ -770,6 +823,9 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     allForce += indForce;
     allTorque += indTorque;
     GeneralizedForces += indGeneralized;
+    (*ODE_FILE) << "DART's default N    is " << Mycntctconstraint->mJacobians1[0].transpose() << std::endl;
+    (*ODE_FILE) << "DART's default B1   is " << Mycntctconstraint->mJacobians1[1].transpose() << std::endl;
+    (*ODE_FILE) << "DART's default B2   is " << Mycntctconstraint->mJacobians1[2].transpose() << std::endl;
   }
   (*ODE_FILE) << "[ODE] all contact forces: "
               << allForce.transpose().format(CSVFmt) << std::endl;
@@ -813,14 +869,14 @@ void MyDantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
   (*ODE_FILE) << "A: " << std::endl;
   for (size_t i = 0; i < _n; ++i) {
     for (size_t j = 0; j < nSkip; ++j) {
-      (*ODE_FILE) << std::setprecision(4) << _A[i * nSkip + j] << " ";
+      (*ODE_FILE) << std::setprecision(10) << _A[i * nSkip + j] << " ";
     }
     (*ODE_FILE) << std::endl;
   }
 
   (*ODE_FILE) << "b: ";
   for (size_t i = 0; i < _n; ++i) {
-    (*ODE_FILE) << std::setprecision(4) << b[i] << " ";
+    (*ODE_FILE) << std::setprecision(10) << b[i] << " ";
   }
   (*ODE_FILE) << std::endl;
 
@@ -892,7 +948,7 @@ bool MyDantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
         std::cout << "A: " << std::endl;
         for (size_t k = 0; k < _n; ++k) {
           for (size_t l = 0; l < nSkip; ++l) {
-            std::cout << std::setprecision(4) << _A[k * nSkip + l] << " ";
+            std::cout << std::setprecision(10) << _A[k * nSkip + l] << " ";
           }
           std::cout << std::endl;
         }
@@ -919,7 +975,7 @@ bool MyDantzigLCPSolver::isSymmetric(size_t _n, double* _A, size_t _begin,
         std::cout << "A: " << std::endl;
         for (size_t k = 0; k < _n; ++k) {
           for (size_t l = 0; l < nSkip; ++l) {
-            std::cout << std::setprecision(4) << _A[k * nSkip + l] << " ";
+            std::cout << std::setprecision(10) << _A[k * nSkip + l] << " ";
           }
           std::cout << std::endl;
         }

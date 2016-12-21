@@ -124,7 +124,7 @@ void MyWindow::timeStepping() {
     std::cerr << "mBox Position: "
               << mWorld->getSkeleton("mBox")->getPositions().transpose()
               << std::endl;
-    //  keyboard('y', 0, 0);
+    keyboard('y', 0, 0);
   }
 
   std::cerr << "mBox Position: "

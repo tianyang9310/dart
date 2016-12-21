@@ -232,7 +232,6 @@ void MyContactConstraint::My2ODEapplyImpulse(
         allTorque += bodyPoint1.cross(friction_force_tmp);
         GeneralizedForces += ((mJacobians1[1] * _lambda[1]) +
                       (mJacobians1[2] * _lambda[2])).eval();
-
       }
 
 /*
