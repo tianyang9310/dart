@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "MyDantzigLCPSolver.h"
+#include "My2DantzigLCPSolver.h"
 #include "MyWindow.h"
 #include "MyWorld.h"
 #include "addSkeles.h"
@@ -38,8 +39,15 @@ int main(int argc, char* argv[]) {
   MyWindow* mWindow = &window;
 
 #ifndef ODE_VANILLA
+#ifndef FORK_LEMKE
+  // Using MyDantzigLCPSolver
   mWorld->getConstraintSolver()->setLCPSolver(
       new MyDantzigLCPSolver(mWorld->getTimeStep(), totalDOF, mWindow));
+#else
+  // Using My2DantzigLCPSolver
+  mWorld->getConstraintSolver()->setLCPSolver(
+      new My2DantzigLCPSolver(mWorld->getTimeStep()));
+#endif
 #endif
 
   glutInit(&argc, argv);

@@ -24,7 +24,13 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
 
   extForce.setZero();
 #ifndef ODE_VANILLA
+#ifndef FORK_LEMKE
   std::cout << "Using Lemke to solve LCP" << std::endl;
+#else
+  std::cout << "Using Fork_Lemke to solve LCP" << std::endl;
+#endif
+#else
+  std::cout << "Using ODE to solve LCP" << std::endl;
 #endif
 }
 
@@ -37,6 +43,7 @@ void MyWindow::timeStepping() {
  *std::cout << std::endl;
  */
 #ifndef ODE_VANILLA
+#ifndef FORK_LEMKE
   // lock Skeleton Velocities before stepping function
   dynamic_cast<MyDantzigLCPSolver*>(
       mWorld->getConstraintSolver()->getLCPSolver())
@@ -47,10 +54,11 @@ void MyWindow::timeStepping() {
       ->pushVelocities(mWorld->getSkeleton("ground skeleton"),
                        mWorld->getSkeleton("ground skeleton")->getVelocities());
 #endif
-
+#endif
   dart::gui::SimWindow::timeStepping();
 
 #ifndef ODE_VANILLA
+#ifndef FORK_LEMKE
   dynamic_cast<MyDantzigLCPSolver*>(
       mWorld->getConstraintSolver()->getLCPSolver())
       ->getSkeletonVelocitiesLock()
@@ -62,7 +70,7 @@ void MyWindow::timeStepping() {
 //                  .size()
 //           << std::endl;
 #endif
-
+#endif
   /*
    *  // regularization the positive of cube
    *  double range = 12.5;
@@ -97,6 +105,7 @@ void MyWindow::timeStepping() {
     std::cout << mWorld->getSkeleton("mBox")->getPositions().transpose()
               << std::endl;
 #ifndef ODE_VANILLA
+#ifndef FORK_LEMKE
     std::cout << "Lemke fail ratio: "
               << dynamic_cast<MyDantzigLCPSolver*>(
                      mWorld->getConstraintSolver()->getLCPSolver())
@@ -104,17 +113,16 @@ void MyWindow::timeStepping() {
                      double(episodeLength)
               << std::endl;
 #endif
+#endif
     keyboard('y', 0, 0);
   }
 // mCollisionDetector->detectCollision(true, true);
 #ifndef ODE_VANILLA
+#ifndef FORK_LEMKE
   numContacts = dynamic_cast<MyDantzigLCPSolver*>(
                     mWorld->getConstraintSolver()->getLCPSolver())
                     ->numContactsCallBack;
-#else
-  numContacts = dynamic_cast<DantzigLCPSolver*>(
-                    mWorld->getConstraintSolver()->getLCPSolver())
-                    ->numContactsCallBack;
+#endif
 #endif
 
   // std::cout << "Current frame is " << mWorld->getSimFrames() << std::endl;
