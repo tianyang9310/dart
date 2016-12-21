@@ -2,30 +2,30 @@
 
 using namespace std;
 
-MyWindow::MyWindow(dart::simulation::WorldPtr world):SimWindow() {
+MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   setWorld(world);
   mCollisionDetector = std::unique_ptr<dart::collision::CollisionDetector>(
       mWorld->getConstraintSolver()->getCollisionDetector());
   counter = 0;
-  episodeLength = 1500;
+  episodeLength = 6500;
   mColor.push_back(Eigen::Vector3d(0.8, 0.2, 0.2));  // red
   mColor.push_back(Eigen::Vector3d(0.2, 0.8, 0.2));  // green
   mColor.push_back(Eigen::Vector3d(0.2, 0.2, 0.8));  // blue
   mColor.push_back(Eigen::Vector3d(0.2, 0.2, 0.2));  // black
+  alwaysUpdateViewer = false;
   srand(0);
 
   mZoom = 0.50f;
-  mTrans[1] = 15.0f; 
+  mTrans[1] = 15.0f;
   Eigen::Quaterniond initTrackBallQuat;
   initTrackBallQuat.w() = 0.895342;
-  initTrackBallQuat.vec() = Eigen::Vector3d(0.180079,0.406869,0.0198165);
+  initTrackBallQuat.vec() = Eigen::Vector3d(0.180079, 0.406869, 0.0198165);
   mTrackBall.setQuaternion(initTrackBallQuat);
 
   extForce.setZero();
-  // Eigen::Vector3d extForce = Eigen::Vector3d::Random() * 1e2;
-  extForce = Eigen::Vector3d::Ones() * 1.2e1;
-  extForce[1] = 0.0;
-  extForce[2] = 0.0;
+#ifndef ODE_VANILLA
+  std::cout << "Using Lemke to solve LCP" << std::endl;
+#endif
 }
 
 MyWindow::~MyWindow() {}
@@ -120,14 +120,16 @@ void MyWindow::timeStepping() {
   // std::cout << "Current frame is " << mWorld->getSimFrames() << std::endl;
   if (numContacts != 4) {
     std::cerr << "numContacts: " << numContacts
-          << " current frame: " << mWorld->getSimFrames() << std::endl;
-    std::cerr << "mBox Position: " << mWorld->getSkeleton("mBox")->getPositions().transpose()
-          << std::endl;
-    keyboard('y', 0, 0);
+              << " current frame: " << mWorld->getSimFrames() << std::endl;
+    std::cerr << "mBox Position: "
+              << mWorld->getSkeleton("mBox")->getPositions().transpose()
+              << std::endl;
+    //  keyboard('y', 0, 0);
   }
 
-  std::cerr << "mBox Position: " << mWorld->getSkeleton("mBox")->getPositions().transpose()
-        << std::endl;
+  std::cerr << "mBox Position: "
+            << mWorld->getSkeleton("mBox")->getPositions().transpose()
+            << std::endl;
   // keyboard('y', 0, 0);
 
   /*
@@ -135,18 +137,23 @@ void MyWindow::timeStepping() {
    *std::cout<<std::endl;
    */
 
-  // std::cout<<std::setprecision(10)<<"Jacobian artificial"<<std::endl<<mWorld->getSkeleton("mBox")->getBodyNode(0)->getLinearJacobian(Eigen::Vector3d::Zero())<<std::endl;
-  // std::cout<<std::setprecision(10)<<"Mass matrix"<<std::endl<<
-  //          mWorld->getSkeleton("mBox")->getMassMatrix()<<std::endl;
-  // std::cout<<std::setprecision(10)<<"AugMass matrix"<<std::endl<<
-  //          mWorld->getSkeleton("mBox")->getAugMassMatrix()<<std::endl;
+  // Whether always update viewer
+  if (alwaysUpdateViewer) {
+    updateViewer();
+  }
 }
 
 void MyWindow::addExtForce() {
-  // dtmsg<<"Add external force"<<std::endl;
-  // mWorld->getSkeleton("mBox")
-  //     ->getBodyNode("BodyNode_1")
-  //     ->addExtForce(Eigen::Vector3d::Random() * 3);
+  // add constant external forces
+  extForce.setZero();
+  extForce(0) = 1.2e1;
+
+  /*
+   * // add random external forces
+   * extForce = Eigen::Vector3d::Random() * 50;
+   */
+
+  //  std::cerr << "Add external force: " << extForce.transpose() << std::endl;
 
   mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce);
 }
@@ -177,6 +184,12 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
     case 'b':
       addExtTorque();
       break;
+    case 'w':
+      updateViewer();
+      break;
+    case 'e':
+      alwaysUpdateViewer = !alwaysUpdateViewer;
+      break;
     default:
       dart::gui::SimWindow::keyboard(_key, _x, _y);
   }
@@ -190,7 +203,7 @@ void MyWindow::drawSkels() {
   // draw Ext force arrow
   Eigen::Vector3d poa = mWorld->getSkeleton("mBox")->getCOM();
   double len = extForce.norm() / 100.0;
-  dart::gui::drawArrow3D(poa, extForce, len, 0.005,0.01);
+  dart::gui::drawArrow3D(poa, extForce, len, 0.005, 0.01);
 
   dart::gui::SimWindow::drawSkels();
 }
@@ -334,3 +347,11 @@ void MyWindow::displayTimer(int _val) {
 }
 
 dart::simulation::WorldPtr MyWindow::getWorld() { return mWorld; }
+
+void MyWindow::updateViewer() {
+  //  dtmsg << "Update viewer" << std::endl;
+  //  std::cout << mTrans.transpose() << std::endl;
+  mTrans = -mWorld->getSkeleton("mBox")->getPositions().segment(3, 3) * 1000;
+  //  mTrans[1] = 150.0f;
+  //  std::cout << mTrans.transpose() << std::endl;
+}

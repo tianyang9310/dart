@@ -6,7 +6,7 @@
 #include "MyDantzigLCPSolver.h"
 #include "dart/dart.h"
 
-// #define ODE_VANILLA  // decide to use MyDantizig or Danzig
+//  #define ODE_VANILLA  // decide to use MyDantizig or Danzig
 
 class MyWindow : public dart::gui::SimWindow {
   public:
@@ -22,6 +22,7 @@ class MyWindow : public dart::gui::SimWindow {
   void draw() override;
   void displayTimer(int _val); 
   dart::simulation::WorldPtr getWorld();
+  void updateViewer();
 
   private:
   std::unique_ptr<Controller> mController;
@@ -31,6 +32,7 @@ class MyWindow : public dart::gui::SimWindow {
   int counter;
   int episodeLength;
   Eigen::Vector3d extForce;
+  bool alwaysUpdateViewer;
 };
 
 #endif  // CNTCTLRNIN_MYWINDOW_H
