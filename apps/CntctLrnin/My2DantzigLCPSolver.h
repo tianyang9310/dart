@@ -7,7 +7,7 @@
 #include <iostream>
 #include <string>
 
-#include "MyContactConstraint.h"
+#include "My2ContactConstraint.h"
 #include "dart/dart.h"
 #include "utils.h"
 

@@ -15,6 +15,7 @@
 #include "dart/constraint/JointCoulombFrictionConstraint.h"
 #include "dart/constraint/JointLimitConstraint.h"
 #include "dart/constraint/SoftContactConstraint.h"
+#include "MyWindow.h"
 
 namespace dart {
 namespace constraint {
@@ -62,7 +63,15 @@ void MyConstraintSolver::updateConstraints() {
       mSoftContactConstraints.push_back(
           new SoftContactConstraint(ct, mTimeStep));
     } else {
+#ifndef ODE_VANILLA
+#ifndef FORK_LEMKE
       mContactConstraints.push_back(new MyContactConstraint(ct, mTimeStep));
+#else
+      mContactConstraints.push_back(new My2ContactConstraint(ct, mTimeStep));
+#endif
+#else
+      mContactConstraints.push_back(new ContactConstraint(ct, mTimeStep));
+#endif
     }
   }
 

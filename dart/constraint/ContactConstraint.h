@@ -58,6 +58,9 @@ public:
   /// Constructor
   ContactConstraint(collision::Contact& _contact, double _timeStep);
 
+  /// Empty Constructor
+  ContactConstraint():ConstraintBase() {};
+
   /// Destructor
   virtual ~ContactConstraint();
 
