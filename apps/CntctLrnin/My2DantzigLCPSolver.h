@@ -30,9 +30,17 @@ class MyWindow;
 
 class My2DantzigLCPSolver : public DantzigLCPSolver {
   public:
+  /// Constructor
   My2DantzigLCPSolver(double _timestep);
+
+  /// Destructor
   virtual ~My2DantzigLCPSolver();
+
+  //----------------------------------------------------------------------------
+  // Member Function
+  //----------------------------------------------------------------------------
   void solve(ConstrainedGroup* _group) override;
+
   void print(size_t _n, double* _A, double* _x, double* _lo, double* _hi,
              double* _b, double* w, int* _findex,
              std::shared_ptr<std::fstream> ODE_FILE);
@@ -42,6 +50,14 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
 
   /// Return true if the diagonla block of matrix is symmetric
   bool isSymmetric(size_t _n, double* _A, size_t _begin, size_t _end);
+
+  /// Permute , negate and augment b
+  void PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b);
+
+  //----------------------------------------------------------------------------
+  // Member Variable
+  //----------------------------------------------------------------------------
+  int numBasis;
 };
 
 #endif

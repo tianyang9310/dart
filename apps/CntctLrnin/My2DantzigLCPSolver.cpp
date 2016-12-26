@@ -1,12 +1,17 @@
 #include "My2DantzigLCPSolver.h"
 
+//==============================================================================
 My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep)
     : DantzigLCPSolver(_timestep) {
+  numBasis = 8;
+}
+
+//==============================================================================
+My2DantzigLCPSolver::~My2DantzigLCPSolver() {
   // pass
 }
 
-My2DantzigLCPSolver::~My2DantzigLCPSolver() {}
-
+//==============================================================================
 void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
   // If there is no constraint, then just return true.
   size_t numConstraints = _group->getNumConstraints();
@@ -15,7 +20,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
   // Build LCP terms by aggregating them from constraints
   size_t n = _group->getTotalDimension();
-  // int nSkip = dPAD(n); // YT: Don't use nSkip
+  int nSkip = dPAD(n); // YT: Don't use nSkip
   double* A = new double[n * n];
   double* x = new double[n];
   double* b = new double[n];
@@ -25,10 +30,9 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
   int* findex = new int[n];
 
 // Set w to 0 and findex to -1
-#ifndef NDEBUG
   std::memset(A, 0.0, n * n * sizeof(double));
-#endif
   std::memset(w, 0.0, n * sizeof(double));
+  std::memset(b, 0.0, n * sizeof(double));
   std::memset(findex, -1, n * sizeof(int));
 
   // Compute offset indices
@@ -58,41 +62,59 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
     // Fill vectors: lo, hi, b, w
     constraint->getInformation(&constInfo);
-
-    // Fill a matrix by impulse tests: A
-    constraint->excite();
-    for (size_t j = 0; j < constraint->getDimension(); ++j) {
-      // Adjust findex for global index
-      if (findex[offset[i] + j] >= 0) findex[offset[i] + j] += offset[i];
-
-      // Apply impulse for mipulse test
-      constraint->applyUnitImpulse(j);
-
-      // Fill upper triangle blocks of A matrix
-      int index = nSkip * (offset[i] + j) + offset[i];
-      constraint->getVelocityChange(A + index, true);
-      for (size_t k = i + 1; k < numConstraints; ++k) {
-        index = nSkip * (offset[i] + j) + offset[k];
-        _group->getConstraint(k)->getVelocityChange(A + index, false);
-      }
-
-      // Filling symmetric part of A matrix
-      for (size_t k = 0; k < i; ++k) {
-        for (size_t l = 0; l < _group->getConstraint(k)->getDimension(); ++l) {
-          int index1 = nSkip * (offset[i] + j) + offset[k] + l;
-          int index2 = nSkip * (offset[k] + l) + offset[i] + j;
-
-          A[index1] = A[index2];
-        }
-      }
-    }
-
-    assert(isSymmetric(n, A, offset[i],
-                       offset[i] + constraint->getDimension() - 1));
-
-    constraint->unexcite();
+    
+/*
+ *     // Fill a matrix by impulse tests: A
+ *     constraint->excite();
+ *     for (size_t j = 0; j < constraint->getDimension(); ++j) {
+ *       // Adjust findex for global index
+ *       if (findex[offset[i] + j] >= 0) findex[offset[i] + j] += offset[i];
+ * 
+ *       // Apply impulse for mipulse test
+ *       constraint->applyUnitImpulse(j);
+ * 
+ *       // Fill upper triangle blocks of A matrix
+ *       int index = nSkip * (offset[i] + j) + offset[i];
+ *       constraint->getVelocityChange(A + index, true);
+ *       for (size_t k = i + 1; k < numConstraints; ++k) {
+ *         index = nSkip * (offset[i] + j) + offset[k];
+ *         _group->getConstraint(k)->getVelocityChange(A + index, false);
+ *       }
+ * 
+ *       // Filling symmetric part of A matrix
+ *       for (size_t k = 0; k < i; ++k) {
+ *         for (size_t l = 0; l < _group->getConstraint(k)->getDimension(); ++l) {
+ *           int index1 = nSkip * (offset[i] + j) + offset[k] + l;
+ *           int index2 = nSkip * (offset[k] + l) + offset[i] + j;
+ * 
+ *           A[index1] = A[index2];
+ *         }
+ *       }
+ *     }
+ * 
+ *     assert(isSymmetric(n, A, offset[i],
+ *                        offset[i] + constraint->getDimension() - 1));
+ * 
+ *     constraint->unexcite();
+ */
   }
+  // ---------------------------------------------------------------------------
+  // Establish Lemke b
+  Eigen::VectorXd Lemke_b(numConstraints*(2+numBasis));
+  Lemke_b.setZero();
 
+  PermuteNegAug_b(b, Lemke_b);
+
+  /*
+   * // debug b
+   * for (size_t tt=0; tt < n; tt++){
+   *   std::cout << *(b+tt) << std::endl;
+   * }
+   * std::cout << "========================="<<std::endl << Lemke_b << std::endl;
+   * std::cin.get();
+   */
+  // ---------------------------------------------------------------------------
+  
   assert(isSymmetric(n, A));
 
   // Print LCP formulation
@@ -126,6 +148,24 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
   delete[] findex;
 }
 
+//==============================================================================
+void My2DantzigLCPSolver::PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b) {
+  // Permute b
+  size_t mDim = 1+numBasis;
+  for (size_t mIdxConstraint=0; mIdxConstraint<numContactsCallBack; mIdxConstraint++) {
+    Lemke_b[mIdxConstraint] = *(b + mIdxConstraint* mDim);
+    Lemke_b.segment(numContactsCallBack + mIdxConstraint*numBasis,numBasis) = 
+    Eigen::Map<Eigen::VectorXd>((b+mIdxConstraint*mDim+1), numBasis);
+  }
+  
+  // Negate b
+  Lemke_b = -Lemke_b; 
+
+  // Augment b
+  Lemke_b.segment((1+numBasis)*numContactsCallBack,numContactsCallBack).setZero();
+}
+
+//==============================================================================
 void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
                                 double* hi, double* b, double* w, int* findex,
                                 std::shared_ptr<std::fstream> ODE_FILE) {
@@ -204,6 +244,7 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
   delete[] Ax;
 }
 
+//==============================================================================
 bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
   size_t nSkip = dPAD(_n);
   for (size_t i = 0; i < _n; ++i) {
