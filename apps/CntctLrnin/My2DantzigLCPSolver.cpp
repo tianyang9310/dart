@@ -127,8 +127,8 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 }
 
 void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
-                               double* hi, double* b, double* w, int* findex,
-                               std::shared_ptr<std::fstream> ODE_FILE) {
+                                double* hi, double* b, double* w, int* findex,
+                                std::shared_ptr<std::fstream> ODE_FILE) {
   size_t nSkip = dPAD(_n);
   (*ODE_FILE) << "A: " << std::endl;
   for (size_t i = 0; i < _n; ++i) {
@@ -231,7 +231,7 @@ bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
 
 //==============================================================================
 bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A, size_t _begin,
-                                     size_t _end) {
+                                      size_t _end) {
   size_t nSkip = dPAD(_n);
   for (size_t i = _begin; i <= _end; ++i) {
     for (size_t j = _begin; j <= _end; ++j) {
