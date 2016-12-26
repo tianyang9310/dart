@@ -15,12 +15,25 @@ namespace constraint {
 
 class My2ContactConstraint : public ContactConstraint {
   public:
+  /// Constructor
   My2ContactConstraint(collision::Contact& _contact, double _timeStep);
+
+  /// Destructor
   virtual ~My2ContactConstraint();
 
+  //----------------------------------------------------------------------------
+  // Member Function
+  //----------------------------------------------------------------------------
+  void getInformation(ConstraintInfo* _info);
+  void getRelVelocity(double* _relVel);
+
+  //----------------------------------------------------------------------------
+  // Member Function
+  //----------------------------------------------------------------------------
   int numBasis;
 };
-}
-}
+
+} // namespace constraint
+} // namespace dart
 
 #endif  // MYCONTACTCONSTRAINT

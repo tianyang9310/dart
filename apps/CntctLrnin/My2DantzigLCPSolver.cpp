@@ -15,8 +15,8 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
   // Build LCP terms by aggregating them from constraints
   size_t n = _group->getTotalDimension();
-  int nSkip = dPAD(n);
-  double* A = new double[n * nSkip];
+  // int nSkip = dPAD(n); // YT: Don't use nSkip
+  double* A = new double[n * n];
   double* x = new double[n];
   double* b = new double[n];
   double* w = new double[n];
@@ -26,7 +26,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
 // Set w to 0 and findex to -1
 #ifndef NDEBUG
-  std::memset(A, 0.0, n * nSkip * sizeof(double));
+  std::memset(A, 0.0, n * n * sizeof(double));
 #endif
   std::memset(w, 0.0, n * sizeof(double));
   std::memset(findex, -1, n * sizeof(int));
