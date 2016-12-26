@@ -35,7 +35,7 @@ My2ContactConstraint::My2ContactConstraint(collision::Contact& _contact,
   mAppliedImpulseIndex = (-1);
   mIsBounceOn = (false);
   mActive = (false);
-  numBasis = 2;
+  numBasis = 8;
 
   // TODO(JS): Assumed single contact
   mContacts.push_back(&_contact);
@@ -98,15 +98,18 @@ My2ContactConstraint::My2ContactConstraint(collision::Contact& _contact,
 
       // TODO(JS): Assumed that the number of tangent basis is 2.
       Eigen::MatrixXd D;
-      // D = getTangentBasisMatrixLemke(ct->normal, numBasis);
-      D = getTangentBasisMatrixODE(ct->normal);
+      D = getTangentBasisMatrixLemke(ct->normal, numBasis);
+      // D = getTangentBasisMatrixODE(ct->normal);
 
-      assert(std::abs(ct->normal.dot(D.col(0))) < DART_EPSILON);
-      assert(std::abs(ct->normal.dot(D.col(1))) < DART_EPSILON);
-      //      if (D.col(0).dot(D.col(1)) > 0.0)
-      //        std::cout << "D.col(0).dot(D.col(1): " << D.col(0).dot(D.col(1))
-      //        << std::endl;
-      assert(std::abs(D.col(0).dot(D.col(1))) < DART_EPSILON);
+      /*
+       * assert(std::abs(ct->normal.dot(D.col(0))) < DART_EPSILON);
+       * assert(std::abs(ct->normal.dot(D.col(1))) < DART_EPSILON);
+       * //      if (D.col(0).dot(D.col(1)) > 0.0)
+       * //        std::cout << "D.col(0).dot(D.col(1): " <<
+       * D.col(0).dot(D.col(1))
+       * //        << std::endl;
+       * assert(std::abs(D.col(0).dot(D.col(1))) < DART_EPSILON);
+       */
 
       //      std::cout << "D: " << std::endl << D << std::endl;
 
@@ -125,51 +128,80 @@ My2ContactConstraint::My2ContactConstraint(collision::Contact& _contact,
       mJacobians1[idx].tail<3>() = bodyDirection1;
       mJacobians2[idx].tail<3>() = bodyDirection2;
 
-      ++idx;
+      idx++;
 
-      // Jacobian for directional friction 1
-      bodyDirection1.noalias() =
-          mBodyNode1->getTransform().linear().transpose() * D.col(0);
-      bodyDirection2.noalias() =
-          mBodyNode2->getTransform().linear().transpose() * -D.col(0);
+      for (; idx < (i + 1) * (numBasis + 1); idx++) {
+        // Jacobian for directional friction 1
+        bodyDirection1.noalias() =
+            mBodyNode1->getTransform().linear().transpose() *
+            D.col((idx % (1 + numBasis)) - 1);
+        bodyDirection2.noalias() =
+            mBodyNode2->getTransform().linear().transpose() *
+            -D.col((idx % (1 + numBasis)) - 1);
 
-      //      bodyPoint1.noalias()
-      //          = mBodyNode1->getWorldTransform().inverse() * ct->point;
-      //      bodyPoint2.noalias()
-      //          = mBodyNode2->getWorldTransform().inverse() * ct->point;
+        // bodyPoint1.noalias() =
+        //     mBodyNode1->getWorldTransform().inverse() * ct->point;
+        // bodyPoint2.noalias() =
+        //     mBodyNode2->getWorldTransform().inverse() * ct->point;
 
-      //      std::cout << "bodyDirection2: " << std::endl << bodyDirection2 <<
-      //      std::endl;
+        // std::cout << "bodyDirection2: " << std::endl
+        //           << bodyDirection2 << std::endl;
 
-      mJacobians1[idx].head<3>() = bodyPoint1.cross(bodyDirection1);
-      mJacobians2[idx].head<3>() = bodyPoint2.cross(bodyDirection2);
+        mJacobians1[idx].head<3>() = bodyPoint1.cross(bodyDirection1);
+        mJacobians2[idx].head<3>() = bodyPoint2.cross(bodyDirection2);
 
-      mJacobians1[idx].tail<3>() = bodyDirection1;
-      mJacobians2[idx].tail<3>() = bodyDirection2;
+        mJacobians1[idx].tail<3>() = bodyDirection1;
+        mJacobians2[idx].tail<3>() = bodyDirection2;
+      }
 
-      ++idx;
-
-      // Jacobian for directional friction 2
-      bodyDirection1.noalias() =
-          mBodyNode1->getTransform().linear().transpose() * D.col(1);
-      bodyDirection2.noalias() =
-          mBodyNode2->getTransform().linear().transpose() * -D.col(1);
-
-      //      bodyPoint1.noalias()
-      //          = mBodyNode1->getWorldTransform().inverse() * ct->point;
-      //      bodyPoint2.noalias()
-      //          = mBodyNode2->getWorldTransform().inverse() * ct->point;
-
-      //      std::cout << "bodyDirection2: " << std::endl << bodyDirection2 <<
-      //      std::endl;
-
-      mJacobians1[idx].head<3>() = bodyPoint1.cross(bodyDirection1);
-      mJacobians2[idx].head<3>() = bodyPoint2.cross(bodyDirection2);
-
-      mJacobians1[idx].tail<3>() = bodyDirection1;
-      mJacobians2[idx].tail<3>() = bodyDirection2;
-
-      ++idx;
+      /*
+       *
+       *  ++idx;
+       *
+       *  // Jacobian for directional friction 1
+       *  bodyDirection1.noalias() =
+       *      mBodyNode1->getTransform().linear().transpose() * D.col(0);
+       *  bodyDirection2.noalias() =
+       *      mBodyNode2->getTransform().linear().transpose() * -D.col(0);
+       *
+       *  // bodyPoint1.noalias()
+       *  //     = mBodyNode1->getWorldTransform().inverse() * ct->point;
+       *  // bodyPoint2.noalias()
+       *  //     = mBodyNode2->getWorldTransform().inverse() * ct->point;
+       *
+       *  // std::cout << "bodyDirection2: " << std::endl << bodyDirection2 <<
+       *  // std::endl;
+       *
+       *  mJacobians1[idx].head<3>() = bodyPoint1.cross(bodyDirection1);
+       *  mJacobians2[idx].head<3>() = bodyPoint2.cross(bodyDirection2);
+       *
+       *  mJacobians1[idx].tail<3>() = bodyDirection1;
+       *  mJacobians2[idx].tail<3>() = bodyDirection2;
+       *
+       *  ++idx;
+       *
+       *  // Jacobian for directional friction 2
+       *  bodyDirection1.noalias() =
+       *      mBodyNode1->getTransform().linear().transpose() * D.col(1);
+       *  bodyDirection2.noalias() =
+       *      mBodyNode2->getTransform().linear().transpose() * -D.col(1);
+       *
+       *  // bodyPoint1.noalias()
+       *  //     = mBodyNode1->getWorldTransform().inverse() * ct->point;
+       *  // bodyPoint2.noalias()
+       *  //     = mBodyNode2->getWorldTransform().inverse() * ct->point;
+       *
+       *  // std::cout << "bodyDirection2: " << std::endl << bodyDirection2 <<
+       *  // std::endl;
+       *
+       *  mJacobians1[idx].head<3>() = bodyPoint1.cross(bodyDirection1);
+       *  mJacobians2[idx].head<3>() = bodyPoint2.cross(bodyDirection2);
+       *
+       *  mJacobians1[idx].tail<3>() = bodyDirection1;
+       *  mJacobians2[idx].tail<3>() = bodyDirection2;
+       *
+       *  ++idx;
+       */
     }
   } else {
     // Set the dimension of this constraint.
