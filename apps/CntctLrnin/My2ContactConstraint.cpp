@@ -407,6 +407,117 @@ void My2ContactConstraint::getInformation(ConstraintInfo* _info) {
 }
 
 //==============================================================================
+void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
+                                          bool impulse_flag) {
+  //----------------------------------------------------------------------------
+  // Friction case
+  //----------------------------------------------------------------------------
+  if (mIsFrictionOn) {
+    size_t index = 0;
+
+    for (size_t i = 0; i < mContacts.size(); ++i) {
+      //      std::cout << "_lambda1: " << _lambda[_idx] << std::endl;
+      //      std::cout << "_lambda2: " << _lambda[_idx + 1] << std::endl;
+      //      std::cout << "_lambda3: " << _lambda[_idx + 2] << std::endl;
+
+      //      std::cout << "imp1: " << mJacobians2[i * 3 + 0] * _lambda[_idx] <<
+      //      std::endl;
+      //      std::cout << "imp2: " << mJacobians2[i * 3 + 1] * _lambda[_idx +
+      //      1] << std::endl;
+      //      std::cout << "imp3: " << mJacobians2[i * 3 + 2] * _lambda[_idx +
+      //      2] << std::endl;
+
+      assert(!math::isNan(fn));
+
+      // Store contact impulse (force) toward the normal w.r.t. world frame
+      mContacts[i]->force =
+          mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
+
+      // Normal impulsive force
+      //      mContacts[i]->lambda[0] = _lambda[_idx];
+      if (mBodyNode1->isReactive())
+        mBodyNode1->addConstraintImpulse(mJacobians1[index] * fn);
+      if (mBodyNode2->isReactive())
+        mBodyNode2->addConstraintImpulse(mJacobians2[index] * fn);
+      //      std::cout << "_lambda: " << _lambda[_idx] << std::endl;
+      index++;
+
+      Eigen::MatrixXd D;
+      D = getTangentBasisMatrixLemke(mContacts[i]->normal, numBasis);
+
+      for (; index < (i + 1) * (numBasis + 1); index++) {
+        int mFrctnBsIdx = index % (1 + numBasis) - 1;
+        assert(!math::isNan(fd(mFrctnBsIdx)));
+        mContacts[i]->force += D.col(mFrctnBsIdx) * fd(mFrctnBsIdx) /
+                               (impulse_flag ? mTimeStep : 1);
+
+        if (mBodyNode1->isReactive())
+          mBodyNode1->addConstraintImpulse(mJacobians1[index] *
+                                           fd(mFrctnBsIdx));
+        if (mBodyNode2->isReactive())
+          mBodyNode2->addConstraintImpulse(mJacobians2[index] *
+                                           fd(mFrctnBsIdx));
+      }
+
+      /*
+       *    assert(!math::isNan(_lambda[index]));
+       *
+       *    // Add contact impulse (force) toward the tangential w.r.t. world
+       * frame
+       *    Eigen::MatrixXd D = getTangentBasisMatrixODE(mContacts[i]->normal);
+       *    mContacts[i]->force += D.col(0) * _lambda[index] / mTimeStep;
+       *
+       *    // Tangential direction-1 impulsive force
+       * //   mContacts[i]->lambda[1] = _lambda[_idx];
+       *    if (mBodyNode1->isReactive())
+       *      mBodyNode1->addConstraintImpulse(mJacobians1[index] *
+       * _lambda[index]);
+       *    if (mBodyNode2->isReactive())
+       *      mBodyNode2->addConstraintImpulse(mJacobians2[index] *
+       * _lambda[index]);
+       * //   std::cout << "_lambda: " << _lambda[_idx] << std::endl;
+       *    index++;
+       *
+       *    assert(!math::isNan(_lambda[index]));
+       *
+       *    // Add contact impulse (force) toward the tangential w.r.t. world
+       * frame
+       *    mContacts[i]->force += D.col(1) * _lambda[index] / mTimeStep;
+       *
+       *    // Tangential direction-2 impulsive force
+       * //   mContacts[i]->lambda[2] = _lambda[_idx];
+       *    if (mBodyNode1->isReactive())
+       *      mBodyNode1->addConstraintImpulse(mJacobians1[index] *
+       * _lambda[index]);
+       *    if (mBodyNode2->isReactive())
+       *      mBodyNode2->addConstraintImpulse(mJacobians2[index] *
+       * _lambda[index]);
+       * //   std::cout << "_lambda: " << _lambda[_idx] << std::endl;
+       *    index++;
+       */
+    }
+  }
+  //----------------------------------------------------------------------------
+  // Frictionless case
+  //----------------------------------------------------------------------------
+  else {
+    for (size_t i = 0; i < mContacts.size(); ++i) {
+      // Normal impulsive force
+      //			pContactPts[i]->lambda[0] = _lambda[i];
+      if (mBodyNode1->isReactive())
+        mBodyNode1->addConstraintImpulse(mJacobians1[i] * fn);
+
+      if (mBodyNode2->isReactive())
+        mBodyNode2->addConstraintImpulse(mJacobians2[i] * fn);
+
+      // Store contact impulse (force) toward the normal w.r.t. world frame
+      mContacts[i]->force =
+          mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
+    }
+  }
+}
+
+//==============================================================================
 void My2ContactConstraint::getRelVelocity(double* _relVel) {
   assert(_relVel != nullptr && "Null pointer is not allowed.");
 
@@ -424,8 +535,7 @@ void My2ContactConstraint::getRelVelocity(double* _relVel) {
 }
 
 //==============================================================================
-void My2ContactConstraint::applyUnitImpulse(size_t _idx)
-{
+void My2ContactConstraint::applyUnitImpulse(size_t _idx) {
   assert(_idx < mDim && "Invalid Index.");
   assert(isActive());
   assert(mBodyNode1->isReactive() || mBodyNode2->isReactive());
@@ -434,34 +544,26 @@ void My2ContactConstraint::applyUnitImpulse(size_t _idx)
   const dynamics::SkeletonPtr& skel2 = mBodyNode2->getSkeleton();
 
   // Self collision case
-  if (skel1 == skel2)
-  {
+  if (skel1 == skel2) {
     skel1->clearConstraintImpulses();
 
-    if (mBodyNode1->isReactive())
-    {
+    if (mBodyNode1->isReactive()) {
       // Both bodies are reactive
-      if (mBodyNode2->isReactive())
-      {
-        skel1->updateBiasImpulse(mBodyNode1, mJacobians1[_idx],
-                                 mBodyNode2, mJacobians2[_idx]);
+      if (mBodyNode2->isReactive()) {
+        skel1->updateBiasImpulse(mBodyNode1, mJacobians1[_idx], mBodyNode2,
+                                 mJacobians2[_idx]);
       }
       // Only body1 is reactive
-      else
-      {
+      else {
         skel1->updateBiasImpulse(mBodyNode1, mJacobians1[_idx]);
       }
-    }
-    else
-    {
+    } else {
       // Only body2 is reactive
-      if (mBodyNode2->isReactive())
-      {
+      if (mBodyNode2->isReactive()) {
         skel2->updateBiasImpulse(mBodyNode2, mJacobians2[_idx]);
       }
       // Both bodies are not reactive
-      else
-      {
+      else {
         // This case should not be happed
         assert(0);
       }
@@ -470,17 +572,14 @@ void My2ContactConstraint::applyUnitImpulse(size_t _idx)
     skel1->updateVelocityChange();
   }
   // Colliding two distinct skeletons
-  else
-  {
-    if (mBodyNode1->isReactive())
-    {
+  else {
+    if (mBodyNode1->isReactive()) {
       skel1->clearConstraintImpulses();
       skel1->updateBiasImpulse(mBodyNode1, mJacobians1[_idx]);
       skel1->updateVelocityChange();
     }
 
-    if (mBodyNode2->isReactive())
-    {
+    if (mBodyNode2->isReactive()) {
       skel2->clearConstraintImpulses();
       skel2->updateBiasImpulse(mBodyNode2, mJacobians2[_idx]);
       skel2->updateVelocityChange();
@@ -491,33 +590,28 @@ void My2ContactConstraint::applyUnitImpulse(size_t _idx)
 }
 
 //==============================================================================
-void My2ContactConstraint::getVelocityChange(double* _vel, bool _withCfm)
-{
+void My2ContactConstraint::getVelocityChange(double* _vel, bool _withCfm) {
   assert(_vel != nullptr && "Null pointer is not allowed.");
 
-  for (size_t i = 0; i < mDim; ++i)
-  {
+  for (size_t i = 0; i < mDim; ++i) {
     _vel[i] = 0.0;
 
-    if (mBodyNode1->getSkeleton()->isImpulseApplied()
-        && mBodyNode1->isReactive())
-    {
+    if (mBodyNode1->getSkeleton()->isImpulseApplied() &&
+        mBodyNode1->isReactive()) {
       _vel[i] += mJacobians1[i].dot(mBodyNode1->getBodyVelocityChange());
     }
 
-    if (mBodyNode2->getSkeleton()->isImpulseApplied()
-        && mBodyNode2->isReactive())
-    {
+    if (mBodyNode2->getSkeleton()->isImpulseApplied() &&
+        mBodyNode2->isReactive()) {
       _vel[i] += mJacobians2[i].dot(mBodyNode2->getBodyVelocityChange());
     }
   }
 
   // Add small values to the diagnal to keep it away from singular, similar to
   // cfm variable in ODE
-  if (_withCfm)
-  {
-    _vel[mAppliedImpulseIndex] += _vel[mAppliedImpulseIndex]
-                                     * mConstraintForceMixing;
+  if (_withCfm) {
+    _vel[mAppliedImpulseIndex] +=
+        _vel[mAppliedImpulseIndex] * mConstraintForceMixing;
   }
 }
 

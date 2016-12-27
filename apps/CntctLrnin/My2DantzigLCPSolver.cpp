@@ -168,28 +168,64 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
    *   std::cin.get();
    */
   // ---------------------------------------------------------------------------
+  // Using Lemke to solve 
+  Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
+  int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
 
-  assert(isSymmetric(n, A));
+  double err_dist = 0.0;
+  bool Validation =
+      dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
+  if (Validation) {
+    //  ---------------------------------------
+    // justify the (*z)
+    // assert(!(Eigen::isnan((*z).array()).any()));
 
-  // Print LCP formulation
-  //  dtdbg << "Before solve:" << std::endl;
-  //  print(n, A, x, lo, hi, b, w, findex);
-  //  std::cout << std::endl;
+    My2ContactConstraint* Mycntctconstraint;
+    // (*z); N; B
+    Eigen::VectorXd fn((*z).head(numConstraints));
+    Eigen::VectorXd fd((*z).segment(numConstraints, numConstraints * numBasis));
+    // Eigen::VectorXd lambda((*z).tail(numConstraints));
 
-  // Solve LCP using ODE's Dantzig algorithm
-  dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
+    // Using Lemke to simulate
+    for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt) {
+      double fn_each = fn(idx_cnstrnt);
+      Eigen::VectorXd fd_each = fd.segment(idx_cnstrnt * numBasis, numBasis);
 
-  // Print LCP formulation
-  //  dtdbg << "After solve:" << std::endl;
-  //  print(n, A, x, lo, hi, b, w, findex);
-  //  std::cout << std::endl;
+      Mycntctconstraint = dynamic_cast<My2ContactConstraint*>(
+          _group->getConstraint(idx_cnstrnt));
+      Mycntctconstraint->MyapplyImpulse(fn_each, fd_each, true);
 
-  // Apply constraint impulses
-  for (size_t i = 0; i < numConstraints; ++i) {
-    constraint = _group->getConstraint(i);
-    constraint->applyImpulse(x + offset[i]);
-    constraint->excite();
-  }
+      Mycntctconstraint->excite();
+    }
+  } else {
+    std::cout << "Lemke fails!!!" << std::endl;
+    std::cin.get();
+  } 
+  // ---------------------------------------------------------------------------
+  
+/*
+ *   assert(isSymmetric(n, A));
+ * 
+ *   // Print LCP formulation
+ *   //  dtdbg << "Before solve:" << std::endl;
+ *   //  print(n, A, x, lo, hi, b, w, findex);
+ *   //  std::cout << std::endl;
+ * 
+ *   // Solve LCP using ODE's Dantzig algorithm
+ *   dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
+ * 
+ *   // Print LCP formulation
+ *   //  dtdbg << "After solve:" << std::endl;
+ *   //  print(n, A, x, lo, hi, b, w, findex);
+ *   //  std::cout << std::endl;
+ * 
+ *   // Apply constraint impulses
+ *   for (size_t i = 0; i < numConstraints; ++i) {
+ *     constraint = _group->getConstraint(i);
+ *     constraint->applyImpulse(x + offset[i]);
+ *     constraint->excite();
+ *   }
+ */
 
   delete[] offset;
 
