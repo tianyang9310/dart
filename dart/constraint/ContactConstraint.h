@@ -147,7 +147,7 @@ public:
   /// Get change in relative velocity at contact point due to external impulse
   /// \param[out] _relVel Change in relative velocity at contact point of the
   ///                     two colliding bodies
-  void getRelVelocity(double* _relVel);
+  virtual void getRelVelocity(double* _relVel);
 
   ///
   void updateFirstFrictionalDirection();

@@ -25,7 +25,9 @@ class My2ContactConstraint : public ContactConstraint {
   // Member Function
   //----------------------------------------------------------------------------
   void getInformation(ConstraintInfo* _info);
-  void getRelVelocity(double* _relVel);
+  void getRelVelocity(double* _relVel) override;
+  void applyUnitImpulse(size_t _idx);
+  void getVelocityChange(double* _vel, bool _withCfm);
 
   //----------------------------------------------------------------------------
   // Member Function

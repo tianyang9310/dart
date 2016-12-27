@@ -423,5 +423,103 @@ void My2ContactConstraint::getRelVelocity(double* _relVel) {
   }
 }
 
+//==============================================================================
+void My2ContactConstraint::applyUnitImpulse(size_t _idx)
+{
+  assert(_idx < mDim && "Invalid Index.");
+  assert(isActive());
+  assert(mBodyNode1->isReactive() || mBodyNode2->isReactive());
+
+  const dynamics::SkeletonPtr& skel1 = mBodyNode1->getSkeleton();
+  const dynamics::SkeletonPtr& skel2 = mBodyNode2->getSkeleton();
+
+  // Self collision case
+  if (skel1 == skel2)
+  {
+    skel1->clearConstraintImpulses();
+
+    if (mBodyNode1->isReactive())
+    {
+      // Both bodies are reactive
+      if (mBodyNode2->isReactive())
+      {
+        skel1->updateBiasImpulse(mBodyNode1, mJacobians1[_idx],
+                                 mBodyNode2, mJacobians2[_idx]);
+      }
+      // Only body1 is reactive
+      else
+      {
+        skel1->updateBiasImpulse(mBodyNode1, mJacobians1[_idx]);
+      }
+    }
+    else
+    {
+      // Only body2 is reactive
+      if (mBodyNode2->isReactive())
+      {
+        skel2->updateBiasImpulse(mBodyNode2, mJacobians2[_idx]);
+      }
+      // Both bodies are not reactive
+      else
+      {
+        // This case should not be happed
+        assert(0);
+      }
+    }
+
+    skel1->updateVelocityChange();
+  }
+  // Colliding two distinct skeletons
+  else
+  {
+    if (mBodyNode1->isReactive())
+    {
+      skel1->clearConstraintImpulses();
+      skel1->updateBiasImpulse(mBodyNode1, mJacobians1[_idx]);
+      skel1->updateVelocityChange();
+    }
+
+    if (mBodyNode2->isReactive())
+    {
+      skel2->clearConstraintImpulses();
+      skel2->updateBiasImpulse(mBodyNode2, mJacobians2[_idx]);
+      skel2->updateVelocityChange();
+    }
+  }
+
+  mAppliedImpulseIndex = _idx;
+}
+
+//==============================================================================
+void My2ContactConstraint::getVelocityChange(double* _vel, bool _withCfm)
+{
+  assert(_vel != nullptr && "Null pointer is not allowed.");
+
+  for (size_t i = 0; i < mDim; ++i)
+  {
+    _vel[i] = 0.0;
+
+    if (mBodyNode1->getSkeleton()->isImpulseApplied()
+        && mBodyNode1->isReactive())
+    {
+      _vel[i] += mJacobians1[i].dot(mBodyNode1->getBodyVelocityChange());
+    }
+
+    if (mBodyNode2->getSkeleton()->isImpulseApplied()
+        && mBodyNode2->isReactive())
+    {
+      _vel[i] += mJacobians2[i].dot(mBodyNode2->getBodyVelocityChange());
+    }
+  }
+
+  // Add small values to the diagnal to keep it away from singular, similar to
+  // cfm variable in ODE
+  if (_withCfm)
+  {
+    _vel[mAppliedImpulseIndex] += _vel[mAppliedImpulseIndex]
+                                     * mConstraintForceMixing;
+  }
+}
+
 }  // namespace constraint
 }  // namespace dart

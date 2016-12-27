@@ -20,7 +20,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
   // Build LCP terms by aggregating them from constraints
   size_t n = _group->getTotalDimension();
-  int nSkip = dPAD(n); // YT: Don't use nSkip
+  // int nSkip = dPAD(n); // YT: Don't use nSkip
   double* A = new double[n * n];
   double* x = new double[n];
   double* b = new double[n];
@@ -60,43 +60,48 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     constInfo.findex = findex + offset[i];
     constInfo.w = w + offset[i];
 
+    // -------------------------------------------------------------------------
     // Fill vectors: lo, hi, b, w
     constraint->getInformation(&constInfo);
     
-/*
- *     // Fill a matrix by impulse tests: A
- *     constraint->excite();
- *     for (size_t j = 0; j < constraint->getDimension(); ++j) {
- *       // Adjust findex for global index
- *       if (findex[offset[i] + j] >= 0) findex[offset[i] + j] += offset[i];
- * 
- *       // Apply impulse for mipulse test
- *       constraint->applyUnitImpulse(j);
- * 
- *       // Fill upper triangle blocks of A matrix
- *       int index = nSkip * (offset[i] + j) + offset[i];
- *       constraint->getVelocityChange(A + index, true);
- *       for (size_t k = i + 1; k < numConstraints; ++k) {
- *         index = nSkip * (offset[i] + j) + offset[k];
- *         _group->getConstraint(k)->getVelocityChange(A + index, false);
- *       }
- * 
- *       // Filling symmetric part of A matrix
- *       for (size_t k = 0; k < i; ++k) {
- *         for (size_t l = 0; l < _group->getConstraint(k)->getDimension(); ++l) {
- *           int index1 = nSkip * (offset[i] + j) + offset[k] + l;
- *           int index2 = nSkip * (offset[k] + l) + offset[i] + j;
- * 
- *           A[index1] = A[index2];
- *         }
- *       }
- *     }
- * 
- *     assert(isSymmetric(n, A, offset[i],
- *                        offset[i] + constraint->getDimension() - 1));
- * 
- *     constraint->unexcite();
- */
+    // -------------------------------------------------------------------------
+    // Fill a matrix by impulse tests: A
+    // Matrix A is row major
+    constraint->excite();
+    for (size_t j = 0; j < constraint->getDimension(); ++j) {
+      /*
+       * // comment out because findex only use in ODE solver
+       * // Adjust findex for global index
+       * if (findex[offset[i] + j] >= 0) findex[offset[i] + j] += offset[i];
+       */
+
+      // Apply impulse for mipulse test
+      constraint->applyUnitImpulse(j);
+
+      // Fill upper triangle blocks of A matrix
+      int index = n * (offset[i] + j) + offset[i];
+      constraint->getVelocityChange(A + index, true);
+      for (size_t k = i + 1; k < numConstraints; ++k) {
+        index = n * (offset[i] + j) + offset[k];
+        _group->getConstraint(k)->getVelocityChange(A + index, false);
+      }
+
+      // Filling symmetric part of A matrix
+      for (size_t k = 0; k < i; ++k) {
+        for (size_t l = 0; l < _group->getConstraint(k)->getDimension(); ++l) {
+          int index1 = n * (offset[i] + j) + offset[k] + l;
+          int index2 = n * (offset[k] + l) + offset[i] + j;
+
+          A[index1] = A[index2];
+        }
+      }
+    }
+
+    assert(isSymmetric(n, A, offset[i],
+                       offset[i] + constraint->getDimension() - 1));
+
+    constraint->unexcite();
+    // -------------------------------------------------------------------------
   }
   // ---------------------------------------------------------------------------
   // Establish Lemke b
@@ -113,6 +118,24 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
    * std::cout << "========================="<<std::endl << Lemke_b << std::endl;
    * std::cin.get();
    */
+  // ---------------------------------------------------------------------------
+  // Establish Lemke A
+  Eigen::MatrixXd Lemke_A(numConstraints*(2+numBasis), numConstraints*(2+numBasis));
+  Lemke_A.setZero();
+
+  Eigen::MatrixXd Pre_Lemke_A = Eigen::Map<Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>(A,n,n);
+  
+  // debug A
+  std::cout << "A: " << std::endl;
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t j = 0; j < n; ++j) {
+      std::cout << std::setprecision(10) << A[i * n + j] << " ";
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << "========================="<<std::endl << Pre_Lemke_A << std::endl;
+  std::cin.get();
   // ---------------------------------------------------------------------------
   
   assert(isSymmetric(n, A));
@@ -167,55 +190,54 @@ void My2DantzigLCPSolver::PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b) {
 
 //==============================================================================
 void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
-                                double* hi, double* b, double* w, int* findex,
-                                std::shared_ptr<std::fstream> ODE_FILE) {
-  size_t nSkip = dPAD(_n);
-  (*ODE_FILE) << "A: " << std::endl;
+                                double* hi, double* b, double* w, int* findex) {
+  size_t nSkip = _n;
+  std::cout << "A: " << std::endl;
   for (size_t i = 0; i < _n; ++i) {
     for (size_t j = 0; j < nSkip; ++j) {
-      (*ODE_FILE) << std::setprecision(10) << _A[i * nSkip + j] << " ";
+      std::cout << std::setprecision(10) << _A[i * nSkip + j] << " ";
     }
-    (*ODE_FILE) << std::endl;
+    std::cout << std::endl;
   }
 
-  (*ODE_FILE) << "b: ";
+  std::cout << "b: ";
   for (size_t i = 0; i < _n; ++i) {
-    (*ODE_FILE) << std::setprecision(10) << b[i] << " ";
+    std::cout << std::setprecision(10) << b[i] << " ";
   }
-  (*ODE_FILE) << std::endl;
+  std::cout << std::endl;
 
-  (*ODE_FILE) << "w: ";
+  std::cout << "w: ";
   for (size_t i = 0; i < _n; ++i) {
-    (*ODE_FILE) << w[i] << " ";
+    std::cout << w[i] << " ";
   }
-  (*ODE_FILE) << std::endl;
+  std::cout << std::endl;
 
-  (*ODE_FILE) << "x: ";
+  std::cout << "x: ";
   for (size_t i = 0; i < _n; ++i) {
-    (*ODE_FILE) << _x[i] << " ";
+    std::cout << _x[i] << " ";
   }
-  (*ODE_FILE) << std::endl;
+  std::cout << std::endl;
 
-  //  (*ODE_FILE) << "lb: ";
+  //  std::cout << "lb: ";
   //  for (int i = 0; i < dim; ++i)
   //  {
-  //    (*ODE_FILE) << lb[i] << " ";
+  //    std::cout << lb[i] << " ";
   //  }
-  //  (*ODE_FILE) << std::endl;
+  //  std::cout << std::endl;
 
-  //  (*ODE_FILE) << "ub: ";
+  //  std::cout << "ub: ";
   //  for (int i = 0; i < dim; ++i)
   //  {
-  //    (*ODE_FILE) << ub[i] << " ";
+  //    std::cout << ub[i] << " ";
   //  }
-  //  (*ODE_FILE) << std::endl;
+  //  std::cout << std::endl;
 
-  // (*ODE_FILE) << "frictionIndex: ";
+  // std::cout << "frictionIndex: ";
   // for (size_t i = 0; i < _n; ++i)
   // {
-  //     (*ODE_FILE) << findex[i] << " ";
+  //     std::cout << findex[i] << " ";
   // }
-  // (*ODE_FILE) << std::endl;
+  // std::cout << std::endl;
 
   double* Ax = new double[_n];
 
@@ -229,24 +251,24 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
     }
   }
 
-  (*ODE_FILE) << "Ax   : ";
+  std::cout << "Ax   : ";
   for (size_t i = 0; i < _n; ++i) {
-    (*ODE_FILE) << Ax[i] << " ";
+    std::cout << Ax[i] << " ";
   }
-  (*ODE_FILE) << std::endl;
+  std::cout << std::endl;
 
-  (*ODE_FILE) << "b + w: ";
+  std::cout << "b + w: ";
   for (size_t i = 0; i < _n; ++i) {
-    (*ODE_FILE) << b[i] + w[i] << " ";
+    std::cout << b[i] + w[i] << " ";
   }
-  (*ODE_FILE) << std::endl;
+  std::cout << std::endl;
 
   delete[] Ax;
 }
 
 //==============================================================================
 bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
-  size_t nSkip = dPAD(_n);
+  size_t nSkip = _n; 
   for (size_t i = 0; i < _n; ++i) {
     for (size_t j = 0; j < _n; ++j) {
       if (std::abs(_A[nSkip * i + j] - _A[nSkip * j + i]) > 1e-6) {
@@ -273,7 +295,7 @@ bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
 //==============================================================================
 bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A, size_t _begin,
                                       size_t _end) {
-  size_t nSkip = dPAD(_n);
+  size_t nSkip = _n;
   for (size_t i = _begin; i <= _end; ++i) {
     for (size_t j = _begin; j <= _end; ++j) {
       if (std::abs(_A[nSkip * i + j] - _A[nSkip * j + i]) > 1e-6) {

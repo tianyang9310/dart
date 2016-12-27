@@ -42,8 +42,7 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
   void solve(ConstrainedGroup* _group) override;
 
   void print(size_t _n, double* _A, double* _x, double* _lo, double* _hi,
-             double* _b, double* w, int* _findex,
-             std::shared_ptr<std::fstream> ODE_FILE);
+             double* _b, double* w, int* _findex);
 
   /// Return true if the matrix is symmetric
   bool isSymmetric(size_t _n, double* _A);
