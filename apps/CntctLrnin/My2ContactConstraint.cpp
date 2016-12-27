@@ -455,6 +455,8 @@ void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
       Eigen::MatrixXd D;
       D = getTangentBasisMatrixLemke(mContacts[i]->normal, numBasis);
 
+      Eigen::VectorXd oldConstraintImp = mBodyNode1->mConstraintImpulse;
+
       for (; index < (i + 1) * (numBasis + 1); index++) {
         int mFrctnBsIdx = index % (1 + numBasis) - 1;
         assert(!math::isNan(fd(mFrctnBsIdx)));
@@ -468,12 +470,9 @@ void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
           mBodyNode2->addConstraintImpulse(mJacobians2[index] *
                                            fd(mFrctnBsIdx));
 
-#ifdef OUTPUT
-  // std::cout << "[8 Basis LCP] tangential directional " << index << ": " << (mJacobians1[index] * fd(mFrctnBsIdx)).transpose() << std::endl;
-#endif
       }
 #ifdef OUTPUT
-  std::cout << "[8 Basis LCP] tangential directional: "<< mBodyNode1->mConstraintImpulse.transpose()  << std::endl;
+  std::cout << "[8 Basis LCP] tangential directional: "<< (mBodyNode1->mConstraintImpulse-oldConstraintImp).transpose()  << std::endl;
 #endif
 
       /*

@@ -182,6 +182,13 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
   std::cout << "Vector b" << std::endl << Lemke_b.transpose() << std::endl;
   std::cout << "Vector z" << std::endl << (*z).transpose() << std::endl;
 
+  for (size_t i = 0; i < numConstraints; i++) {
+    ContactConstraint* cntctconstraint =
+        dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+    std::cout << "BodyNode1 old constraint impulse " << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose() << std::endl;
+    std::cout << "BodyNode2 old constraint impulse " << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose() << std::endl;
+  }
+
   if (Validation) {
     //  ---------------------------------------
     // justify the (*z)
@@ -208,6 +215,13 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     std::cout << "Lemke fails!!!" << std::endl;
     std::cin.get();
   } 
+
+  for (size_t i = 0; i < numConstraints; i++) {
+    ContactConstraint* cntctconstraint =
+        dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+    std::cout << "BodyNode1 new constraint impulse " << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose() << std::endl;
+    std::cout << "BodyNode2 new constraint impulse " << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose() << std::endl;
+  }
 
   // ---------------------------------------------------------------------------
   
