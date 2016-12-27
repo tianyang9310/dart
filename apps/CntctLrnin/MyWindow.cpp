@@ -25,9 +25,10 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   extForce.setZero();
 #ifndef ODE_VANILLA
 #ifndef FORK_LEMKE
-  std::cout << "Using Lemke to solve LCP" << std::endl;
+  std::cout << "Using Matrix A and Vector b from scratch to solve LCP"
+            << std::endl;
 #else
-  std::cout << "Using Fork_Lemke to solve LCP" << std::endl;
+  std::cout << "Using Matrix A and Vector b from ODE to solve LCP" << std::endl;
 #endif
 #else
   std::cout << "Using ODE to solve LCP" << std::endl;
@@ -132,12 +133,14 @@ void MyWindow::timeStepping() {
     std::cerr << "mBox Position: "
               << mWorld->getSkeleton("mBox")->getPositions().transpose()
               << std::endl;
-    keyboard('y', 0, 0);
+    // keyboard('y', 0, 0);
   }
 
-  std::cerr << "mBox Position: "
-            << mWorld->getSkeleton("mBox")->getPositions().transpose()
-            << std::endl;
+  /*
+   * std::cerr << "mBox Position: "
+   *           << mWorld->getSkeleton("mBox")->getPositions().transpose()
+   *           << std::endl;
+   */
   // keyboard('y', 0, 0);
 
   /*

@@ -409,6 +409,12 @@ void My2ContactConstraint::getInformation(ConstraintInfo* _info) {
 //==============================================================================
 void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
                                           bool impulse_flag) {
+#ifdef OUTPUT
+  std::cout << std::endl << "------------------------------------" << std::endl;
+  std::cout << "[8 Basis LCP] Using My2ContactConstraint class" << std::endl;
+  std::cout << "[8 Basis LCP] fn: " << fn << std::endl;
+  std::cout << "[8 Basis LCP] fd: " << fd.transpose() << std::endl;
+#endif
   //----------------------------------------------------------------------------
   // Friction case
   //----------------------------------------------------------------------------
@@ -432,6 +438,10 @@ void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
       // Store contact impulse (force) toward the normal w.r.t. world frame
       mContacts[i]->force =
           mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
+
+#ifdef OUTPUT
+  std::cout << "[8 Basis LCP] normal impulsive: " << (mJacobians1[index] * fn).transpose() << std::endl;
+#endif
 
       // Normal impulsive force
       //      mContacts[i]->lambda[0] = _lambda[_idx];
@@ -457,7 +467,14 @@ void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
         if (mBodyNode2->isReactive())
           mBodyNode2->addConstraintImpulse(mJacobians2[index] *
                                            fd(mFrctnBsIdx));
+
+#ifdef OUTPUT
+  // std::cout << "[8 Basis LCP] tangential directional " << index << ": " << (mJacobians1[index] * fd(mFrctnBsIdx)).transpose() << std::endl;
+#endif
       }
+#ifdef OUTPUT
+  std::cout << "[8 Basis LCP] tangential directional: "<< mBodyNode1->mConstraintImpulse.transpose()  << std::endl;
+#endif
 
       /*
        *    assert(!math::isNan(_lambda[index]));

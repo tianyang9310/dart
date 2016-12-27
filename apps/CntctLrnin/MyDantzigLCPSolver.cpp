@@ -703,7 +703,7 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
    */
   // ---------------------------------------------------------------------------
 
-  //  Validation = false;
+  // Validation = false;
 
   // ---------------------------------------------------------------------------
   // If Lemke solution is valid, then use Lemke solution to simulate,

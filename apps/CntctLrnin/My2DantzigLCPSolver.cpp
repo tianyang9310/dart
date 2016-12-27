@@ -160,7 +160,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
    *     }
    *     std::cout << std::endl;
    *   }
-   *
+   * 
    *   std::cout << "========================="<<std::endl << Pre_Lemke_A <<
    * std::endl;
    *   std::cout << "========================="<<std::endl << Lemke_A <<
@@ -175,6 +175,13 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
   double err_dist = 0.0;
   bool Validation =
       dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
+
+  // Debug Lemke
+  std::cout << std::endl << "====================================" << std::endl;
+  std::cout << "Matrix A" << std::endl << Lemke_A << std::endl;
+  std::cout << "Vector b" << std::endl << Lemke_b.transpose() << std::endl;
+  std::cout << "Vector z" << std::endl << (*z).transpose() << std::endl;
+
   if (Validation) {
     //  ---------------------------------------
     // justify the (*z)
@@ -201,6 +208,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     std::cout << "Lemke fails!!!" << std::endl;
     std::cin.get();
   } 
+
   // ---------------------------------------------------------------------------
   
 /*
