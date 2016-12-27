@@ -19,7 +19,7 @@
 // #include "dart/config.h"
 // #include "dart/common/Console.h"
 // #include "dart/lcpsolver/Lemke.h"
-// #include "../Lemke_Fix/MyLemke.h"
+#include "../Lemke_Fix/MyLemke.h"
 // #include "dart/lcpsolver/lcp.h"
 
 // #include "MyDantzigLCPSolver.h"
@@ -51,7 +51,13 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
   bool isSymmetric(size_t _n, double* _A, size_t _begin, size_t _end);
 
   /// Permute , negate and augment b
-  void PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b);
+  void PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b,
+                       const Eigen::VectorXd& Pre_Lemke_b, Eigen::MatrixXd& T);
+
+  /// Permute and augment A
+  void PermuteAug_A(const Eigen::MatrixXd& Pre_Lemke_A,
+                    Eigen::MatrixXd& Lemke_A, const Eigen::MatrixXd& T,
+                    const Eigen::MatrixXd& mu, const Eigen::MatrixXd& E);
 
   //----------------------------------------------------------------------------
   // Member Variable

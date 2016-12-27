@@ -29,7 +29,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
   double* hi = new double[n];
   int* findex = new int[n];
 
-// Set w to 0 and findex to -1
+  // Set w to 0 and findex to -1
   std::memset(A, 0.0, n * n * sizeof(double));
   std::memset(w, 0.0, n * sizeof(double));
   std::memset(b, 0.0, n * sizeof(double));
@@ -50,6 +50,11 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
   ConstraintInfo constInfo;
   constInfo.invTimeStep = 1.0 / mTimeStep;
   ConstraintBase* constraint;
+
+  Eigen::MatrixXd mu(numConstraints, numConstraints);
+  Eigen::MatrixXd E(numConstraints * numBasis, numConstraints);
+  mu.setIdentity();
+  E.setZero();
   for (size_t i = 0; i < numConstraints; ++i) {
     constraint = _group->getConstraint(i);
 
@@ -61,9 +66,11 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     constInfo.w = w + offset[i];
 
     // -------------------------------------------------------------------------
-    // Fill vectors: lo, hi, b, w
+    // Fill vectors: lo, hi, b, w, mu, E
     constraint->getInformation(&constInfo);
-    
+    mu(i, i) = dynamic_cast<My2ContactConstraint*>(constraint)->mFrictionCoeff;
+    E.block(i * numBasis, i, numBasis, 1) = Eigen::VectorXd::Ones(numBasis);
+
     // -------------------------------------------------------------------------
     // Fill a matrix by impulse tests: A
     // Matrix A is row major
@@ -104,40 +111,64 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     // -------------------------------------------------------------------------
   }
   // ---------------------------------------------------------------------------
-  // Establish Lemke b
-  Eigen::VectorXd Lemke_b(numConstraints*(2+numBasis));
-  Lemke_b.setZero();
+  // Assertion
+  assert(n == numConstraints * (1 + numBasis));
 
-  PermuteNegAug_b(b, Lemke_b);
+  // ---------------------------------------------------------------------------
+  // Establish Lemke b
+  Eigen::VectorXd Pre_Lemke_b = Eigen::Map<Eigen::VectorXd>(b, n);
+
+  Eigen::VectorXd Lemke_b(numConstraints * (2 + numBasis));
+  Eigen::MatrixXd T(numConstraints * (1 + numBasis),
+                    numConstraints * (1 + numBasis));
+  Lemke_b.setZero();
+  T.setZero();
+
+  PermuteNegAug_b(b, Lemke_b, Pre_Lemke_b, T);
 
   /*
    * // debug b
+   * std::cout << "Print out b" << std::endl;
    * for (size_t tt=0; tt < n; tt++){
    *   std::cout << *(b+tt) << std::endl;
    * }
-   * std::cout << "========================="<<std::endl << Lemke_b << std::endl;
+   * std::cout << "========================="<<std::endl << Pre_Lemke_b <<
+   * std::endl;
+   * std::cout << "========================="<<std::endl << Lemke_b <<
+   * std::endl;
    * std::cin.get();
    */
   // ---------------------------------------------------------------------------
   // Establish Lemke A
-  Eigen::MatrixXd Lemke_A(numConstraints*(2+numBasis), numConstraints*(2+numBasis));
+  Eigen::MatrixXd Pre_Lemke_A = Eigen::Map<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
+      A, n, n);
+
+  Eigen::MatrixXd Lemke_A(numConstraints * (2 + numBasis),
+                          numConstraints * (2 + numBasis));
   Lemke_A.setZero();
 
-  Eigen::MatrixXd Pre_Lemke_A = Eigen::Map<Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>(A,n,n);
-  
-  // debug A
-  std::cout << "A: " << std::endl;
-  for (size_t i = 0; i < n; ++i) {
-    for (size_t j = 0; j < n; ++j) {
-      std::cout << std::setprecision(10) << A[i * n + j] << " ";
-    }
-    std::cout << std::endl;
-  }
+  // Permute A
+  PermuteAug_A(Pre_Lemke_A, Lemke_A, T, mu, E);
 
-  std::cout << "========================="<<std::endl << Pre_Lemke_A << std::endl;
-  std::cin.get();
+  /*
+   *   // debug A
+   *   std::cout << "A: " << std::endl;
+   *   for (size_t i = 0; i < n; ++i) {
+   *     for (size_t j = 0; j < n; ++j) {
+   *       std::cout << std::setprecision(10) << A[i * n + j] << " ";
+   *     }
+   *     std::cout << std::endl;
+   *   }
+   *
+   *   std::cout << "========================="<<std::endl << Pre_Lemke_A <<
+   * std::endl;
+   *   std::cout << "========================="<<std::endl << Lemke_A <<
+   * std::endl;
+   *   std::cin.get();
+   */
   // ---------------------------------------------------------------------------
-  
+
   assert(isSymmetric(n, A));
 
   // Print LCP formulation
@@ -172,20 +203,68 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 }
 
 //==============================================================================
-void My2DantzigLCPSolver::PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b) {
+void My2DantzigLCPSolver::PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b,
+                                          const Eigen::VectorXd& Pre_Lemke_b,
+                                          Eigen::MatrixXd& T) {
+  size_t mDim = 1 + numBasis;
+  // Obtain transformation matrix
+  int Trows = T.rows();
+  int Tcols = T.cols();
+  assert(Trows == mDim * numContactsCallBack);
+  assert(Tcols == mDim * numContactsCallBack);
+  Eigen::MatrixXd Tcache(Trows, Tcols);
+  Tcache.setIdentity();
+
   // Permute b
-  size_t mDim = 1+numBasis;
-  for (size_t mIdxConstraint=0; mIdxConstraint<numContactsCallBack; mIdxConstraint++) {
-    Lemke_b[mIdxConstraint] = *(b + mIdxConstraint* mDim);
-    Lemke_b.segment(numContactsCallBack + mIdxConstraint*numBasis,numBasis) = 
-    Eigen::Map<Eigen::VectorXd>((b+mIdxConstraint*mDim+1), numBasis);
+  for (size_t mIdxConstraint = 0; mIdxConstraint < numContactsCallBack;
+       mIdxConstraint++) {
+    Lemke_b[mIdxConstraint] = *(b + mIdxConstraint * mDim);
+    T.row(mIdxConstraint) = Tcache.row(mIdxConstraint * mDim);
+
+    Lemke_b.segment(numContactsCallBack + mIdxConstraint * numBasis, numBasis) =
+        Eigen::Map<Eigen::VectorXd>((b + mIdxConstraint * mDim + 1), numBasis);
+    T.block(numContactsCallBack + mIdxConstraint * numBasis, 0, numBasis,
+            Tcols) =
+        Tcache.block(mIdxConstraint * mDim + 1, 0, numBasis, Tcols);
   }
-  
+
+  // // Assert transformation
+  // std::cout << "T*b" << std::endl << T*Pre_Lemke_b << std::endl;
+  // std::cout << "b' " << std::endl << Lemke_b.head(Pre_Lemke_b.rows()) <<
+  // std::endl;
+  assert(T * Pre_Lemke_b == Lemke_b.head(Pre_Lemke_b.rows()));
+
   // Negate b
-  Lemke_b = -Lemke_b; 
+  Lemke_b = -Lemke_b;
 
   // Augment b
-  Lemke_b.segment((1+numBasis)*numContactsCallBack,numContactsCallBack).setZero();
+  Lemke_b.tail(numContactsCallBack).setZero();
+}
+
+//==============================================================================
+void My2DantzigLCPSolver::PermuteAug_A(const Eigen::MatrixXd& Pre_Lemke_A,
+                                       Eigen::MatrixXd& Lemke_A,
+                                       const Eigen::MatrixXd& T,
+                                       const Eigen::MatrixXd& mu,
+                                       const Eigen::MatrixXd& E) {
+  size_t mDim = 1 + numBasis;
+  // Permute A
+  Lemke_A.block(0, 0, Pre_Lemke_A.rows(), Pre_Lemke_A.cols()) =
+      T * Pre_Lemke_A * T.inverse();
+
+  // Augment A
+  // _TimeStep =  1.0 means using calculating impulse in Lemke
+  // otherwise _TimeStep  = mTimeStep means calculating force in Lemke
+  double _TimeStep = 1.0;  // mTimeStep;
+  Lemke_A.block(numContactsCallBack * mDim, 0, numContactsCallBack,
+                numContactsCallBack) =
+      mu / (_TimeStep == 1.0 ? mTimeStep : 1.0);
+  Lemke_A.block(numContactsCallBack * mDim, numContactsCallBack,
+                numContactsCallBack, numContactsCallBack * numBasis) =
+      -E.transpose() / (_TimeStep == 1.0 ? mTimeStep : 1.0);
+  Lemke_A.block(numContactsCallBack, numContactsCallBack * mDim,
+                numContactsCallBack * numBasis, numContactsCallBack) =
+      E / (_TimeStep == 1.0 ? mTimeStep : 1.0);
 }
 
 //==============================================================================
@@ -268,7 +347,7 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
 
 //==============================================================================
 bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
-  size_t nSkip = _n; 
+  size_t nSkip = _n;
   for (size_t i = 0; i < _n; ++i) {
     for (size_t j = 0; j < _n; ++j) {
       if (std::abs(_A[nSkip * i + j] - _A[nSkip * j + i]) > 1e-6) {
