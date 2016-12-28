@@ -94,8 +94,8 @@ int Lemke(const Eigen::MatrixXd &_M, const Eigen::VectorXd &_q,
       Eigen::VectorXd *_z) {
 int n = _q.size();
 
-const double zer_tol = 1e-12;
-const double piv_tol = 1e-14;
+const double zer_tol = 1e-7;
+const double piv_tol = 1e-9;
 int maxiter = 1000;
 int err = 0;
 

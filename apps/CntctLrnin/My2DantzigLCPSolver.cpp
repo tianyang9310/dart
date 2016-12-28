@@ -13,6 +13,7 @@ My2DantzigLCPSolver::~My2DantzigLCPSolver() {
 
 //==============================================================================
 void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
+  std::cout << std::setprecision(10);
   // If there is no constraint, then just return true.
   size_t numConstraints = _group->getNumConstraints();
   numContactsCallBack = numConstraints;
@@ -213,9 +214,9 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     // Debug Lemke
     std::cout << std::endl
               << "====================================" << std::endl;
-    std::cout << "Matrix A" << std::endl << Lemke_A << std::endl;
-    std::cout << "Vector b" << std::endl << Lemke_b.transpose() << std::endl;
-    std::cout << "Vector z" << std::endl << (*z).transpose() << std::endl;
+    std::cout << "Matrix A " << std::endl << Lemke_A << std::endl;
+    std::cout << "Vector b " << std::endl << Lemke_b.transpose() << std::endl;
+    std::cout << "Vector z " << std::endl << (*z).transpose() << std::endl;
 
     for (size_t i = 0; i < numConstraints; i++) {
       ContactConstraint* cntctconstraint =
@@ -296,10 +297,13 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
     std::cout << std::endl
               << "```````````````````````````````````````````````" << std::endl;
-    std::cout << "Matrix A" << std::endl << Pre_Lemke_A << std::endl;
-    std::cout << "Vector b" << std::endl
+    std::cout << "Matrix A " << std::endl << Pre_Lemke_A << std::endl;
+    std::cout << "Vector b " << std::endl
               << Pre_Lemke_b.transpose() << std::endl;
-    std::cout << "Vector z" << std::endl << (*z).transpose() << std::endl;
+    std::cout << "Vector z " << (*z).transpose() << std::endl;
+    std::cout << "Vector w " << (Pre_Lemke_A *(*z)+Pre_Lemke_b).transpose() << std::endl;
+    std::cout << "[w].*[z] " 
+              << ((*z).array()*(Pre_Lemke_A *(*z)+Pre_Lemke_b).array()).transpose() << std::endl;
     std::cout << "Validation: " << std::boolalpha << Validation << std::endl;
     std::cout << std::endl
               << "```````````````````````````````````````````````" << std::endl;
