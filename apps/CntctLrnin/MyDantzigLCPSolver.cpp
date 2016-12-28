@@ -936,6 +936,12 @@ void MyDantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
     (*ODE_FILE) << b[i] + w[i] << " ";
   }
   (*ODE_FILE) << std::endl;
+  
+  (*ODE_FILE) << "x^T * w: ";
+  for (size_t i = 0; i < _n; ++i) {
+    (*ODE_FILE)<< _x[i]*w[i] << " ";
+  }
+  (*ODE_FILE) << std::endl;
 
   delete[] Ax;
 }

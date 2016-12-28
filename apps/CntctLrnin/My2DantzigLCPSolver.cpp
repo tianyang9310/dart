@@ -279,9 +279,9 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     for (int i = 0; i < n; i++) old_b[i] = b[i];
 
     // Print LCP formulation
-    //  dtdbg << "Before solve:" << std::endl;
-    //  print(n, A, x, lo, hi, b, w, findex);
-    //  std::cout << std::endl;
+    std::cout << "Before solve:" << std::endl;
+    print(n, A, x, lo, hi, b, w, findex);
+    std::cout << std::endl;
 
     // Solve LCP using ODE's Dantzig algorithm
     dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
@@ -510,6 +510,12 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
   std::cout << "b + w: ";
   for (size_t i = 0; i < _n; ++i) {
     std::cout << b[i] + w[i] << " ";
+  }
+  std::cout << std::endl;
+
+  std::cout << "x^T * w: ";
+  for (size_t i = 0; i < _n; ++i) {
+    std::cout << _x[i]*w[i] << " ";
   }
   std::cout << std::endl;
 
