@@ -20,12 +20,12 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
   // Build LCP terms by aggregating them from constraints
   size_t n = _group->getTotalDimension();
-  int nSkip = dPAD(n); // YT: Don't use nSkip
+  int nSkip = dPAD(n);  // YT: Don't use nSkip
   double* A;
   if (numBasis == 8) {
     A = new double[n * n];
   } else {
-    A = new double[n *nSkip];
+    A = new double[n * nSkip];
   }
   double* x = new double[n];
   double* b = new double[n];
@@ -96,14 +96,14 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
       // Fill upper triangle blocks of A matrix
       int index;
-      if (numBasis==8) {
-       index = n * (offset[i] + j) + offset[i];
+      if (numBasis == 8) {
+        index = n * (offset[i] + j) + offset[i];
       } else {
         index = nSkip * (offset[i] + j) + offset[i];
       }
       constraint->getVelocityChange(A + index, true);
       for (size_t k = i + 1; k < numConstraints; ++k) {
-        if (numBasis ==8) {
+        if (numBasis == 8) {
           index = n * (offset[i] + j) + offset[k];
         } else {
           index = nSkip * (offset[i] + j) + offset[k];
@@ -114,14 +114,14 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       // Filling symmetric part of A matrix
       for (size_t k = 0; k < i; ++k) {
         for (size_t l = 0; l < _group->getConstraint(k)->getDimension(); ++l) {
-          int index1; 
-          int index2; 
-          if (numBasis ==8) {
-           index1 = n * (offset[i] + j) + offset[k] + l;
-           index2 = n * (offset[k] + l) + offset[i] + j;
+          int index1;
+          int index2;
+          if (numBasis == 8) {
+            index1 = n * (offset[i] + j) + offset[k] + l;
+            index2 = n * (offset[k] + l) + offset[i] + j;
           } else {
-          index1 = nSkip * (offset[i] + j) + offset[k] + l;
-          index2 = nSkip * (offset[k] + l) + offset[i] + j;
+            index1 = nSkip * (offset[i] + j) + offset[k] + l;
+            index2 = nSkip * (offset[k] + l) + offset[i] + j;
           }
 
           A[index1] = A[index2];
@@ -185,7 +185,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
    *     }
    *     std::cout << std::endl;
    *   }
-   * 
+   *
    *   std::cout << "========================="<<std::endl << Pre_Lemke_A <<
    * std::endl;
    *   std::cout << "========================="<<std::endl << Lemke_A <<
@@ -193,84 +193,95 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
    *   std::cin.get();
    */
   // ---------------------------------------------------------------------------
-  // Using Lemke to solve 
+  // Using Lemke to solve
   if (numBasis == 8) {
-  Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
-  int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
+    Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
+    int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
 
-  double err_dist = 0.0;
-  bool Validation =
-      dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
+    double err_dist = 0.0;
+    bool Validation =
+        dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
 
-  // Debug Lemke
-  std::cout << std::endl << "====================================" << std::endl;
-  std::cout << "Matrix A" << std::endl << Lemke_A << std::endl;
-  std::cout << "Vector b" << std::endl << Lemke_b.transpose() << std::endl;
-  std::cout << "Vector z" << std::endl << (*z).transpose() << std::endl;
+    // Debug Lemke
+    std::cout << std::endl
+              << "====================================" << std::endl;
+    std::cout << "Matrix A" << std::endl << Lemke_A << std::endl;
+    std::cout << "Vector b" << std::endl << Lemke_b.transpose() << std::endl;
+    std::cout << "Vector z" << std::endl << (*z).transpose() << std::endl;
 
-  for (size_t i = 0; i < numConstraints; i++) {
-    ContactConstraint* cntctconstraint =
-        dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
-    std::cout << "BodyNode1 old constraint impulse " << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose() << std::endl;
-    std::cout << "BodyNode2 old constraint impulse " << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose() << std::endl;
-  }
+    for (size_t i = 0; i < numConstraints; i++) {
+      ContactConstraint* cntctconstraint =
+          dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+      std::cout << "BodyNode1 old constraint impulse "
+                << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
+                << std::endl;
+      std::cout << "BodyNode2 old constraint impulse "
+                << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
+                << std::endl;
+    }
 
-  if (Validation) {
-    //  ---------------------------------------
-    // justify the (*z)
-    // assert(!(Eigen::isnan((*z).array()).any()));
+    if (Validation) {
+      //  ---------------------------------------
+      // justify the (*z)
+      // assert(!(Eigen::isnan((*z).array()).any()));
 
-    My2ContactConstraint* Mycntctconstraint;
-    // (*z); N; B
-    Eigen::VectorXd fn((*z).head(numConstraints));
-    Eigen::VectorXd fd((*z).segment(numConstraints, numConstraints * numBasis));
-    // Eigen::VectorXd lambda((*z).tail(numConstraints));
+      My2ContactConstraint* Mycntctconstraint;
+      // (*z); N; B
+      Eigen::VectorXd fn((*z).head(numConstraints));
+      Eigen::VectorXd fd(
+          (*z).segment(numConstraints, numConstraints * numBasis));
+      // Eigen::VectorXd lambda((*z).tail(numConstraints));
 
-    // Using Lemke to simulate
-    for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt) {
-      double fn_each = fn(idx_cnstrnt);
-      Eigen::VectorXd fd_each = fd.segment(idx_cnstrnt * numBasis, numBasis);
+      // Using Lemke to simulate
+      for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints;
+           ++idx_cnstrnt) {
+        double fn_each = fn(idx_cnstrnt);
+        Eigen::VectorXd fd_each = fd.segment(idx_cnstrnt * numBasis, numBasis);
 
-      Mycntctconstraint = dynamic_cast<My2ContactConstraint*>(
-          _group->getConstraint(idx_cnstrnt));
-      Mycntctconstraint->MyapplyImpulse(fn_each, fd_each, true);
+        Mycntctconstraint = dynamic_cast<My2ContactConstraint*>(
+            _group->getConstraint(idx_cnstrnt));
+        Mycntctconstraint->MyapplyImpulse(fn_each, fd_each, true);
 
-      Mycntctconstraint->excite();
+        Mycntctconstraint->excite();
+      }
+    } else {
+      std::cout << "Lemke fails!!!" << std::endl;
+      std::cin.get();
+    }
+
+    for (size_t i = 0; i < numConstraints; i++) {
+      ContactConstraint* cntctconstraint =
+          dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+      std::cout << "BodyNode1 new constraint impulse "
+                << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
+                << std::endl;
+      std::cout << "BodyNode2 new constraint impulse "
+                << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
+                << std::endl;
     }
   } else {
-    std::cout << "Lemke fails!!!" << std::endl;
-    std::cin.get();
-  } 
+    // ---------------------------------------------------------------------------
+    assert(isSymmetric(n, A));
 
-  for (size_t i = 0; i < numConstraints; i++) {
-    ContactConstraint* cntctconstraint =
-        dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
-    std::cout << "BodyNode1 new constraint impulse " << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose() << std::endl;
-    std::cout << "BodyNode2 new constraint impulse " << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose() << std::endl;
-  }
-  } else {
-  // ---------------------------------------------------------------------------
-  assert(isSymmetric(n, A));
+    // Print LCP formulation
+    //  dtdbg << "Before solve:" << std::endl;
+    //  print(n, A, x, lo, hi, b, w, findex);
+    //  std::cout << std::endl;
 
-  // Print LCP formulation
-  //  dtdbg << "Before solve:" << std::endl;
-  //  print(n, A, x, lo, hi, b, w, findex);
-  //  std::cout << std::endl;
+    // Solve LCP using ODE's Dantzig algorithm
+    dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
 
-  // Solve LCP using ODE's Dantzig algorithm
-  dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
+    // Print LCP formulation
+    //  dtdbg << "After solve:" << std::endl;
+    //  print(n, A, x, lo, hi, b, w, findex);
+    //  std::cout << std::endl;
 
-  // Print LCP formulation
-  //  dtdbg << "After solve:" << std::endl;
-  //  print(n, A, x, lo, hi, b, w, findex);
-  //  std::cout << std::endl;
-
-  // Apply constraint impulses
-  for (size_t i = 0; i < numConstraints; ++i) {
-    constraint = _group->getConstraint(i);
-    constraint->applyImpulse(x + offset[i]);
-    constraint->excite();
-  }
+    // Apply constraint impulses
+    for (size_t i = 0; i < numConstraints; ++i) {
+      constraint = _group->getConstraint(i);
+      constraint->applyImpulse(x + offset[i]);
+      constraint->excite();
+    }
   }
   delete[] offset;
 

@@ -8,9 +8,9 @@
 #include <string>
 
 #include "My2ContactConstraint.h"
+#include "MyWindow.h"
 #include "dart/dart.h"
 #include "utils.h"
-#include "MyWindow.h"
 
 // #include "dart/constraint/LCPSolver.h"
 // #include "dart/constraint/DantzigLCPSolver.h"
