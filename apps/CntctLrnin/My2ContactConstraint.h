@@ -29,6 +29,7 @@ class My2ContactConstraint : public ContactConstraint {
   void getRelVelocity(double* _relVel) override;
   void applyUnitImpulse(size_t _idx) override;
   void MyapplyImpulse(double fn, const Eigen::VectorXd& fd, bool impulse_flag);
+  void applyImpulse(double* _lambda) override;
   void getVelocityChange(double* _vel, bool _withCfm) override;
 
   //----------------------------------------------------------------------------

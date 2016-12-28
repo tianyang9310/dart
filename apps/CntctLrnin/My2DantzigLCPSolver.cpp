@@ -263,6 +263,11 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     // ---------------------------------------------------------------------------
     assert(isSymmetric(n, A));
 
+    double* old_A = new double[n * nSkip];
+    double* old_b = new double[n];
+    for (int i = 0; i < n * nSkip; i++) old_A[i] = A[i];
+    for (int i = 0; i < n; i++) old_b[i] = b[i];
+
     // Print LCP formulation
     //  dtdbg << "Before solve:" << std::endl;
     //  print(n, A, x, lo, hi, b, w, findex);
@@ -272,15 +277,37 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
 
     // Print LCP formulation
-    //  dtdbg << "After solve:" << std::endl;
-    //  print(n, A, x, lo, hi, b, w, findex);
-    //  std::cout << std::endl;
+    std::cout << "After solve:" << std::endl;
+    print(n, old_A, x, lo, hi, old_b, w, findex);
+    std::cout << std::endl;
+
+    for (size_t i = 0; i < numConstraints; i++) {
+      ContactConstraint* cntctconstraint =
+          dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+      std::cout << "BodyNode1 old constraint impulse "
+                << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
+                << std::endl;
+      std::cout << "BodyNode2 old constraint impulse "
+                << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
+                << std::endl;
+    }
 
     // Apply constraint impulses
     for (size_t i = 0; i < numConstraints; ++i) {
       constraint = _group->getConstraint(i);
       constraint->applyImpulse(x + offset[i]);
       constraint->excite();
+    }
+
+    for (size_t i = 0; i < numConstraints; i++) {
+      ContactConstraint* cntctconstraint =
+          dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+      std::cout << "BodyNode1 new constraint impulse "
+                << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
+                << std::endl;
+      std::cout << "BodyNode2 new constraint impulse "
+                << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
+                << std::endl;
     }
   }
   delete[] offset;
@@ -362,7 +389,12 @@ void My2DantzigLCPSolver::PermuteAug_A(const Eigen::MatrixXd& Pre_Lemke_A,
 //==============================================================================
 void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
                                 double* hi, double* b, double* w, int* findex) {
-  size_t nSkip = _n;
+  size_t nSkip;
+  if (numBasis==8) {
+    nSkip = _n;
+  } else {
+    nSkip = dPAD(_n);
+  }
   std::cout << "A: " << std::endl;
   for (size_t i = 0; i < _n; ++i) {
     for (size_t j = 0; j < nSkip; ++j) {
@@ -439,7 +471,12 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
 
 //==============================================================================
 bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
-  size_t nSkip = _n;
+  size_t nSkip;
+  if (numBasis==8) {
+    nSkip = _n;
+  } else {
+    nSkip = dPAD(_n);
+  }
   for (size_t i = 0; i < _n; ++i) {
     for (size_t j = 0; j < _n; ++j) {
       if (std::abs(_A[nSkip * i + j] - _A[nSkip * j + i]) > 1e-6) {
@@ -466,7 +503,12 @@ bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
 //==============================================================================
 bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A, size_t _begin,
                                       size_t _end) {
-  size_t nSkip = _n;
+  size_t nSkip;
+  if (numBasis==8) {
+    nSkip = _n;
+  } else {
+    nSkip = dPAD(_n);
+  }
   for (size_t i = _begin; i <= _end; ++i) {
     for (size_t j = _begin; j <= _end; ++j) {
       if (std::abs(_A[nSkip * i + j] - _A[nSkip * j + i]) > 1e-6) {

@@ -546,6 +546,112 @@ void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
 }
 
 //==============================================================================
+void My2ContactConstraint::applyImpulse(double* _lambda) {
+#ifdef OUTPUT
+  std::cout << std::endl << "------------------------------------" << std::endl;
+  std::cout << "[" << NUMBASIS << " Basis LCP] Using My2ContactConstraint class"
+            << std::endl;
+  std::cout << "[" << NUMBASIS << " Basis LCP] fn: " << _lambda[0] << std::endl;
+  std::cout << "[" << NUMBASIS << " Basis LCP] fd1: " << _lambda[1] << std::endl;
+  std::cout << "[" << NUMBASIS << " Basis LCP] fd2: " << _lambda[2] << std::endl;
+#endif
+  //----------------------------------------------------------------------------
+  // Friction case
+  //----------------------------------------------------------------------------
+  if (mIsFrictionOn)
+  {
+    size_t index = 0;
+
+    for (size_t i = 0; i < mContacts.size(); ++i)
+    {
+//      std::cout << "_lambda1: " << _lambda[_idx] << std::endl;
+//      std::cout << "_lambda2: " << _lambda[_idx + 1] << std::endl;
+//      std::cout << "_lambda3: " << _lambda[_idx + 2] << std::endl;
+
+//      std::cout << "imp1: " << mJacobians2[i * 3 + 0] * _lambda[_idx] << std::endl;
+//      std::cout << "imp2: " << mJacobians2[i * 3 + 1] * _lambda[_idx + 1] << std::endl;
+//      std::cout << "imp3: " << mJacobians2[i * 3 + 2] * _lambda[_idx + 2] << std::endl;
+
+      assert(!math::isNan(_lambda[index]));
+
+      // Store contact impulse (force) toward the normal w.r.t. world frame
+      mContacts[i]->force = mContacts[i]->normal * _lambda[index] / mTimeStep;
+
+#ifdef OUTPUT
+      std::cout << "[" << NUMBASIS << " Basis LCP] normal impulsive: "
+                << (mJacobians1[index] * _lambda[index]).transpose() << std::endl;
+#endif
+
+      // Normal impulsive force
+//      mContacts[i]->lambda[0] = _lambda[_idx];
+      if (mBodyNode1->isReactive())
+        mBodyNode1->addConstraintImpulse(mJacobians1[index] * _lambda[index]);
+      if (mBodyNode2->isReactive())
+        mBodyNode2->addConstraintImpulse(mJacobians2[index] * _lambda[index]);
+//      std::cout << "_lambda: " << _lambda[_idx] << std::endl;
+      index++;
+
+      Eigen::VectorXd oldConstraintImp = mBodyNode1->mConstraintImpulse;
+
+      assert(!math::isNan(_lambda[index]));
+
+      // Add contact impulse (force) toward the tangential w.r.t. world frame
+      Eigen::MatrixXd D = getTangentBasisMatrixODE(mContacts[i]->normal);
+      mContacts[i]->force += D.col(0) * _lambda[index] / mTimeStep;
+
+      // Tangential direction-1 impulsive force
+//      mContacts[i]->lambda[1] = _lambda[_idx];
+      if (mBodyNode1->isReactive())
+        mBodyNode1->addConstraintImpulse(mJacobians1[index] * _lambda[index]);
+      if (mBodyNode2->isReactive())
+        mBodyNode2->addConstraintImpulse(mJacobians2[index] * _lambda[index]);
+//      std::cout << "_lambda: " << _lambda[_idx] << std::endl;
+      index++;
+
+      assert(!math::isNan(_lambda[index]));
+
+      // Add contact impulse (force) toward the tangential w.r.t. world frame
+      mContacts[i]->force += D.col(1) * _lambda[index] / mTimeStep;
+
+      // Tangential direction-2 impulsive force
+//      mContacts[i]->lambda[2] = _lambda[_idx];
+      if (mBodyNode1->isReactive())
+        mBodyNode1->addConstraintImpulse(mJacobians1[index] * _lambda[index]);
+      if (mBodyNode2->isReactive())
+        mBodyNode2->addConstraintImpulse(mJacobians2[index] * _lambda[index]);
+//      std::cout << "_lambda: " << _lambda[_idx] << std::endl;
+      index++;
+
+#ifdef OUTPUT
+      std::cout
+          << "[" << NUMBASIS << " Basis LCP] tangential directional: "
+          << (mBodyNode1->mConstraintImpulse - oldConstraintImp).transpose()
+          << std::endl;
+#endif
+    }
+  }
+  //----------------------------------------------------------------------------
+  // Frictionless case
+  //----------------------------------------------------------------------------
+  else
+  {
+    for (size_t i = 0; i < mContacts.size(); ++i)
+    {
+      // Normal impulsive force
+//			pContactPts[i]->lambda[0] = _lambda[i];
+      if (mBodyNode1->isReactive())
+        mBodyNode1->addConstraintImpulse(mJacobians1[i] * _lambda[i]);
+
+      if (mBodyNode2->isReactive())
+        mBodyNode2->addConstraintImpulse(mJacobians2[i] * _lambda[i]);
+
+      // Store contact impulse (force) toward the normal w.r.t. world frame
+      mContacts[i]->force = mContacts[i]->normal * _lambda[i] / mTimeStep;
+    }
+  }
+}
+
+//==============================================================================
 void My2ContactConstraint::getRelVelocity(double* _relVel) {
   assert(_relVel != nullptr && "Null pointer is not allowed.");
 
