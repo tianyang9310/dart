@@ -165,9 +165,17 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
    */
   // ---------------------------------------------------------------------------
   // Establish Lemke A
-  Eigen::MatrixXd Pre_Lemke_A = Eigen::Map<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
-      A, n, n);
+  Eigen::MatrixXd Pre_Lemke_A;
+  if (numBasis == 8) {
+    Pre_Lemke_A = Eigen::Map<
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
+        A, n, n);
+  } else {
+    Eigen::MatrixXd Pre_Lemke_A_nSkip = Eigen::Map<
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
+        A, n, nSkip);
+    Pre_Lemke_A = Pre_Lemke_A_nSkip.block(0, 0, n, n);
+  }
 
   Eigen::MatrixXd Lemke_A(numConstraints * (2 + numBasis),
                           numConstraints * (2 + numBasis));
@@ -276,6 +284,30 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     // Solve LCP using ODE's Dantzig algorithm
     dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
 
+    //``````````````````````````````````````````````````````````````````````````
+    // Solve LCP using Lemke
+    Pre_Lemke_b = -Pre_Lemke_b;
+    Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (1 + numBasis));
+    int err = dart::lcpsolver::YT::Lemke(Pre_Lemke_A, Pre_Lemke_b, z);
+
+    double err_dist = 0.0;
+    bool Validation =
+        dart::lcpsolver::YT::validate(Pre_Lemke_A, (*z), Pre_Lemke_b, err_dist);
+
+    std::cout << std::endl
+              << "```````````````````````````````````````````````" << std::endl;
+    std::cout << "Matrix A" << std::endl << Pre_Lemke_A << std::endl;
+    std::cout << "Vector b" << std::endl
+              << Pre_Lemke_b.transpose() << std::endl;
+    std::cout << "Vector z" << std::endl << (*z).transpose() << std::endl;
+    std::cout << "Validation: " << std::boolalpha << Validation << std::endl;
+    std::cout << std::endl
+              << "```````````````````````````````````````````````" << std::endl;
+    std::cout << std::endl;
+
+    // std::cin.get();
+    //``````````````````````````````````````````````````````````````````````````
+
     // Print LCP formulation
     std::cout << "After solve:" << std::endl;
     print(n, old_A, x, lo, hi, old_b, w, findex);
@@ -296,6 +328,16 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     for (size_t i = 0; i < numConstraints; ++i) {
       constraint = _group->getConstraint(i);
       constraint->applyImpulse(x + offset[i]);
+
+      /*
+       * My2ContactConstraint* Mycntctconstraint;
+       * Mycntctconstraint = dynamic_cast<My2ContactConstraint*>(
+       *     _group->getConstraint(i));
+       * double fn_each = (*z)(i*(1+numBasis));
+       * Eigen::VectorXd fd_each = (*z).segment(i*(1+numBasis)+1,numBasis);
+       * Mycntctconstraint->MyapplyImpulse(fn_each, fd_each, true);
+       */
+
       constraint->excite();
     }
 
@@ -390,7 +432,7 @@ void My2DantzigLCPSolver::PermuteAug_A(const Eigen::MatrixXd& Pre_Lemke_A,
 void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
                                 double* hi, double* b, double* w, int* findex) {
   size_t nSkip;
-  if (numBasis==8) {
+  if (numBasis == 8) {
     nSkip = _n;
   } else {
     nSkip = dPAD(_n);
@@ -472,7 +514,7 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
 //==============================================================================
 bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
   size_t nSkip;
-  if (numBasis==8) {
+  if (numBasis == 8) {
     nSkip = _n;
   } else {
     nSkip = dPAD(_n);
@@ -504,7 +546,7 @@ bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
 bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A, size_t _begin,
                                       size_t _end) {
   size_t nSkip;
-  if (numBasis==8) {
+  if (numBasis == 8) {
     nSkip = _n;
   } else {
     nSkip = dPAD(_n);
