@@ -468,19 +468,19 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
   }
   std::cout << std::endl;
 
-  //  std::cout << "lb: ";
-  //  for (int i = 0; i < dim; ++i)
-  //  {
-  //    std::cout << lb[i] << " ";
-  //  }
-  //  std::cout << std::endl;
+   std::cout << "lb: ";
+   for (int i = 0; i < _n; ++i)
+   {
+     std::cout << lo[i] << " ";
+   }
+   std::cout << std::endl;
 
-  //  std::cout << "ub: ";
-  //  for (int i = 0; i < dim; ++i)
-  //  {
-  //    std::cout << ub[i] << " ";
-  //  }
-  //  std::cout << std::endl;
+   std::cout << "ub: ";
+   for (int i = 0; i < _n; ++i)
+   {
+     std::cout << hi[i] << " ";
+   }
+   std::cout << std::endl;
 
   // std::cout << "frictionIndex: ";
   // for (size_t i = 0; i < _n; ++i)

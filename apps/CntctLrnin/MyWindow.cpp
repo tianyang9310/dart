@@ -136,11 +136,12 @@ void MyWindow::timeStepping() {
     keyboard('y', 0, 0);
   }
 
-  /*
-   * std::cerr << "mBox Position: "
-   *           << mWorld->getSkeleton("mBox")->getPositions().transpose()
-   *           << std::endl;
-   */
+  std::cout << "mBox Position: "
+            << mWorld->getSkeleton("mBox")->getPositions().transpose()
+            << std::endl;
+  std::cout << "mBox Velocity: "
+            << mWorld->getSkeleton("mBox")->getVelocities().transpose()
+            << std::endl;
   // keyboard('y', 0, 0);
 
   /*
@@ -157,7 +158,7 @@ void MyWindow::timeStepping() {
 void MyWindow::addExtForce() {
   // add constant external forces
   extForce.setZero();
-  extForce(0) = 1.2e1;
+  extForce(0) = 1.5e1;
 
   /*
    * // add random external forces
