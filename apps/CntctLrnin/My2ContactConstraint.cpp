@@ -36,7 +36,7 @@ My2ContactConstraint::My2ContactConstraint(collision::Contact& _contact,
   mAppliedImpulseIndex = (-1);
   mIsBounceOn = (false);
   mActive = (false);
-  numBasis = 8;
+  numBasis = NUMBASIS;
 
   // TODO(JS): Assumed single contact
   mContacts.push_back(&_contact);
@@ -99,8 +99,11 @@ My2ContactConstraint::My2ContactConstraint(collision::Contact& _contact,
 
       // TODO(JS): Assumed that the number of tangent basis is 2.
       Eigen::MatrixXd D;
-      D = getTangentBasisMatrixLemke(ct->normal, numBasis);
-      // D = getTangentBasisMatrixODE(ct->normal);
+      if (numBasis==8) {
+        D = getTangentBasisMatrixLemke(ct->normal, numBasis);
+      } else {
+        D = getTangentBasisMatrixODE(ct->normal);
+      }
 
       /*
        * assert(std::abs(ct->normal.dot(D.col(0))) < DART_EPSILON);
@@ -411,9 +414,9 @@ void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
                                           bool impulse_flag) {
 #ifdef OUTPUT
   std::cout << std::endl << "------------------------------------" << std::endl;
-  std::cout << "[8 Basis LCP] Using My2ContactConstraint class" << std::endl;
-  std::cout << "[8 Basis LCP] fn: " << fn << std::endl;
-  std::cout << "[8 Basis LCP] fd: " << fd.transpose() << std::endl;
+  std::cout << "[" << NUMBASIS << " Basis LCP] Using My2ContactConstraint class" << std::endl;
+  std::cout << "[" << NUMBASIS << " Basis LCP] fn: " << fn << std::endl;
+  std::cout << "[" << NUMBASIS << " Basis LCP] fd: " << fd.transpose() << std::endl;
 #endif
   //----------------------------------------------------------------------------
   // Friction case
@@ -440,7 +443,7 @@ void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
           mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
 
 #ifdef OUTPUT
-  std::cout << "[8 Basis LCP] normal impulsive: " << (mJacobians1[index] * fn).transpose() << std::endl;
+  std::cout <<  "[" << NUMBASIS << " Basis LCP] normal impulsive: " << (mJacobians1[index] * fn).transpose() << std::endl;
 #endif
 
       // Normal impulsive force
@@ -453,7 +456,11 @@ void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
       index++;
 
       Eigen::MatrixXd D;
-      D = getTangentBasisMatrixLemke(mContacts[i]->normal, numBasis);
+      if (numBasis==8) {
+        D = getTangentBasisMatrixLemke(mContacts[i]->normal, numBasis);
+      } else {
+        D = getTangentBasisMatrixODE(mContacts[i]->normal);
+      }
 
       Eigen::VectorXd oldConstraintImp = mBodyNode1->mConstraintImpulse;
 
@@ -472,7 +479,7 @@ void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
 
       }
 #ifdef OUTPUT
-  std::cout << "[8 Basis LCP] tangential directional: "<< (mBodyNode1->mConstraintImpulse-oldConstraintImp).transpose()  << std::endl;
+  std::cout << "[" << NUMBASIS << " Basis LCP] tangential directional: "<< (mBodyNode1->mConstraintImpulse-oldConstraintImp).transpose()  << std::endl;
 #endif
 
       /*

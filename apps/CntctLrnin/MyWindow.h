@@ -9,6 +9,8 @@
 // #define ODE_VANILLA  // decide to use MyDantizig or Danzig
 #define FORK_LEMKE
 
+#define NUMBASIS 2
+
 class MyWindow : public dart::gui::SimWindow {
   public:
   MyWindow(dart::simulation::WorldPtr world);

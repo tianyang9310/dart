@@ -3,7 +3,7 @@
 //==============================================================================
 My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep)
     : DantzigLCPSolver(_timestep) {
-  numBasis = 8;
+  numBasis = NUMBASIS;
 }
 
 //==============================================================================
@@ -20,8 +20,13 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
   // Build LCP terms by aggregating them from constraints
   size_t n = _group->getTotalDimension();
-  // int nSkip = dPAD(n); // YT: Don't use nSkip
-  double* A = new double[n * n];
+  int nSkip = dPAD(n); // YT: Don't use nSkip
+  double* A;
+  if (numBasis == 8) {
+    A = new double[n * n];
+  } else {
+    A = new double[n *nSkip];
+  }
   double* x = new double[n];
   double* b = new double[n];
   double* w = new double[n];
@@ -30,7 +35,11 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
   int* findex = new int[n];
 
   // Set w to 0 and findex to -1
-  std::memset(A, 0.0, n * n * sizeof(double));
+  if (numBasis == 8) {
+    std::memset(A, 0.0, n * n * sizeof(double));
+  } else {
+    std::memset(A, 0.0, n * nSkip * sizeof(double));
+  }
   std::memset(w, 0.0, n * sizeof(double));
   std::memset(b, 0.0, n * sizeof(double));
   std::memset(findex, -1, n * sizeof(int));
@@ -86,18 +95,34 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       constraint->applyUnitImpulse(j);
 
       // Fill upper triangle blocks of A matrix
-      int index = n * (offset[i] + j) + offset[i];
+      int index;
+      if (numBasis==8) {
+       index = n * (offset[i] + j) + offset[i];
+      } else {
+        index = nSkip * (offset[i] + j) + offset[i];
+      }
       constraint->getVelocityChange(A + index, true);
       for (size_t k = i + 1; k < numConstraints; ++k) {
-        index = n * (offset[i] + j) + offset[k];
+        if (numBasis ==8) {
+          index = n * (offset[i] + j) + offset[k];
+        } else {
+          index = nSkip * (offset[i] + j) + offset[k];
+        }
         _group->getConstraint(k)->getVelocityChange(A + index, false);
       }
 
       // Filling symmetric part of A matrix
       for (size_t k = 0; k < i; ++k) {
         for (size_t l = 0; l < _group->getConstraint(k)->getDimension(); ++l) {
-          int index1 = n * (offset[i] + j) + offset[k] + l;
-          int index2 = n * (offset[k] + l) + offset[i] + j;
+          int index1; 
+          int index2; 
+          if (numBasis ==8) {
+           index1 = n * (offset[i] + j) + offset[k] + l;
+           index2 = n * (offset[k] + l) + offset[i] + j;
+          } else {
+          index1 = nSkip * (offset[i] + j) + offset[k] + l;
+          index2 = nSkip * (offset[k] + l) + offset[i] + j;
+          }
 
           A[index1] = A[index2];
         }
@@ -169,6 +194,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
    */
   // ---------------------------------------------------------------------------
   // Using Lemke to solve 
+  if (numBasis == 8) {
   Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
   int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
 
@@ -222,33 +248,30 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     std::cout << "BodyNode1 new constraint impulse " << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose() << std::endl;
     std::cout << "BodyNode2 new constraint impulse " << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose() << std::endl;
   }
-
+  } else {
   // ---------------------------------------------------------------------------
-  
-/*
- *   assert(isSymmetric(n, A));
- * 
- *   // Print LCP formulation
- *   //  dtdbg << "Before solve:" << std::endl;
- *   //  print(n, A, x, lo, hi, b, w, findex);
- *   //  std::cout << std::endl;
- * 
- *   // Solve LCP using ODE's Dantzig algorithm
- *   dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
- * 
- *   // Print LCP formulation
- *   //  dtdbg << "After solve:" << std::endl;
- *   //  print(n, A, x, lo, hi, b, w, findex);
- *   //  std::cout << std::endl;
- * 
- *   // Apply constraint impulses
- *   for (size_t i = 0; i < numConstraints; ++i) {
- *     constraint = _group->getConstraint(i);
- *     constraint->applyImpulse(x + offset[i]);
- *     constraint->excite();
- *   }
- */
+  assert(isSymmetric(n, A));
 
+  // Print LCP formulation
+  //  dtdbg << "Before solve:" << std::endl;
+  //  print(n, A, x, lo, hi, b, w, findex);
+  //  std::cout << std::endl;
+
+  // Solve LCP using ODE's Dantzig algorithm
+  dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
+
+  // Print LCP formulation
+  //  dtdbg << "After solve:" << std::endl;
+  //  print(n, A, x, lo, hi, b, w, findex);
+  //  std::cout << std::endl;
+
+  // Apply constraint impulses
+  for (size_t i = 0; i < numConstraints; ++i) {
+    constraint = _group->getConstraint(i);
+    constraint->applyImpulse(x + offset[i]);
+    constraint->excite();
+  }
+  }
   delete[] offset;
 
   delete[] A;

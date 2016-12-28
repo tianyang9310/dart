@@ -2,6 +2,7 @@
 #define MY2CONTACTCONSTRAINT
 
 #include "dart/constraint/ContactConstraint.h"
+#include "MyWindow.h"
 #include "utils.h"
 
 namespace dart {
