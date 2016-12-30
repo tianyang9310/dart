@@ -212,12 +212,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     bool Validation =
         dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
 
-    // Debug Lemke
-    std::cout << std::endl
-              << "====================================" << std::endl;
-    std::cout << "Matrix A " << std::endl << Lemke_A << std::endl;
-    std::cout << "Vector b " << std::endl << Lemke_b.transpose() << std::endl;
-    std::cout << "Vector z " << std::endl << (*z).transpose() << std::endl;
+    print(Lemke_A, Lemke_b, (*z), Validation);
 
     for (size_t i = 0; i < numConstraints; i++) {
       ContactConstraint* cntctconstraint =
@@ -296,21 +291,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     bool Validation =
         dart::lcpsolver::YT::validate(Pre_Lemke_A, (*z), Pre_Lemke_b, err_dist);
 
-    std::cout << std::endl
-              << "```````````````````````````````````````````````" << std::endl;
-    std::cout << "Matrix A " << std::endl << Pre_Lemke_A << std::endl;
-    std::cout << "Vector b " << std::endl
-              << Pre_Lemke_b.transpose() << std::endl;
-    std::cout << "Vector z " << (*z).transpose() << std::endl;
-    std::cout << "Vector w " << (Pre_Lemke_A *(*z)+Pre_Lemke_b).transpose() << std::endl;
-    std::cout << "[w].*[z] " 
-              << ((*z).array()*(Pre_Lemke_A *(*z)+Pre_Lemke_b).array()).transpose() << std::endl;
-    std::cout << "Validation: " << std::boolalpha << Validation << std::endl;
-    std::cout << std::endl
-              << "```````````````````````````````````````````````" << std::endl;
-    std::cout << std::endl;
-
-    // std::cin.get();
+    print(Pre_Lemke_A, Pre_Lemke_b, (*z), Validation);
     //``````````````````````````````````````````````````````````````````````````
 
     // Print LCP formulation
@@ -468,19 +449,17 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
   }
   std::cout << std::endl;
 
-   std::cout << "lb: ";
-   for (int i = 0; i < _n; ++i)
-   {
-     std::cout << lo[i] << " ";
-   }
-   std::cout << std::endl;
+  std::cout << "lb: ";
+  for (int i = 0; i < _n; ++i) {
+    std::cout << lo[i] << " ";
+  }
+  std::cout << std::endl;
 
-   std::cout << "ub: ";
-   for (int i = 0; i < _n; ++i)
-   {
-     std::cout << hi[i] << " ";
-   }
-   std::cout << std::endl;
+  std::cout << "ub: ";
+  for (int i = 0; i < _n; ++i) {
+    std::cout << hi[i] << " ";
+  }
+  std::cout << std::endl;
 
   // std::cout << "frictionIndex: ";
   // for (size_t i = 0; i < _n; ++i)
@@ -515,11 +494,63 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
 
   std::cout << "x^T * w: ";
   for (size_t i = 0; i < _n; ++i) {
-    std::cout << _x[i]*w[i] << " ";
+    std::cout << _x[i] * w[i] << " ";
   }
   std::cout << std::endl;
 
   delete[] Ax;
+}
+
+//==============================================================================
+void My2DantzigLCPSolver::print(const Eigen::MatrixXd& A,
+                                const Eigen::VectorXd& b,
+                                const Eigen::VectorXd& z, bool Validation) {
+  std::cout << std::endl
+            << "```````````````````````````````````````````````" << std::endl;
+
+  std::cout << "Matrix A " << std::endl << A << std::endl << std::endl;
+  std::cout << "Vector b " << std::endl
+            << b.transpose() << std::endl
+            << std::endl;
+  std::cout << "Vector z " << std::endl
+            << z.transpose().head(numContactsCallBack) << std::endl;
+  for (int i = 0; i < numContactsCallBack; i++) {
+    std::cout << z.transpose().segment(numContactsCallBack + i * numBasis,
+                                       numBasis)
+              << std::endl;
+  }
+  std::cout << z.transpose().tail(numContactsCallBack) << std::endl
+            << std::endl;
+
+  Eigen::VectorXd w = (A * z + b).eval();
+  std::cout << "Vector w " << std::endl
+            << w.transpose().head(numContactsCallBack) << std::endl;
+  for (int i = 0; i < numContactsCallBack; i++) {
+    std::cout << w.transpose().segment(numContactsCallBack + i * numBasis,
+                                       numBasis)
+              << std::endl;
+  }
+  std::cout << w.transpose().tail(numContactsCallBack) << std::endl
+            << std::endl;
+
+  Eigen::VectorXd wz = (z.array() * w.array()).eval();
+  std::cout << "[w].*[z]" << std::endl
+            << wz.transpose().head(numContactsCallBack) << std::endl;
+  for (int i = 0; i < numContactsCallBack; i++) {
+    std::cout << wz.transpose().segment(numContactsCallBack + i * numBasis,
+                                        numBasis)
+              << std::endl;
+  }
+  std::cout << wz.transpose().tail(numContactsCallBack) << std::endl
+            << std::endl;
+
+  std::cout << "Validation: " << std::boolalpha << Validation << std::endl;
+
+  std::cout << std::endl
+            << "```````````````````````````````````````````````" << std::endl;
+  std::cout << std::endl;
+
+  // std::cin.get();
 }
 
 //==============================================================================

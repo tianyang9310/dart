@@ -39,6 +39,14 @@ MyWindow::~MyWindow() {}
 
 void MyWindow::timeStepping() {
   int numContacts = mCollisionDetector->getNumContacts();
+  std::cout << "=================================================" << std::endl;
+  std::cout << "mBox Position: "
+            << mWorld->getSkeleton("mBox")->getPositions().transpose()
+            << std::endl;
+  std::cout << "mBox Velocity: "
+            << mWorld->getSkeleton("mBox")->getVelocities().transpose()
+            << std::endl << std::endl;
+
 /*
  *std::cout << "num of contact points is: " << numContacts << std::endl;
  *std::cout << std::endl;
@@ -141,7 +149,7 @@ void MyWindow::timeStepping() {
             << std::endl;
   std::cout << "mBox Velocity: "
             << mWorld->getSkeleton("mBox")->getVelocities().transpose()
-            << std::endl;
+            << std::endl << std::endl;
   // keyboard('y', 0, 0);
 
   /*

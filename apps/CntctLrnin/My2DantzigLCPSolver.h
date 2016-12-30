@@ -42,8 +42,13 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
   //----------------------------------------------------------------------------
   void solve(ConstrainedGroup* _group) override;
 
+  /// ODE print function
   void print(size_t _n, double* _A, double* _x, double* _lo, double* _hi,
              double* _b, double* w, int* _findex);
+
+  /// Lemke print function
+  void print(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
+             const Eigen::VectorXd& z, bool Validation);
 
   /// Return true if the matrix is symmetric
   bool isSymmetric(size_t _n, double* _A);

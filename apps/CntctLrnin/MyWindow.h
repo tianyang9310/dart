@@ -9,7 +9,7 @@
 // #define ODE_VANILLA  // decide to use MyDantizig or Danzig
 #define FORK_LEMKE
 
-#define NUMBASIS 2
+#define NUMBASIS 8
 
 class MyWindow : public dart::gui::SimWindow {
   public:

@@ -271,8 +271,12 @@ void My2ContactConstraint::getInformation(ConstraintInfo* _info) {
           _info->hi[index] = dInfinity;
           assert(_info->findex[index] == -1);
         } else {
-          _info->lo[index + mIdxOffset] = -mFrictionCoeff;
-          _info->hi[index + mIdxOffset] = mFrictionCoeff;
+          /*
+           * _info->lo[index + mIdxOffset] = -mFrictionCoeff;
+           * _info->hi[index + mIdxOffset] = mFrictionCoeff;
+           */
+          _info->lo[index + mIdxOffset] = -1*mFrictionCoeff;
+          _info->hi[index + mIdxOffset] = 1*mFrictionCoeff;
           _info->findex[index + mIdxOffset] = index;
         }
 
