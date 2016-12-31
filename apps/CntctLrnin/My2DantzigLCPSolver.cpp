@@ -4,6 +4,7 @@
 My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep)
     : DantzigLCPSolver(_timestep) {
   numBasis = NUMBASIS;
+  mPrecision = PRECISION;
 }
 
 //==============================================================================
@@ -13,7 +14,7 @@ My2DantzigLCPSolver::~My2DantzigLCPSolver() {
 
 //==============================================================================
 void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
-  std::cout << std::setprecision(10);
+  std::cout << std::setprecision(mPrecision);
   // If there is no constraint, then just return true.
   size_t numConstraints = _group->getNumConstraints();
   numContactsCallBack = numConstraints;
@@ -190,7 +191,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
    *   std::cout << "A: " << std::endl;
    *   for (size_t i = 0; i < n; ++i) {
    *     for (size_t j = 0; j < n; ++j) {
-   *       std::cout << std::setprecision(10) << A[i * n + j] << " ";
+   *       std::cout << std::setprecision(mPrecision) << A[i * n + j] << " ";
    *     }
    *     std::cout << std::endl;
    *   }
@@ -224,6 +225,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
                 << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
                 << std::endl;
     }
+    std::cout << std::endl;
 
     if (Validation) {
       //  ---------------------------------------
@@ -253,6 +255,8 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       std::cout << "Lemke fails!!!" << std::endl;
       std::cin.get();
     }
+
+    std::cout << std::endl;
 
     for (size_t i = 0; i < numConstraints; i++) {
       ContactConstraint* cntctconstraint =
@@ -327,6 +331,8 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       constraint->excite();
     }
 
+    std::cout << std::endl;
+
     for (size_t i = 0; i < numConstraints; i++) {
       ContactConstraint* cntctconstraint =
           dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
@@ -338,6 +344,9 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
                 << std::endl;
     }
   }
+
+  std::cout << std::endl;
+
   delete[] offset;
 
   delete[] A;
@@ -417,6 +426,7 @@ void My2DantzigLCPSolver::PermuteAug_A(const Eigen::MatrixXd& Pre_Lemke_A,
 //==============================================================================
 void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
                                 double* hi, double* b, double* w, int* findex) {
+  std::cout << std::setprecision(mPrecision);
   size_t nSkip;
   if (numBasis != 2) {
     nSkip = _n;
@@ -426,14 +436,14 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
   std::cout << "A: " << std::endl;
   for (size_t i = 0; i < _n; ++i) {
     for (size_t j = 0; j < nSkip; ++j) {
-      std::cout << std::setprecision(10) << _A[i * nSkip + j] << " ";
+      std::cout << _A[i * nSkip + j] << " ";
     }
     std::cout << std::endl;
   }
 
   std::cout << "b: ";
   for (size_t i = 0; i < _n; ++i) {
-    std::cout << std::setprecision(10) << b[i] << " ";
+    std::cout << b[i] << " ";
   }
   std::cout << std::endl;
 
@@ -555,6 +565,7 @@ void My2DantzigLCPSolver::print(const Eigen::MatrixXd& A,
 
 //==============================================================================
 bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
+  std::cout << std::setprecision(mPrecision);
   size_t nSkip;
   if (numBasis != 2) {
     nSkip = _n;
@@ -567,7 +578,7 @@ bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
         std::cout << "A: " << std::endl;
         for (size_t k = 0; k < _n; ++k) {
           for (size_t l = 0; l < nSkip; ++l) {
-            std::cout << std::setprecision(10) << _A[k * nSkip + l] << " ";
+            std::cout << _A[k * nSkip + l] << " ";
           }
           std::cout << std::endl;
         }
@@ -587,6 +598,7 @@ bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
 //==============================================================================
 bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A, size_t _begin,
                                       size_t _end) {
+  std::cout << std::setprecision(mPrecision);
   size_t nSkip;
   if (numBasis != 2) {
     nSkip = _n;
@@ -599,7 +611,7 @@ bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A, size_t _begin,
         std::cout << "A: " << std::endl;
         for (size_t k = 0; k < _n; ++k) {
           for (size_t l = 0; l < nSkip; ++l) {
-            std::cout << std::setprecision(10) << _A[k * nSkip + l] << " ";
+            std::cout << _A[k * nSkip + l] << " ";
           }
           std::cout << std::endl;
         }

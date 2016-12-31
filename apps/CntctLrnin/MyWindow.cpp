@@ -38,6 +38,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
 MyWindow::~MyWindow() {}
 
 void MyWindow::timeStepping() {
+  addExtForce();
   int numContacts = mCollisionDetector->getNumContacts();
   std::cout << "=================================================" << std::endl;
   std::cout << "mBox Position: "
@@ -107,7 +108,6 @@ void MyWindow::timeStepping() {
   } else if (counter == 150) {
     // addExtTorque();
   }
-  addExtForce();
   // addExtTorque();
   if (mWorld->getSimFrames() == episodeLength) {
     std::cout << "Time is " << mWorld->getTime() << std::endl;

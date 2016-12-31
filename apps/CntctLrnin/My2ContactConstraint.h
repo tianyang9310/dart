@@ -36,6 +36,7 @@ class My2ContactConstraint : public ContactConstraint {
   // Member Function
   //----------------------------------------------------------------------------
   int numBasis;
+  int mPrecision;
 };
 
 }  // namespace constraint

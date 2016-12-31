@@ -10,6 +10,7 @@
 #define FORK_LEMKE
 
 #define NUMBASIS 8
+#define PRECISION 20
 
 class MyWindow : public dart::gui::SimWindow {
   public:

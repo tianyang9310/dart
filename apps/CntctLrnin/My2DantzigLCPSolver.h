@@ -69,6 +69,7 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
   // Member Variable
   //----------------------------------------------------------------------------
   int numBasis;
+  int mPrecision;
 };
 
 #endif
