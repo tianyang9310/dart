@@ -270,14 +270,14 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     Eigen::Vector3d normDirection2;
     normDirection = ct->normal;
 
-    // normal direction should also be in the world frame
-    normDirection1 = ct->normal;
-    normDirection2 = - ct->normal;
-
     /*
-     * normDirection1 = bodyNode1->getTransform().linear().transpose() * ct->normal;
-     * normDirection2 = - bodyNode2->getTransform().linear().transpose() * ct->normal;
+     * // normal direction should also be in the world frame
+     * normDirection1 = ct->normal;
+     * normDirection2 = - ct->normal;
      */
+
+    normDirection1 = bodyNode1->getTransform().linear().transpose() * ct->normal;
+    normDirection2 = - bodyNode2->getTransform().linear().transpose() * ct->normal;
 // -----------------------------------------------------------------------------
 
 #ifdef LEMKE_OUTPUT_DETAILS
@@ -307,14 +307,14 @@ void MyDantzigLCPSolver::solve(ConstrainedGroup* _group) {
     Eigen::MatrixXd D2(3, numBasis);
     D = getTangentBasisMatrixLemke(normDirection, numBasis);
 
-    // tangential direction in the world frame
-    D1 = D;
-    D2 = -D;
-
     /*
-     * D1 = bodyNode1->getTransform().linear().transpose() * D;
-     * D2 =  - bodyNode1->getTransform().linear().transpose() * D;
+     * // tangential direction in the world frame
+     * D1 = D;
+     * D2 = -D;
      */
+
+    D1 = bodyNode1->getTransform().linear().transpose() * D;
+    D2 =  - bodyNode1->getTransform().linear().transpose() * D;
 
 // -----------------------------------------------------------------------------
 #ifdef LEMKE_OUTPUT_DETAILS
