@@ -1,10 +1,11 @@
 #include "My2DantzigLCPSolver.h"
 
 //==============================================================================
-My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep)
+My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep, MyWindow* _mWindow)
     : DantzigLCPSolver(_timestep) {
   numBasis = NUMBASIS;
   mPrecision = PRECISION;
+  mWindow = _mWindow;
 }
 
 //==============================================================================
@@ -257,6 +258,27 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     }
 
     std::cout << std::endl;
+
+/*
+ *     for (size_t i = 0; i < numConstraints; i++) {
+ *       ContactConstraint* cntctconstraint =
+ *           dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+ *       std::cout << "BodyNode1 new constraint impulse "
+ *                 << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
+ *                 << std::endl;
+ *       std::cout << "BodyNode2 new constraint impulse "
+ *                 << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
+ *                 << std::endl;
+ *     }
+ * 
+ * //````````````````````````````````````````````````````````````````````````````
+ * // Rectify data at the very fist time step
+ * if (mWindow->getWorld()->getSimFrames() < 5) {
+ *   clampZero(mWindow->getWorld()->getSkeleton("mBox")
+ *     ->getBodyNode(0)->mConstraintImpulse);
+ * } 
+ * //````````````````````````````````````````````````````````````````````````````
+ */
 
     for (size_t i = 0; i < numConstraints; i++) {
       ContactConstraint* cntctconstraint =

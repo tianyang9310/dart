@@ -32,7 +32,7 @@ class MyWindow;
 class My2DantzigLCPSolver : public DantzigLCPSolver {
   public:
   /// Constructor
-  My2DantzigLCPSolver(double _timestep);
+  My2DantzigLCPSolver(double _timestep, MyWindow* _mWindow = NULL);
 
   /// Destructor
   virtual ~My2DantzigLCPSolver();
@@ -70,6 +70,7 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
   //----------------------------------------------------------------------------
   int numBasis;
   int mPrecision;
+  MyWindow* mWindow;
 };
 
 #endif

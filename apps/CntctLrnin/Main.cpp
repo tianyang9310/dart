@@ -23,7 +23,9 @@ int main(int argc, char* argv[]) {
 
   // using Bullet Collision Detector
   mWorld->getConstraintSolver()->setCollisionDetector(
-      new dart::collision::BulletCollisionDetector());
+      // new dart::collision::BulletCollisionDetector());
+      // new dart::collision::FCLMeshCollisionDetector());
+      new dart::collision::DARTCollisionDetector());
 
   // using MyDantzigLCPSolver
   int totalDOF = 0;
@@ -46,7 +48,7 @@ int main(int argc, char* argv[]) {
 #else
   // Using My2DantzigLCPSolver
   mWorld->getConstraintSolver()->setLCPSolver(
-      new My2DantzigLCPSolver(mWorld->getTimeStep()));
+      new My2DantzigLCPSolver(mWorld->getTimeStep(), mWindow));
 #endif
 #endif
 

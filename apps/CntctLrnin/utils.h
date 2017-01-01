@@ -12,7 +12,7 @@
 #endif
 
 #ifndef CLAMP_ZERO
-#define CLAMP_ZERO 1e-12
+#define CLAMP_ZERO 1e-8
 #endif
 
 // #define REGULARIZED_PRINT // print regularized info
