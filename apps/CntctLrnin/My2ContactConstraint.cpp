@@ -116,15 +116,6 @@ My2ContactConstraint::My2ContactConstraint(collision::Contact& _contact,
        * assert(std::abs(D.col(0).dot(D.col(1))) < DART_EPSILON);
        */
 
-      // print out normal and D
-      std::cout << std::setprecision(mPrecision) << std::endl;
-      std::cout << "*********************************************" << std::endl;
-      std::cout << "ct->point: " << ct->point.transpose() << std::endl;
-      std::cout << "Normal vector: " << ct->normal.transpose() << std::endl;
-      std::cout << "D: " << std::endl << D << std::endl;
-      std::cout << "get inverse transform" << std::endl
-                << mBodyNode1->getTransform().linear().transpose() << std::endl;
-
       // Jacobian for normal contact
       bodyDirection1.noalias() =
           mBodyNode1->getTransform().linear().transpose() * ct->normal;
@@ -133,6 +124,15 @@ My2ContactConstraint::My2ContactConstraint(collision::Contact& _contact,
 
       bodyPoint1.noalias() = mBodyNode1->getTransform().inverse() * ct->point;
       bodyPoint2.noalias() = mBodyNode2->getTransform().inverse() * ct->point;
+
+      // print out normal and D
+      std::cout << std::setprecision(mPrecision) << std::endl;
+      std::cout << "*********************************************" << std::endl;
+      std::cout << "bodyPoint1: " << bodyPoint1.transpose() << std::endl;
+      std::cout << "bodeDirection1: " << bodyDirection1.transpose() << std::endl;
+      std::cout << "D: " << std::endl << D << std::endl;
+      std::cout << "get inverse transform" << std::endl
+                << mBodyNode1->getTransform().matrix() << std::endl;
 
       mJacobians1[idx].head<3>() = bodyPoint1.cross(bodyDirection1);
       mJacobians2[idx].head<3>() = bodyPoint2.cross(bodyDirection2);
