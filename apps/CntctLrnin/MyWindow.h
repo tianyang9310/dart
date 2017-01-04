@@ -7,7 +7,7 @@
 #include "dart/dart.h"
 
 // #define ODE_VANILLA  // decide to use MyDantizig or Danzig
-#define FORK_LEMKE
+// #define FORK_LEMKE
 
 #define NUMBASIS 8
 #define PRECISION 20
