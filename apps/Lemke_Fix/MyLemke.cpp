@@ -94,9 +94,14 @@ int Lemke(const Eigen::MatrixXd &_M, const Eigen::VectorXd &_q,
       Eigen::VectorXd *_z) {
 int n = _q.size();
 
-const double zer_tol = 1e-6;
-const double piv_tol = 1e-12;
-int maxiter = 1000;
+// regularization x/d such that it is comparable for some very small x, magnify 
+// the difference of x, otherwise all small x have almost the same x/d. On the
+// other hand, we can find a list of small x. In essence it cannot be too large
+const double zer_tol = 1e-6; 
+// comparing piv_tol to zero, s.t. as small as possible
+const double piv_tol = 1e-12; 
+
+int maxiter = std::min(1000, 25*n);
 int err = 0;
 
 if (_q.minCoeff() >= 0) {
@@ -157,7 +162,6 @@ if (!bas.empty()) {
         err = 3;
         return err;
     }
-    // TODO: change household to more accurate solver
     // x = -B.householderQr().solve(_q);
     x = -B.colPivHouseholderQr().solve(_q);
 }
@@ -205,7 +209,6 @@ for (iter = 0; iter < maxiter; ++iter) {
         Be = _M.col(entering);
     }
 
-    // TODO: change household to more accurate solver
     // Eigen::VectorXd d = B.householderQr().solve(Be);
     Eigen::VectorXd d = B.colPivHouseholderQr().solve(Be);
 
@@ -258,8 +261,10 @@ for (iter = 0; iter < maxiter; ++iter) {
 
     // Check if artificial among these
     for (size_t i = 0; i < jSize; ++i) {
-        if (bas[j[i]] == t)
+        if (bas[j[i]] == t) {
             lvindex = i;
+            break;
+        }
     }
 
     if (lvindex != -1) {
@@ -308,6 +313,7 @@ if (iter >= maxiter && leaving != t) {
 
 if (err == 0) {
     for (size_t i = 0; i < bas.size(); ++i) {
+      // TODOs: here if statement could be removed
         if (bas[i] < _z->size()) {
             (*_z)[bas[i]] = x[i];
         }
