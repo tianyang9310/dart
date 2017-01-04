@@ -157,7 +157,9 @@ if (!bas.empty()) {
         err = 3;
         return err;
     }
-    x = -B.householderQr().solve(_q);
+    // TODO: change household to more accurate solver
+    // x = -B.householderQr().solve(_q);
+    x = -B.colPivHouseholderQr().solve(_q);
 }
 
 // Check if initial basis provides solution
@@ -203,7 +205,9 @@ for (iter = 0; iter < maxiter; ++iter) {
         Be = _M.col(entering);
     }
 
-    Eigen::VectorXd d = B.householderQr().solve(Be);
+    // TODO: change household to more accurate solver
+    // Eigen::VectorXd d = B.householderQr().solve(Be);
+    Eigen::VectorXd d = B.colPivHouseholderQr().solve(Be);
 
     // Find new leaving variable
     std::vector<int> j;
