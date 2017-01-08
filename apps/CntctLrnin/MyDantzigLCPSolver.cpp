@@ -45,10 +45,10 @@ MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
 #endif
 
   ODE_FILE = std::make_shared<std::fstream>("/tmp/ODE.txt", std::fstream::out);
-  ODE_FILE->precision(10);
+  ODE_FILE->precision(20);
   Lemke_FILE =
       std::make_shared<std::fstream>("/tmp/Lemke.txt", std::fstream::out);
-  Lemke_FILE->precision(10);
+  Lemke_FILE->precision(20);
 }
 
 MyDantzigLCPSolver::~MyDantzigLCPSolver() {

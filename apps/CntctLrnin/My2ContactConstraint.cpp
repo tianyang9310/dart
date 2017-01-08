@@ -349,7 +349,7 @@ void My2ContactConstraint::getInformation(ConstraintInfo* _info) {
       //
       //      _lcp->b[_idx] = _lcp->b[_idx] * 1.1;
       //      std::cout << "_lcp->b[_idx]: " << _lcp->b[_idx] << std::endl;
-      _info->b[index] += bouncingVelocity;
+      // _info->b[index] += bouncingVelocity;
       //      std::cout << "_lcp->b[_idx]: " << _lcp->b[_idx] << std::endl;
 
       /*

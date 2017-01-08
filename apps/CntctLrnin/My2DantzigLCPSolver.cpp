@@ -104,7 +104,8 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       } else {
         index = nSkip * (offset[i] + j) + offset[i];
       }
-      constraint->getVelocityChange(A + index, true);
+      // constraint->getVelocityChange(A + index, true);
+      constraint->getVelocityChange(A + index, false);
       for (size_t k = i + 1; k < numConstraints; ++k) {
         if (numBasis != 2) {
           index = n * (offset[i] + j) + offset[k];
@@ -259,24 +260,26 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
     std::cout << std::endl;
 
-    for (size_t i = 0; i < numConstraints; i++) {
-      ContactConstraint* cntctconstraint =
-          dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
-      std::cout << "BodyNode1 new constraint impulse "
-                << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
-                << std::endl;
-      std::cout << "BodyNode2 new constraint impulse "
-                << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
-                << std::endl;
-    }
-
-//````````````````````````````````````````````````````````````````````````````
-// Rectify data at the very fist time step
-if (mWindow->getWorld()->getSimFrames() < 5) {
-  clampZero(mWindow->getWorld()->getSkeleton("mBox")
-    ->getBodyNode(0)->mConstraintImpulse);
-} 
-//````````````````````````````````````````````````````````````````````````````
+/*
+ *     for (size_t i = 0; i < numConstraints; i++) {
+ *       ContactConstraint* cntctconstraint =
+ *           dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+ *       std::cout << "BodyNode1 new constraint impulse "
+ *                 << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
+ *                 << std::endl;
+ *       std::cout << "BodyNode2 new constraint impulse "
+ *                 << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
+ *                 << std::endl;
+ *     }
+ * 
+ * //````````````````````````````````````````````````````````````````````````````
+ * // Rectify data at the very fist time step
+ * if (mWindow->getWorld()->getSimFrames() < 5) {
+ *   clampZero(mWindow->getWorld()->getSkeleton("mBox")
+ *     ->getBodyNode(0)->mConstraintImpulse);
+ * } 
+ * //````````````````````````````````````````````````````````````````````````````
+ */
 
     for (size_t i = 0; i < numConstraints; i++) {
       ContactConstraint* cntctconstraint =
