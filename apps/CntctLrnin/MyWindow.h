@@ -12,6 +12,8 @@
 #define NUMBASIS 8
 #define PRECISION 20
 
+#define CUBE
+
 class MyWindow : public dart::gui::SimWindow {
   public:
   MyWindow(dart::simulation::WorldPtr world);

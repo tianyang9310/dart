@@ -2,6 +2,7 @@
 #define CNTCTLRNIN_ADDSKEL_H
 
 #include "dart/dart.h"
+#include "MyWindow.h"
 
 using namespace dart::simulation;
 using namespace dart::dynamics;

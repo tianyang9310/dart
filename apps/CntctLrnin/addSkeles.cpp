@@ -24,16 +24,20 @@ SkeletonPtr AddBox() {
   bn->getParentJoint()->setName("Joint_1");
   bn->setName("BodyNode_1");
 
-  std::shared_ptr<BoxShape> boxshpe = std::make_shared<BoxShape>(length_tuple);
-  boxshpe->setColor(dart::Color::Red(0.6));
-  bn->addVisualizationShape(boxshpe);
-  bn->addCollisionShape(boxshpe);
+#ifdef CUBE
+  std::shared_ptr<BoxShape> shpe = std::make_shared<BoxShape>(length_tuple);
+#else
+  std::shared_ptr<EllipsoidShape> shpe = std::make_shared<EllipsoidShape>(length_tuple);
+#endif
+  shpe->setColor(dart::Color::Red(0.6));
+  bn->addVisualizationShape(shpe);
+  bn->addCollisionShape(shpe);
 
   // set inertia
-  Inertia boxinrtia;
-  boxinrtia.setMass(mass);
-  boxinrtia.setMoment(boxshpe->computeInertia(boxinrtia.getMass()));
-  bn->setInertia(boxinrtia);
+  Inertia inrtia;
+  inrtia.setMass(mass);
+  inrtia.setMoment(shpe->computeInertia(inrtia.getMass()));
+  bn->setInertia(inrtia);
 
   // put the body into the right position
   Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
