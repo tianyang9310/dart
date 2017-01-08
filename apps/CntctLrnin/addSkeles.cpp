@@ -24,11 +24,20 @@ SkeletonPtr AddBox() {
   bn->getParentJoint()->setName("Joint_1");
   bn->setName("BodyNode_1");
 
-#ifdef CUBE
-  std::shared_ptr<BoxShape> shpe = std::make_shared<BoxShape>(length_tuple);
-#else
-  std::shared_ptr<EllipsoidShape> shpe = std::make_shared<EllipsoidShape>(length_tuple);
-#endif
+  std::shared_ptr<Shape> shpe;
+  switch (SHAPE){
+    case 0:
+    shpe = std::make_shared<BoxShape>(length_tuple);
+    break;
+    case 1:
+    shpe = std::make_shared<EllipsoidShape>(length_tuple);
+    break;
+    case 2:
+    shpe = std::make_shared<CylinderShape>(0.05, 0.5);
+    default:
+    std::cout << "Unknown shape!!!" << std::endl;
+  }
+
   shpe->setColor(dart::Color::Red(0.6));
   bn->addVisualizationShape(shpe);
   bn->addCollisionShape(shpe);

@@ -12,7 +12,10 @@
 #define NUMBASIS 8
 #define PRECISION 20
 
-// #define CUBE
+// 0: cube
+// 1: ball
+// 2: cylinder
+#define SHAPE 2
 
 class MyWindow : public dart::gui::SimWindow {
   public:
