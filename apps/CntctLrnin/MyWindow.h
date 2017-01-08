@@ -12,7 +12,7 @@
 #define NUMBASIS 8
 #define PRECISION 20
 
-#define CUBE
+// #define CUBE
 
 class MyWindow : public dart::gui::SimWindow {
   public:
@@ -46,6 +46,9 @@ class MyWindow : public dart::gui::SimWindow {
 
   /// total length for episode
   int episodeLength;
+
+  /// COM traj
+  std::vector<Eigen::Vector3d> COMtraj;
   Eigen::Vector3d extForce;
   bool alwaysUpdateViewer;
 };

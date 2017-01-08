@@ -8,7 +8,8 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
       mWorld->getConstraintSolver()->getCollisionDetector());
   counter = 0;
   randFCounter = 50;
-  episodeLength = 6500;
+  episodeLength = 2500;
+  COMtraj.clear();
   mColor.push_back(Eigen::Vector3d(0.8, 0.2, 0.2));  // red
   mColor.push_back(Eigen::Vector3d(0.2, 0.8, 0.2));  // green
   mColor.push_back(Eigen::Vector3d(0.2, 0.2, 0.8));  // blue
@@ -235,6 +236,27 @@ void MyWindow::drawSkels() {
   Eigen::Vector3d poa = mWorld->getSkeleton("mBox")->getCOM();
   double len = extForce.norm() / 100.0;
   dart::gui::drawArrow3D(poa, extForce, len, 0.005, 0.01);
+
+  /*
+   * // draw Biped COM
+   * Eigen::Vector3d COM = mWorld->getSkeleton("mBox")->getCOM();
+   * mRI->setPenColor(Eigen::Vector3d(0.8,0.8,0.2));
+   * mRI->pushMatrix();
+   * mRI->translate(COM);
+   * mRI->drawEllipsoid(Eigen::Vector3d(0.2,0.2,0.2));
+   * mRI->popMatrix();
+   */
+
+  // draw Biped COM trajectory
+  COMtraj.push_back(poa);
+  if (COMtraj.size() > 1) {
+    for (int i = 0; i < COMtraj.size()-1; i++) {
+      glBegin(GL_LINES);
+      glVertex3f(COMtraj[i](0),COMtraj[i](1),COMtraj[i](2));
+      glVertex3f(COMtraj[i+1](0),COMtraj[i+1](1),COMtraj[i+1](2));
+      glEnd();
+    }
+  }
 
   dart::gui::SimWindow::drawSkels();
 }
