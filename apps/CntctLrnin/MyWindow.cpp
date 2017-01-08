@@ -7,6 +7,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   mCollisionDetector = std::unique_ptr<dart::collision::CollisionDetector>(
       mWorld->getConstraintSolver()->getCollisionDetector());
   counter = 0;
+  randFCounter = 50;
   episodeLength = 6500;
   mColor.push_back(Eigen::Vector3d(0.8, 0.2, 0.2));  // red
   mColor.push_back(Eigen::Vector3d(0.2, 0.8, 0.2));  // green
@@ -25,10 +26,11 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   extForce.setZero();
 #ifndef ODE_VANILLA
 #ifndef FORK_LEMKE
-  std::cout << "Using Matrix A and Vector b from scratch to solve LCP"
+  std::cout << "Using Matrix A and Vector b from scratch and Lemke to solve LCP"
             << std::endl;
 #else
-  std::cout << "Using Matrix A and Vector b from ODE to solve LCP" << std::endl;
+  std::cout << "Using Matrix A and Vector b from ODE and Lemke to solve LCP"
+            << std::endl;
 #endif
 #else
   std::cout << "Using ODE to solve LCP" << std::endl;
@@ -101,13 +103,19 @@ void MyWindow::timeStepping() {
    *  }
    */
 
-  counter = (counter + 1) % 200;
+  // 20 is the period/
+  int mPeriod = 20;
+  int mDutyCycle = 10;
+  counter = (counter + 1) % mPeriod;
 
-  if (counter == 50) {
-    // addExtForce();
-  } else if (counter == 150) {
-    // addExtTorque();
-  }
+  if (counter < mDutyCycle) {
+    addExtForce();
+  } 
+  /*
+   * else if (counter == 150) {
+   *   // addExtTorque();
+   * }
+   */
   // addExtTorque();
   if (mWorld->getSimFrames() == episodeLength) {
     std::cout << "Time is " << mWorld->getTime() << std::endl;
@@ -141,7 +149,7 @@ void MyWindow::timeStepping() {
     std::cerr << "mBox Position: "
               << mWorld->getSkeleton("mBox")->getPositions().transpose()
               << std::endl;
-    keyboard('y', 0, 0);
+    // keyboard('y', 0, 0);
   }
 
   std::cout << "mBox Position: "
@@ -169,11 +177,14 @@ void MyWindow::addExtForce() {
   extForce(0) = 1.5e1;
 
   /*
-   * // add random external forces
-   * extForce = Eigen::Vector3d::Random() * 50;
+   * randFCounter--;
+   * if (randFCounter < 0) {
+   *   // add random external forces
+   *   extForce = Eigen::Vector3d::Random() * 50;
+   *   randFCounter = 50;
+   * }
+   * std::cerr << "Add external force: " << extForce.transpose() << std::endl;
    */
-
-  //  std::cerr << "Add external force: " << extForce.transpose() << std::endl;
 
   mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce);
 }

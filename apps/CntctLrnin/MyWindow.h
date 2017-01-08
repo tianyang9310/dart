@@ -33,7 +33,16 @@ class MyWindow : public dart::gui::SimWindow {
   std::unique_ptr<dart::collision::CollisionDetector> mCollisionDetector;
   std::vector<Eigen::Vector3d> mColor;
 
+  //----------------------------------------------------------------------------
+  // Member Function
+  //----------------------------------------------------------------------------
+  /// counter for when to apply extForces
   int counter;
+
+  /// counter for when to update random Forces
+  int randFCounter;
+
+  /// total length for episode
   int episodeLength;
   Eigen::Vector3d extForce;
   bool alwaysUpdateViewer;
