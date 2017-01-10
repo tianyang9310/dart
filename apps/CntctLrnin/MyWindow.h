@@ -2,6 +2,7 @@
 #define CNTCTLRNIN_MYWINDOW_H
 
 #include <random>
+#include <cmath>
 #include "Controller.h"
 #include "MyDantzigLCPSolver.h"
 #include "dart/dart.h"
@@ -57,6 +58,10 @@ class MyWindow : public dart::gui::SimWindow {
 
   /// COM traj
   std::vector<Eigen::Vector3d> COMtraj;
+
+  /// Force application point offset
+  Eigen::Vector3d offset;
+
   Eigen::Vector3d extForce;
   bool alwaysUpdateViewer;
 };

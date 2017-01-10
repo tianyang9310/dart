@@ -25,7 +25,9 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   mTrackBall.setQuaternion(initTrackBallQuat);
 
   extForce.setZero();
-  setPlatform();
+  // setPlatform();
+
+  offset<<-0.05,0.05,0;
 #ifndef ODE_VANILLA
 #ifndef FORK_LEMKE
   std::cout << "Using Matrix A and Vector b from scratch and Lemke to solve LCP"
@@ -42,9 +44,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
 MyWindow::~MyWindow() {}
 
 void MyWindow::timeStepping() {
-  /*
-   * addExtForce();
-   */
+  addExtForce();
   int numContacts = mCollisionDetector->getNumContacts();
   std::cout << "=================================================" << std::endl;
   std::cout << "mBox Position: "
@@ -179,21 +179,44 @@ void MyWindow::timeStepping() {
 }
 
 void MyWindow::addExtForce() {
-  // add constant external forces
+  // ---------------------------------------------------------------------------
+  
+//  // Apply force to COM
+//  // add constant external forces
+//  extForce.setZero();
+//  extForce(0) = 1.5e1;
+//
+//  /*
+//   * randFCounter--;
+//   * if (randFCounter < 0) {
+//   *   // add random external forces
+//   *   extForce = Eigen::Vector3d::Random() * 50;
+//   *   randFCounter = 50;
+//   * }
+//   * std::cerr << "Add external force: " << extForce.transpose() << std::endl;
+//   */
+//
+//  // Apply force to COM
+//  mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce);
+
+  // ---------------------------------------------------------------------------
+  
+  // Apply force to margin
+  double theta = -mWorld->getSkeleton("mBox")->getDof(2)->getPosition();
+  theta = DART_PI_HALF / 2.0 -theta;
+
   extForce.setZero();
-  extForce(0) = 1.5e1;
+  extForce(0) = -(mWorld->getSkeleton("mBox")->getMass() * mWorld->getGravity() 
+    * std::tan(theta) / 2)(1);
+  extForce(0) = extForce(0) * 1.0;
 
-  /*
-   * randFCounter--;
-   * if (randFCounter < 0) {
-   *   // add random external forces
-   *   extForce = Eigen::Vector3d::Random() * 50;
-   *   randFCounter = 50;
-   * }
-   * std::cerr << "Add external force: " << extForce.transpose() << std::endl;
-   */
-
-  mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce);
+  std::cout << "Theta: " << theta << std::endl;
+  if (theta>0){
+    mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce, offset);
+  } else {
+    // std::cin.get(); 
+    // keyboard('y',0,0);
+  }
 }
 
 void MyWindow::addExtTorque() {
@@ -241,7 +264,7 @@ void MyWindow::drawSkels() {
   // draw Ext force arrow
   Eigen::Vector3d poa = mWorld->getSkeleton("mBox")->getCOM();
   double len = extForce.norm() / 100.0;
-  dart::gui::drawArrow3D(poa, extForce, len, 0.005, 0.01);
+  // dart::gui::drawArrow3D(poa, extForce, len, 0.005, 0.01);
 
   /*
    * // draw Biped COM
