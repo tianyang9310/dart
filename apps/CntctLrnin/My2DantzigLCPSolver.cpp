@@ -215,7 +215,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     bool Validation =
         dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
 
-    print(Lemke_A, Lemke_b, (*z), Validation);
+    print(Lemke_A, Lemke_b, (*z), Validation, err);
 
     for (size_t i = 0; i < numConstraints; i++) {
       ContactConstraint* cntctconstraint =
@@ -255,31 +255,34 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       }
     } else {
       std::cout << "Lemke fails!!!" << std::endl;
-      std::cin.get();
+      mWindow->keyboard('y',0,0);
+      // std::cin.get();
     }
 
     std::cout << std::endl;
 
-/*
- *     for (size_t i = 0; i < numConstraints; i++) {
- *       ContactConstraint* cntctconstraint =
- *           dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
- *       std::cout << "BodyNode1 new constraint impulse "
- *                 << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
- *                 << std::endl;
- *       std::cout << "BodyNode2 new constraint impulse "
- *                 << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
- *                 << std::endl;
- *     }
- * 
- * //````````````````````````````````````````````````````````````````````````````
- * // Rectify data at the very fist time step
- * if (mWindow->getWorld()->getSimFrames() < 5) {
- *   clampZero(mWindow->getWorld()->getSkeleton("mBox")
- *     ->getBodyNode(0)->mConstraintImpulse);
- * } 
- * //````````````````````````````````````````````````````````````````````````````
- */
+    /*
+     *     for (size_t i = 0; i < numConstraints; i++) {
+     *       ContactConstraint* cntctconstraint =
+     *           dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+     *       std::cout << "BodyNode1 new constraint impulse "
+     *                 <<
+     * cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
+     *                 << std::endl;
+     *       std::cout << "BodyNode2 new constraint impulse "
+     *                 <<
+     * cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
+     *                 << std::endl;
+     *     }
+     *
+     * //````````````````````````````````````````````````````````````````````````````
+     * // Rectify data at the very fist time step
+     * if (mWindow->getWorld()->getSimFrames() < 5) {
+     *   clampZero(mWindow->getWorld()->getSkeleton("mBox")
+     *     ->getBodyNode(0)->mConstraintImpulse);
+     * }
+     * //````````````````````````````````````````````````````````````````````````````
+     */
 
     for (size_t i = 0; i < numConstraints; i++) {
       ContactConstraint* cntctconstraint =
@@ -318,7 +321,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     bool Validation =
         dart::lcpsolver::YT::validate(Pre_Lemke_A, (*z), Pre_Lemke_b, err_dist);
 
-    print(Pre_Lemke_A, Pre_Lemke_b, (*z), Validation);
+    print(Pre_Lemke_A, Pre_Lemke_b, (*z), Validation, err);
     //``````````````````````````````````````````````````````````````````````````
 
     // Print LCP formulation
@@ -537,7 +540,8 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
 //==============================================================================
 void My2DantzigLCPSolver::print(const Eigen::MatrixXd& A,
                                 const Eigen::VectorXd& b,
-                                const Eigen::VectorXd& z, bool Validation) {
+                                const Eigen::VectorXd& z, bool Validation,
+                                int err) {
   std::cout << std::endl
             << "```````````````````````````````````````````````" << std::endl;
 
@@ -578,6 +582,7 @@ void My2DantzigLCPSolver::print(const Eigen::MatrixXd& A,
             << std::endl;
 
   std::cout << "Validation: " << std::boolalpha << Validation << std::endl;
+  std::cout << "Error type: " << err << std::endl;
 
   std::cout << std::endl
             << "```````````````````````````````````````````````" << std::endl;

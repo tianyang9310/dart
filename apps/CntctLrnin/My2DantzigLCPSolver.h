@@ -48,7 +48,7 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
 
   /// Lemke print function
   void print(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
-             const Eigen::VectorXd& z, bool Validation);
+             const Eigen::VectorXd& z, bool Validation, int err);
 
   /// Return true if the matrix is symmetric
   bool isSymmetric(size_t _n, double* _A);

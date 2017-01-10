@@ -15,9 +15,12 @@
 // 0: cube
 // 1: ball
 // 2: cylinder
-#define SHAPE 2
+#define SHAPE 0
 
 class MyWindow : public dart::gui::SimWindow {
+  //----------------------------------------------------------------------------
+  // Member Function
+  //----------------------------------------------------------------------------
   public:
   MyWindow(dart::simulation::WorldPtr world);
   virtual ~MyWindow();
@@ -32,6 +35,8 @@ class MyWindow : public dart::gui::SimWindow {
   void displayTimer(int _val); 
   dart::simulation::WorldPtr getWorld();
   void updateViewer();
+  void tiltPlatform();
+  void setPlatform();
 
   private:
   std::unique_ptr<Controller> mController;
@@ -39,7 +44,7 @@ class MyWindow : public dart::gui::SimWindow {
   std::vector<Eigen::Vector3d> mColor;
 
   //----------------------------------------------------------------------------
-  // Member Function
+  // Member Variable
   //----------------------------------------------------------------------------
   /// counter for when to apply extForces
   int counter;

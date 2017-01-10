@@ -25,6 +25,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   mTrackBall.setQuaternion(initTrackBallQuat);
 
   extForce.setZero();
+  setPlatform();
 #ifndef ODE_VANILLA
 #ifndef FORK_LEMKE
   std::cout << "Using Matrix A and Vector b from scratch and Lemke to solve LCP"
@@ -41,7 +42,9 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
 MyWindow::~MyWindow() {}
 
 void MyWindow::timeStepping() {
-  addExtForce();
+  /*
+   * addExtForce();
+   */
   int numContacts = mCollisionDetector->getNumContacts();
   std::cout << "=================================================" << std::endl;
   std::cout << "mBox Position: "
@@ -49,7 +52,8 @@ void MyWindow::timeStepping() {
             << std::endl;
   std::cout << "mBox Velocity: "
             << mWorld->getSkeleton("mBox")->getVelocities().transpose()
-            << std::endl << std::endl;
+            << std::endl
+            << std::endl;
 
 /*
  *std::cout << "num of contact points is: " << numContacts << std::endl;
@@ -105,13 +109,14 @@ void MyWindow::timeStepping() {
    */
 
   // 20 is the period/
-  int mPeriod = 20;
-  int mDutyCycle = 10;
+  int mPeriod = 500;
+  int mDutyCycle = 1;
   counter = (counter + 1) % mPeriod;
 
   if (counter < mDutyCycle) {
-    addExtForce();
-  } 
+    // addExtForce();
+    // tiltPlatform();
+  }
   /*
    * else if (counter == 150) {
    *   // addExtTorque();
@@ -158,7 +163,8 @@ void MyWindow::timeStepping() {
             << std::endl;
   std::cout << "mBox Velocity: "
             << mWorld->getSkeleton("mBox")->getVelocities().transpose()
-            << std::endl << std::endl;
+            << std::endl
+            << std::endl;
   // keyboard('y', 0, 0);
 
   /*
@@ -250,10 +256,10 @@ void MyWindow::drawSkels() {
   // draw Biped COM trajectory
   COMtraj.push_back(poa);
   if (COMtraj.size() > 1) {
-    for (int i = 0; i < COMtraj.size()-1; i++) {
+    for (int i = 0; i < COMtraj.size() - 1; i++) {
       glBegin(GL_LINES);
-      glVertex3f(COMtraj[i](0),COMtraj[i](1),COMtraj[i](2));
-      glVertex3f(COMtraj[i+1](0),COMtraj[i+1](1),COMtraj[i+1](2));
+      glVertex3f(COMtraj[i](0), COMtraj[i](1), COMtraj[i](2));
+      glVertex3f(COMtraj[i + 1](0), COMtraj[i + 1](1), COMtraj[i + 1](2));
       glEnd();
     }
   }
@@ -407,4 +413,34 @@ void MyWindow::updateViewer() {
   mTrans = -mWorld->getSkeleton("mBox")->getPositions().segment(3, 3) * 1000;
   //  mTrans[1] = 150.0f;
   //  std::cout << mTrans.transpose() << std::endl;
+}
+
+void MyWindow::tiltPlatform() {
+  double angle = mWorld->getSkeleton("mPlatform")->getDof(0)->getPosition();
+  if (angle > 50.0/180*DART_PI) {
+    std::cout << "Reaching 50!!!" << std::endl << std::endl;
+    keyboard('y',0,0);
+  } else {
+    double mDelta = 1.0/180 * DART_PI;
+    mWorld->getSkeleton("mPlatform")->getDof(0)->setPosition(angle+mDelta);
+    std::cout << "Platform angles: "
+              << mWorld->getSkeleton("mPlatform")->getPositions() << std::endl;
+  }
+
+  // keyboard('y',0,0);
+  // std::cin.get();
+}
+
+void MyWindow::setPlatform() {
+  double raw_angle = 45.0 / 180*DART_PI;
+
+  // tilt platform 
+  mWorld->getSkeleton("mPlatform")->getDof(0)->setPosition(raw_angle);
+
+  // tilt cube
+  mWorld->getSkeleton("mBox")->getDof(2)->setPosition(raw_angle);
+  mWorld->getSkeleton("mBox")->getDof(4)->setPosition(0.055/std::cos(raw_angle)-0.055);
+
+  // keyboard('y',0,0);
+  // std::cin.get();
 }

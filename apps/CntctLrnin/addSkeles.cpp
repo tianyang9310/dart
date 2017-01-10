@@ -2,7 +2,8 @@
 
 void AddSkel(WorldPtr world) {
   world->addSkeleton(AddBox());
-  world->addSkeleton(AddGround());
+  // world->addSkeleton(AddGround());
+  world->addSkeleton(AddPlatform());
 }
 
 SkeletonPtr AddBox() {
@@ -10,7 +11,7 @@ SkeletonPtr AddBox() {
   double frcton_cff = 0.0;
   double mass = 1.0;
   Eigen::Vector3d length_tuple(0.1, 0.1, 0.1);
-  Eigen::Vector3d init_pos(0.0, 0.0749, 0.0);
+  Eigen::Vector3d init_pos(0.0, 0.055, 0.0);
   Eigen::Quaterniond init_ori_Quat;  // arbitrary initial orientation
   init_ori_Quat.w() = 1.0;
   init_ori_Quat.vec() = Eigen::Vector3d::Random();
@@ -69,4 +70,54 @@ SkeletonPtr AddBox() {
 SkeletonPtr AddGround() {
   return dart::utils::SkelParser::readSkeleton(DART_DATA_PATH
                                                "skel/ground.skel");
+}
+
+SkeletonPtr AddPlatform() {
+  double jnt_dmpin = 0.0;
+  double frcton_cff = 0.0;
+  double mass = 10.0;
+  Eigen::Vector3d length_tuple(1.0, 0.01, 1.0);
+  Eigen::Vector3d init_pos(0.0, 0.0, 0.0);
+  Eigen::Quaterniond init_ori_Quat;  // arbitrary initial orientation
+  init_ori_Quat.w() = 1.0;
+  init_ori_Quat.vec() = Eigen::Vector3d::Random();
+  init_ori_Quat.normalize();
+  Eigen::Matrix3d init_ori = init_ori_Quat.toRotationMatrix();
+  // Eigen::Matrix3d init_ori = Eigen::Matrix3d::Identity();
+
+  SkeletonPtr mPlatform = Skeleton::create("mPlatform");
+
+  BodyNodePtr bn = mPlatform->createJointAndBodyNodePair<RevoluteJoint>().second;
+  bn->getParentJoint()->setName("Joint_1");
+  bn->setName("BodyNode_1");
+
+  std::shared_ptr<Shape> shpe;
+  shpe = std::make_shared<BoxShape>(length_tuple);
+  shpe->setColor(dart::Color::Green(0.8));
+  bn->addVisualizationShape(shpe);
+  bn->addCollisionShape(shpe);
+
+  // set inertia
+  Inertia inrtia;
+  inrtia.setMass(mass);
+  inrtia.setMoment(shpe->computeInertia(inrtia.getMass()));
+  bn->setInertia(inrtia);
+
+  // put the body into the right position
+  Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
+  tf.translation() = init_pos;
+  // tf.linear() = init_ori;
+  bn->getParentJoint()->setTransformFromParentBodyNode(tf);
+
+  // disable friction
+  //   bn->setFrictionCoeff(frcton_cff);
+  //
+  //   // disable joint friction
+  //   for (size_t i = 0; i<bn->getParentJoint()->getNumDofs();++i)
+  //   {
+  //       bn->getParentJoint()->getDof(i)->setDampingCoefficient(jnt_dmpin);
+  //   }
+
+  mPlatform->setMobile(false);
+  return mPlatform;
 }

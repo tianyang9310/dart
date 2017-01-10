@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 
   // using MyDantzigLCPSolver
   int totalDOF = 0;
-  totalDOF += mWorld->getSkeleton("ground skeleton")->getNumDofs();
+  // totalDOF += mWorld->getSkeleton("ground skeleton")->getNumDofs();
   totalDOF += mWorld->getSkeleton("mBox")->getNumDofs();
   // std::cout << "Ground Skeleton: "
   // << mWorld->getSkeleton("ground skeleton")->isMobile() << std::endl;
