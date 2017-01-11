@@ -158,6 +158,7 @@ if (!bas.empty()) {
     double cond = svd.singularValues()(0)
         / svd.singularValues()(svd.singularValues().size() - 1);
     if (cond > 1e16) {
+        std::cout << "Fail due to cond # before iterations" << std::endl;
         (*_z) = Eigen::VectorXd::Zero(n);
         err = 3;
         return err;
@@ -220,6 +221,7 @@ for (iter = 0; iter < maxiter; ++iter) {
     }
     if (j.empty()) // no new pivots - ray termination
     {
+        std::cout << "Fails due to empty j in the iterations" << std::endl;
         err = 2;
         break;
     }
@@ -278,6 +280,17 @@ for (iter = 0; iter < maxiter; ++iter) {
                 lvindex = i;
             }
         }
+
+        // random choose for multiple 
+        std::vector<int> tmpd_max_idx;
+        tmpd_max_idx.clear();
+        for (size_t i = 0; i < jSize; i++) {
+          if (std::abs(theta - tmpd[i]) < piv_tol) {
+            tmpd_max_idx.push_back(i);
+          } 
+        }
+        lvindex = tmpd_max_idx[std::rand() % tmpd_max_idx.size()];
+
         lvindex = j[lvindex]; // choose the first if there are multiple
     }
 
@@ -324,6 +337,7 @@ if (err == 0) {
 
     if (!validate(_M, *_z, _q)) {
         // _z = VectorXd::Zero(n);
+        std::cout << "Fails duo to validation after iterations" << std::endl; 
         err = 3;
     }
 } else {
