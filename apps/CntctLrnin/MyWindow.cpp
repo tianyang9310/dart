@@ -25,7 +25,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   mTrackBall.setQuaternion(initTrackBallQuat);
 
   extForce.setZero();
-  setPlatform();
+  // setPlatform();
 #ifndef ODE_VANILLA
 #ifndef FORK_LEMKE
   std::cout << "Using Matrix A and Vector b from scratch and Lemke to solve LCP"
@@ -109,13 +109,13 @@ void MyWindow::timeStepping() {
    */
 
   // 20 is the period/
-  int mPeriod = 500;
+  int mPeriod = 5;
   int mDutyCycle = 1;
   counter = (counter + 1) % mPeriod;
 
   if (counter < mDutyCycle) {
     // addExtForce();
-    // tiltPlatform();
+    tiltPlatform();
   }
   /*
    * else if (counter == 150) {
@@ -421,7 +421,7 @@ void MyWindow::tiltPlatform() {
     std::cout << "Reaching 50!!!" << std::endl << std::endl;
     keyboard('y',0,0);
   } else {
-    double mDelta = 1.0/180 * DART_PI;
+    double mDelta = 0.005/180 * DART_PI;
     mWorld->getSkeleton("mPlatform")->getDof(0)->setPosition(angle+mDelta);
     std::cout << "Platform angles: "
               << mWorld->getSkeleton("mPlatform")->getPositions() << std::endl;
