@@ -7,8 +7,9 @@ void AddSkel(WorldPtr world) {
 }
 
 SkeletonPtr AddBox() {
-  double jnt_dmpin = 0.0;
-  double frcton_cff = 0.0;
+  // double jnt_dmpin = 0.0;
+  // double frcton_cff = 0.0;
+  // double rsttn_cff = 1.0;
   double mass = 1.0;
   Eigen::Vector3d length_tuple(0.1, 0.1, 0.1);
   Eigen::Vector3d init_pos(0.0, 0.055, 0.0);
@@ -64,6 +65,9 @@ SkeletonPtr AddBox() {
   //       bn->getParentJoint()->getDof(i)->setDampingCoefficient(jnt_dmpin);
   //   }
 
+  // change restitution coefficients
+  bn->setRestitutionCoeff(rsttn_cff);
+
   return mBox;
 }
 
@@ -73,10 +77,11 @@ SkeletonPtr AddGround() {
 }
 
 SkeletonPtr AddPlatform() {
-  double jnt_dmpin = 0.0;
-  double frcton_cff = 0.0;
+  // double jnt_dmpin = 0.0;
+  // double frcton_cff = 0.0;
+  // double rsttn_cff = 1.0;
   double mass = 10.0;
-  Eigen::Vector3d length_tuple(1.0, 0.01, 1.0);
+  Eigen::Vector3d length_tuple(5.0, 0.01, 5.0);
   Eigen::Vector3d init_pos(0.0, 0.0, 0.0);
   Eigen::Quaterniond init_ori_Quat;  // arbitrary initial orientation
   init_ori_Quat.w() = 1.0;
@@ -117,6 +122,9 @@ SkeletonPtr AddPlatform() {
   //   {
   //       bn->getParentJoint()->getDof(i)->setDampingCoefficient(jnt_dmpin);
   //   }
+
+  // change restitution coefficients
+  bn->setRestitutionCoeff(rsttn_cff);
 
   mPlatform->setMobile(false);
   return mPlatform;

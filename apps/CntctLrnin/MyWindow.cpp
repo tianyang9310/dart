@@ -203,19 +203,25 @@ void MyWindow::addExtForce() {
   
   // Apply force to margin
   double theta = -mWorld->getSkeleton("mBox")->getDof(2)->getPosition();
+  while (theta < 0) {
+    theta += 2*DART_PI;
+  }
   theta = DART_PI_HALF / 2.0 -theta;
 
   extForce.setZero();
   extForce(0) = -(mWorld->getSkeleton("mBox")->getMass() * mWorld->getGravity() 
     * std::tan(theta) / 2)(1);
-  extForce(0) = extForce(0) * 1.0;
+  extForce(0) = extForce(0) * 3.0;
 
   std::cout << "Theta: " << theta << std::endl;
-  if (theta>0){
+  if (theta>0) { // && mWorld->getSimFrames() < 250){
     mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce, offset);
   } else {
-    // std::cin.get(); 
-    // keyboard('y',0,0);
+    std::cout << "Psi: " <<  -mWorld->getSkeleton("mBox")->getDof(2)->getPosition() << std::endl;
+    if (-mWorld->getSkeleton("mBox")->getDof(2)->getPosition()>=3.13) {
+      // std::cin.get(); 
+      // keyboard('y',0,0);
+    } 
   }
 }
 
