@@ -159,19 +159,22 @@ void DantzigLCPSolver::solve(ConstrainedGroup* _group)
 
   assert(isSymmetric(n, A));
 
+#ifndef NDEBUG
   // Print LCP formulation
-//  dtdbg << "Before solve:" << std::endl;
-//  print(n, A, x, lo, hi, b, w, findex);
-//  std::cout << std::endl;
+ dtdbg << "Before solve:" << std::endl;
+ print(n, A, x, lo, hi, b, w, findex);
+ std::cout << std::endl;
+#endif
 
   // Solve LCP using ODE's Dantzig algorithm
   dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
 
+#ifndef NDEBUG
   // Print LCP formulation
-//  dtdbg << "After solve:" << std::endl;
-//  print(n, A, x, lo, hi, b, w, findex);
-//  std::cout << std::endl;
-
+ dtdbg << "After solve:" << std::endl;
+ print(n, A, x, lo, hi, b, w, findex);
+ std::cout << std::endl;
+#endif
   // Apply constraint impulses
   for (size_t i = 0; i < numConstraints; ++i)
   {
@@ -207,7 +210,7 @@ bool DantzigLCPSolver::isSymmetric(size_t _n, double* _A)
         {
           for (size_t l = 0; l < nSkip; ++l)
           {
-            std::cout << std::setprecision(4) << _A[k * nSkip + l] << " ";
+            std::cout << std::setprecision(20) << _A[k * nSkip + l] << " ";
           }
           std::cout << std::endl;
         }
@@ -238,7 +241,7 @@ bool DantzigLCPSolver::isSymmetric(size_t _n, double* _A,
         {
           for (size_t l = 0; l < nSkip; ++l)
           {
-            std::cout << std::setprecision(4) << _A[k * nSkip + l] << " ";
+            std::cout << std::setprecision(20) << _A[k * nSkip + l] << " ";
           }
           std::cout << std::endl;
         }
@@ -264,7 +267,7 @@ void DantzigLCPSolver::print(size_t _n, double* _A, double* _x,
   {
     for (size_t j = 0; j < nSkip; ++j)
     {
-      std::cout << std::setprecision(4) << _A[i * nSkip + j] << " ";
+      std::cout << std::setprecision(20) << _A[i * nSkip + j] << " ";
     }
     std::cout << std::endl;
   }
@@ -272,7 +275,7 @@ void DantzigLCPSolver::print(size_t _n, double* _A, double* _x,
   std::cout << "b: ";
   for (size_t i = 0; i < _n; ++i)
   {
-    std::cout << std::setprecision(4) << b[i] << " ";
+    std::cout << std::setprecision(20) << b[i] << " ";
   }
   std::cout << std::endl;
 
