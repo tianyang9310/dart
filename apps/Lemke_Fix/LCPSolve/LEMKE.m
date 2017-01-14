@@ -35,8 +35,8 @@ if size(M)~=[n n]
   error('Matrices are not compatible');
 end
 
-zer_tol = 1e-5;
-piv_tol = 1e-8;
+zer_tol = 1e-6;
+piv_tol = 1e-12;
 maxiter = min(1000,25*n);
 err=0;
 
