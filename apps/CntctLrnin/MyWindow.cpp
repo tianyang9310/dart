@@ -109,7 +109,7 @@ void MyWindow::timeStepping() {
    */
 
   // 20 is the period/
-  int mPeriod = 5;
+  int mPeriod = 10;
   int mDutyCycle = 1;
   counter = (counter + 1) % mPeriod;
 
@@ -421,8 +421,12 @@ void MyWindow::tiltPlatform() {
     std::cout << "Reaching 50!!!" << std::endl << std::endl;
     keyboard('y',0,0);
   } else {
-    double mDelta = 0.005/180 * DART_PI;
-    mWorld->getSkeleton("mPlatform")->getDof(0)->setPosition(angle+mDelta);
+    /*
+     * double mDelta = 0.005/180 * DART_PI;
+     * mWorld->getSkeleton("mPlatform")->getDof(0)->setPosition(angle+mDelta);
+     */
+
+    mWorld->getSkeleton("mPlatform")->getDof(0)->setForce(1);
     std::cout << "Platform angles: "
               << mWorld->getSkeleton("mPlatform")->getPositions() << std::endl;
   }
