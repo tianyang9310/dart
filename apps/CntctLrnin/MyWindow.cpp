@@ -419,6 +419,8 @@ void MyWindow::tiltPlatform() {
   double angle = mWorld->getSkeleton("mPlatform")->getDof(0)->getPosition();
   if (angle > 50.0/180*DART_PI) {
     std::cout << "Reaching 50!!!" << std::endl << std::endl;
+    mWorld->getSkeleton("mPlatform")->getDof(0)->setVelocity(0);
+    mWorld->getSkeleton("mBox")->setVelocities(Eigen::Vector6d::Zero());
     keyboard('y',0,0);
   } else {
     /*
