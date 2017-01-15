@@ -215,6 +215,21 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     bool Validation =
         dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
 
+    // have another try because there is randomness in Lemke
+    int Lemke_try = 30;
+    while (!Validation && Lemke_try > 0) {
+      err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
+      err_dist = 0.0;
+      Validation =
+          dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
+      Lemke_try--;
+      if (Validation) {
+        std::cout << "#Find a solution after " << 30 - Lemke_try << " times try"
+                  << std::endl;
+        break;
+      }
+    }
+
     print(Lemke_A, Lemke_b, (*z), Validation, err);
 
     for (size_t i = 0; i < numConstraints; i++) {
@@ -255,7 +270,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       }
     } else {
       std::cout << "Lemke fails!!!" << std::endl;
-      mWindow->keyboard('y',0,0);
+      mWindow->keyboard('y', 0, 0);
       // std::cin.get();
     }
 
