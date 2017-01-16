@@ -1,0 +1,1 @@
+snopt7 interface src working for mac, change int to long
