@@ -7,6 +7,7 @@
 #include "MyWindow.h"
 #include "MyWorld.h"
 #include "addSkeles.h"
+#include "SnLCPWrapper.h"
 #include "dart/dart.h"
 
 int main(int argc, char* argv[]) {
