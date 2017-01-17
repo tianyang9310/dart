@@ -50,16 +50,21 @@ using namespace qpcc;
 int main(int argc, char* argv[]) {
 //   double A[] = {0.5, 2.0, -1.5, 0.4, -0.6, 1.3, -0.3, 1.7, -2.2};
 //   double b[] = {2.1, -0.3, -1.8};
-  double A[] = {1,0,0,0,1,0,0,0,1}; // column major
-  double b[] = {1,2,4};
-  int n = 3;
+  // double A[] = {1,0,0,0,1,0,0,0,1}; // column major
+  // double b[] = {1,2,4};
   
-  QPCCProblem problem(n, A, b);
+  // double A[] = {1,-1,2,1,2,1}; // column major
+  double A[] = {1, 1, -1, 2, 2, 1}; // row major
+  double b[] = {2,2,3};
+  int dim_cnst = 3; // num of constraint
+  int dim_var = 2; // num of var
+  
+  QPCCProblem problem(dim_var, dim_cnst, A, b);
   SnoptSolver solver(&problem);
   solver.solve();
 
-  double x[n];
-  for (size_t i = 0; i < n; i++) {
+  double x[dim_var];
+  for (size_t i = 0; i < dim_var; i++) {
     x[i] = problem.vars()[i]->mVal;
     std::cout << x[i] << std::endl;
   }
