@@ -14,5 +14,6 @@ To check:
 
  SNOPTB EXIT  40 -- terminated after numerical difficulties
  SNOPTB INFO  41 -- current point cannot be improved
+ snopt accuracy complimentary constraint: 1e-19 v.s. 1e-10
 
 6. LCP gradient too large such that infeaisble
