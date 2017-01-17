@@ -52,10 +52,11 @@ void MyLCPConstraint::fillJac(VVD _jacobian, VVB _map, int _index)
 
   Eigen::MatrixXd diag = (mA*x-mB).asDiagonal();
   Eigen::MatrixXd tmpJ(dim_cnst, dim_var);
-  for (size_t i = 0; i < dim_var; i++) {
-    // TODO: using colwise to optimize code
-    tmpJ.col(i) = (mA.col(i).array() * x.array()).matrix();
-  }
+  // for (size_t i = 0; i < dim_var; i++) 
+  //   // TODO: using colwise to optimize code
+  //   tmpJ.col(i) = (mA.col(i).array() * x.array()).matrix();
+  // }
+  tmpJ = (mA.array().colwise() * x.array()).matrix();
   tmpJ = tmpJ + diag;
   // std::cout << "Diag: " << diag << std::endl;
   // std::cout << "Jacobian: " << tmpJ << std::endl;
