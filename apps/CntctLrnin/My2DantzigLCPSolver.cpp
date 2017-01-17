@@ -467,6 +467,7 @@ void My2DantzigLCPSolver::PermuteAug_A(const Eigen::MatrixXd& Pre_Lemke_A,
 //==============================================================================
 void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
                                 double* hi, double* b, double* w, int* findex) {
+#ifdef ODE_PRINT
   std::cout << std::setprecision(mPrecision);
   size_t nSkip;
   if (numBasis != 2) {
@@ -550,6 +551,7 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
   std::cout << std::endl;
 
   delete[] Ax;
+#endif
 }
 
 //==============================================================================
@@ -557,6 +559,7 @@ void My2DantzigLCPSolver::print(const Eigen::MatrixXd& A,
                                 const Eigen::VectorXd& b,
                                 const Eigen::VectorXd& z, bool Validation,
                                 int err) {
+#ifdef LEMKE_PRINT
   std::cout << std::endl
             << "```````````````````````````````````````````````" << std::endl;
 
@@ -604,6 +607,7 @@ void My2DantzigLCPSolver::print(const Eigen::MatrixXd& A,
   std::cout << std::endl;
 
   // std::cin.get();
+#endif
 }
 
 //==============================================================================

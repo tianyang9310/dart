@@ -25,6 +25,9 @@
 
 // #include "MyDantzigLCPSolver.h"
 
+// #define LEMKE_PRINT
+// #define ODE_PRINT
+
 using namespace dart::constraint;
 
 class MyWindow;
