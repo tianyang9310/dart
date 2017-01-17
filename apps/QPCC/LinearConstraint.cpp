@@ -14,7 +14,7 @@ LinearConstraint::LinearConstraint(std::vector<Var *>& _var,
   mConstTerm.setZero();
   mWeight.resize(mNumRows);
   mWeight.setOnes();
-  mEquality = 0;
+  mEquality = -1;
   // mIsNonlinear = false;
 }
 
@@ -24,19 +24,21 @@ LinearConstraint::~LinearConstraint()
 
 Eigen::VectorXd LinearConstraint::evalCon()
 {
-  int dim = mB.size();
-  Eigen::VectorXd x(dim);
-  for (size_t i = 0; i < dim; i++)
+  int dim_var = mA.cols();
+  int dim_cnst = mA.rows();
+  Eigen::VectorXd x(dim_var);
+  for (size_t i = 0; i < dim_var; i++)
     x[i] = mVariables[i]->mVal;
   
   return mA * x - mB;
 }
 
 void LinearConstraint::fillJac(VVD _jacobian, VVB _map, int _index) {
-  int dim = mB.size();
-  for (size_t i = 0; i < dim; i++)
+  int dim_var = mA.cols();
+  int dim_cnst = mA.rows();
+  for (size_t i = 0; i < dim_cnst; i++)
   {
-    for (size_t j = 0; j < dim; j++)
+    for (size_t j = 0; j < dim_var; j++)
     {
       _jacobian->at(_index + i)->at(j) = mA(i, j);
       _map->at(_index + i)->at(j) = true;
