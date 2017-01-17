@@ -5,6 +5,7 @@
 #include "Constraint.h"
 #include "LinearConstraint.h"
 #include "LCPConstraint.h"
+#include "MyLCPConstraint.h"
 #include "L2NormConstraint.h"
 #include "QPObjective.h"
 
@@ -32,27 +33,30 @@ QPCCProblem::QPCCProblem(size_t dim_var, size_t dim_cnst, double* A, double* b)
   createBoxes();
 
 //   Add constraints or objectives
-   qpcc::LinearConstraint* linear = new qpcc::LinearConstraint(this->vars(), AMat, bVec);
-   conBox()->add(linear);
+   // qpcc::LinearConstraint* linear = new qpcc::LinearConstraint(this->vars(), AMat, bVec);
+   // conBox()->add(linear);
 
-//  for (size_t i = 0; i < dim; i++)
-//  {
-//    LCPConstraint* lcp =
-//      new LCPConstraint(this->vars(), AMat.row(i), bVec[i], i);
-//    conBox()->add(lcp);
-//  }
+ // for (size_t i = 0; i < dim_cnst; i++)
+ // {
+ //   LCPConstraint* lcp =
+ //     new LCPConstraint(this->vars(), AMat.row(i), bVec[i], i);
+ //   conBox()->add(lcp);
+ // }
+
+ qpcc::LinearConstraint* linear = new qpcc::LinearConstraint(this->vars(), AMat, bVec,1);
+ conBox()->add(linear);
+ MyLCPConstraint* lcp = new MyLCPConstraint(this->vars(), AMat, bVec);
+ conBox()->add(lcp);
   
 //   L2NormConstraint* l2 = new L2NormConstraint(this->vars());
 //   objBox()->add(l2);
-  Eigen::MatrixXd H(dim_var,dim_var);
-  H <<
-    1,0,0,0;
 
-  Eigen::VectorXd f(dim_var);
-  f << 3,4;
-
-  QPObjective* qp = new QPObjective(this->vars(), H, f);
-  objBox()->add(qp);
+  // Eigen::MatrixXd H(dim_var,dim_var);
+  // H << 1,0,0,0;
+  // Eigen::VectorXd f(dim_var);
+  // f << 3,4;
+  // QPObjective* qp = new QPObjective(this->vars(), H, f);
+  // objBox()->add(qp);
 }
 
 QPCCProblem::~QPCCProblem() {

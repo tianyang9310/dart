@@ -57,10 +57,12 @@ int main(int argc, char* argv[]) {
   // double b[] = {2,2,3};
   // double A[] = {1,1,1,1,1,1,1,1};
   // double b[] = {-2};
-  double A[] = {-1,0,0,-1,-1,-3,2,5,3,4};
-  double b[] = {0,0,-15,100,80};
-  int dim_cnst = 5; // num of constraint
-  int dim_var = 2; // num of var
+  // double A[] = {-1,0,0,-1,-1,-3,2,5,3,4};
+  // double b[] = {0,0,-15,100,80};
+  double A[] = {1};
+  double b[] = {0.99};
+  int dim_cnst = 1; // num of constraint
+  int dim_var = 1; // num of var
   
   QPCCProblem problem(dim_var, dim_cnst, A, b);
   SnoptSolver solver(&problem);

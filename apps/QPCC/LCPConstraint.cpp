@@ -14,11 +14,16 @@ LCPConstraint::LCPConstraint(std::vector<Var *>& _var,
 
 {
   mNumRows = 1;
+
   mConstTerm.resize(1);
-  mConstTerm[0] = 0.0001;
+  // mConstTerm[0] = 0.0001;
+  mConstTerm.setZero();
+
   mWeight.resize(1);
   mWeight << 1.0;
-  mEquality = 2;
+
+  // mEquality = 2;
+  mEquality = 0;
 }
 
 LCPConstraint::~LCPConstraint() {

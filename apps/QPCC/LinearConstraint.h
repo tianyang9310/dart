@@ -1,6 +1,7 @@
 #ifndef APPS_QPCC_LINEARCONSTRAINT_H
 #define APPS_QPCC_LINEARCONSTRAINT_H
 
+#include <iostream>
 #include "Constraint.h"
 
 namespace qpcc {
