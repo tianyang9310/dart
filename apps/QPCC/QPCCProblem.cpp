@@ -25,7 +25,7 @@ QPCCProblem::QPCCProblem(size_t dim_var, size_t dim_cnst, double* A, double* b)
   }
   
  for (size_t i = 0; i < dim_var; i++)
-   addVariable(initVal[i], 0, 1e9);
+   addVariable(initVal[i], -1e9, 1e9);
    // addVariable(1e3, 0.0, 1e9);
   
   // Create constraint and objective boxes
@@ -44,10 +44,20 @@ QPCCProblem::QPCCProblem(size_t dim_var, size_t dim_cnst, double* A, double* b)
   
 //   L2NormConstraint* l2 = new L2NormConstraint(this->vars());
 //   objBox()->add(l2);
-  Eigen::MatrixXd H(2,2);
-  H << 1, -1, -1, 2;
-  Eigen::VectorXd f(2);
-  f << -2, -6;
+  Eigen::MatrixXd H(dim_var,dim_var);
+  H <<
+    1.0000,  -0.2500,        0,        0,        0,        0,        0,  -0.2500,
+   -0.2500,   1.0000,  -0.2500,        0,        0,        0,        0,        0,
+         0,  -0.2500,   1.0000,  -0.2500,        0,        0,        0,        0,
+         0,        0,  -0.2500,   1.0000,  -0.2500,        0,        0,        0,
+         0,        0,        0,  -0.2500,   1.0000,  -0.2500,        0,        0,
+         0,        0,        0,        0,  -0.2500,   1.0000,  -0.2500,        0,
+         0,        0,        0,        0,        0,  -0.2500,   1.0000,  -0.2500,
+   -0.2500,        0,        0,        0,        0,        0,  -0.2500,   1.0000;
+
+  Eigen::VectorXd f(dim_var);
+  f << -4,   -3,   -2,   -1,    0,    1,    2,    3;
+
   QPObjective* qp = new QPObjective(this->vars(), H, f);
   objBox()->add(qp);
 }

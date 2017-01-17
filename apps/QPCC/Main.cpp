@@ -53,11 +53,12 @@ int main(int argc, char* argv[]) {
   // double A[] = {1,0,0,0,1,0,0,0,1}; // column major
   // double b[] = {1,2,4};
   
-  // double A[] = {1,-1,2,1,2,1}; // column major
-  double A[] = {1, 1, -1, 2, 2, 1}; // row major
-  double b[] = {2,2,3};
-  int dim_cnst = 3; // num of constraint
-  int dim_var = 2; // num of var
+  // double A[] = {1, 1, -1, 2, 2, 1}; // row major
+  // double b[] = {2,2,3};
+  double A[] = {1,1,1,1,1,1,1,1};
+  double b[] = {-2};
+  int dim_cnst = 1; // num of constraint
+  int dim_var = 8; // num of var
   
   QPCCProblem problem(dim_var, dim_cnst, A, b);
   SnoptSolver solver(&problem);
