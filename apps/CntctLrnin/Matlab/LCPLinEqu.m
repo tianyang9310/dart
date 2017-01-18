@@ -7,8 +7,11 @@ T = eye(dim_var);
 T = T(index_sort,:);
 
 num_nonzero = (find(z_sort==0));
+if (~isempty(num_nonzero))
 num_nonzero = num_nonzero(1)-1;
-
+else 
+num_nonzero = 0;
+end
 A_new = T * A * inv(T);
 b_new = T * b;
 
