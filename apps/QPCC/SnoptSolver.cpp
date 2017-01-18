@@ -95,8 +95,8 @@ bool SnoptSolver::solve() {
     
     SnoptInterface::Return ret = mSnopt->solve(coef_vals, lower_bounds, upper_bounds,mUnit);
     
-    cout << "SnoptSolver " << mOptCount << " : ";
-    cout << "obj = " << mSnopt->mReturnedObj << endl;
+    // cout << "SnoptSolver " << mOptCount << " : ";
+    // cout << "obj = " << mSnopt->mReturnedObj << endl;
     
     delete[] coef_vals;
     delete[] lower_bounds;

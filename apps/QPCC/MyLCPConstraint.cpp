@@ -37,7 +37,7 @@ Eigen::VectorXd MyLCPConstraint::evalCon()
   Eigen::VectorXd ret(dim_cnst);
   ret = ((mA * x - mB).array() * x.array()).matrix();
 
-  std::cout << "LCP Constraint: " << ret.transpose() << std::endl;
+  // std::cout << "LCP Constraint: " << ret.transpose() << std::endl;
   return ret;
 }
 

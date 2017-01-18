@@ -37,7 +37,7 @@ Eigen::VectorXd LCPConstraint::evalCon()
     x[i] = mVariables[i]->mVal;
   Eigen::VectorXd ret(1);
   ret[0] = x[mRowIndex] * (mA.dot(x) - mB);
-  std::cout << "LCP Constraint " << mRowIndex << ": " << ret << std::endl;
+  // std::cout << "LCP Constraint " << mRowIndex << ": " << ret << std::endl;
   return ret;
 }
 

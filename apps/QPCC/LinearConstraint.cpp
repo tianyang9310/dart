@@ -25,7 +25,7 @@ Eigen::VectorXd LinearConstraint::evalCon() {
   Eigen::VectorXd x(dim_var);
   for (size_t i = 0; i < dim_var; i++) x[i] = mVariables[i]->mVal;
 
-  std::cout << "Linear Con " <<(mA * x-mB).transpose()<< std::endl;
+  // std::cout << "Linear Con " <<(mA * x-mB).transpose()<< std::endl;
   return mA * x - mB;
 }
 

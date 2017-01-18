@@ -22,5 +22,5 @@ void SnLCP::solve(Eigen::VectorXd& z) {
   for (size_t i = 0; i < dim_var; i++) {
     z(i) = problem.vars()[i]->mVal;
   }
-  std::cout << z.transpose() << std::endl;
+  // std::cout << z.transpose() << std::endl;
 }
