@@ -215,7 +215,10 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     bool Validation =
         dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
 
-    // have another try because there is randomness in Lemke
+    // -------------------------------------------------------------------------
+    // Lemke failure remedy:
+    // 1. recalling Lemke to solve (sometimes effective due to randomness in
+    // Lemke implementation)
     int Lemke_try = 30;
     while (!Validation && Lemke_try > 0) {
       err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
@@ -229,6 +232,22 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
         break;
       }
     }
+    // 2. Using snopt LCP to solve
+    if (!Validation) {
+      std::cout << "Trying to use Snopt LCP to solve..." << std::endl;
+      SnLCP mSnoptLCPSolver(Lemke_A,Lemke_b);
+      mSnoptLCPSolver.solve((*z));
+      err_dist = 0.0;
+      Validation =
+          dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
+      if (Validation) {
+        std::cout << "Using Snopt LCP find a solution!" << std::endl;
+      } else {
+        std::cout << "Snopt fails to find a solution either!" << std::endl;
+      }
+      // mWindow->keyboard('y', 0, 0);
+    }
+    // -------------------------------------------------------------------------
 
     print(Lemke_A, Lemke_b, (*z), Validation, err);
 
