@@ -247,6 +247,25 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       }
       // mWindow->keyboard('y', 0, 0);
     }
+    // 3. Using brute force to solve
+    if (!Validation) {
+      std::cout << "#Trying to use brute force to solve..." << std::endl;
+      int dim_var = Lemke_b.size();
+      Eigen::VectorXd z_pattern(dim_var);
+      z_pattern.setZero();
+      std::vector<Eigen::VectorXd> ret_list;
+      DFS(z_pattern,0,Lemke_A,Lemke_b,ret_list);
+      if (!ret_list.empty()){
+        std::cout << "Using brute force find a solution!" << std::endl;
+        Validation = true;
+      } else {
+        std::cout << "Brute force fails to find a solution" << std::endl;
+      }
+      (*z) = ret_list[0];
+      std::cout << "Solution is " << (*z).transpose() << std::endl;
+      print(Lemke_A, Lemke_b, (*z), Validation, err);
+      mWindow->keyboard('y', 0, 0);
+    }
     // -------------------------------------------------------------------------
 
     print(Lemke_A, Lemke_b, (*z), Validation, err);

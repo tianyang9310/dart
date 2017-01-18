@@ -12,6 +12,7 @@
 #include "dart/dart.h"
 #include "utils.h"
 #include "SnLCPWrapper.h"
+#include "LCPLinEqu.h"
 
 // #include "dart/constraint/LCPSolver.h"
 // #include "dart/constraint/DantzigLCPSolver.h"

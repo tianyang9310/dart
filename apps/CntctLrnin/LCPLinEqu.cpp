@@ -52,18 +52,52 @@ bool LCPLinEqu(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
   Eigen::MatrixXd A_new = T * A * T.inverse();
   Eigen::VectorXd b_new = T * b;
 
+  //  std::cout << "A_new: " << A_new << std::endl;
+  //  std::cout << "b_new: " << b_new.transpose() << std::endl;
+
   Eigen::VectorXd ret(dim_var);
   ret.setZero();
-  ret.head(numNonZero) = A_new.topLeftCorner(numNonZero, numNonZero)
-                             .colPivHouseholderQr()
-                             .solve(-b_new.head(numNonZero));
+  if (numNonZero != 0) {
+    Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(
+        A_new.topLeftCorner(numNonZero, numNonZero));
+    if (lu_decomp.rank() == numNonZero) {
+      ret.head(numNonZero) = A_new.topLeftCorner(numNonZero, numNonZero)
+                                 .colPivHouseholderQr()
+                                 .solve(-b_new.head(numNonZero));
+    }
+  }
 
-  // restore 
+  // restore
   z = T.colPivHouseholderQr().solve(ret);
   // w = A*z + b;
-  
+
   // Validate z. If fail, return z=0 and false
-  bool Validation =
-      dart::lcpsolver::YT::validate(A, z, b);
+  bool Validation = dart::lcpsolver::YT::validate(A, z, b);
   return Validation;
+}
+
+bool DFS(Eigen::VectorXd& z, size_t index, const Eigen::MatrixXd& A,
+         const Eigen::VectorXd& b, vector<Eigen::VectorXd>& ret_list) {
+  int dim_var = z.size();
+  if (index == dim_var) {
+    std::cout << "z: " << z.transpose() << std::endl;
+    std::cout << "Searching..." << std::endl;
+    Eigen::VectorXd ret = z;
+    if (LCPLinEqu(A, b, ret)) {
+      ret_list.push_back(ret);
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    z(index) = 0;
+    if (DFS(z, index + 1, A, b, ret_list)) {
+      return true;
+    }
+    z(index) = 1;
+    if (DFS(z, index + 1, A, b, ret_list)) {
+      return true;
+    }
+    return false;
+  }
 }
