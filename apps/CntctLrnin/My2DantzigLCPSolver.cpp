@@ -234,7 +234,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     }
     // 2. Using snopt LCP to solve
     if (!Validation) {
-      std::cout << "Trying to use Snopt LCP to solve..." << std::endl;
+      std::cout << "#Trying to use Snopt LCP to solve..." << std::endl;
       SnLCP mSnoptLCPSolver(Lemke_A,Lemke_b);
       mSnoptLCPSolver.solve((*z));
       err_dist = 0.0;
@@ -251,6 +251,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
     print(Lemke_A, Lemke_b, (*z), Validation, err);
 
+#ifdef IMPULSE_CHANGE
     for (size_t i = 0; i < numConstraints; i++) {
       ContactConstraint* cntctconstraint =
           dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
@@ -262,6 +263,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
                 << std::endl;
     }
     std::cout << std::endl;
+#endif
 
     if (Validation) {
       //  ---------------------------------------
@@ -318,6 +320,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
      * //````````````````````````````````````````````````````````````````````````````
      */
 
+#ifdef IMPULSE_CHANGE
     for (size_t i = 0; i < numConstraints; i++) {
       ContactConstraint* cntctconstraint =
           dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
@@ -328,6 +331,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
                 << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
                 << std::endl;
     }
+#endif
   } else {
     // ---------------------------------------------------------------------------
     assert(isSymmetric(n, A));

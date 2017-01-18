@@ -28,6 +28,7 @@
 
 // #define LEMKE_PRINT
 // #define ODE_PRINT
+// #define IMPULSE_CHANGE
 
 using namespace dart::constraint;
 
