@@ -217,6 +217,8 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
     // -------------------------------------------------------------------------
     // Lemke failure remedy:
+
+#ifdef RECALL_SOLVE
     // 1. recalling Lemke to solve (sometimes effective due to randomness in
     // Lemke implementation)
     int Lemke_try = 30;
@@ -232,6 +234,9 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
         break;
       }
     }
+#endif
+
+#ifdef SNOPT_SOLVE
     // 2. Using snopt LCP to solve
     if (!Validation) {
       std::cout << "#Trying to use Snopt LCP to solve..." << std::endl;
@@ -247,6 +252,9 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       }
       // mWindow->keyboard('y', 0, 0);
     }
+#endif
+
+#ifdef BRUTE_SOLVE
     // 3. Using brute force to solve
     if (!Validation) {
       std::cout << "#Trying to use brute force to solve..." << std::endl;
@@ -265,6 +273,12 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       std::cout << "Solution is " << (*z).transpose() << std::endl;
       print(Lemke_A, Lemke_b, (*z), Validation, err);
       mWindow->keyboard('y', 0, 0);
+    }
+#endif
+
+    // If fail anyway, set z as 0 to make it free from breaking
+    if (!Validation) {
+      z->setZero();
     }
     // -------------------------------------------------------------------------
 
@@ -310,7 +324,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       }
     } else {
       std::cout << "Lemke fails!!!" << std::endl;
-      mWindow->keyboard('y', 0, 0);
+      // mWindow->keyboard('y', 0, 0);
       // std::cin.get();
     }
 
