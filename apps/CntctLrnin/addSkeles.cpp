@@ -81,8 +81,8 @@ SkeletonPtr AddPlatform() {
   // double frcton_cff = 0.0;
   // double rsttn_cff = 1.0;
   double mass = 10.0;
-  Eigen::Vector3d length_tuple(1.0, 0.01, 1.0);
-  Eigen::Vector3d init_pos(0.0, 0.2, 0.0);
+  Eigen::Vector3d length_tuple(1000.0, 0.01, 1000.0);
+  Eigen::Vector3d init_pos(0.0, 0.19, 0.0);
   Eigen::Quaterniond init_ori_Quat;  // arbitrary initial orientation
   init_ori_Quat.w() = 1.0;
   init_ori_Quat.vec() = Eigen::Vector3d::Random();
@@ -138,7 +138,7 @@ SkeletonPtr AddPlatform() {
    * bn->setRestitutionCoeff(rsttn_cff);
    */
 
-  // mPlatform->setMobile(false);
+  mPlatform->setMobile(false);
   mPlatform->disableSelfCollision();
   return mPlatform;
 }

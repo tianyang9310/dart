@@ -8,7 +8,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
       mWorld->getConstraintSolver()->getCollisionDetector());
   counter = 0;
   randFCounter = 50;
-  episodeLength = 2500;
+  episodeLength = 6500;
   COMtraj.clear();
   mColor.push_back(Eigen::Vector3d(0.8, 0.2, 0.2));  // red
   mColor.push_back(Eigen::Vector3d(0.2, 0.8, 0.2));  // green
@@ -44,9 +44,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
 MyWindow::~MyWindow() {}
 
 void MyWindow::timeStepping() {
-  /*
-   * addExtForce();
-   */
+  addExtForce();
   int numContacts = mCollisionDetector->getNumContacts();
   std::cout << "=================================================" << std::endl;
   std::cout << "mBox Position: "
@@ -117,7 +115,7 @@ void MyWindow::timeStepping() {
 
   if (counter < mDutyCycle) {
     // addExtForce();
-    tiltPlatform();
+    // tiltPlatform();
   }
   /*
    * else if (counter == 150) {
@@ -183,48 +181,48 @@ void MyWindow::timeStepping() {
 void MyWindow::addExtForce() {
   // ---------------------------------------------------------------------------
   
-//  // Apply force to COM
-//  // add constant external forces
-//  extForce.setZero();
-//  extForce(0) = 1.5e1;
-//
-//  /*
-//   * randFCounter--;
-//   * if (randFCounter < 0) {
-//   *   // add random external forces
-//   *   extForce = Eigen::Vector3d::Random() * 50;
-//   *   randFCounter = 50;
-//   * }
-//   * std::cerr << "Add external force: " << extForce.transpose() << std::endl;
-//   */
-//
-//  // Apply force to COM
-//  mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce);
+ // Apply force to COM
+ // add constant external forces
+ extForce.setZero();
+ extForce(0) = 1.5e1;
+
+ /*
+  * randFCounter--;
+  * if (randFCounter < 0) {
+  *   // add random external forces
+  *   extForce = Eigen::Vector3d::Random() * 50;
+  *   randFCounter = 50;
+  * }
+  * std::cerr << "Add external force: " << extForce.transpose() << std::endl;
+  */
+
+ // Apply force to COM
+ mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce);
 
   // ---------------------------------------------------------------------------
   
-  // Apply force to margin
-  double theta = -mWorld->getSkeleton("mBox")->getDof(2)->getPosition();
-  while (theta < 0) {
-    theta += 2*DART_PI;
-  }
-  theta = DART_PI_HALF / 2.0 -theta;
+  // // Apply force to margin
+  // double theta = -mWorld->getSkeleton("mBox")->getDof(2)->getPosition();
+  // while (theta < 0) {
+  //   theta += 2*DART_PI;
+  // }
+  // theta = DART_PI_HALF / 2.0 -theta;
 
-  extForce.setZero();
-  extForce(0) = -(mWorld->getSkeleton("mBox")->getMass() * mWorld->getGravity() 
-    * std::tan(theta) / 2)(1);
-  extForce(0) = extForce(0) * 3.0;
+  // extForce.setZero();
+  // extForce(0) = -(mWorld->getSkeleton("mBox")->getMass() * mWorld->getGravity() 
+  //   * std::tan(theta) / 2)(1);
+  // extForce(0) = extForce(0) * 3.0;
 
-  std::cout << "Theta: " << theta << std::endl;
-  if (theta>0) { // && mWorld->getSimFrames() < 250){
-    mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce, offset);
-  } else {
-    std::cout << "Psi: " <<  -mWorld->getSkeleton("mBox")->getDof(2)->getPosition() << std::endl;
-    if (-mWorld->getSkeleton("mBox")->getDof(2)->getPosition()>=3.13) {
-      // std::cin.get(); 
-      // keyboard('y',0,0);
-    } 
-  }
+  // std::cout << "Theta: " << theta << std::endl;
+  // if (theta>0) { // && mWorld->getSimFrames() < 250){
+  //   mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce, offset);
+  // } else {
+  //   std::cout << "Psi: " <<  -mWorld->getSkeleton("mBox")->getDof(2)->getPosition() << std::endl;
+  //   if (-mWorld->getSkeleton("mBox")->getDof(2)->getPosition()>=3.13) {
+  //     // std::cin.get(); 
+  //     // keyboard('y',0,0);
+  //   } 
+  // }
 }
 
 void MyWindow::addExtTorque() {
