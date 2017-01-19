@@ -75,6 +75,9 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
                     Eigen::MatrixXd& Lemke_A, const Eigen::MatrixXd& T,
                     const Eigen::MatrixXd& mu, const Eigen::MatrixXd& E);
 
+  /// Scaling A matrix for ill-conditioned A
+  void Scaling(Eigen::MatrixXd& A);
+
   //----------------------------------------------------------------------------
   // Member Variable
   //----------------------------------------------------------------------------

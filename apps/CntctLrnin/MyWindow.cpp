@@ -44,7 +44,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
 MyWindow::~MyWindow() {}
 
 void MyWindow::timeStepping() {
-  addExtForce();
+  // addExtForce();
   int numContacts = mCollisionDetector->getNumContacts();
   std::cout << "=================================================" << std::endl;
   std::cout << "mBox Position: "
