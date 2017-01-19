@@ -215,7 +215,12 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     bool Validation =
         dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
 
-    // have another try because there is randomness in Lemke
+    // -------------------------------------------------------------------------
+    // Lemke failure remedy:
+
+#ifdef RECALL_SOLVE
+    // 1. recalling Lemke to solve (sometimes effective due to randomness in
+    // Lemke implementation)
     int Lemke_try = 30;
     while (!Validation && Lemke_try > 0) {
       err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
@@ -229,9 +234,57 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
         break;
       }
     }
+#endif
+
+#ifdef SNOPT_SOLVE
+    // 2. Using snopt LCP to solve
+    if (!Validation) {
+      std::cout << "#Trying to use Snopt LCP to solve..." << std::endl;
+      SnLCP mSnoptLCPSolver(Lemke_A,Lemke_b);
+      mSnoptLCPSolver.solve((*z));
+      err_dist = 0.0;
+      Validation =
+          dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
+      if (Validation) {
+        std::cout << "Using Snopt LCP find a solution!" << std::endl;
+      } else {
+        std::cout << "Snopt fails to find a solution either!" << std::endl;
+      }
+      // mWindow->keyboard('y', 0, 0);
+    }
+#endif
+
+#ifdef BRUTE_SOLVE
+    // 3. Using brute force to solve
+    if (!Validation) {
+      std::cout << "#Trying to use brute force to solve..." << std::endl;
+      int dim_var = Lemke_b.size();
+      Eigen::VectorXd z_pattern(dim_var);
+      z_pattern.setZero();
+      std::vector<Eigen::VectorXd> ret_list;
+      DFS(z_pattern,0,Lemke_A,Lemke_b,ret_list);
+      if (!ret_list.empty()){
+        std::cout << "Using brute force find a solution!" << std::endl;
+        Validation = true;
+      } else {
+        std::cout << "Brute force fails to find a solution" << std::endl;
+      }
+      (*z) = ret_list[0];
+      std::cout << "Solution is " << (*z).transpose() << std::endl;
+      print(Lemke_A, Lemke_b, (*z), Validation, err);
+      mWindow->keyboard('y', 0, 0);
+    }
+#endif
+
+    // If fail anyway, set z as 0 to make it free from breaking
+    if (!Validation) {
+      z->setZero();
+    }
+    // -------------------------------------------------------------------------
 
     print(Lemke_A, Lemke_b, (*z), Validation, err);
 
+#ifdef IMPULSE_CHANGE
     for (size_t i = 0; i < numConstraints; i++) {
       ContactConstraint* cntctconstraint =
           dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
@@ -243,6 +296,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
                 << std::endl;
     }
     std::cout << std::endl;
+#endif
 
     if (Validation) {
       //  ---------------------------------------
@@ -270,7 +324,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       }
     } else {
       std::cout << "Lemke fails!!!" << std::endl;
-      mWindow->keyboard('y', 0, 0);
+      // mWindow->keyboard('y', 0, 0);
       // std::cin.get();
     }
 
@@ -299,6 +353,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
      * //````````````````````````````````````````````````````````````````````````````
      */
 
+#ifdef IMPULSE_CHANGE
     for (size_t i = 0; i < numConstraints; i++) {
       ContactConstraint* cntctconstraint =
           dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
@@ -309,6 +364,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
                 << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
                 << std::endl;
     }
+#endif
   } else {
     // ---------------------------------------------------------------------------
     assert(isSymmetric(n, A));
@@ -467,6 +523,7 @@ void My2DantzigLCPSolver::PermuteAug_A(const Eigen::MatrixXd& Pre_Lemke_A,
 //==============================================================================
 void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
                                 double* hi, double* b, double* w, int* findex) {
+#ifdef ODE_PRINT
   std::cout << std::setprecision(mPrecision);
   size_t nSkip;
   if (numBasis != 2) {
@@ -550,6 +607,7 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
   std::cout << std::endl;
 
   delete[] Ax;
+#endif
 }
 
 //==============================================================================
@@ -557,6 +615,7 @@ void My2DantzigLCPSolver::print(const Eigen::MatrixXd& A,
                                 const Eigen::VectorXd& b,
                                 const Eigen::VectorXd& z, bool Validation,
                                 int err) {
+#ifdef LEMKE_PRINT
   std::cout << std::endl
             << "```````````````````````````````````````````````" << std::endl;
 
@@ -604,6 +663,7 @@ void My2DantzigLCPSolver::print(const Eigen::MatrixXd& A,
   std::cout << std::endl;
 
   // std::cin.get();
+#endif
 }
 
 //==============================================================================

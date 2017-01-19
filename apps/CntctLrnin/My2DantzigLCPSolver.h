@@ -11,6 +11,8 @@
 #include "MyWindow.h"
 #include "dart/dart.h"
 #include "utils.h"
+#include "SnLCPWrapper.h"
+#include "LCPLinEqu.h"
 
 // #include "dart/constraint/LCPSolver.h"
 // #include "dart/constraint/DantzigLCPSolver.h"
@@ -24,6 +26,14 @@
 // #include "dart/lcpsolver/lcp.h"
 
 // #include "MyDantzigLCPSolver.h"
+
+// #define LEMKE_PRINT
+// #define ODE_PRINT
+// #define IMPULSE_CHANGE
+
+#define RECALL_SOLVE
+#define SNOPT_SOLVE
+#define BRUTE_SOLVE
 
 using namespace dart::constraint;
 

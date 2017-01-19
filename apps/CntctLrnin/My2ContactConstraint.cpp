@@ -19,9 +19,7 @@
 #define DART_MAX_BOUNCING_VELOCITY 1e+2
 // #define DART_CONTACT_CONSTRAINT_EPSILON  1e-6
 
-#define OUTPUT
-
-// #define CLAMP_CONTACT_CONSTRAINT
+// #define OUTPUT
 
 namespace dart {
 namespace constraint {
@@ -125,6 +123,7 @@ My2ContactConstraint::My2ContactConstraint(collision::Contact& _contact,
       bodyPoint1.noalias() = mBodyNode1->getTransform().inverse() * ct->point;
       bodyPoint2.noalias() = mBodyNode2->getTransform().inverse() * ct->point;
 
+#ifdef OUTPUT
       // print out normal and D
       std::cout << std::setprecision(mPrecision) << std::endl;
       std::cout << "*********************************************" << std::endl;
@@ -133,6 +132,7 @@ My2ContactConstraint::My2ContactConstraint(collision::Contact& _contact,
       std::cout << "D: " << std::endl << D << std::endl;
       std::cout << "get inverse transform" << std::endl
                 << mBodyNode1->getTransform().matrix() << std::endl;
+#endif
 
       mJacobians1[idx].head<3>() = bodyPoint1.cross(bodyDirection1);
       mJacobians2[idx].head<3>() = bodyPoint2.cross(bodyDirection2);
@@ -493,9 +493,10 @@ void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
         if (mBodyNode2->isReactive())
           mBodyNode2->addConstraintImpulse(mJacobians2[index] *
                                            fd(mFrctnBsIdx));
-
+#ifdef OUTPUT
         std::cout << "[" << NUMBASIS << " Basis LCP] Jacobian" << index << " : "
                   << mJacobians1[index].transpose() << std::endl;
+#endif
       }
 #ifdef OUTPUT
       std::cout

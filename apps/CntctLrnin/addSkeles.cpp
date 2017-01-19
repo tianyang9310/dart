@@ -12,7 +12,7 @@ SkeletonPtr AddBox() {
   // double rsttn_cff = 1.0;
   double mass = 1.0;
   Eigen::Vector3d length_tuple(0.1, 0.1, 0.1);
-  Eigen::Vector3d init_pos(0.0, 0.055, 0.0);
+  Eigen::Vector3d init_pos(0.0, 0.255, 0.0);
   Eigen::Quaterniond init_ori_Quat;  // arbitrary initial orientation
   init_ori_Quat.w() = 1.0;
   init_ori_Quat.vec() = Eigen::Vector3d::Random();
@@ -81,8 +81,8 @@ SkeletonPtr AddPlatform() {
   // double frcton_cff = 0.0;
   // double rsttn_cff = 1.0;
   double mass = 10.0;
-  Eigen::Vector3d length_tuple(5.0, 0.01, 5.0);
-  Eigen::Vector3d init_pos(0.0, 0.0, 0.0);
+  Eigen::Vector3d length_tuple(1.0, 0.01, 1.0);
+  Eigen::Vector3d init_pos(0.0, 0.2, 0.0);
   Eigen::Quaterniond init_ori_Quat;  // arbitrary initial orientation
   init_ori_Quat.w() = 1.0;
   init_ori_Quat.vec() = Eigen::Vector3d::Random();
@@ -92,7 +92,17 @@ SkeletonPtr AddPlatform() {
 
   SkeletonPtr mPlatform = Skeleton::create("mPlatform");
 
-  BodyNodePtr bn = mPlatform->createJointAndBodyNodePair<RevoluteJoint>().second;
+  BodyNodePtr bn0 = mPlatform->createJointAndBodyNodePair<WeldJoint>().second;
+  bn0->getParentJoint()->setName("Joint_0");
+  bn0->setName("BodyNode_0");
+
+  std::shared_ptr<Shape> shpe0;
+  shpe0 = std::make_shared<BoxShape>(Eigen::Vector3d(0.01,0.01,0.01));
+  shpe0->setColor(dart::Color::Blue(0.8));
+  bn0->addVisualizationShape(shpe0);
+  bn0->addCollisionShape(shpe0);
+
+  BodyNodePtr bn = mPlatform->createJointAndBodyNodePair<RevoluteJoint>(bn0).second;
   bn->getParentJoint()->setName("Joint_1");
   bn->setName("BodyNode_1");
 
@@ -123,9 +133,12 @@ SkeletonPtr AddPlatform() {
   //       bn->getParentJoint()->getDof(i)->setDampingCoefficient(jnt_dmpin);
   //   }
 
-  // change restitution coefficients
-  bn->setRestitutionCoeff(rsttn_cff);
+  /*
+   * // change restitution coefficients
+   * bn->setRestitutionCoeff(rsttn_cff);
+   */
 
-  mPlatform->setMobile(false);
+  // mPlatform->setMobile(false);
+  mPlatform->disableSelfCollision();
   return mPlatform;
 }

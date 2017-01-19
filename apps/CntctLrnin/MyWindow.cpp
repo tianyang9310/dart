@@ -44,7 +44,9 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
 MyWindow::~MyWindow() {}
 
 void MyWindow::timeStepping() {
-  addExtForce();
+  /*
+   * addExtForce();
+   */
   int numContacts = mCollisionDetector->getNumContacts();
   std::cout << "=================================================" << std::endl;
   std::cout << "mBox Position: "
@@ -109,13 +111,13 @@ void MyWindow::timeStepping() {
    */
 
   // 20 is the period/
-  int mPeriod = 500;
+  int mPeriod = 10;
   int mDutyCycle = 1;
   counter = (counter + 1) % mPeriod;
 
   if (counter < mDutyCycle) {
     // addExtForce();
-    // tiltPlatform();
+    tiltPlatform();
   }
   /*
    * else if (counter == 150) {
@@ -448,10 +450,16 @@ void MyWindow::tiltPlatform() {
   double angle = mWorld->getSkeleton("mPlatform")->getDof(0)->getPosition();
   if (angle > 50.0/180*DART_PI) {
     std::cout << "Reaching 50!!!" << std::endl << std::endl;
+    mWorld->getSkeleton("mPlatform")->getDof(0)->setVelocity(0);
+    mWorld->getSkeleton("mBox")->setVelocities(Eigen::Vector6d::Zero());
     keyboard('y',0,0);
   } else {
-    double mDelta = 1.0/180 * DART_PI;
-    mWorld->getSkeleton("mPlatform")->getDof(0)->setPosition(angle+mDelta);
+    /*
+     * double mDelta = 0.005/180 * DART_PI;
+     * mWorld->getSkeleton("mPlatform")->getDof(0)->setPosition(angle+mDelta);
+     */
+
+    mWorld->getSkeleton("mPlatform")->getDof(0)->setForce(1);
     std::cout << "Platform angles: "
               << mWorld->getSkeleton("mPlatform")->getPositions() << std::endl;
   }
