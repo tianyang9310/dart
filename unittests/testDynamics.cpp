@@ -50,7 +50,7 @@
 #include "dart/dynamics/SimpleFrame.h"
 #include "dart/simulation/World.h"
 #include "dart/utils/SkelParser.h"
-
+#include "apps/CntctLrnin/My2DantzigLCPSolver.h"
 using namespace Eigen;
 using namespace dart;
 
@@ -1204,6 +1204,8 @@ void DynamicsTest::compareEquationsOfMotion(const std::string& _fileName)
   double ubK = 10.0;
 
   simulation::WorldPtr myWorld;
+  myWorld->getConstraintSolver()->setLCPSolver(
+      new My2DantzigLCPSolver(myWorld->getTimeStep()));
 
   //----------------------------- Tests ----------------------------------------
   // Check whether multiplication of mass matrix and its inverse is identity
@@ -1742,12 +1744,13 @@ void DynamicsTest::testConstraintImpulse(const std::string& _fileName)
 //  double ub =  1.5 * DART_PI;
 
   simulation::WorldPtr myWorld;
-
   //----------------------------- Tests ----------------------------------------
   // Check whether multiplication of mass matrix and its inverse is identity
   // matrix.
   myWorld = utils::SkelParser::readWorld(_fileName);
   EXPECT_TRUE(myWorld != nullptr);
+  myWorld->getConstraintSolver()->setLCPSolver(
+      new My2DantzigLCPSolver(myWorld->getTimeStep()));
 
   for (size_t i = 0; i < myWorld->getNumSkeletons(); ++i)
   {
@@ -1844,6 +1847,8 @@ void DynamicsTest::testImpulseBasedDynamics(const std::string& _fileName)
   // matrix.
   myWorld = utils::SkelParser::readWorld(_fileName);
   EXPECT_TRUE(myWorld != nullptr);
+  myWorld->getConstraintSolver()->setLCPSolver(
+      new My2DantzigLCPSolver(myWorld->getTimeStep()));
 
   for (size_t i = 0; i < myWorld->getNumSkeletons(); ++i)
   {
