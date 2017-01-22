@@ -50,6 +50,8 @@
 #include "dart/dynamics/Skeleton.h"
 #include "dart/simulation/World.h"
 #include "dart/utils/SkelParser.h"
+#include "apps/CntctLrnin/My2DantzigLCPSolver.h"
+#include "apps/CntctLrnin/MyWorld.h"
 
 //==============================================================================
 class ConstraintTest : public ::testing::Test
@@ -121,8 +123,10 @@ void ConstraintTest::SingleContactTest(const std::string& _fileName)
   // size_t testCount = 1;
 #endif
 
-  WorldPtr world(new World);
+  WorldPtr world(new MyWorld);
   EXPECT_TRUE(world != nullptr);
+  world->getConstraintSolver()->setLCPSolver(
+      new My2DantzigLCPSolver(world->getTimeStep()));
   world->setGravity(Vector3d(0.0, -10.00, 0.0));
   world->setTimeStep(0.001);
   world->getConstraintSolver()->setCollisionDetector(
@@ -164,7 +168,7 @@ void ConstraintTest::SingleContactTest(const std::string& _fileName)
   // double lb = -1.5 * DART_PI;
   // double ub =  1.5 * DART_PI;
 
-  int maxSteps = 500;
+  int maxSteps = 5000;
   for (int i = 0; i < maxSteps; ++i)
   {
 //    Vector3d pos1 = sphere->getWorldTransform().translation();
@@ -205,21 +209,21 @@ void ConstraintTest::SingleContactTest(const std::string& _fileName)
 //      std::cout << "pos1:" << pos1.transpose() << std::endl;
       std::cout << "vel1:" << vel1.transpose() << ", pos1[1]: " << pos1[1] << std::endl;
 
-//      EXPECT_NEAR(pos1[0], 0.0, 1e-9);
-//      EXPECT_NEAR(pos1[1], -0.05, 1e-2);
-//      EXPECT_NEAR(pos1[2], 0.0, 1e-9);
+     EXPECT_NEAR(pos1[0], 0.0, 1e-9);
+     EXPECT_NEAR(pos1[1], -0.05, 1e-2);
+     EXPECT_NEAR(pos1[2], 0.0, 1e-9);
 
-//      EXPECT_NEAR(vel1[0], 0.0, 1e-9);
-//      EXPECT_NEAR(vel1[1], 0.0, 1e-9);
-//      EXPECT_NEAR(vel1[2], 0.0, 1e-9);
+     EXPECT_NEAR(vel1[0], 0.0, 1e-9);
+     EXPECT_NEAR(vel1[1], 0.0, 1e-9);
+     EXPECT_NEAR(vel1[2], 0.0, 1e-9);
 
-//      if (!equals(vel1, Vector3d(0.0, 0.0, 0.0)))
-//        std::cout << "vel1:" << vel1.transpose() << std::endl;
+     if (!equals(vel1, Vector3d(0.0, 0.0, 0.0)))
+       dterr << "vel1:" << vel1.transpose() << std::endl;
 
-//      EXPECT_EQ(vel1, Vector3d::Zero());
+     // EXPECT_EQ(vel1, Vector3d::Zero());
     }
 
-//    std::cout << std::endl;
+   // std::cout << std::endl;
 
     break;
   }

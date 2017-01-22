@@ -51,6 +51,8 @@
 #include "dart/simulation/World.h"
 #include "dart/utils/SkelParser.h"
 #include "apps/CntctLrnin/My2DantzigLCPSolver.h"
+#include "apps/CntctLrnin/MyConstraintSolver.h"
+
 using namespace Eigen;
 using namespace dart;
 
@@ -595,6 +597,8 @@ void DynamicsTest::testJacobians(const std::string& _fileName)
   WorldPtr world = SkelParser::readWorld(_fileName);
   assert(world != nullptr);
   world->setGravity(gravity);
+  world->getConstraintSolver()->setLCPSolver(
+      new My2DantzigLCPSolver(world->getTimeStep()));
 
   //------------------------------ Tests ---------------------------------------
   for (size_t i = 0; i < world->getNumSkeletons(); ++i)
@@ -714,6 +718,8 @@ void DynamicsTest::testFiniteDifferenceGeneralizedCoordinates(
   assert(world != nullptr);
   world->setGravity(gravity);
   world->setTimeStep(timeStep);
+  world->getConstraintSolver()->setLCPSolver(
+      new My2DantzigLCPSolver(world->getTimeStep()));
 
   //------------------------------ Tests ---------------------------------------
   for (size_t i = 0; i < world->getNumSkeletons(); ++i)
@@ -818,6 +824,8 @@ void DynamicsTest::testFiniteDifferenceBodyNodeVelocity(
   assert(world != nullptr);
   world->setGravity(gravity);
   world->setTimeStep(timeStep);
+  world->getConstraintSolver()->setLCPSolver(
+      new My2DantzigLCPSolver(world->getTimeStep()));
 
   //------------------------------ Tests ---------------------------------------
   for (int i = 0; i < nRandomItr; ++i)
@@ -913,6 +921,8 @@ void DynamicsTest::testFiniteDifferenceBodyNodeAcceleration(
   assert(world != nullptr);
   world->setGravity(gravity);
   world->setTimeStep(timeStep);
+  world->getConstraintSolver()->setLCPSolver(
+      new My2DantzigLCPSolver(world->getTimeStep()));
 
   //------------------------------ Tests ---------------------------------------
   for (size_t i = 0; i < world->getNumSkeletons(); ++i)
@@ -1165,6 +1175,8 @@ void DynamicsTest::testForwardKinematics(const std::string& fileName)
 {
   auto world = utils::SkelParser::readWorld(fileName);
   EXPECT_TRUE(world != nullptr);
+  world->getConstraintSolver()->setLCPSolver(
+      new My2DantzigLCPSolver(world->getTimeStep()));
 
   auto numSkeletons = world->getNumSkeletons();
   for (auto i = 0u; i < numSkeletons; ++i)
@@ -1204,14 +1216,13 @@ void DynamicsTest::compareEquationsOfMotion(const std::string& _fileName)
   double ubK = 10.0;
 
   simulation::WorldPtr myWorld;
-  myWorld->getConstraintSolver()->setLCPSolver(
-      new My2DantzigLCPSolver(myWorld->getTimeStep()));
-
   //----------------------------- Tests ----------------------------------------
   // Check whether multiplication of mass matrix and its inverse is identity
   // matrix.
   myWorld = utils::SkelParser::readWorld(_fileName);
   EXPECT_TRUE(myWorld != nullptr);
+  myWorld->getConstraintSolver()->setLCPSolver(
+      new My2DantzigLCPSolver(myWorld->getTimeStep()));
 
   for (size_t i = 0; i < myWorld->getNumSkeletons(); ++i)
   {
@@ -1485,6 +1496,8 @@ void DynamicsTest::testCenterOfMass(const std::string& _fileName)
   // matrix.
   myWorld = utils::SkelParser::readWorld(_fileName);
   EXPECT_TRUE(myWorld != nullptr);
+  myWorld->getConstraintSolver()->setLCPSolver(
+      new My2DantzigLCPSolver(myWorld->getTimeStep()));
 
   for (size_t i = 0; i < myWorld->getNumSkeletons(); ++i)
   {
@@ -1646,6 +1659,8 @@ void DynamicsTest::testCenterOfMassFreeFall(const std::string& _fileName)
   // matrix.
   myWorld = utils::SkelParser::readWorld(_fileName);
   EXPECT_TRUE(myWorld != nullptr);
+  myWorld->getConstraintSolver()->setLCPSolver(
+      new My2DantzigLCPSolver(myWorld->getTimeStep()));
 
   for (size_t i = 0; i < myWorld->getNumSkeletons(); ++i)
   {
@@ -2045,6 +2060,9 @@ TEST_F(DynamicsTest, HybridDynamics)
   world->setTimeStep(timeStep);
   EXPECT_TRUE(world != nullptr);
   EXPECT_NEAR(world->getTimeStep(), timeStep, tol);
+  world->setConstraintSolver(new dart::constraint::MyConstraintSolver(world->getTimeStep()));
+  world->getConstraintSolver()->setLCPSolver(
+                new My2DantzigLCPSolver(world->getTimeStep()));
 
   SkeletonPtr skel = world->getSkeleton("skeleton 1");
   EXPECT_TRUE(skel != nullptr);

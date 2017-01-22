@@ -15,6 +15,7 @@ My2DantzigLCPSolver::~My2DantzigLCPSolver() {
 
 //==============================================================================
 void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
+  // dterr << "Really using My2DantzigLCPSolver!!!" << std::endl;
   std::cout << std::setprecision(mPrecision);
   // If there is no constraint, then just return true.
   size_t numConstraints = _group->getNumConstraints();
@@ -80,7 +81,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     // -------------------------------------------------------------------------
     // Fill vectors: lo, hi, b, w, mu, E
     constraint->getInformation(&constInfo);
-    mu(i, i) = dynamic_cast<My2ContactConstraint*>(constraint)->mFrictionCoeff;
+    mu(i, i) = dynamic_cast<ContactConstraint*>(constraint)->mFrictionCoeff;
     E.block(i * numBasis, i, numBasis, 1) = Eigen::VectorXd::Ones(numBasis);
 
     // -------------------------------------------------------------------------

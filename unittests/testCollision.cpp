@@ -48,6 +48,8 @@
 //#include "dart/collision/unc/UNCCollisionDetector.h"
 #include "dart/simulation/simulation.h"
 #include "dart/utils/utils.h"
+#include "apps/CntctLrnin/My2DantzigLCPSolver.h"
+#include "apps/CntctLrnin/MyConstraintSolver.h"
 
 using namespace dart;
 using namespace common;
@@ -518,10 +520,11 @@ TEST_F(COLLISION, CollisionOfPrescribedJoints)
 
   // Load world and skeleton
   WorldPtr world = SkelParser::readWorld(
-        DART_DATA_PATH"/skel/test/collision_of_prescribed_joints_test.skel");
+      DART_DATA_PATH"/skel/test/collision_of_prescribed_joints_test.skel");
   world->setTimeStep(timeStep);
   EXPECT_TRUE(world != nullptr);
   EXPECT_NEAR(world->getTimeStep(), timeStep, tol);
+  world->setConstraintSolver(new dart::constraint::MyConstraintSolver(world->getTimeStep()));
 
   SkeletonPtr skel1 = world->getSkeleton("skeleton 1");
   SkeletonPtr skel2 = world->getSkeleton("skeleton 2");
