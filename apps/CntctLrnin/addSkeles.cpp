@@ -2,8 +2,8 @@
 
 void AddSkel(WorldPtr world) {
   world->addSkeleton(AddBox());
-  // world->addSkeleton(AddGround());
-  world->addSkeleton(AddPlatform());
+  world->addSkeleton(AddGround());
+  // world->addSkeleton(AddPlatform());
 }
 
 SkeletonPtr AddBox() {
@@ -12,7 +12,7 @@ SkeletonPtr AddBox() {
   // double rsttn_cff = 1.0;
   double mass = 1.0;
   Eigen::Vector3d length_tuple(0.1, 0.1, 0.1);
-  Eigen::Vector3d init_pos(0.0, 0.255, 0.0);
+  Eigen::Vector3d init_pos(0.0, 0.075, 0.0);
   Eigen::Quaterniond init_ori_Quat;  // arbitrary initial orientation
   init_ori_Quat.w() = 1.0;
   init_ori_Quat.vec() = Eigen::Vector3d::Random();
@@ -72,8 +72,10 @@ SkeletonPtr AddBox() {
 }
 
 SkeletonPtr AddGround() {
-  return dart::utils::SkelParser::readSkeleton(DART_DATA_PATH
+  SkeletonPtr ground = dart::utils::SkelParser::readSkeleton(DART_DATA_PATH
                                                "skel/ground.skel");
+  ground->setMobile(false);
+  return ground;
 }
 
 SkeletonPtr AddPlatform() {
@@ -82,7 +84,7 @@ SkeletonPtr AddPlatform() {
   // double rsttn_cff = 1.0;
   double mass = 10.0;
   Eigen::Vector3d length_tuple(1000.0, 0.01, 1000.0);
-  Eigen::Vector3d init_pos(0.0, 0.19, 0.0);
+  Eigen::Vector3d init_pos(0.0, 0.2, 0.0);
   Eigen::Quaterniond init_ori_Quat;  // arbitrary initial orientation
   init_ori_Quat.w() = 1.0;
   init_ori_Quat.vec() = Eigen::Vector3d::Random();

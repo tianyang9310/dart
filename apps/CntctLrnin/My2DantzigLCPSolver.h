@@ -27,9 +27,9 @@
 
 // #include "MyDantzigLCPSolver.h"
 
-// #define LEMKE_PRINT
-// #define ODE_PRINT
-// #define IMPULSE_CHANGE
+#define LEMKE_PRINT
+#define ODE_PRINT
+#define IMPULSE_CHANGE
 
 #define RECALL_SOLVE
 #define SNOPT_SOLVE

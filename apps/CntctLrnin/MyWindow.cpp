@@ -39,12 +39,25 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
 #else
   std::cout << "Using ODE to solve LCP" << std::endl;
 #endif
+
+  // --------------------------------------------------------------------------
+  // DARTCollisionDetector debugging
+  Eigen::VectorXd tmpPos(6);
+  tmpPos << 
+1.0491850938661603513e-16, 1.2125717097077889972e-16, 9.1365717075353438932e-17,   0.0,0.0,0.0;
+  mWorld->getSkeleton("mBox")->setPositions(tmpPos);
+  mCollisionDetector->detectCollision(true, true);
+  int numContacts = mCollisionDetector->getNumContacts();
+  std::cout << "DARTCollisionDetector debugging " << numContacts << std::endl;
+  std::cin.get();
+  // --------------------------------------------------------------------------
 }
 
 MyWindow::~MyWindow() {}
 
 void MyWindow::timeStepping() {
   addExtForce();
+  mCollisionDetector->detectCollision(true, true);
   int numContacts = mCollisionDetector->getNumContacts();
   std::cout << "=================================================" << std::endl;
   std::cout << "mBox Position: "
@@ -55,6 +68,9 @@ void MyWindow::timeStepping() {
             << std::endl
             << std::endl;
 
+  if (numContacts == 3) {
+    keyboard('y',0,0);
+  }
 /*
  *std::cout << "num of contact points is: " << numContacts << std::endl;
  *std::cout << std::endl;
@@ -145,6 +161,10 @@ void MyWindow::timeStepping() {
   numContacts = dynamic_cast<MyDantzigLCPSolver*>(
                     mWorld->getConstraintSolver()->getLCPSolver())
                     ->numContactsCallBack;
+#else
+  numContacts = dynamic_cast<My2DantzigLCPSolver*>(
+                    mWorld->getConstraintSolver()->getLCPSolver())
+                    ->numContactsCallBack;
 #endif
 #endif
 
@@ -155,7 +175,7 @@ void MyWindow::timeStepping() {
     std::cerr << "mBox Position: "
               << mWorld->getSkeleton("mBox")->getPositions().transpose()
               << std::endl;
-    // keyboard('y', 0, 0);
+    keyboard('y', 0, 0);
   }
 
   std::cout << "mBox Position: "
