@@ -286,7 +286,9 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
     // If fail anyway, set z as 0 to make it free from breaking
     if (!Validation) {
+      print(Lemke_A, Lemke_b, (*z), Validation, err);
       z->setZero();
+      // std::cin.get();
     }
     // -------------------------------------------------------------------------
 
@@ -756,7 +758,7 @@ void My2DantzigLCPSolver::Scaling(Eigen::MatrixXd& A) {
   
   // Scaling mu and E
   int mDim = 1 + numBasis;
-  double h = 1e-6;
+  double h = 4e-3;
 
   A.block(numContactsCallBack * mDim, 0, numContactsCallBack,
                 numContactsCallBack) *= h;

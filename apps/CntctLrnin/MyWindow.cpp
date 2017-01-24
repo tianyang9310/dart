@@ -467,7 +467,7 @@ void MyWindow::tiltPlatform() {
 }
 
 void MyWindow::setPlatform() {
-  double raw_angle = 45.0 / 180*DART_PI;
+  double raw_angle = (45.0+1e-4) / 180*DART_PI;
 
   // tilt platform 
   mWorld->getSkeleton("mPlatform")->getDof(0)->setPosition(raw_angle);

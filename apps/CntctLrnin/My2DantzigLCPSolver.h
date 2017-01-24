@@ -33,7 +33,7 @@
 
 #define RECALL_SOLVE
 #define SNOPT_SOLVE
-#define BRUTE_SOLVE
+// #define BRUTE_SOLVE
 
 using namespace dart::constraint;
 
