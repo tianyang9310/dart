@@ -83,7 +83,7 @@ SkeletonPtr AddPlatform() {
   // double frcton_cff = 0.0;
   // double rsttn_cff = 1.0;
   double mass = 10.0;
-  Eigen::Vector3d length_tuple(1000.0, 0.01, 1000.0);
+  Eigen::Vector3d length_tuple(1.0, 0.01, 1.0);
   Eigen::Vector3d init_pos(0.0, 0.2, 0.0);
   Eigen::Quaterniond init_ori_Quat;  // arbitrary initial orientation
   init_ori_Quat.w() = 1.0;

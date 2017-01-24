@@ -15,6 +15,7 @@ My2DantzigLCPSolver::~My2DantzigLCPSolver() {
 
 //==============================================================================
 void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
+  // dterr << "Really using My2DantzigLCPSolver!!!" << std::endl;
   std::cout << std::setprecision(mPrecision);
   // If there is no constraint, then just return true.
   size_t numConstraints = _group->getNumConstraints();
@@ -80,7 +81,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     // -------------------------------------------------------------------------
     // Fill vectors: lo, hi, b, w, mu, E
     constraint->getInformation(&constInfo);
-    mu(i, i) = dynamic_cast<My2ContactConstraint*>(constraint)->mFrictionCoeff;
+    mu(i, i) = dynamic_cast<ContactConstraint*>(constraint)->mFrictionCoeff;
     E.block(i * numBasis, i, numBasis, 1) = Eigen::VectorXd::Ones(numBasis);
 
     // -------------------------------------------------------------------------
@@ -187,6 +188,13 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
   // Permute A
   PermuteAug_A(Pre_Lemke_A, Lemke_A, T, mu, E);
+
+  // Scaling A
+  Eigen::MatrixXd tmpA = Lemke_A;
+  Scaling(tmpA);
+  // std::cout << "Before scaling: " << std::endl << Lemke_A << std::endl;
+  // std::cout << "After scaling: " << std::endl << tmpA << std::endl;
+  Lemke_A = tmpA;
 
   /*
    *   // debug A
@@ -729,4 +737,31 @@ bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A, size_t _begin,
   }
 
   return true;
+}
+
+//==============================================================================
+void My2DantzigLCPSolver::Scaling(Eigen::MatrixXd& A) {
+  int numRow = A.rows();
+  int numCol = A.cols();
+  assert(numRow == numCol);
+  assert(numContactsCallBack * (2+numBasis) == numRow);
+
+  /*
+   * double MYCFM = 1e-9;
+   * // adding eps to diagonal terms
+   * for (size_t i = 0; i < numRow; i++) {
+   *   A(i,i) = (1 + MYCFM) * A(i,i);
+   * }
+   */
+  
+  // Scaling mu and E
+  int mDim = 1 + numBasis;
+  double h = 1e-6;
+
+  A.block(numContactsCallBack * mDim, 0, numContactsCallBack,
+                numContactsCallBack) *= h;
+  A.block(numContactsCallBack * mDim, numContactsCallBack,
+                numContactsCallBack, numContactsCallBack * numBasis) *= h;
+  A.block(numContactsCallBack, numContactsCallBack * mDim,
+                numContactsCallBack * numBasis, numContactsCallBack) *= h;
 }
