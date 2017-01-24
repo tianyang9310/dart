@@ -25,7 +25,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   mTrackBall.setQuaternion(initTrackBallQuat);
 
   extForce.setZero();
-  // setPlatform();
+  setPlatform();
 
   offset<<-0.05,0.05,0;
 #ifndef ODE_VANILLA
@@ -486,7 +486,7 @@ void MyWindow::tiltPlatform() {
 }
 
 void MyWindow::setPlatform() {
-  double raw_angle = 45.0 / 180*DART_PI;
+  double raw_angle = (45.0+1e-3) / 180*DART_PI;
 
   // tilt platform 
   mWorld->getSkeleton("mPlatform")->getDof(0)->setPosition(raw_angle);

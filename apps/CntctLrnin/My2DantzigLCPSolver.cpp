@@ -192,8 +192,8 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
   // Scaling A
   Eigen::MatrixXd tmpA = Lemke_A;
   Scaling(tmpA);
-  // std::cout << "Before scaling: " << std::endl << Lemke_A << std::endl;
-  // std::cout << "After scaling: " << std::endl << tmpA << std::endl;
+  std::cout << "Before scaling: " << std::endl << Lemke_A << std::endl;
+  std::cout << "After scaling: " << std::endl << tmpA << std::endl;
   Lemke_A = tmpA;
 
   /*
@@ -756,7 +756,7 @@ void My2DantzigLCPSolver::Scaling(Eigen::MatrixXd& A) {
   
   // Scaling mu and E
   int mDim = 1 + numBasis;
-  double h = 1e-6;
+  double h = 2e-3;
 
   A.block(numContactsCallBack * mDim, 0, numContactsCallBack,
                 numContactsCallBack) *= h;
