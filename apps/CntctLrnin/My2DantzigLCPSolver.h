@@ -7,12 +7,12 @@
 #include <iostream>
 #include <string>
 
+#include "LCPLinEqu.h"
 #include "My2ContactConstraint.h"
 #include "MyWindow.h"
+#include "SnLCPWrapper.h"
 #include "dart/dart.h"
 #include "utils.h"
-#include "SnLCPWrapper.h"
-#include "LCPLinEqu.h"
 
 // #include "dart/constraint/LCPSolver.h"
 // #include "dart/constraint/DantzigLCPSolver.h"
@@ -34,6 +34,8 @@
 #define RECALL_SOLVE
 #define SNOPT_SOLVE
 // #define BRUTE_SOLVE
+
+#define SANITY_CHECK
 
 using namespace dart::constraint;
 
@@ -78,11 +80,17 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
   /// Scaling A matrix for ill-conditioned A
   void Scaling(Eigen::MatrixXd& A);
 
+  /// Decomposing z
+  void Decompose(const Eigen::VectorXd& z,
+                 std::vector<Eigen::VectorXd>& z_groups);
+
   //----------------------------------------------------------------------------
   // Member Variable
   //----------------------------------------------------------------------------
   int numBasis;
+
   int mPrecision;
+
   MyWindow* mWindow;
 };
 

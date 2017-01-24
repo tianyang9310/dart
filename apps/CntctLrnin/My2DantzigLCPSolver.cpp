@@ -223,8 +223,8 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     bool Validation =
         dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
 
-    // -------------------------------------------------------------------------
-    // Lemke failure remedy:
+// -------------------------------------------------------------------------
+// Lemke failure remedy:
 
 #ifdef RECALL_SOLVE
     // 1. recalling Lemke to solve (sometimes effective due to randomness in
@@ -248,7 +248,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     // 2. Using snopt LCP to solve
     if (!Validation) {
       std::cout << "#Trying to use Snopt LCP to solve..." << std::endl;
-      SnLCP mSnoptLCPSolver(Lemke_A,Lemke_b);
+      SnLCP mSnoptLCPSolver(Lemke_A, Lemke_b);
       mSnoptLCPSolver.solve((*z));
       err_dist = 0.0;
       Validation =
@@ -270,8 +270,8 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       Eigen::VectorXd z_pattern(dim_var);
       z_pattern.setZero();
       std::vector<Eigen::VectorXd> ret_list;
-      DFS(z_pattern,0,Lemke_A,Lemke_b,ret_list);
-      if (!ret_list.empty()){
+      DFS(z_pattern, 0, Lemke_A, Lemke_b, ret_list);
+      if (!ret_list.empty()) {
         std::cout << "Using brute force find a solution!" << std::endl;
         Validation = true;
       } else {
@@ -308,6 +308,74 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     std::cout << std::endl;
 #endif
 
+#ifdef SANITY_CHECK
+    // -------------------------------------------------------------------------
+    double SanityCheckZero = 1e-6;
+    std::vector<Eigen::VectorXd> z_groups;
+    Decompose((*z), z_groups);
+    for (int i = 0; i < numConstraints; i++) {
+      // Corner case where fn==0, fd>0 and lambda>0
+      if (z_groups[i][0] > -SanityCheckZero && z_groups[i][0] < SanityCheckZero &&
+          z_groups[i].segment(1, numBasis).array().maxCoeff() > SanityCheckZero &&
+          z_groups[i][numBasis+1] > SanityCheckZero) {
+        std::cerr << "ERROR: fn==0, fd>0 and lambda>0" << std::endl;
+        std::cerr << "Lemke A is " << std::endl;
+        std::cerr << Lemke_A << std::endl;
+        std::cerr << "Lemke b is ";
+        std::cerr << Lemke_b.transpose() << std::endl;
+        std::cerr << "[z]" << (*z).transpose() << std::endl;
+        std::cerr << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
+                      << std::endl;
+        std::cerr
+            << "[z].*[w]"
+            << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
+            << std::endl;
+        std::cerr << z_groups[i] << std::endl;
+        std::cin.get();
+      }
+      // Corner case where fn==0, fd>0 and lambda=0
+      if (z_groups[i][0] > -SanityCheckZero && z_groups[i][0] < SanityCheckZero &&
+          z_groups[i].segment(1, numBasis).array().maxCoeff() > SanityCheckZero &&
+          z_groups[i][numBasis+1] > -SanityCheckZero && z_groups[i][9] < SanityCheckZero) {
+        std::cerr << "ERROR: fn==0, fd>0 and lambda==0" << std::endl;
+        std::cerr << "Lemke A is " << std::endl;
+        std::cerr << Lemke_A << std::endl;
+        std::cerr << "Lemke b is ";
+        std::cerr << Lemke_b.transpose() << std::endl;
+        std::cerr << "[z]" << (*z).transpose() << std::endl;
+        std::cerr << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
+                      << std::endl;
+        std::cerr
+            << "[z].*[w]"
+            << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
+            << std::endl;
+        std::cerr << z_groups[i] << std::endl;
+        std::cin.get();
+      }
+      // Corner case where fn>0, fd=0 and lambda>0
+      if (z_groups[i][0] > SanityCheckZero &&
+          (z_groups[i].segment(1, numBasis).array() > -SanityCheckZero &&
+           z_groups[i].segment(1, numBasis).array() < SanityCheckZero)
+              .all() &&
+          z_groups[i][numBasis+1] > SanityCheckZero) {
+        std::cerr << "ERROR: fn>0, fd==0 and lambda>0" << std::endl;
+        std::cerr << "Lemke A is " << std::endl;
+        std::cerr << Lemke_A << std::endl;
+        std::cerr << "Lemke b is ";
+        std::cerr << Lemke_b.transpose() << std::endl;
+        std::cerr << "[z]" << (*z).transpose() << std::endl;
+        std::cerr << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
+                      << std::endl;
+        std::cerr
+            << "[z].*[w]"
+            << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
+            << std::endl;
+        std::cerr << z_groups[i] << std::endl;
+        std::cin.get();
+      }
+    }
+#endif
+
     if (Validation) {
       //  ---------------------------------------
       // justify the (*z)
@@ -340,28 +408,28 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
     std::cout << std::endl;
 
-    /*
-     *     for (size_t i = 0; i < numConstraints; i++) {
-     *       ContactConstraint* cntctconstraint =
-     *           dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
-     *       std::cout << "BodyNode1 new constraint impulse "
-     *                 <<
-     * cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
-     *                 << std::endl;
-     *       std::cout << "BodyNode2 new constraint impulse "
-     *                 <<
-     * cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
-     *                 << std::endl;
-     *     }
-     *
-     * //````````````````````````````````````````````````````````````````````````````
-     * // Rectify data at the very fist time step
-     * if (mWindow->getWorld()->getSimFrames() < 5) {
-     *   clampZero(mWindow->getWorld()->getSkeleton("mBox")
-     *     ->getBodyNode(0)->mConstraintImpulse);
-     * }
-     * //````````````````````````````````````````````````````````````````````````````
-     */
+/*
+ *     for (size_t i = 0; i < numConstraints; i++) {
+ *       ContactConstraint* cntctconstraint =
+ *           dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+ *       std::cout << "BodyNode1 new constraint impulse "
+ *                 <<
+ * cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
+ *                 << std::endl;
+ *       std::cout << "BodyNode2 new constraint impulse "
+ *                 <<
+ * cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
+ *                 << std::endl;
+ *     }
+ *
+ * //````````````````````````````````````````````````````````````````````````````
+ * // Rectify data at the very fist time step
+ * if (mWindow->getWorld()->getSimFrames() < 5) {
+ *   clampZero(mWindow->getWorld()->getSkeleton("mBox")
+ *     ->getBodyNode(0)->mConstraintImpulse);
+ * }
+ * //````````````````````````````````````````````````````````````````````````````
+ */
 
 #ifdef IMPULSE_CHANGE
     for (size_t i = 0; i < numConstraints; i++) {
@@ -672,7 +740,7 @@ void My2DantzigLCPSolver::print(const Eigen::MatrixXd& A,
             << "```````````````````````````````````````````````" << std::endl;
   std::cout << std::endl;
 
-  // std::cin.get();
+// std::cin.get();
 #endif
 }
 
@@ -746,7 +814,7 @@ void My2DantzigLCPSolver::Scaling(Eigen::MatrixXd& A) {
   int numRow = A.rows();
   int numCol = A.cols();
   assert(numRow == numCol);
-  assert(numContactsCallBack * (2+numBasis) == numRow);
+  assert(numContactsCallBack * (2 + numBasis) == numRow);
 
   /*
    * double MYCFM = 1e-9;
@@ -755,15 +823,36 @@ void My2DantzigLCPSolver::Scaling(Eigen::MatrixXd& A) {
    *   A(i,i) = (1 + MYCFM) * A(i,i);
    * }
    */
-  
+
   // Scaling mu and E
   int mDim = 1 + numBasis;
   double h = 4e-3;
 
   A.block(numContactsCallBack * mDim, 0, numContactsCallBack,
-                numContactsCallBack) *= h;
-  A.block(numContactsCallBack * mDim, numContactsCallBack,
-                numContactsCallBack, numContactsCallBack * numBasis) *= h;
+          numContactsCallBack) *= h;
+  A.block(numContactsCallBack * mDim, numContactsCallBack, numContactsCallBack,
+          numContactsCallBack * numBasis) *= h;
   A.block(numContactsCallBack, numContactsCallBack * mDim,
-                numContactsCallBack * numBasis, numContactsCallBack) *= h;
+          numContactsCallBack * numBasis, numContactsCallBack) *= h;
+}
+
+//==============================================================================
+void My2DantzigLCPSolver::Decompose(const Eigen::VectorXd& z,
+                                   std::vector<Eigen::VectorXd>& z_groups) {
+  int numContactsToLearn = z.rows() / (numBasis + 2);
+  // decompose z
+  Eigen::VectorXd z_fn(numContactsToLearn);
+  z_fn = z.head(numContactsToLearn);
+  Eigen::VectorXd z_fd(numContactsToLearn * numBasis);
+  z_fd = z.segment(numContactsToLearn, numContactsToLearn * numBasis);
+  Eigen::VectorXd z_lambda(numContactsToLearn);
+  z_lambda = z.tail(numContactsToLearn);
+
+  z_groups.clear();
+  for (int i = 0; i < numContactsToLearn; i++) {
+    Eigen::VectorXd each_z;
+    each_z.resize(numBasis + 2);
+    each_z << z_fn(i), z_fd.segment(i * numBasis, numBasis), z_lambda(i);
+    z_groups.push_back(each_z);
+  }
 }
