@@ -5,6 +5,7 @@
 #include <cmath>
 #include "Controller.h"
 #include "MyDantzigLCPSolver.h"
+#include "My2DantzigLCPSolver.h"
 #include "dart/dart.h"
 
 // #define ODE_VANILLA  // decide to use MyDantizig or Danzig

@@ -135,6 +135,13 @@ void MyWindow::timeStepping() {
                          ->getLemkeFailCounter() /
                      double(episodeLength)
               << std::endl;
+#else
+    std::cout << "Lemke fail ratio: "
+              << dynamic_cast<My2DantzigLCPSolver*>(
+                     mWorld->getConstraintSolver()->getLCPSolver())
+                         ->getLemkeFail() /
+                     double(episodeLength)
+              << std::endl;
 #endif
 #endif
     keyboard('y', 0, 0);

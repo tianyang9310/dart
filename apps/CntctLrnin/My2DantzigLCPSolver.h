@@ -84,12 +84,17 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
   void Decompose(const Eigen::VectorXd& z,
                  std::vector<Eigen::VectorXd>& z_groups);
 
+  /// Lemke fails counter
+  int getLemkeFail() {return numLemkeFail;};
+
   //----------------------------------------------------------------------------
   // Member Variable
   //----------------------------------------------------------------------------
   int numBasis;
 
   int mPrecision;
+
+  int numLemkeFail;
 
   MyWindow* mWindow;
 };

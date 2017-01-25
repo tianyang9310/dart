@@ -5,6 +5,7 @@ My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep, MyWindow* _mWindow)
     : DantzigLCPSolver(_timestep) {
   numBasis = NUMBASIS;
   mPrecision = PRECISION;
+  numLemkeFail = 0;
   mWindow = _mWindow;
 }
 
@@ -286,6 +287,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 
     // If fail anyway, set z as 0 to make it free from breaking
     if (!Validation) {
+      numLemkeFail++;
       print(Lemke_A, Lemke_b, (*z), Validation, err);
       z->setZero();
       // std::cin.get();
@@ -856,3 +858,4 @@ void My2DantzigLCPSolver::Decompose(const Eigen::VectorXd& z,
     z_groups.push_back(each_z);
   }
 }
+
