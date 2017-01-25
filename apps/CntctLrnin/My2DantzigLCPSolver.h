@@ -27,6 +27,7 @@
 
 // #include "MyDantzigLCPSolver.h"
 
+#define OUTPUT2FILE
 // #define LEMKE_PRINT
 // #define ODE_PRINT
 // #define IMPULSE_CHANGE
@@ -87,15 +88,34 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
   /// Lemke fails counter
   int getLemkeFail() {return numLemkeFail;};
 
+#ifdef OUTPUT2FILE
+  /// Output Lemke solution
+  void recordLCPSolve(const Eigen::MatrixXd A, const Eigen::VectorXd z,
+                      const Eigen::VectorXd b);
+#endif
+
   //----------------------------------------------------------------------------
   // Member Variable
   //----------------------------------------------------------------------------
+  /// For functionality of Lemke
   int numBasis;
-
-  int mPrecision;
 
   int numLemkeFail;
 
+#ifdef OUTPUT2FILE
+  /// For output file use
+  std::vector<std::shared_ptr<std::fstream>> outputFiles;
+
+  std::vector<int> counters;
+
+  int dataSize;
+
+  int numDesiredCT;
+#endif
+
+  int mPrecision;
+
+  /// For debugging use
   MyWindow* mWindow;
 };
 

@@ -4,14 +4,36 @@
 My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep, MyWindow* _mWindow)
     : DantzigLCPSolver(_timestep) {
   numBasis = NUMBASIS;
-  mPrecision = PRECISION;
   numLemkeFail = 0;
+
+  mPrecision = PRECISION;
+#ifdef OUTPUT2FILE
+  dataSize = 30000;
+  numDesiredCT = 4;
+  // Here magic number of 4 is what we suppose to get from cube testing
+  for (int numContactsToLearn = 1; numContactsToLearn < 1+numDesiredCT;
+       numContactsToLearn++) {
+    std::string trainingFile =
+        "/tmp/CntctLrnin/lcp_data" + std::to_string(numContactsToLearn) + ".csv";
+    std::shared_ptr<std::fstream> outputFile =
+        std::make_shared<std::fstream>(trainingFile, std::fstream::out);
+    outputFile->precision(mPrecision);
+    outputFiles.push_back(outputFile);
+    counters.push_back(0);
+  }
+#endif
+
   mWindow = _mWindow;
 }
 
 //==============================================================================
 My2DantzigLCPSolver::~My2DantzigLCPSolver() {
-  // pass
+#ifdef OUTPUT2FILE
+  for (int numContactsToLearn = 1; numContactsToLearn < 5;
+       numContactsToLearn++) {
+    outputFiles[numContactsToLearn - 1]->close();
+  }
+#endif
 }
 
 //==============================================================================
@@ -445,8 +467,26 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
                 << std::endl;
     }
 #endif
+
+#ifdef OUTPUT2FILE
+  // output to file after all necessary computation and valid Lemke results
+  if (Validation && (counters[numConstraints - 1] < dataSize)) {
+    recordLCPSolve(Lemke_A, (*z), Lemke_b);
+  }
+  // early stopping
+  bool early_stopping = true;
+  for (int mDCT_idx = 0; mDCT_idx < numDesiredCT; mDCT_idx++) {
+    if (counters[mDCT_idx] < dataSize) {
+      early_stopping = false;
+      continue;
+    }
+  }
+  if (early_stopping) {
+    exit(0);
+  }
+#endif
   } else {
-    // ---------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     assert(isSymmetric(n, A));
 
     double* old_A = new double[n * nSkip];
@@ -859,3 +899,86 @@ void My2DantzigLCPSolver::Decompose(const Eigen::VectorXd& z,
   }
 }
 
+//==============================================================================
+#ifdef OUTPUT2FILE
+void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
+                                        const Eigen::VectorXd z,
+                                        const Eigen::VectorXd b) {
+  int nSize = b.rows();
+  int numContactsToLearn = nSize / (numBasis + 2);
+  assert(numContactsToLearn == numContactsCallBack);
+
+  std::shared_ptr<std::fstream> outputFile =
+      outputFiles[numContactsToLearn - 1];
+  counters[numContactsToLearn - 1] += 1;
+
+  //  output A, z, and b
+  //  // since all friction coeffs are the same, no need to output them
+  for (int i = 0; i < nSize - numContactsToLearn; i++) {
+    for (int j = i; j < nSize - numContactsToLearn; j++) {
+      (*outputFile) << A(i, j) << ",";
+    }
+  }
+
+  for (int i = 0; i < nSize - numContactsToLearn; i++) {
+    (*outputFile) << b(i) << ",";
+  }
+
+  // decompose z
+  Eigen::VectorXd z_fn(numContactsToLearn);
+  z_fn = z.head(numContactsToLearn);
+  Eigen::VectorXd z_fd(numContactsToLearn * numBasis);
+  z_fd = z.segment(numContactsToLearn, numContactsToLearn * numBasis);
+  Eigen::VectorXd z_lambda(numContactsToLearn);
+  z_lambda = z.tail(numContactsToLearn);
+
+  std::vector<Eigen::VectorXd> each_z(numContactsToLearn);
+  for (int i = 0; i < numContactsToLearn; i++) {
+    each_z[i].resize(numBasis + 2);
+    each_z[i] << z_fn(i), z_fd.segment(i * numBasis, numBasis), z_lambda(i);
+    int value = 9;
+
+    // Convention: numbasis = 8, so total 10 elements
+    if (each_z[i](0) < MY_DART_ZERO)  // fn = 0, break
+    {
+      value = 9;
+    } else if (each_z[i](9) < MY_DART_ZERO)  // lambda = 0, static
+    {
+      value = 8;
+    } else if (each_z[i](1) > MY_DART_ZERO)  // fd_1 > 0
+    {
+      value = 0;
+    } else if (each_z[i](2) > MY_DART_ZERO)  // fd_2 > 0
+    {
+      value = 1;
+    } else if (each_z[i](3) > MY_DART_ZERO)  // fd_3 > 0
+    {
+      value = 2;
+    } else if (each_z[i](4) > MY_DART_ZERO)  // fd_4 > 0
+    {
+      value = 3;
+    } else if (each_z[i](5) > MY_DART_ZERO)  // fd_5 > 0
+    {
+      value = 4;
+    } else if (each_z[i](6) > MY_DART_ZERO)  // fd_6 > 0
+    {
+      value = 5;
+    } else if (each_z[i](7) > MY_DART_ZERO)  // fd_7 > 0
+    {
+      value = 6;
+    } else if (each_z[i](8) > MY_DART_ZERO)  // fd_8 > 0
+    {
+      value = 7;
+    } else {
+      std::cerr << "ERROR: unknown LCP solution!!!" << std::endl;
+      std::cin.get();
+    }
+    (*outputFile) << value;
+    if (i < numContactsToLearn - 1) {
+      (*outputFile) << ",";
+    }
+  }
+
+  (*outputFile) << std::endl;
+}
+#endif
