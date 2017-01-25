@@ -337,7 +337,7 @@ if (err == 0) {
 
     if (!validate(_M, *_z, _q)) {
         // _z = VectorXd::Zero(n);
-        std::cout << "Fails duo to validation after iterations" << std::endl; 
+        std::cout << "Fails due to validation after iterations" << std::endl; 
         err = 3;
     }
 } else {

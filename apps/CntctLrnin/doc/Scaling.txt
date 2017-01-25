@@ -1,0 +1,71 @@
+Size = 20
+Comparing for scaling effect
+Before
+0.0069530357308992141868 0.0069530357308993234744                        0 0.0010565512891130561697                        0                        0                        0                        0                        0 0.0010565512891130008754 0.0014941891624063868838                        0                        0                        0                        0                        0                        0                        0                        0                        0
+After
+0.0069530357308994431703 0.0069530357308988880588                        0 0.0010565512891128605796                        0                        0                        0                        0                        0 0.0010565512891133543253 0.0014941891624061763317                        0                        0                        0                        0                        0                        0                        0                        0                        0
+
+Comparing for scaling effect
+Before
+ 0.22085897063358178594  0.22085897063360832027                       0 0.042040598555265977498                       0                       0                       0                       0                       0 0.042040598555244189372  0.05945438464713736354                       0                       0                       0                       0                       0                       0                       0                       0                       0
+After
+ 0.22085897063359738457  0.22085897063359782866                       0 0.042040598555260620672                       0                       0                       0                       0                       0 0.042040598555260211278 0.059454384647132298147                       0                       0                       0                       0                       0                       0                       0                       0                       0
+
+Size = 40
+Comparing for scaling effect
+Before
+                         0                          0   0.0049049999999978641935   0.0049049999999974478598  -8.181726327454468891e-20                          0                          0                          0                          0                          0                          0                          0 -1.6451063454269380151e-19                          0                          0                          0                          0                          0                          0                          0   0.0049049999999978650608                          0                          0                          0                          0                          0                          0                          0   0.0049049999999974487272                          0                          0                          0                          0                          0                          0                          0   0.0027403200000000096231   0.0027403200000000113579   0.0027403200000000109242   0.0027403200000000096231
+After
+                         0                          0   0.0049049999999976959253   0.0049049999999966195294 -2.8285966947455886656e-17                          0                          0                          0                          0                          0                          0                          0 -5.3627388793833460519e-17                          0                          0                          0                          0                          0                          0                          0   0.0049049999999977774573                          0                          0                          0                          0                          0                          0                          0   0.0049049999999965978453                          0                          0                          0                          0                          0                          0                          0     0.68508000000000235374     0.68508000000000279783     0.68508000000000224272     0.68508000000000290886
+
+
+Pattern checking
+
+/*
+ * * fn=0, fd=0, lambda=0		contact break
+ * * fn=0, fd=0, lambda>0		has relative tangential velocities but no friction
+
+ Given the specific structure of A, same A, solution is not unique, all are
+ physically feasible
+ Doesn't matter if fn=0 fd=0
+ Conclusion, change but doesn't matter
+
+ * * fn=0, fd>0, lambda=0 	X
+ * * fn=0, fd>0, lambda>0		X
+
+Not possible
+
+ * * fn>0, fd=0, lambda=0		static, no relative tangential velocities, no relative tangential acc
+ * * fn>0, fd=0, lambda>0		X
+
+Vector z 
+0.0049050000000000022402                        0 0.0049050000000000013728                        0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0
+0 0 0 0
+
+such that fd=0, lambda much be exactly 0
+lambda = 0 , no relative movement
+
+Conclusion, no effect
+
+ * * fn>0, fd>0, lambda=0		static friction, no relative tangential velocities, relative tangential acc
+ * * fn>0, fd>0, lambda>0		slide
+
+This is the friction core
+The pushing force is not enough to push the cube
+
+Already increase 250 times
+Vector z 
+                        0 1.0000000000002777392e-05  0.0048949999999999991782  0.0049050000000000022402
+-1.4656042820026059291e-34                          0                          0                          0                          0                          0                          0                          0
+2.7864848896276937205e-18                         0                         0                         0                         0                         0                         0                         0
+0.0048949999999999983108                        0                        0                        0                        0                        0                        0                        0
+0.0048950000000000000455                        0                        0                        0                        0                        0                        0                        0
+ 2.1616814368153648224e-19                          0 -5.1584586491299776805e-20                          0
+
+no effect
+
+ */

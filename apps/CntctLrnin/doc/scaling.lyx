@@ -1,0 +1,476 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\left[\begin{array}{c}
+w_{0}\\
+w_{1}\\
+w_{2}
+\end{array}\right] & =\left[\begin{array}{ccc}
+A_{00} & A_{01} & 0\\
+A_{10} & A_{11} & hE\\
+h\mu & -hE^{T} & 0
+\end{array}\right]\left[\begin{array}{c}
+f_{n}\\
+f_{d}\\
+\lambda
+\end{array}\right]+\left[\begin{array}{c}
+b_{0}\\
+b_{1}\\
+0
+\end{array}\right]\\
+\left[\begin{array}{c}
+f_{n}\\
+f_{d}\\
+\lambda
+\end{array}\right] & \geq0\\
+ & A_{00}f_{n}+A_{01}f_{d}+b_{0}\geq0\\
+ & A_{10}f_{n}+A_{11}f_{d}+hE\lambda+b_{1}\geq0\\
+ & h(\mu f_{n}-f_{d})\geq0\\
+ & f_{n}(A_{00}f_{n}+A_{01}f_{d}+b_{0})=0\\
+ & f_{d}(A_{10}f_{n}+A_{11}f_{d}+hE\lambda+b_{1})=0\\
+ & \lambda h(\mu f_{n}-f_{d})=0\\
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here are a few concerns:
+\end_layout
+
+\begin_layout Standard
+1.
+ Can 
+\begin_inset Formula $h$
+\end_inset
+
+ be arbitraily small?
+\end_layout
+
+\begin_layout Standard
+No.
+ We can think of h as 0.
+ Then the whole LCP becomes 
+\begin_inset Formula 
+\begin{align*}
+\left[\begin{array}{c}
+w_{0}\\
+w_{1}
+\end{array}\right] & =\left[\begin{array}{cc}
+A_{00} & A_{01}\\
+A_{10} & A_{11}
+\end{array}\right]\left[\begin{array}{c}
+f_{n}\\
+f_{d}
+\end{array}\right]+\left[\begin{array}{c}
+b_{0}\\
+b_{1}
+\end{array}\right]
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In other words, the smaller h is, the looser the friciton cone constraint
+ is.
+ (Recalling the thrid row of LCP is about friction cone constraint 
+\begin_inset Formula $\mu f_{n}-f_{d}\geq0$
+\end_inset
+
+).
+ If h is 0, the dimension of LCP degenerates and it become easier to solve.
+ This is the reason why after scaling, the Lemke failure rate improves.
+ (if h=1e-3, failure rate is 97/(2596-97)=.038815526; h=1e-4, Lemke failure
+ rate is 52/(2551-52)=.020808323; h=1e-6, failure rate is 0).
+ To keep a feasible friction cone constraint, a critical value of 
+\begin_inset Formula $h$
+\end_inset
+
+ needs to be spotted.
+ It can be found using static slopping test.
+ Setting the angle as (45+1e-4), non-scaling method will have the cube sliding
+ along the slope while scaling method (1e-6) will make it rolling forward.
+ (The critical value is 
+\series bold
+4e-3.
+
+\series default
+ If h is less than it, it starts rolling behavior).
+ The friction cone constraint can be phrased as 
+\begin_inset Formula $h(\mu f_{n}-f_{d})\geq-1e-6$
+\end_inset
+
+ (1e-6 is used defined zero).
+ Supposing 
+\begin_inset Formula $h=1e-3$
+\end_inset
+
+, then 
+\begin_inset Formula $(\mu f_{n}-f_{d})\ge-1e-3$
+\end_inset
+
+ The direct effect can be regarded that we have slightly larger 
+\begin_inset Formula $\mu$
+\end_inset
+
+.
+ In this sense, the rolling behavior is self-explained.
+ At that angle, cube is supposed not to sliding.
+ But if the angle is greater than 45, the gravity force deviate from diagonal
+ and will make cube roll.
+ 
+\end_layout
+
+\begin_layout Standard
+2.
+ Does scaling affect pattern?
+\end_layout
+
+\begin_layout Standard
+Scaling makes no change to 
+\begin_inset Formula $f_{n}$
+\end_inset
+
+ and 
+\begin_inset Formula $f_{d}$
+\end_inset
+
+.
+ The only diff would be 
+\begin_inset Formula $\lambda$
+\end_inset
+
+.
+ After scaling, it gets 
+\begin_inset Formula $\frac{1}{h}$
+\end_inset
+
+ times larger.
+ Here are some simulation data for your consideration of the error it could
+ make.
+\end_layout
+
+\begin_layout Standard
+Size = 20, 2 contact points
+\end_layout
+
+\begin_layout Standard
+Comparing for scaling effect 
+\end_layout
+
+\begin_layout Standard
+Before 0.0069530357308992141868 0.0069530357308993234744 0 0.0010565512891130561697
+ 0 0 0 0 0 0.0010565512891130008754 0.0014941891624063868838 0 0 0 0 0 0 0
+ 0 0 
+\end_layout
+
+\begin_layout Standard
+After 0.0069530357308994431703 0.0069530357308988880588 0 0.0010565512891128605796
+ 0 0 0 0 0 0.0010565512891133543253 0.0014941891624061763317 0 0 0 0 0 0 0
+ 0 0
+\end_layout
+
+\begin_layout Standard
+Comparing for scaling effect 
+\end_layout
+
+\begin_layout Standard
+Before 0.22085897063358178594 0.22085897063360832027 0 0.042040598555265977498
+ 0 0 0 0 0 0.042040598555244189372 0.05945438464713736354 0 0 0 0 0 0 0 0
+ 0 
+\end_layout
+
+\begin_layout Standard
+After 0.22085897063359738457 0.22085897063359782866 0 0.042040598555260620672
+ 0 0 0 0 0 0.042040598555260211278 0.059454384647132298147 0 0 0 0 0 0 0 0
+ 0
+\end_layout
+
+\begin_layout Standard
+Size = 40, 4 contact points.
+\end_layout
+
+\begin_layout Standard
+Comparing for scaling effect 
+\end_layout
+
+\begin_layout Standard
+Before 0 0 0.0049049999999978641935 0.0049049999999974478598 -8.181726327454468891e
+-20 0 0 0 0 0 0 0 -1.6451063454269380151e-19 0 0 0 0 0 0 0 0.004904999999997865060
+8 0 0 0 0 0 0 0 0.0049049999999974487272 0 0 0 0 0 0 0 0.0027403200000000096231
+ 0.0027403200000000113579 0.0027403200000000109242 0.0027403200000000096231
+ 
+\end_layout
+
+\begin_layout Standard
+After 0 0 0.0049049999999976959253 0.0049049999999966195294 -2.8285966947455886656e
+-17 0 0 0 0 0 0 0 -5.3627388793833460519e-17 0 0 0 0 0 0 0 0.004904999999997777457
+3 0 0 0 0 0 0 0 0.0049049999999965978453 0 0 0 0 0 0 0 0.68508000000000235374
+ 0.68508000000000279783 0.68508000000000224272 0.68508000000000290886
+\end_layout
+
+\begin_layout Standard
+\begin_inset Phantom VPhantom
+status open
+
+\begin_layout Plain Layout
+--------------------------------------------------------------------------------
+-
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The patterns:
+\end_layout
+
+\begin_layout Itemize
+fn=0, fd=0, lambda=0 contact break 
+\end_layout
+
+\begin_layout Itemize
+fn=0, fd=0, lambda>0 it has relative tangential velocities but no friction
+\end_layout
+
+\begin_layout Standard
+Given the specific structure of A, both patterns are feasible for one single
+ A.
+ In other words, even scaling change the pattern, it doesn't matter.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Phantom VPhantom
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+fn=0, fd>0, lambda=0 
+\end_layout
+
+\begin_layout Itemize
+fn=0, fd>0, lambda>0 
+\end_layout
+
+\begin_layout Standard
+Not possible at all
+\end_layout
+
+\begin_layout Standard
+\begin_inset Phantom VPhantom
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+fn>0, fd=0, lambda=0 static, no relative tangential velocities, no relative
+ tangential acc
+\end_layout
+
+\begin_layout Itemize
+fn>0, fd=0, lambda>0 
+\end_layout
+
+\begin_layout Standard
+This case could be the most dangerous one, but further analysis shows that
+ it is safe.
+ If 
+\begin_inset Formula $f_{d}$
+\end_inset
+
+ is exactly 0, then it means no relative movement, therefore 
+\begin_inset Formula $\lambda=0$
+\end_inset
+
+.
+ Simulation also reinforces this point.
+ In conclusion, scaling doesn't have an impact.
+\end_layout
+
+\begin_layout Standard
+Vector z 0.0049050000000000022402 0 0.0049050000000000013728 0 0 0 0 0 0 0
+ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+\end_layout
+
+\begin_layout Standard
+\begin_inset Phantom VPhantom
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+fn>0, fd>0, lambda=0 static friction, no relative tangential velocities,
+ relative tangential acc, in other words, pushing force is not enough to
+ push the cube
+\end_layout
+
+\begin_layout Itemize
+fn>0, fd>0, lambda>0 slide
+\end_layout
+
+\begin_layout Standard
+This is the friction cone case, which is also dangerous.
+ I verify this case by simulation because I want to see how large lambda
+ could be considering all kinds of error.
+ If 9.79N force is applied a 1kg cube, the cube will stay and there is a
+ directional friction force.
+ The lambda (after scaling) is around 1e-19, which is far away from the
+ user-defined zero.
+ 
+\end_layout
+
+\begin_layout Standard
+Vector z 0 1.0000000000002777392e-05 0.0048949999999999991782 0.0049050000000000022
+402 -1.4656042820026059291e-34 0 0 0 0 0 0 0 2.7864848896276937205e-18 0 0
+ 0 0 0 0 0 0.0048949999999999983108 0 0 0 0 0 0 0 0.0048950000000000000455
+ 0 0 0 0 0 0 0 2.1616814368153648224e-19 0 -5.1584586491299776805e-20 0 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Phantom VPhantom
+status open
+
+\begin_layout Plain Layout
+\begin_inset Phantom VPhantom
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In conclusion, scaling doesn't affect pattern.
+\end_layout
+
+\begin_layout Standard
+3.
+ Scaling and Lemke tolerance
+\end_layout
+
+\begin_layout Standard
+h is 4e-3, which is still a large number compared to Lemke piv_tol 1e-12.
+ In this sense, after scaling, it shouldn't change 
+\begin_inset Formula $f_{n}$
+\end_inset
+
+ and 
+\begin_inset Formula $f_{d}$
+\end_inset
+
+ too much.
+ BTW, it makes  entries of A almost the same order of maginitude, so that
+ Lemke becomes more stable.
+\end_layout
+
+\end_body
+\end_document
