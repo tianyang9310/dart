@@ -114,14 +114,12 @@ void MyWindow::timeStepping() {
   counter = (counter + 1) % mPeriod;
 
   if (counter < mDutyCycle) {
-    // addExtForce();
+    addExtForce();
     // tiltPlatform();
   }
-  /*
-   * else if (counter == 150) {
-   *   // addExtTorque();
-   * }
-   */
+  else if (counter > 8) {
+    addExtTorque();
+  }
   // addExtTorque();
   if (mWorld->getSimFrames() == episodeLength) {
     std::cout << "Time is " << mWorld->getTime() << std::endl;
@@ -144,7 +142,7 @@ void MyWindow::timeStepping() {
               << std::endl;
 #endif
 #endif
-    keyboard('y', 0, 0);
+    // keyboard('y', 0, 0);
   }
 // mCollisionDetector->detectCollision(true, true);
 #ifndef ODE_VANILLA
@@ -190,18 +188,16 @@ void MyWindow::addExtForce() {
   
  // Apply force to COM
  // add constant external forces
- extForce.setZero();
- extForce(0) = 1.5e1;
+ // extForce.setZero();
+ // extForce(0) = 1.5e1;
 
- /*
-  * randFCounter--;
-  * if (randFCounter < 0) {
-  *   // add random external forces
-  *   extForce = Eigen::Vector3d::Random() * 50;
-  *   randFCounter = 50;
-  * }
-  * std::cerr << "Add external force: " << extForce.transpose() << std::endl;
-  */
+ // randFCounter--;
+ // if (randFCounter < 0) {
+   // add random external forces
+   extForce = Eigen::Vector3d::Random() * 5;
+ //   randFCounter = 50;
+ // }
+ // std::cerr << "Add external force: " << extForce.transpose() << std::endl;
 
  // Apply force to COM
  mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce);
@@ -234,14 +230,14 @@ void MyWindow::addExtForce() {
 
 void MyWindow::addExtTorque() {
   // dtmsg<<"Add external torque"<<std::endl;
-  Eigen::Vector3d extTorque = Eigen::Vector3d::Identity() * 0.8;
-  mWorld->getSkeleton("mBox")
-      ->getBodyNode("BodyNode_1")
-      ->addExtTorque(extTorque);
-
+  // Eigen::Vector3d extTorque = Eigen::Vector3d::Identity() * 0.8;
   // mWorld->getSkeleton("mBox")
   //     ->getBodyNode("BodyNode_1")
-  //     ->addExtTorque(Eigen::Vector3d::Random() * 100);
+  //     ->addExtTorque(extTorque);
+
+  mWorld->getSkeleton("mBox")
+      ->getBodyNode("BodyNode_1")
+      ->addExtTorque(Eigen::Vector3d::Random() * 10);
 }
 
 void MyWindow::keyboard(unsigned char _key, int _x, int _y) {

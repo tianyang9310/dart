@@ -10,7 +10,6 @@
 #include "LCPLinEqu.h"
 #include "My2ContactConstraint.h"
 #include "MyWindow.h"
-#include "SnLCPWrapper.h"
 #include "dart/dart.h"
 #include "utils.h"
 
@@ -28,12 +27,12 @@
 // #include "MyDantzigLCPSolver.h"
 
 #define OUTPUT2FILE
-// #define LEMKE_PRINT
-// #define ODE_PRINT
-// #define IMPULSE_CHANGE
+#define LEMKE_PRINT
+#define ODE_PRINT
+#define IMPULSE_CHANGE
 
 #define RECALL_SOLVE
-#define SNOPT_SOLVE
+// #define SNOPT_SOLVE
 // #define BRUTE_SOLVE
 
 #define SANITY_CHECK

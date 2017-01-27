@@ -7,7 +7,6 @@
 #include "MyDantzigLCPSolver.h"
 #include "MyWindow.h"
 #include "MyWorld.h"
-#include "SnLCPWrapper.h"
 #include "addSkeles.h"
 #include "dart/dart.h"
 
