@@ -920,6 +920,10 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
     }
   }
 
+  for (int i = 0; i < numContactsToLearn; i++) {
+    (*outputFile) << A(nSize-numContactsToLearn+i,i) << ",";
+  }
+
   for (int i = 0; i < nSize - numContactsToLearn; i++) {
     (*outputFile) << b(i) << ",";
   }
