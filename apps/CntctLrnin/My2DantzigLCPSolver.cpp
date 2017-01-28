@@ -397,6 +397,16 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
         std::cerr << z_groups[i] << std::endl;
         std::cin.get();
       }
+      // Count how many non-zero does fd have
+      double fd_nz=0;
+      fd_nz = (z_groups[i].segment(1,numBasis).array() > SanityCheckZero)
+              .matrix().cast<double>().sum();
+      std::cout << i << "th contact has " << fd_nz << " nonzero in fd. ";
+      if (z_groups[i](1+numBasis) > SanityCheckZero) {
+        std::cout << "lambda" << " > 0 " << std::endl;
+      } else {
+        std::cout << "lambda" << " = 0 " << std::endl;
+      }
     }
 #endif
 
