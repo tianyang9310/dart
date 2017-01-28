@@ -3,7 +3,6 @@
 #include "dart/dart.h"
 #include "MyWindow.h"
 #include "addSkeles.h"
-#include "MyDantzigLCPSolver.h"
 
 
 int main(int argc, char* argv[])
@@ -17,7 +16,7 @@ int main(int argc, char* argv[])
     mWorld->setGravity(gravity);
     
     // using Bullet Collision Detector
-    mWorld->getConstraintSolver()->setCollisionDetector(new dart::collision::BulletCollisionDetector());
+    mWorld->getConstraintSolver()->setCollisionDetector(new dart::collision::DARTCollisionDetector());
     
     // using MyDantzigLCPSolver
     int totalDOF = 0;
@@ -25,7 +24,7 @@ int main(int argc, char* argv[])
     totalDOF += mWorld->getSkeleton("mBox")->getNumDofs();
     std::cout<<"Ground Skeleton: "<<mWorld->getSkeleton("ground skeleton")->isMobile()<<std::endl;
     std::cout<<"mBox: "<<mWorld->getSkeleton("mBox")->isMobile()<<std::endl;;
-    mWorld->getConstraintSolver()->setLCPSolver(new MyDantzigLCPSolver(mWorld->getTimeStep(), totalDOF));
+    // mWorld->getConstraintSolver()->setLCPSolver(new MyDantzigLCPSolver(mWorld->getTimeStep(), totalDOF));
     
     // create a window and link it to the world
     MyWindow window(mWorld);

@@ -15,23 +15,23 @@ MyWindow::~MyWindow()
 
 void MyWindow::timeStepping()
 {
-    int numCntct = mCollisionDetector->getNumContacts();
-    if (numCntct>0)
-    {
-        cout<<"There are "<<numCntct<<" contact points"<<endl;
-        // retrieve A and p in LCP (for only normal part, assuming frictionless)
-        
-        // std::cout<<mWorld->getSkeleton("ground skeleton")->getBodyNode("ground")->getArticulatedInertia()<<std::endl;
-        // std::cin.get();
-    }
+  addExtForce();
     
     dart::gui::SimWindow::timeStepping();
+    if (mWorld->getSimFrames() == 2500) {
+      keyboard(' ',0,0);
+      std::cout << "mbox pos " << mWorld->getSkeleton("mBox")->getPositions().transpose() << std::endl; 
+    }
 }
 
 void MyWindow::addExtForce()
 {
-    mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtTorque(Eigen::Vector3d::Random()*100);
-    mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(Eigen::Vector3d::Random()*3);
+    // mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtTorque(Eigen::Vector3d::Random()*100);
+    Eigen::Vector3d extForce;
+    extForce.setZero();
+    extForce(0) = 1.2e1; //*std::cos(45.0/180.0*DART_PI);
+    // extForce(2) = 1.2e1*std::sin(45.0/180.0*DART_PI);
+    mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce);
 }
 
 void MyWindow::keyboard(unsigned char _key, int _x, int _y)
