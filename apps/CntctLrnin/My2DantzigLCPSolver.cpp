@@ -950,42 +950,21 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
   for (int i = 0; i < numContactsToLearn; i++) {
     each_z[i].resize(numBasis + 2);
     each_z[i] << z_fn(i), z_fd.segment(i * numBasis, numBasis), z_lambda(i);
-    int value = 9;
+
+    double RECORD_ZERO = 1e-50;
+    int value = 256;
 
     // Convention: numbasis = 8, so total 10 elements
-    if (each_z[i](0) < MY_DART_ZERO)  // fn = 0, break
+    if (each_z[i](0) < RECORD_ZERO)  // fn = 0, break
     {
-      value = 9;
-    } else if (each_z[i](9) < MY_DART_ZERO)  // lambda = 0, static
-    {
-      value = 8;
-    } else if (each_z[i](1) > MY_DART_ZERO)  // fd_1 > 0
-    {
-      value = 0;
-    } else if (each_z[i](2) > MY_DART_ZERO)  // fd_2 > 0
-    {
-      value = 1;
-    } else if (each_z[i](3) > MY_DART_ZERO)  // fd_3 > 0
-    {
-      value = 2;
-    } else if (each_z[i](4) > MY_DART_ZERO)  // fd_4 > 0
-    {
-      value = 3;
-    } else if (each_z[i](5) > MY_DART_ZERO)  // fd_5 > 0
-    {
-      value = 4;
-    } else if (each_z[i](6) > MY_DART_ZERO)  // fd_6 > 0
-    {
-      value = 5;
-    } else if (each_z[i](7) > MY_DART_ZERO)  // fd_7 > 0
-    {
-      value = 6;
-    } else if (each_z[i](8) > MY_DART_ZERO)  // fd_8 > 0
-    {
-      value = 7;
+      value = 256;
     } else {
-      std::cerr << "ERROR: unknown LCP solution!!!" << std::endl;
-      std::cin.get();
+      value = 0;
+      for (int j = 0; j < numBasis; j++) {
+        if (each_z[i](j) > RECORD_ZERO ) {
+          value += std::pow(2,numBasis-1-j);
+        }
+      } 
     }
     (*outputFile) << value;
     if (i < numContactsToLearn - 1) {
