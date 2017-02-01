@@ -41,9 +41,19 @@ title('contact 1')
 subplot(2,1,2)
 hist(lcpdata2(:,end))
 title('contact 2')
-hist3(lcpdata2(:,end-1:end));
+% hist3(lcpdata2(:,end-1:end));
 
 figure(4);
 lcpdata1=csvread([path 'lcp_data1.csv']);
 hist(lcpdata1(:,end))
 title('contact 1')
+
+figure(5);
+lcpdata2_trim=csvread([path 'lcp_data2_trim_.csv']);
+subplot(2,1,1)
+hist(lcpdata2_trim(:,end-1))
+title('contact 1')
+subplot(2,1,2)
+hist(lcpdata2_trim(:,end))
+title('contact 2')
+% hist3(lcpdata2_trim(:,end-1:end));
