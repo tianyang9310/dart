@@ -48,7 +48,8 @@ MyWindow::~MyWindow() {
 void MyWindow::timeStepping() {
   mWorld->getSkeleton(1)->getBodyNode(0)->addExtForce(mForce);
   mWorld->step();
-  mForce /= 2.0;
+  std::cout << "Force Magnitude is: " << mForce.norm() << std::endl;
+  // mForce /= 2.0;
 }
 
 void MyWindow::drawSkels() {
@@ -90,13 +91,16 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
       mShowMarkers = !mShowMarkers;
       break;
     case '1':  // upper right force
-      mForce[0] = -500;
+      mForce.setZero();
+      mForce[0] = 12;
       break;
     case '2':  // upper right force
       mForce[0] = 500;
       break;
     case '3':  // upper right force
-      mForce[2] = -500;
+      mForce.setZero();
+      mForce[0] = 12*std::cos(45.0/180.0*DART_PI);
+      mForce[2] = 12*std::sin(45.0/180.0*DART_PI);
       break;
     case '4':  // upper right force
       mForce[2] = 500;
