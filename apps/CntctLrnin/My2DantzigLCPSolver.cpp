@@ -946,24 +946,31 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
   Eigen::VectorXd z_lambda(numContactsToLearn);
   z_lambda = z.tail(numContactsToLearn);
 
-  double RECORD_ZERO = 1e-50;
-  int value = 256;
+  double RECORD_ZERO = 1e-25;
+  int value = 9;
   std::vector<Eigen::VectorXd> each_z(numContactsToLearn);
   for (int i = 0; i < numContactsToLearn; i++) {
     each_z[i].resize(numBasis + 2);
     each_z[i] << z_fn(i), z_fd.segment(i * numBasis, numBasis), z_lambda(i);
     
+    int value = 9;
     // Convention: numbasis = 8, so total 10 elements
     if (each_z[i](0) < RECORD_ZERO)  // fn = 0, break
     {
-      value = 256;
-    } else {
-      value = 0;
+      value = 9;
+    } else if (each_z[i](numBasis+1) < RECORD_ZERO) { // lambda = 0, static
+      value = 8;
+    } else { // random choose non-zero in fd
+      std::vector<int> nonZerofd;
+      nonZerofd.clear();
       for (int j = 0; j < numBasis; j++) {
-        if (each_z[i](j+1) > RECORD_ZERO ) {
-          value += std::pow(2,numBasis-1-j);
+        if (each_z[i](j+1) > RECORD_ZERO) {
+          nonZerofd.push_back(j);
         }
-      } 
+      }
+      assert(nonZerofd.size() <= 2);
+      assert(nonZerofd.size() > 0);
+      value = nonZerofd[std::rand() % nonZerofd.size()];
     }
     (*outputFile) << value;
     if (i < numContactsToLearn - 1) {
