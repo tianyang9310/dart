@@ -8,7 +8,7 @@ My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep, MyWindow* _mWindow)
 
   mPrecision = PRECISION;
 #ifdef OUTPUT2FILE
-  dataSize = 30000;
+  dataSize = 50000;
   numDesiredCT = 4;
   // Here magic number of 4 is what we suppose to get from cube testing
   for (int numContactsToLearn = 1; numContactsToLearn < 1+numDesiredCT;
@@ -237,7 +237,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
    */
   // ---------------------------------------------------------------------------
   // Using Lemke to solve
-  std::cout << "# ct points: " << numContactsCallBack << std::endl;
+  // std::cout << "# ct points: " << numContactsCallBack << std::endl;
   if (numBasis != 2) {
     Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
     int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
@@ -440,7 +440,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       // std::cin.get();
     }
 
-    std::cout << std::endl;
+    // std::cout << std::endl;
 
 /*
  *     for (size_t i = 0; i < numConstraints; i++) {
@@ -572,7 +572,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     }
   }
 
-  std::cout << std::endl;
+  // std::cout << std::endl;
 
   delete[] offset;
 

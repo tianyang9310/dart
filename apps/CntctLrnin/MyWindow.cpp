@@ -46,14 +46,14 @@ MyWindow::~MyWindow() {}
 void MyWindow::timeStepping() {
   // addExtForce();
   int numContacts = mCollisionDetector->getNumContacts();
-  std::cout << "=================================================" << std::endl;
-  std::cout << "mBox Position: "
-            << mWorld->getSkeleton("mBox")->getPositions().transpose()
-            << std::endl;
-  std::cout << "mBox Velocity: "
-            << mWorld->getSkeleton("mBox")->getVelocities().transpose()
-            << std::endl
-            << std::endl;
+  // std::cout << "=================================================" << std::endl;
+  // std::cout << "mBox Position: "
+  //           << mWorld->getSkeleton("mBox")->getPositions().transpose()
+  //           << std::endl;
+  // std::cout << "mBox Velocity: "
+  //           << mWorld->getSkeleton("mBox")->getVelocities().transpose()
+  //           << std::endl
+  //           << std::endl;
 
 /*
  *std::cout << "num of contact points is: " << numContacts << std::endl;
@@ -154,22 +154,22 @@ void MyWindow::timeStepping() {
 #endif
 
   // std::cout << "Current frame is " << mWorld->getSimFrames() << std::endl;
-  if (numContacts != 4) {
-    std::cerr << "numContacts: " << numContacts
-              << " current frame: " << mWorld->getSimFrames() << std::endl;
-    std::cerr << "mBox Position: "
-              << mWorld->getSkeleton("mBox")->getPositions().transpose()
-              << std::endl;
-    // keyboard('y', 0, 0);
-  }
+  // if (numContacts != 4) {
+  //   std::cerr << "numContacts: " << numContacts
+  //             << " current frame: " << mWorld->getSimFrames() << std::endl;
+  //   std::cerr << "mBox Position: "
+  //             << mWorld->getSkeleton("mBox")->getPositions().transpose()
+  //             << std::endl;
+  //   // keyboard('y', 0, 0);
+  // }
 
-  std::cout << "mBox Position: "
-            << mWorld->getSkeleton("mBox")->getPositions().transpose()
-            << std::endl;
-  std::cout << "mBox Velocity: "
-            << mWorld->getSkeleton("mBox")->getVelocities().transpose()
-            << std::endl
-            << std::endl;
+  // std::cout << "mBox Position: "
+  //           << mWorld->getSkeleton("mBox")->getPositions().transpose()
+  //           << std::endl;
+  // std::cout << "mBox Velocity: "
+  //           << mWorld->getSkeleton("mBox")->getVelocities().transpose()
+  //           << std::endl
+  //           << std::endl;
   // keyboard('y', 0, 0);
 
   /*

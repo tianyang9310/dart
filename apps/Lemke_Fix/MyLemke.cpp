@@ -317,8 +317,8 @@ for (iter = 0; iter < maxiter; ++iter) {
     bas[lvindex] = entering;
 }
 
-std::cout << std::endl << iter << "th iteration Lemke" << std::endl 
-          << std::endl;
+// std::cout << std::endl << iter << "th iteration Lemke" << std::endl 
+//           << std::endl;
 
 if (iter >= maxiter && leaving != t) {
     err = 1;

@@ -19,7 +19,7 @@
 #define DART_MAX_BOUNCING_VELOCITY 1e+2
 // #define DART_CONTACT_CONSTRAINT_EPSILON  1e-6
 
-#define OUTPUT
+// #define OUTPUT
 
 namespace dart {
 namespace constraint {
