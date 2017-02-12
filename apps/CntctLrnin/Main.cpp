@@ -10,6 +10,8 @@
 #include "addSkeles.h"
 #include "dart/dart.h"
 
+// #define RUN_GUI
+
 int main(int argc, char* argv[]) {
   std::srand(
       (unsigned)(std::chrono::system_clock::now().time_since_epoch().count()));
@@ -94,9 +96,15 @@ int main(int argc, char* argv[]) {
 #endif
 #endif
 
+#ifdef RUN_GUI
   glutInit(&argc, argv);
   window.initWindow(640, 480, "Balance");
   glutMainLoop();
+#else
+  while (true) {
+    window.timeStepping();
+  }
+#endif
 
   return 0;
 }
