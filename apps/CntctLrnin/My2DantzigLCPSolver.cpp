@@ -964,7 +964,7 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
       std::vector<int> nonZerofd;
       nonZerofd.clear();
       for (int j = 0; j < numBasis; j++) {
-        if (each_z[i](j+1) > RECORD_ZERO) {
+        if (each_z[i](j+1) > - RECORD_ZERO) {
           nonZerofd.push_back(j);
         }
       }
