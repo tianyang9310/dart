@@ -922,22 +922,6 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
       outputFiles[numContactsToLearn - 1];
   counters[numContactsToLearn - 1] += 1;
 
-  //  output A, z, and b
-  //  // since all friction coeffs are the same, no need to output them
-  for (int i = 0; i < nSize - numContactsToLearn; i++) {
-    for (int j = i; j < nSize - numContactsToLearn; j++) {
-      (*outputFile) << A(i, j) << ",";
-    }
-  }
-
-  for (int i = 0; i < numContactsToLearn; i++) {
-    (*outputFile) << A(nSize-numContactsToLearn+i,i) << ",";
-  }
-
-  for (int i = 0; i < nSize - numContactsToLearn; i++) {
-    (*outputFile) << b(i) << ",";
-  }
-
   // decompose z
   Eigen::VectorXd z_fn(numContactsToLearn);
   z_fn = z.head(numContactsToLearn);
@@ -949,6 +933,7 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
   double RECORD_ZERO = 1e-25;
   int value = 9;
   std::vector<Eigen::VectorXd> each_z(numContactsToLearn);
+  Eigen::VectorXi value_array(numContactsToLearn);
   for (int i = 0; i < numContactsToLearn; i++) {
     each_z[i].resize(numBasis + 2);
     each_z[i] << z_fn(i), z_fd.segment(i * numBasis, numBasis), z_lambda(i);
@@ -972,12 +957,34 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
       assert(nonZerofd.size() > 0);
       value = nonZerofd[std::rand() % nonZerofd.size()];
     }
-    (*outputFile) << value;
+    value_array(i) = value;
+  }
+
+  if (value_array.maxCoeff() < 8) {
+  //  output A, z, and b
+  //  // since all friction coeffs are the same, no need to output them
+  for (int i = 0; i < nSize - numContactsToLearn; i++) {
+    for (int j = i; j < nSize - numContactsToLearn; j++) {
+      (*outputFile) << A(i, j) << ",";
+    }
+  }
+
+  for (int i = 0; i < numContactsToLearn; i++) {
+    (*outputFile) << A(nSize-numContactsToLearn+i,i) << ",";
+  }
+
+  for (int i = 0; i < nSize - numContactsToLearn; i++) {
+    (*outputFile) << b(i) << ",";
+  }
+
+  for (int i = 0; i < numContactsToLearn; i++ ) {
+    (*outputFile) << value_array(i);
     if (i < numContactsToLearn - 1) {
       (*outputFile) << ",";
     }
   }
 
   (*outputFile) << std::endl;
+  }
 }
 #endif
