@@ -26,6 +26,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
 
   extForce.setZero();
   // setPlatform();
+  resetCubeOrientation();
 
   offset<<-0.05,0.05,0;
 #ifndef ODE_VANILLA
@@ -46,6 +47,10 @@ MyWindow::~MyWindow() {}
 void MyWindow::timeStepping() {
   // addExtForce();
   int numContacts = mCollisionDetector->getNumContacts();
+  if (numContacts>2) {
+    int dir = (mWorld->getSimFrames()/800)%8;
+    resetCubeOrientation(dir); 
+  }
   // std::cout << "=================================================" << std::endl;
   // std::cout << "mBox Position: "
   //           << mWorld->getSkeleton("mBox")->getPositions().transpose()
@@ -88,36 +93,36 @@ void MyWindow::timeStepping() {
 //           << std::endl;
 #endif
 #endif
-  /*
-   *  // regularization the positive of cube
-   *  double range = 12.5;
-   *  if ((std::abs(mWorld->getSkeleton("mBox")
-   *                    ->getBodyNode("BodyNode_1")
-   *                    ->getTransform()
-   *                    .translation()(0)) > range)  // x direction
-   *      || (std::abs(mWorld->getSkeleton("mBox")
-   *                       ->getBodyNode("BodyNode_1")
-   *                       ->getTransform()
-   *                       .translation()(2)) > range))  // z direction
-   *  {
-   *    std::cerr << "ERROR: runnng out of range, need regularization!!!" <<
-   * std::endl;
-   *
-   *    mWorld->getSkeleton("mBox")->setPositions(Eigen::VectorXd::Zero(6));
-   *    mWorld->getSkeleton("mBox")->setVelocities(Eigen::VectorXd::Zero(6));
-   *  }
-   */
+   // regularization the positive of cube
+   double range = 12.5;
+   if ((std::abs(mWorld->getSkeleton("mBox")
+                     ->getBodyNode("BodyNode_1")
+                     ->getTransform()
+                     .translation()(0)) > range)  // x direction
+       || (std::abs(mWorld->getSkeleton("mBox")
+                        ->getBodyNode("BodyNode_1")
+                        ->getTransform()
+                        .translation()(2)) > range))  // z direction
+   {
+  //    std::cerr << "ERROR: runnng out of range, need regularization!!!" <<
+  // std::endl;
+  
+     int dir = (mWorld->getSimFrames()/800)%8;
+     resetCubeOrientation(dir);
+     // mWorld->getSkeleton("mBox")->setPositions(Eigen::VectorXd::Zero(6));
+     // mWorld->getSkeleton("mBox")->setVelocities(Eigen::VectorXd::Zero(6));
+   }
 
   // 20 is the period/
   int mPeriod = 10;
-  int mDutyCycle = 1;
+  int mDutyCycle = 4;
   counter = (counter + 1) % mPeriod;
 
   if (counter < mDutyCycle) {
     addExtForce();
     // tiltPlatform();
   }
-  else if (counter > 8) {
+  else if (counter > mPeriod - mDutyCycle - 1) {
     addExtTorque();
   }
   // addExtTorque();
@@ -188,13 +193,17 @@ void MyWindow::addExtForce() {
   
  // Apply force to COM
  // add constant external forces
- // extForce.setZero();
- // extForce(0) = 1.5e1;
+ extForce.setZero();
+ int dir = (mWorld->getSimFrames()/800)%8;
+ double mag = std::rand()% 20;
+ double dev = double(std::rand())/RAND_MAX * 10 - 5;
+ extForce(0) = mag * std::sin((dir*45.0 + dev)/180*DART_PI);
+ extForce(2) = mag * std::cos((dir*45.0 + dev)/180*DART_PI);
 
  // randFCounter--;
  // if (randFCounter < 0) {
    // add random external forces
-   extForce = Eigen::Vector3d::Random() * 5;
+   // extForce = Eigen::Vector3d::Random() * 5;
  //   randFCounter = 50;
  // }
  // std::cerr << "Add external force: " << extForce.transpose() << std::endl;
@@ -481,4 +490,20 @@ void MyWindow::setPlatform() {
 
   // keyboard('y',0,0);
   // std::cin.get();
+}
+
+void MyWindow::resetCubeOrientation(int dir) {
+  std::cout << "reset orientation" << std::endl;
+  Eigen::Vector3d eulerYZX;
+  eulerYZX << dir*45.0, std::rand()%10-5+45, 0.0;
+  eulerYZX = eulerYZX /180.0 * DART_PI;
+  Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
+  tf.linear() = dart::math::eulerYZXToMatrix(eulerYZX);
+
+  Eigen::VectorXd mResetPos(6);
+  mResetPos  = 
+  dynamic_cast<dart::dynamics::FreeJoint*>(
+    mWorld->getSkeleton("mBox")->getJoint("Joint_1"))->convertToPositions(tf);
+  mWorld->getSkeleton("mBox")->setPositions(mResetPos);
+  mWorld->getSkeleton("mBox")->setVelocities(Eigen::VectorXd::Zero(6));
 }

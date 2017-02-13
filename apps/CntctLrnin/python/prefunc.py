@@ -13,20 +13,20 @@ row, col = data.shape
 
 # massage data
 max_num = 50
-offset = 128
-size = [129]*index
+offset = 0
+size = [10]*index
 gridBin = np.zeros(tuple(size))
 
 new_data = np.zeros(shape=(0,col))
 for iter in data:
     label = iter[-index:]
     coord = label.astype(np.int) - offset
-    if (gridBin[tuple(coord)] <= max_num):
+    if (9 not in coord):
         new_data = np.append(new_data,np.array([iter]),axis=0)
         gridBin[tuple(coord)] +=1
     else:
         continue
 
 # write data
-new_dir = pre_dir+cur_dir+'_trim_'+str(max_num)+post_dir
+new_dir = pre_dir+cur_dir+'_filter_not_9_'+str(max_num)+post_dir
 np.savetxt(new_dir, new_data, delimiter = ',', fmt='%s')

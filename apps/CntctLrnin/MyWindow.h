@@ -1,11 +1,11 @@
 #ifndef CNTCTLRNIN_MYWINDOW_H
 #define CNTCTLRNIN_MYWINDOW_H
 
-#include <random>
 #include <cmath>
+#include <random>
 #include "Controller.h"
-#include "MyDantzigLCPSolver.h"
 #include "My2DantzigLCPSolver.h"
+#include "MyDantzigLCPSolver.h"
 #include "dart/dart.h"
 
 // #define ODE_VANILLA  // decide to use MyDantizig or Danzig
@@ -34,11 +34,12 @@ class MyWindow : public dart::gui::SimWindow {
   void keyboard(unsigned char _key, int _x, int _y) override;
   void drawSkels() override;
   void draw() override;
-  void displayTimer(int _val); 
+  void displayTimer(int _val);
   dart::simulation::WorldPtr getWorld();
   void updateViewer();
   void tiltPlatform();
   void setPlatform();
+  void resetCubeOrientation(int dir = 0);
 
   private:
   std::unique_ptr<Controller> mController;
