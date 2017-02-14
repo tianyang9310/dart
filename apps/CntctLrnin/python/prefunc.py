@@ -4,7 +4,7 @@ import numpy as np
 
 # import data
 index = 2
-pre_dir = '/Users/Yang/Material/Research/dart/build/data/lcp_data'
+pre_dir = '../../../build/data/lcp_data'
 cur_dir = str(index)
 post_dir = '.csv'
 dir = pre_dir+cur_dir+post_dir
