@@ -12,21 +12,31 @@ data = np.genfromtxt(dir,dtype=str,delimiter=',')
 row, col = data.shape
 
 # massage data
-max_num = 50
-offset = 0
+max_num = 1000
 size = [10]*index
 gridBin = np.zeros(tuple(size))
 
 new_data = np.zeros(shape=(0,col))
 for iter in data:
     label = iter[-index:]
-    coord = label.astype(np.int) - offset
-    if (9 not in coord):
+    coord = label.astype(np.int)
+    if (gridBin[tuple(coord)] <= max_num):
         new_data = np.append(new_data,np.array([iter]),axis=0)
         gridBin[tuple(coord)] +=1
     else:
         continue
 
+for iter in data:
+    label = iter[-index:]
+    coord = label.astype(np.int)
+    if (gridBin[tuple(coord)] <= max_num):
+        repeatTimes = np.random.randint(5)
+        for repeat in xrange(repeatTimes):
+            new_data = np.append(new_data,np.array([iter]),axis=0)
+            gridBin[tuple(coord)] +=1
+    else:
+        continue
+
 # write data
-new_dir = pre_dir+cur_dir+'_filter_not_9_'+str(max_num)+post_dir
+new_dir = pre_dir+cur_dir+'_trim_'+str(max_num)+post_dir
 np.savetxt(new_dir, new_data, delimiter = ',', fmt='%s')
