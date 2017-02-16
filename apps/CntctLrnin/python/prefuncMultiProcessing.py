@@ -4,6 +4,7 @@
 from multiprocessing import Pool, Manager
 import multiprocessing
 import numpy as np
+import h5py
 import time
 import os
 
@@ -128,5 +129,8 @@ if __name__ == '__main__':
     for res in newData_Pool:
          new_data = np.append(new_data, res.get(timeout=1), axis=0)
 
-    new_dir = pre_dir + cur_dir + '_trim_' + str(numMax) + post_dir
-    np.savetxt(new_dir, new_data, delimiter=',', fmt='%s')
+    new_dir = pre_dir + cur_dir + '_trim_' + str(numMax) + '.h5'
+    h5file = h5py.File(new_dir,'w')
+    h5file.create_dataset('ct data',data=new_data)
+    h5file.close()
+    # np.savetxt(new_dir, new_data, delimiter=',', fmt='%s')
