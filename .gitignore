@@ -3,6 +3,7 @@ Xcode/
 build/
 build_debug/
 .idea/
+*.pyc
 syntax: glob
 *.swp
 *.swo

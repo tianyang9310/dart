@@ -137,12 +137,16 @@ if __name__ == '__main__':
          new_data = np.append(new_data, res.get(timeout=1), axis=0)
 
 
+    # draw histogram
     alllabel = new_data[:,-numContactsToLearn:]
     label = []
     for idx in range(numContactsToLearn):
         label.append(alllabel[:,idx])
     # label = tuple(label)
     plt1v1Hist('../../../build/data/After',label)
+
+    # store data
+    new_data = new_data.astype(np.float64)
     new_dir = pre_dir + cur_dir + '_trim_' + str(numMax) + '.h5'
     h5file = h5py.File(new_dir,'w')
     h5file.create_dataset('ct data',data=new_data)
