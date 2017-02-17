@@ -13,7 +13,8 @@ import os
 numContactsToLearn = 3
 numProcess = multiprocessing.cpu_count()
 numClass = 10
-numMax = 500
+numMax = 400
+MaxRepeat = 60
 
 pre_dir = '../../../build/data/lcp_data'
 cur_dir = str(numContactsToLearn)
@@ -75,7 +76,7 @@ def repeatNewDataReachMax(idxProcess, Bin):
         coord = tuple(label.astype(np.int))
         coord = index_from_XD_to_1D(*coord)
         if (Bin[coord] <= numMax):
-            repeatTimes = np.random.randint(5)
+            repeatTimes = np.random.randint(MaxRepeat)
             for repeat in xrange(repeatTimes):
                 newSubData = np.append(newSubData, np.array([iter]), axis=0)
                 Bin[coord] += 1
@@ -147,7 +148,7 @@ if __name__ == '__main__':
 
     # store data
     new_data = new_data.astype(np.float64)
-    new_dir = pre_dir + cur_dir + '_trim_' + str(numMax) + '.h5'
+    new_dir = pre_dir + cur_dir + '_trim_' + str(numMax) + '_' + str(MaxRepeat)  + '.h5'
     h5file = h5py.File(new_dir,'w')
     h5file.create_dataset('ct data',data=new_data)
     h5file.close()
