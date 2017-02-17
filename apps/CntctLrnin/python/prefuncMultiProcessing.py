@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from multiprocessing import Pool, Manager
+from pyHist3 import *
 import multiprocessing
 import numpy as np
 import h5py
@@ -20,6 +21,12 @@ post_dir = '.csv'
 dir = pre_dir + cur_dir + post_dir
 
 data = np.genfromtxt(dir, dtype=str, delimiter=',')
+alllabel = data[:,-numContactsToLearn:]
+label = []
+for idx in range(numContactsToLearn):
+    label.append(alllabel[:,idx])
+# label = tuple(label)
+plt1v1Hist('../../../build/data/Before',label)
 row, col = data.shape
 
 numRow_PerProcess = row / numProcess
@@ -129,6 +136,13 @@ if __name__ == '__main__':
     for res in newData_Pool:
          new_data = np.append(new_data, res.get(timeout=1), axis=0)
 
+
+    alllabel = new_data[:,-numContactsToLearn:]
+    label = []
+    for idx in range(numContactsToLearn):
+        label.append(alllabel[:,idx])
+    # label = tuple(label)
+    plt1v1Hist('../../../build/data/After',label)
     new_dir = pre_dir + cur_dir + '_trim_' + str(numMax) + '.h5'
     h5file = h5py.File(new_dir,'w')
     h5file.create_dataset('ct data',data=new_data)
