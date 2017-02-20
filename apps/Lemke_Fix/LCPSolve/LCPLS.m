@@ -39,9 +39,10 @@ B=[A(:,bas) B(:,nonbas)];
 % x = lsqlin(B,-b,[],[],[],[],zeros(n,1),[],[],options);
 
 % x = lsqr(B,-b);
-options = optimoptions('linprog','Algorithm','interior-point','Display', 'off');
-% options = optimoptions('linprog','Algorithm','interior-point','Display', 'off');
-[x,time] = mylinprog([],[],[],B,-b,zeros(n,1),[],[],options);
+% options = optimoptions('linprog','Algorithm','dual-simplex','Display', 'off');
+%options = optimoptions('linprog','Algorithm','interior-point','Display', 'off');
+%[x,time] = mylinprog([],[],[],B,-b,zeros(n,1),[],[],options);
+[x,time] = MySnoptLP(B,-b);
 
 % Check if initial basis provides solution
 if all(x>=-1e-6) && ~isempty(x)
