@@ -1,22 +1,18 @@
 #include "addSkeles.h"
 
 void AddSkel(WorldPtr world) {
-  for (int i = 0; i < NUMCUBES; i++) {
-    world->addSkeleton(AddBox("mBox" + std::to_string(i),
-                              (Eigen::Vector3d() << 0, 0, 0.2 * i).finished()));
-  }
+  world->addSkeleton(AddBox(NUMCUBES, (Eigen::Vector3d() << 0, 0, 0.2).finished()));
   // world->addSkeleton(AddGround());
   world->addSkeleton(AddPlatform());
 }
 
-SkeletonPtr AddBox(string name, const Eigen::Vector3d& init_pos_offset) {
+SkeletonPtr AddBox(int numCubes, const Eigen::Vector3d& init_pos_offset) {
   // double jnt_dmpin = 0.0;
   // double frcton_cff = 0.0;
   // double rsttn_cff = 1.0;
   double mass = 1.0;
   Eigen::Vector3d length_tuple(0.1, 0.1, 0.1);
   Eigen::Vector3d init_pos(0.0, 0.255, 0.0);
-  init_pos = init_pos + init_pos_offset;
   Eigen::Quaterniond init_ori_Quat;  // arbitrary initial orientation
   init_ori_Quat.w() = 1.0;
   init_ori_Quat.vec() = Eigen::Vector3d::Random();
@@ -24,54 +20,61 @@ SkeletonPtr AddBox(string name, const Eigen::Vector3d& init_pos_offset) {
   Eigen::Matrix3d init_ori = init_ori_Quat.toRotationMatrix();
   // Eigen::Matrix3d init_ori = Eigen::Matrix3d::Identity();
 
-  SkeletonPtr mBox = Skeleton::create(name);
+  SkeletonPtr mBox = Skeleton::create("mBox");
 
-  BodyNodePtr bn = mBox->createJointAndBodyNodePair<FreeJoint>().second;
-  bn->getParentJoint()->setName("Joint_1");
-  bn->setName("BodyNode_1");
+  BodyNodePtr rootBodyNode =
+      mBox->createJointAndBodyNodePair<FreeJoint>().second;
+  rootBodyNode->getParentJoint()->setName("RootJoint");
+  rootBodyNode->setName("RootBodyNode");
 
-  std::shared_ptr<Shape> shpe;
-  switch (SHAPE) {
-    case 0:
-      shpe = std::make_shared<BoxShape>(length_tuple);
-      break;
-    case 1:
-      shpe = std::make_shared<EllipsoidShape>(length_tuple);
-      break;
-    case 2:
-      shpe = std::make_shared<CylinderShape>(0.05, 0.5);
-    default:
-      std::cout << "Unknown shape!!!" << std::endl;
+  for (int idxmBox = 0; idxmBox < numCubes; idxmBox++) {
+    BodyNodePtr bn = mBox->createJointAndBodyNodePair<FreeJoint>(rootBodyNode).second;
+    bn->getParentJoint()->setName("Joint_"+std::to_string(idxmBox));
+    bn->setName("BodyNode_"+std::to_string(idxmBox));
+
+    std::shared_ptr<Shape> shpe;
+    switch (SHAPE) {
+      case 0:
+        shpe = std::make_shared<BoxShape>(length_tuple);
+        break;
+      case 1:
+        shpe = std::make_shared<EllipsoidShape>(length_tuple);
+        break;
+      case 2:
+        shpe = std::make_shared<CylinderShape>(0.05, 0.5);
+      default:
+        std::cout << "Unknown shape!!!" << std::endl;
+    }
+
+    shpe->setColor(dart::Color::Red(0.6));
+    bn->addVisualizationShape(shpe);
+    bn->addCollisionShape(shpe);
+
+    // set inertia
+    Inertia inrtia;
+    inrtia.setMass(mass);
+    inrtia.setMoment(shpe->computeInertia(inrtia.getMass()));
+    bn->setInertia(inrtia);
+
+    // put the body into the right position
+    Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
+    tf.translation() = init_pos + idxmBox*init_pos_offset;
+    // tf.linear() = init_ori;
+    bn->getParentJoint()->setTransformFromParentBodyNode(tf);
+
+    // disable friction
+    //   bn->setFrictionCoeff(frcton_cff);
+    //
+    //   // disable joint friction
+    //   for (size_t i = 0; i<bn->getParentJoint()->getNumDofs();++i)
+    //   {
+    //       bn->getParentJoint()->getDof(i)->setDampingCoefficient(jnt_dmpin);
+    //   }
+
+    // change restitution coefficients
+    bn->setRestitutionCoeff(rsttn_cff);
   }
-
-  shpe->setColor(dart::Color::Red(0.6));
-  bn->addVisualizationShape(shpe);
-  bn->addCollisionShape(shpe);
-
-  // set inertia
-  Inertia inrtia;
-  inrtia.setMass(mass);
-  inrtia.setMoment(shpe->computeInertia(inrtia.getMass()));
-  bn->setInertia(inrtia);
-
-  // put the body into the right position
-  Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
-  tf.translation() = init_pos;
-  // tf.linear() = init_ori;
-  bn->getParentJoint()->setTransformFromParentBodyNode(tf);
-
-  // disable friction
-  //   bn->setFrictionCoeff(frcton_cff);
-  //
-  //   // disable joint friction
-  //   for (size_t i = 0; i<bn->getParentJoint()->getNumDofs();++i)
-  //   {
-  //       bn->getParentJoint()->getDof(i)->setDampingCoefficient(jnt_dmpin);
-  //   }
-
-  // change restitution coefficients
-  bn->setRestitutionCoeff(rsttn_cff);
-
+  mBox->enableSelfCollision();
   return mBox;
 }
 

@@ -9,7 +9,7 @@ My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep, MyWindow* _mWindow)
   mPrecision = PRECISION;
 #ifdef OUTPUT2FILE
   dataSize = 50000;
-  numDesiredCT = 4;
+  numDesiredCT = 5*NUMCUBES;
   // Here magic number of 4 is what we suppose to get from cube testing
   for (int numContactsToLearn = 1; numContactsToLearn < 1+numDesiredCT;
        numContactsToLearn++) {

@@ -13,9 +13,7 @@ using namespace dart::simulation;
 using namespace dart::dynamics;
 
 void AddSkel(dart::simulation::WorldPtr world);
-SkeletonPtr AddBox(
-    string name = "mBox",
-    const Eigen::Vector3d& init_pos_offset = Eigen::Vector3d::Zero());
+SkeletonPtr AddBox(int numCubes, const Eigen::Vector3d& init_pos_offset);
 SkeletonPtr AddGround();
 SkeletonPtr AddPlatform();
 

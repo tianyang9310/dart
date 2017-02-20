@@ -10,7 +10,7 @@
 #include "addSkeles.h"
 #include "dart/dart.h"
 
-#define RUN_GUI
+// #define RUN_GUI
 
 int main(int argc, char* argv[]) {
   std::srand(

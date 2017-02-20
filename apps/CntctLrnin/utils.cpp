@@ -45,7 +45,7 @@ Eigen::MatrixXd getTangentBasisMatrixLemke(const Eigen::Vector3d& _n,
 
 std::string idx2string(const int idxmBox){
   std::string name;
-  name = "mBox" + std::to_string(idxmBox);
+  name = "BodyNode_" + std::to_string(idxmBox);
   return name;
 }
 

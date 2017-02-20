@@ -14,7 +14,6 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   mColor.push_back(Eigen::Vector3d(0.2, 0.8, 0.2));  // green
   mColor.push_back(Eigen::Vector3d(0.2, 0.2, 0.8));  // blue
   mColor.push_back(Eigen::Vector3d(0.2, 0.2, 0.2));  // black
-  alwaysUpdateViewer = false;
   srand(0);
 
   mZoom = 0.50f;
@@ -25,11 +24,11 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   mTrackBall.setQuaternion(initTrackBallQuat);
 
   extForce.setZero();
-  // assert(NUMCUBES == 1);
-  // setPlatform(0);
-  for (int i=0; i<NUMCUBES; i++){
-    resetCubeOrientation(i,0);
-  }
+  /*
+   * for (int i=0; i<NUMCUBES; i++){
+   *   resetCubeOrientation(i,0);
+   * }
+   */
 
   offset<<-0.05,0.05,0;
 #ifndef ODE_VANILLA
@@ -50,16 +49,16 @@ MyWindow::~MyWindow() {}
 void MyWindow::timeStepping() {
   // addExtForce();
   int numContacts = mCollisionDetector->getNumContacts();
-  for (int i=0; i<NUMCUBES; i++){
+  // for (int i=0; i<NUMCUBES; i++){
   // std::cout << "=================================================" << std::endl;
-  // std::cout << idx2string(i)<< " Position: "
-  //           << mWorld->getSkeleton(idx2string(i))->getPositions().transpose()
+  // std::cout << "mBox Position: "
+  //           << mWorld->getSkeleton("mBox")->getPositions().transpose()
   //           << std::endl;
-  // std::cout << idx2string(i)<< " Velocities: "
-  //           << mWorld->getSkeleton(idxstring(i))->getVelocities().transpose()
+  // std::cout << "mBox Velocity: "
+  //           << mWorld->getSkeleton("mBox")->getVelocities().transpose()
   //           << std::endl
   //           << std::endl;
-  }
+  // }
 
 /*
  *std::cout << "num of contact points is: " << numContacts << std::endl;
@@ -77,22 +76,25 @@ void MyWindow::timeStepping() {
 #endif
 #endif
    // regularization the positive of cube
-   double range = 12.5;
+   double range = 25;
    for (int i = 0; i<NUMCUBES; i++) {
-    if ((std::abs(mWorld->getSkeleton(idx2string(i))
-                     ->getBodyNode("BodyNode_1")
+    if ((std::abs(mWorld->getSkeleton("mBox")
+                     ->getBodyNode(idx2string(i))
                      ->getTransform()
                      .translation()(0)) > range)  // x direction
-       || (std::abs(mWorld->getSkeleton((idx2string(i)))
-                        ->getBodyNode("BodyNode_1")
+       || (std::abs(mWorld->getSkeleton("mBox")
+                        ->getBodyNode(idx2string(i))
                         ->getTransform()
                         .translation()(2)) > range))  // z direction
     {
     //    std::cerr << "ERROR: runnng out of range, need regularization!!!" <<
     // std::endl;
 
-     int dir = (mWorld->getSimFrames()/800)%8;
-     resetCubeOrientation(i,dir);
+     // int dir = (mWorld->getSimFrames()/800)%8;
+     // resetCubeOrientation(i,dir);
+     int totalDof = mWorld->getSkeleton("mBox")->getNumDofs();
+     mWorld->getSkeleton("mBox")->setPositions(Eigen::VectorXd::Zero(totalDof));
+     mWorld->getSkeleton("mBox")->setVelocities(Eigen::VectorXd::Zero(totalDof));
     }
   }
 
@@ -104,7 +106,6 @@ void MyWindow::timeStepping() {
   if (counter < mDutyCycle) {
     addExtForce();
     // assert(NUMCUBES==1);
-    // tiltPlatform(0);
   }
   else if (counter > mPeriod - mDutyCycle - 1) {
     addExtTorque();
@@ -112,7 +113,7 @@ void MyWindow::timeStepping() {
   // addExtTorque();
   if (mWorld->getSimFrames() == episodeLength) {
     std::cout << "Time is " << mWorld->getTime() << std::endl;
-    std::cout << mWorld->getSkeleton("mBox0")->getPositions().transpose()
+    std::cout << mWorld->getSkeleton("mBox")->getPositions().transpose()
               << std::endl;
 #ifndef ODE_VANILLA
 #ifndef FORK_LEMKE
@@ -134,11 +135,6 @@ void MyWindow::timeStepping() {
 #endif
 
   // keyboard('y', 0, 0);
-
-  // Whether always update viewer
-  if (alwaysUpdateViewer) {
-    updateViewer(0);
-  }
 }
 
 void MyWindow::addExtForce() {
@@ -162,28 +158,28 @@ void MyWindow::addExtForce() {
     // std::cerr << "Add external force: " << extForce.transpose() << std::endl;
 
     // Apply force to COM
-    mWorld->getSkeleton(idx2string(i))->getBodyNode("BodyNode_1")->addExtForce(extForce);
+    mWorld->getSkeleton("mBox")->getBodyNode(idx2string(i))->addExtForce(extForce);
   }
   // ---------------------------------------------------------------------------
   
   // // Apply force to margin
-  // double theta = -mWorld->getSkeleton("mBox0")->getDof(2)->getPosition();
+  // double theta = -mWorld->getSkeleton("mBox")->getDof(2)->getPosition();
   // while (theta < 0) {
   //   theta += 2*DART_PI;
   // }
   // theta = DART_PI_HALF / 2.0 -theta;
 
   // extForce.setZero();
-  // extForce(0) = -(mWorld->getSkeleton("mBox0")->getMass() * mWorld->getGravity() 
+  // extForce(0) = -(mWorld->getSkeleton("mBox")->getMass() * mWorld->getGravity() 
   //   * std::tan(theta) / 2)(1);
   // extForce(0) = extForce(0) * 3.0;
 
   // std::cout << "Theta: " << theta << std::endl;
   // if (theta>0) { // && mWorld->getSimFrames() < 250){
-  //   mWorld->getSkeleton("mBox0")->getBodyNode("BodyNode_1")->addExtForce(extForce, offset);
+  //   mWorld->getSkeleton("mBox")->getBodyNode("BodyNode_1")->addExtForce(extForce, offset);
   // } else {
-  //   std::cout << "Psi: " <<  -mWorld->getSkeleton("mBox0")->getDof(2)->getPosition() << std::endl;
-  //   if (-mWorld->getSkeleton("mBox0")->getDof(2)->getPosition()>=3.13) {
+  //   std::cout << "Psi: " <<  -mWorld->getSkeleton("mBox")->getDof(2)->getPosition() << std::endl;
+  //   if (-mWorld->getSkeleton("mBox")->getDof(2)->getPosition()>=3.13) {
   //     // std::cin.get(); 
   //     // keyboard('y',0,0);
   //   } 
@@ -193,13 +189,13 @@ void MyWindow::addExtForce() {
 void MyWindow::addExtTorque() {
   // dtmsg<<"Add external torque"<<std::endl;
   // Eigen::Vector3d extTorque = Eigen::Vector3d::Identity() * 0.8;
-  // mWorld->getSkeleton("mBox0")
+  // mWorld->getSkeleton("mBox")
   //     ->getBodyNode("BodyNode_1")
   //     ->addExtTorque(extTorque);
 
   for (int i = 0; i<NUMCUBES; i++) {
-  mWorld->getSkeleton(idx2string(i))
-      ->getBodyNode("BodyNode_1")
+  mWorld->getSkeleton("mBox")
+      ->getBodyNode(idx2string(i))
       ->addExtTorque(Eigen::Vector3d::Random() * 4);
   }
 }
@@ -227,10 +223,8 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
     case '7':
     case '8':
     case '9':
-      updateViewer(int(_key)-1);
       break;
     case 'e':
-      alwaysUpdateViewer = !alwaysUpdateViewer;
       break;
     default:
       dart::gui::SimWindow::keyboard(_key, _x, _y);
@@ -242,12 +236,14 @@ void MyWindow::drawSkels() {
   glEnable(GL_LIGHTING);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-  for (int i = 0; i<NUMCUBES; i++) {
-  // draw Ext force arrow
-  Eigen::Vector3d poa = mWorld->getSkeleton(idx2string(i))->getCOM();
-  double len = extForce.norm() / 100.0;
-  // dart::gui::drawArrow3D(poa, extForce, len, 0.005, 0.01);
-  }
+  /*
+   * for (int i = 0; i<NUMCUBES; i++) {
+   * // draw Ext force arrow
+   * Eigen::Vector3d poa = mWorld->getSkeleton(idx2string(i))->getCOM();
+   * double len = extForce.norm() / 100.0;
+   * // dart::gui::drawArrow3D(poa, extForce, len, 0.005, 0.01);
+   * }
+   */
 
   /*
    * // draw Biped COM trajectory
@@ -405,64 +401,20 @@ void MyWindow::displayTimer(int _val) {
 
 dart::simulation::WorldPtr MyWindow::getWorld() { return mWorld; }
 
-void MyWindow::updateViewer(int idxmBox) {
-  //  dtmsg << "Update viewer" << std::endl;
-  //  std::cout << mTrans.transpose() << std::endl;
-  mTrans = -mWorld->getSkeleton(idx2string(idxmBox))->getPositions().segment(3, 3) * 1000;
-  //  mTrans[1] = 150.0f;
-  //  std::cout << mTrans.transpose() << std::endl;
-}
-
-void MyWindow::tiltPlatform(int idxmBox) {
-  assert(idxmBox==0);
-  double angle = mWorld->getSkeleton("mPlatform")->getDof(0)->getPosition();
-  if (angle > 50.0/180*DART_PI) {
-    std::cout << "Reaching 50!!!" << std::endl << std::endl;
-    mWorld->getSkeleton("mPlatform")->getDof(0)->setVelocity(0);
-    mWorld->getSkeleton(idx2string(idxmBox))->setVelocities(Eigen::Vector6d::Zero());
-    keyboard('y',0,0);
-  } else {
-    /*
-     * double mDelta = 0.005/180 * DART_PI;
-     * mWorld->getSkeleton("mPlatform")->getDof(0)->setPosition(angle+mDelta);
-     */
-
-    mWorld->getSkeleton("mPlatform")->getDof(0)->setForce(1);
-    std::cout << "Platform angles: "
-              << mWorld->getSkeleton("mPlatform")->getPositions() << std::endl;
-  }
-
-  // keyboard('y',0,0);
-  // std::cin.get();
-}
-
-void MyWindow::setPlatform(int idxmBox) {
-  assert(idxmBox==0);
-  double raw_angle = (45.0+1e-4) / 180*DART_PI;
-
-  // tilt platform 
-  mWorld->getSkeleton("mPlatform")->getDof(0)->setPosition(raw_angle);
-
-  // tilt cube
-  mWorld->getSkeleton(idx2string(idxmBox))->getDof(2)->setPosition(raw_angle);
-  mWorld->getSkeleton(idx2string(idxmBox))->getDof(4)->setPosition(0.055/std::cos(raw_angle)-0.055);
-
-  // keyboard('y',0,0);
-  // std::cin.get();
-}
-
-void MyWindow::resetCubeOrientation(int idxmBox, int dir) {
-  std::cout << "reset orientation" << std::endl;
-  Eigen::Vector3d eulerYZX;
-  eulerYZX << dir*45.0, std::rand()%10-5+45, 0.0;
-  eulerYZX = eulerYZX /180.0 * DART_PI;
-  Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
-  tf.linear() = dart::math::eulerYZXToMatrix(eulerYZX);
-
-  Eigen::VectorXd mResetPos(6);
-  mResetPos  = 
-  dynamic_cast<dart::dynamics::FreeJoint*>(
-    mWorld->getSkeleton(idx2string(idxmBox))->getJoint("Joint_1"))->convertToPositions(tf);
-  mWorld->getSkeleton(idx2string(idxmBox))->setPositions(mResetPos);
-  mWorld->getSkeleton(idx2string(idxmBox))->setVelocities(Eigen::VectorXd::Zero(6));
-}
+/*
+ * void MyWindow::resetCubeOrientation(int idxmBox, int dir) {
+ *   std::cout << "reset orientation" << std::endl;
+ *   Eigen::Vector3d eulerYZX;
+ *   eulerYZX << dir*45.0, std::rand()%10-5+45, 0.0;
+ *   eulerYZX = eulerYZX /180.0 * DART_PI;
+ *   Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
+ *   tf.linear() = dart::math::eulerYZXToMatrix(eulerYZX);
+ * 
+ *   Eigen::VectorXd mResetPos(6);
+ *   mResetPos  = 
+ *   dynamic_cast<dart::dynamics::FreeJoint*>(
+ *     mWorld->getSkeleton(idx2string(idxmBox))->getJoint("Joint_1"))->convertToPositions(tf);
+ *   mWorld->getSkeleton(idx2string(idxmBox))->setPositions(mResetPos);
+ *   mWorld->getSkeleton(idx2string(idxmBox))->setVelocities(Eigen::VectorXd::Zero(6));
+ * }
+ */
