@@ -1,6 +1,7 @@
-MaxIter = 1e4;
+MaxIter = 1e5;
 errList = [];
-start = tic
+start = tic;
+elpasedTime = 0;
 for iter = 1:MaxIter
     idxContact = randi(4);
     idxContact = 4;
@@ -9,8 +10,18 @@ for iter = 1:MaxIter
     idxChoice = randi(poolSize);
     A = ct{idxContact,1}((idxChoice-1)*matSize+1:(idxChoice)*matSize,:);
     b = ct{idxContact,2}(idxChoice,:)';
-    [z,err]=LEMKE(A,b);
+%     value = ct{idxContact,3}(idxChoice,:);
+%     ub_index = value2ub_index(value);
+%     z0 = zeros(size(b));
+%     z0(ub_index) = 1;
+%     [z,err]=LEMKE(A,b,z0);
+    [z,err,time]=LEMKE(A,b);
+%     if any(abs(z)<1e-6) && any(abs(z)>0)
+%         z
+%     end
     errList = [errList err];
+    elpasedTime = elpasedTime + time;
 end
 averagetimeLEMKE = toc(start)/MaxIter
+averagetimeLEMKE = elpasedTime/MaxIter
 solvedRatio = length(find(errList==0))/MaxIter

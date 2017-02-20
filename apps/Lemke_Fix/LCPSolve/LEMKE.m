@@ -1,4 +1,4 @@
-function [z,err] = LEMKE(M,q,z0)
+function [z,err,time] = LEMKE(M,q,z0)
 % LEMKE Solves linear complementarity problems (LCPs).
 % An LCP solves
 % Mz+q >=0, z>=0, z'(Mz+q)=0.
@@ -25,7 +25,7 @@ function [z,err] = LEMKE(M,q,z0)
 % Copyright (c) 1997 by Paul L. Fackler
 
 %tic; flops(0);
-
+Lemke_start=tic;
 n = length(q);
 
 if nargin<4, ineqind=ones(n,1); end
@@ -78,8 +78,12 @@ if ~isempty(bas)
   B=[M(:,bas) B(:,nonbas)];
   if condest(B)>1e16
     z=[]; err=3; return
+%     B = B + 1e-3*eye(n);
   end
   x=-(B\q);
+% x = lsqlin(B,-q,[],[],[],[],zeros(n,1),[]);
+% options = optimoptions('linprog','Algorithm','interior-point','Display', 'off');
+% [x,time] = mylinprog([],[],[],B,-q,zeros(n,1),[],[],options);
 end
 
 % Check if initial basis provides solution
@@ -151,6 +155,7 @@ if iter>=maxiter & leaving~=t err=1; end
 % z=[];
 %end
 
+time = toc(Lemke_start);
 %t=toc; f=flops;
 % disp([num2str(iter) ' ' num2str(t) ' ' num2str(f)])
 

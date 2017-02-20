@@ -1,4 +1,4 @@
-MaxIter = 1e4;
+MaxIter = 1e5;
 errList = [];
 start = tic;
 elapsedTime = 0;
@@ -12,12 +12,14 @@ for iter = 1:MaxIter
     A = ct{idxContact,1}((idxChoice-1)*matSize+1:(idxChoice)*matSize,:);
     b = ct{idxContact,2}(idxChoice,:)';
     value = ct{idxContact,3}(idxChoice,:);
-    [z,time]=LCPLPSOLVER(A,b,value);
+%     [z,time] = LCPLPReducedSOLVER(A,b,value);
+%     [z,time] = LCPLPSOLVER(A,b,value);
+    [z,time] = LCPLS(A,b,value);
     if ~isempty(z)
         count = count+1;
     end
     elapsedTime = elapsedTime + time;
 end
-% averagetime = toc(start)/MaxIter
-averagetimeLP = elapsedTime/MaxIter
+averagetimeTotal = toc(start)/MaxIter
+averagetimeOnlyLinprog = elapsedTime/MaxIter
 solvedRatio = count/MaxIter
