@@ -1,6 +1,7 @@
 #ifndef MYUTILS
 #define MYUTILS
 
+#include <string>
 #include "dart/dart.h"
 
 #ifndef DART_CONTACT_CONSTRAINT_EPSILON
@@ -60,5 +61,7 @@ void clampNeg(T1& z, T2 Validation) {
     }
   }
 }
+
+std::string idx2string(const int idxmBox);
 
 #endif  // MYUTILS

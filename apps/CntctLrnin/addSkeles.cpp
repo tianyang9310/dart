@@ -1,18 +1,22 @@
 #include "addSkeles.h"
 
 void AddSkel(WorldPtr world) {
-  world->addSkeleton(AddBox());
+  for (int i = 0; i < NUMCUBES; i++) {
+    world->addSkeleton(AddBox("mBox" + std::to_string(i),
+                              (Eigen::Vector3d() << 0, 0, 0.2 * i).finished()));
+  }
   // world->addSkeleton(AddGround());
   world->addSkeleton(AddPlatform());
 }
 
-SkeletonPtr AddBox() {
+SkeletonPtr AddBox(string name, const Eigen::Vector3d& init_pos_offset) {
   // double jnt_dmpin = 0.0;
   // double frcton_cff = 0.0;
   // double rsttn_cff = 1.0;
   double mass = 1.0;
   Eigen::Vector3d length_tuple(0.1, 0.1, 0.1);
   Eigen::Vector3d init_pos(0.0, 0.255, 0.0);
+  init_pos = init_pos + init_pos_offset;
   Eigen::Quaterniond init_ori_Quat;  // arbitrary initial orientation
   init_ori_Quat.w() = 1.0;
   init_ori_Quat.vec() = Eigen::Vector3d::Random();
@@ -20,24 +24,24 @@ SkeletonPtr AddBox() {
   Eigen::Matrix3d init_ori = init_ori_Quat.toRotationMatrix();
   // Eigen::Matrix3d init_ori = Eigen::Matrix3d::Identity();
 
-  SkeletonPtr mBox = Skeleton::create("mBox");
+  SkeletonPtr mBox = Skeleton::create(name);
 
   BodyNodePtr bn = mBox->createJointAndBodyNodePair<FreeJoint>().second;
   bn->getParentJoint()->setName("Joint_1");
   bn->setName("BodyNode_1");
 
   std::shared_ptr<Shape> shpe;
-  switch (SHAPE){
+  switch (SHAPE) {
     case 0:
-    shpe = std::make_shared<BoxShape>(length_tuple);
-    break;
+      shpe = std::make_shared<BoxShape>(length_tuple);
+      break;
     case 1:
-    shpe = std::make_shared<EllipsoidShape>(length_tuple);
-    break;
+      shpe = std::make_shared<EllipsoidShape>(length_tuple);
+      break;
     case 2:
-    shpe = std::make_shared<CylinderShape>(0.05, 0.5);
+      shpe = std::make_shared<CylinderShape>(0.05, 0.5);
     default:
-    std::cout << "Unknown shape!!!" << std::endl;
+      std::cout << "Unknown shape!!!" << std::endl;
   }
 
   shpe->setColor(dart::Color::Red(0.6));
@@ -97,12 +101,13 @@ SkeletonPtr AddPlatform() {
   bn0->setName("BodyNode_0");
 
   std::shared_ptr<Shape> shpe0;
-  shpe0 = std::make_shared<BoxShape>(Eigen::Vector3d(0.01,0.01,0.01));
+  shpe0 = std::make_shared<BoxShape>(Eigen::Vector3d(0.01, 0.01, 0.01));
   shpe0->setColor(dart::Color::Blue(0.8));
   bn0->addVisualizationShape(shpe0);
   bn0->addCollisionShape(shpe0);
 
-  BodyNodePtr bn = mPlatform->createJointAndBodyNodePair<RevoluteJoint>(bn0).second;
+  BodyNodePtr bn =
+      mPlatform->createJointAndBodyNodePair<RevoluteJoint>(bn0).second;
   bn->getParentJoint()->setName("Joint_1");
   bn->setName("BodyNode_1");
 

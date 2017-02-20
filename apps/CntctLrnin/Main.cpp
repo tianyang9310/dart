@@ -10,7 +10,7 @@
 #include "addSkeles.h"
 #include "dart/dart.h"
 
-// #define RUN_GUI
+#define RUN_GUI
 
 int main(int argc, char* argv[]) {
   std::srand(
@@ -70,15 +70,6 @@ int main(int argc, char* argv[]) {
       // new dart::collision::BulletCollisionDetector());
       // new dart::collision::FCLMeshCollisionDetector());
       new dart::collision::DARTCollisionDetector());
-
-  // using MyDantzigLCPSolver
-  int totalDOF = 0;
-  // totalDOF += mWorld->getSkeleton("ground skeleton")->getNumDofs();
-  totalDOF += mWorld->getSkeleton("mBox")->getNumDofs();
-  // std::cout << "Ground Skeleton: "
-  // << mWorld->getSkeleton("ground skeleton")->isMobile() << std::endl;
-  // std::cout << "mBox: " << mWorld->getSkeleton("mBox")->isMobile() <<
-  // std::endl;
 
   // create a window and link it to the world
   MyWindow window(mWorld);

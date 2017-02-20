@@ -13,6 +13,7 @@
 
 #define NUMBASIS 8
 #define PRECISION 20
+#define NUMCUBES 3
 
 // 0: cube
 // 1: ball
@@ -36,10 +37,10 @@ class MyWindow : public dart::gui::SimWindow {
   void draw() override;
   void displayTimer(int _val);
   dart::simulation::WorldPtr getWorld();
-  void updateViewer();
-  void tiltPlatform();
-  void setPlatform();
-  void resetCubeOrientation(int dir = 0);
+  void updateViewer(int idxmBox);
+  void tiltPlatform(int idxmBox);
+  void setPlatform(int idxmBox);
+  void resetCubeOrientation(int idxmBox, int dir = 0);
 
   private:
   std::unique_ptr<Controller> mController;
@@ -59,7 +60,7 @@ class MyWindow : public dart::gui::SimWindow {
   int episodeLength;
 
   /// COM traj
-  std::vector<Eigen::Vector3d> COMtraj;
+  std::vector<std::vector<Eigen::Vector3d>> COMtraj;
 
   /// Force application point offset
   Eigen::Vector3d offset;
