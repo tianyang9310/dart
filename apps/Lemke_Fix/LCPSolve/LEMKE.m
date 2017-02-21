@@ -135,7 +135,11 @@ for iter=1:maxiter
     [theta,lvindex]=max(d(j));
     lvindex=find(d(j)==theta);
     lvindex=ceil(length(lvindex)*rand(1,1)); % if multiple choose randomly
-
+    if isempty(j)
+        disp('error')
+        err = 2;
+        break;
+    end
     lvindex=j(lvindex);
   end
   leaving=bas(lvindex);

@@ -40,8 +40,8 @@ B=[A(:,bas) B(:,nonbas)];
 
 % x = lsqr(B,-b);
 % options = optimoptions('linprog','Algorithm','dual-simplex','Display', 'off');
-%options = optimoptions('linprog','Algorithm','interior-point','Display', 'off');
-%[x,time] = mylinprog([],[],[],B,-b,zeros(n,1),[],[],options);
+% options = optimoptions('linprog','Algorithm','interior-point','Display', 'off');
+% [x,time] = mylinprog([],[],[],B,-b,zeros(n,1),[],[],options);
 [x,time] = MySnoptLP(B,-b);
 
 % Check if initial basis provides solution
