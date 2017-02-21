@@ -27,8 +27,13 @@ SkeletonPtr AddBox(int numCubes, const Eigen::Vector3d& init_pos_offset) {
   rootBodyNode->getParentJoint()->setName("RootJoint");
   rootBodyNode->setName("RootBodyNode");
 
+  // put the body into the right position
+  Eigen::Isometry3d roottf(Eigen::Isometry3d::Identity());
+  roottf.translation() = 2*init_pos;
+  rootBodyNode->getParentJoint()->setTransformFromParentBodyNode(roottf);
+
   for (int idxmBox = 0; idxmBox < numCubes; idxmBox++) {
-    BodyNodePtr bn = mBox->createJointAndBodyNodePair<FreeJoint>(rootBodyNode).second;
+    BodyNodePtr bn = mBox->createJointAndBodyNodePair<EulerJoint>(rootBodyNode).second;
     bn->getParentJoint()->setName("Joint_"+std::to_string(idxmBox));
     bn->setName("BodyNode_"+std::to_string(idxmBox));
 
@@ -58,7 +63,7 @@ SkeletonPtr AddBox(int numCubes, const Eigen::Vector3d& init_pos_offset) {
 
     // put the body into the right position
     Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
-    tf.translation() = init_pos + idxmBox*init_pos_offset;
+    tf.translation() = - init_pos + idxmBox*init_pos_offset;
     // tf.linear() = init_ori;
     bn->getParentJoint()->setTransformFromParentBodyNode(tf);
 

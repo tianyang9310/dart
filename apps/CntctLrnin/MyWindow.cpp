@@ -76,7 +76,7 @@ void MyWindow::timeStepping() {
 #endif
 #endif
    // regularization the positive of cube
-   double range = 25;
+   double range = 500;
    for (int i = 0; i<NUMCUBES; i++) {
     if ((std::abs(mWorld->getSkeleton("mBox")
                      ->getBodyNode(idx2string(i))
