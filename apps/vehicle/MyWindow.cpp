@@ -67,6 +67,7 @@ void MyWindow::timeStepping() {
   vehicle->setForces(tau);
 
   mWorld->step();
+  std::cout << "num ct: " << mWorld->getConstraintSolver()->getCollisionDetector()->getNumContacts() << std::endl;
 }
 
 void MyWindow::drawSkels() {

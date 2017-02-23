@@ -43,10 +43,10 @@ Controller::Controller(dart::dynamics::SkeletonPtr _skel,
   mLeftHeel = _skel->getBodyNode("h_heel_left");
 
   mLeftFoot[0] = _skel->getDof("j_heel_left_1")->getIndexInSkeleton();
-  mLeftFoot[1] = _skel->getDof("j_toe_left")->getIndexInSkeleton();
+  // mLeftFoot[1] = _skel->getDof("j_toe_left")->getIndexInSkeleton();
 
   mRightFoot[0] = _skel->getDof("j_heel_right_1")->getIndexInSkeleton();
-  mRightFoot[1] = _skel->getDof("j_toe_right")->getIndexInSkeleton();
+  // mRightFoot[1] = _skel->getDof("j_toe_right")->getIndexInSkeleton();
 
   mTimestep = _t;
   mFrame = 0;
@@ -113,18 +113,18 @@ void Controller::computeTorques() {
     double k2 = 100.0;
     double kd = 10.0;
     mTorques[mLeftFoot[0]]  += -k1 * offset + kd * (mPreOffset - offset);
-    mTorques[mLeftFoot[1]]  += -k2 * offset + kd * (mPreOffset - offset);
+    // mTorques[mLeftFoot[1]]  += -k2 * offset + kd * (mPreOffset - offset);
     mTorques[mRightFoot[0]] += -k1 * offset + kd * (mPreOffset - offset);
-    mTorques[mRightFoot[1]] += -k2 * offset + kd * (mPreOffset - offset);
+    // mTorques[mRightFoot[1]] += -k2 * offset + kd * (mPreOffset - offset);
     mPreOffset = offset;
   } else if (offset > -0.2 && offset < -0.05) {
     double k1 = 2000.0;
     double k2 = 100.0;
     double kd = 100.0;
     mTorques[mLeftFoot[0]]  += -k1 * offset + kd * (mPreOffset - offset);
-    mTorques[mLeftFoot[1]]  += -k2 * offset + kd * (mPreOffset - offset);
+    // mTorques[mLeftFoot[1]]  += -k2 * offset + kd * (mPreOffset - offset);
     mTorques[mRightFoot[0]] += -k1 * offset + kd * (mPreOffset - offset);
-    mTorques[mRightFoot[1]] += -k2 * offset + kd * (mPreOffset - offset);
+    // mTorques[mRightFoot[1]] += -k2 * offset + kd * (mPreOffset - offset);
     mPreOffset = offset;
   }
 

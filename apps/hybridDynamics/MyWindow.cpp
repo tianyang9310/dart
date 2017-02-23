@@ -70,6 +70,7 @@ void MyWindow::timeStepping()
   skel->setCommand(index7,  0.1 * std::sin(mWorld->getTime() * 2.0));
 
   mWorld->step();
+  std::cout << "num ct: " << mWorld->getConstraintSolver()->getCollisionDetector()->getNumContacts() << std::endl;
 }
 
 //==============================================================================

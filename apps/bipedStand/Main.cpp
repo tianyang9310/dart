@@ -64,6 +64,10 @@ int main(int argc, char* argv[]) {
 
   // create controller
   Controller* myController = new Controller(biped, myWorld->getTimeStep());
+  myWorld->getConstraintSolver()->setCollisionDetector(
+      // new dart::collision::BulletCollisionDetector());
+      // new dart::collision::FCLMeshCollisionDetector());
+      new dart::collision::DARTCollisionDetector());
 
   // create a window and link it to the world
   MyWindow window;

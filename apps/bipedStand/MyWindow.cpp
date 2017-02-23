@@ -60,6 +60,7 @@ void MyWindow::timeStepping() {
     mImpulseDuration = 0;
     mForce.setZero();
   }
+  std::cout << "num ct: " << mWorld->getConstraintSolver()->getCollisionDetector()->getNumContacts() << std::endl;
 }
 
 void MyWindow::drawSkels() {
