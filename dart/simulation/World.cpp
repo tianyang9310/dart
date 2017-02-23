@@ -47,69 +47,74 @@
 #include <vector>
 
 #include "dart/common/Console.h"
-#include "dart/constraint/ConstraintSolver.h"
-#include "dart/dynamics/Skeleton.h"
 #include "dart/integration/SemiImplicitEulerIntegrator.h"
+#include "dart/dynamics/Skeleton.h"
+#include "dart/constraint/ConstraintSolver.h"
 
 namespace dart {
 namespace simulation {
 
 //==============================================================================
 World::World(const std::string& _name)
-    : mName(_name),
-      mNameMgrForSkeletons("World::Skeleton | " + _name, "skeleton"),
-      mNameMgrForSimpleFrames("World::SimpleFrame | " + _name, "frame"),
-      mGravity(0.0, 0.0, -9.81),
-      mTimeStep(0.001),
-      mTime(0.0),
-      mFrame(0),
-      mConstraintSolver(new constraint::ConstraintSolver(mTimeStep)),
-      mRecording(new Recording(mSkeletons)),
-      onNameChanged(mNameChangedSignal) {
+  : mName(_name),
+    mNameMgrForSkeletons("World::Skeleton | " + _name, "skeleton"),
+    mNameMgrForSimpleFrames("World::SimpleFrame | " + _name, "frame"),
+    mGravity(0.0, 0.0, -9.81),
+    mTimeStep(0.001),
+    mTime(0.0),
+    mFrame(0),
+    mConstraintSolver(new constraint::ConstraintSolver(mTimeStep)),
+    mRecording(new Recording(mSkeletons)),
+    onNameChanged(mNameChangedSignal)
+{
   mIndices.push_back(0);
 }
 
 //==============================================================================
-World::~World() {
+World::~World()
+{
   delete mConstraintSolver;
   delete mRecording;
 
-  for (common::Connection& connection : mNameConnectionsForSkeletons)
+  for(common::Connection& connection : mNameConnectionsForSkeletons)
     connection.disconnect();
 
-  for (common::Connection& connection : mNameConnectionsForSimpleFrames)
+  for(common::Connection& connection : mNameConnectionsForSimpleFrames)
     connection.disconnect();
 }
 
 //==============================================================================
-WorldPtr World::clone() const {
+WorldPtr World::clone() const
+{
   WorldPtr worldClone(new World(mName));
 
   worldClone->setGravity(mGravity);
   worldClone->setTimeStep(mTimeStep);
 
   // Clone and add each Skeleton
-  for (size_t i = 0; i < mSkeletons.size(); ++i) {
+  for(size_t i=0; i<mSkeletons.size(); ++i)
+  {
     worldClone->addSkeleton(mSkeletons[i]->clone());
   }
 
   // Clone and add each SimpleFrame
-  for (size_t i = 0; i < mSimpleFrames.size(); ++i) {
-    worldClone->addSimpleFrame(
-        mSimpleFrames[i]->clone(mSimpleFrames[i]->getParentFrame()));
+  for(size_t i=0; i<mSimpleFrames.size(); ++i)
+  {
+    worldClone->addSimpleFrame(mSimpleFrames[i]->clone(mSimpleFrames[i]->getParentFrame()));
   }
 
   // For each newly cloned SimpleFrame, try to make its parent Frame be one of
   // the new clones if there is a match. This is meant to minimize any possible
   // interdependencies between the kinematics of different worlds.
-  for (size_t i = 0; i < worldClone->getNumSimpleFrames(); ++i) {
+  for(size_t i=0; i<worldClone->getNumSimpleFrames(); ++i)
+  {
     dynamics::Frame* current_parent =
         worldClone->getSimpleFrame(i)->getParentFrame();
 
     dynamics::SimpleFramePtr parent_candidate =
         worldClone->getSimpleFrame(current_parent->getName());
 
-    if (parent_candidate)
+    if(parent_candidate)
       worldClone->getSimpleFrame(i)->setParentFrame(parent_candidate.get());
   }
 
@@ -117,33 +122,42 @@ WorldPtr World::clone() const {
 }
 
 //==============================================================================
-void World::setTimeStep(double _timeStep) {
+void World::setTimeStep(double _timeStep)
+{
   assert(_timeStep > 0.0 && "Invalid timestep.");
 
   mTimeStep = _timeStep;
-  //  mConstraintHandler->setTimeStep(_timeStep);
+//  mConstraintHandler->setTimeStep(_timeStep);
   mConstraintSolver->setTimeStep(_timeStep);
   for (std::vector<dynamics::SkeletonPtr>::iterator it = mSkeletons.begin();
-       it != mSkeletons.end(); ++it) {
+       it != mSkeletons.end(); ++it)
+  {
     (*it)->setTimeStep(_timeStep);
   }
 }
 
 //==============================================================================
-double World::getTimeStep() const { return mTimeStep; }
+double World::getTimeStep() const
+{
+  return mTimeStep;
+}
 
 //==============================================================================
-void World::reset() {
+void World::reset()
+{
   mTime = 0.0;
   mFrame = 0;
   mRecording->clear();
 }
 
 //==============================================================================
-void World::step(bool _resetCommand) {
+void World::step(bool _resetCommand)
+{
   // Integrate velocity for unconstrained skeletons
-  for (auto& skel : mSkeletons) {
-    if (!skel->isMobile()) continue;
+  for (auto& skel : mSkeletons)
+  {
+    if (!skel->isMobile())
+      continue;
 
     skel->computeForwardDynamics();
     skel->integrateVelocities(mTimeStep);
@@ -153,20 +167,24 @@ void World::step(bool _resetCommand) {
   mConstraintSolver->solve();
 
   // Compute velocity changes given constraint impulses
-  for (auto& skel : mSkeletons) {
-    if (!skel->isMobile()) continue;
+  for (auto& skel : mSkeletons)
+  {
+    if (!skel->isMobile())
+      continue;
 
-    if (skel->isImpulseApplied()) {
+    if (skel->isImpulseApplied())
+    {
       skel->computeImpulseForwardDynamics();
       skel->setImpulseApplied(false);
     }
 
     skel->integratePositions(mTimeStep);
 
-    if (_resetCommand) {
+    if (_resetCommand)
+    {
       skel->clearInternalForces();
       skel->clearExternalForces();
-      //    skel->clearConstraintImpulses();
+//    skel->clearConstraintImpulses();
       skel->resetCommands();
     }
   }
@@ -176,74 +194,103 @@ void World::step(bool _resetCommand) {
 }
 
 //==============================================================================
-void World::setTime(double _time) { mTime = _time; }
+void World::setTime(double _time)
+{
+  mTime = _time;
+}
 
 //==============================================================================
-double World::getTime() const { return mTime; }
+double World::getTime() const
+{
+  return mTime;
+}
 
 //==============================================================================
-int World::getSimFrames() const { return mFrame; }
+int World::getSimFrames() const
+{
+  return mFrame;
+}
 
 //==============================================================================
-const std::string& World::setName(const std::string& _newName) {
-  if (_newName == mName) return mName;
+const std::string& World::setName(const std::string& _newName)
+{
+  if(_newName == mName)
+    return mName;
 
   const std::string oldName = mName;
   mName = _newName;
 
   mNameChangedSignal.raise(oldName, mName);
 
-  mNameMgrForSkeletons.setManagerName("World::Skeleton | " + mName);
-  mNameMgrForSimpleFrames.setManagerName("World::SimpleFrame | " + mName);
+  mNameMgrForSkeletons.setManagerName(
+        "World::Skeleton | " + mName);
+  mNameMgrForSimpleFrames.setManagerName(
+        "World::SimpleFrame | " + mName);
 
   return mName;
 }
 
 //==============================================================================
-const std::string& World::getName() const { return mName; }
+const std::string& World::getName() const
+{
+  return mName;
+}
 
 //==============================================================================
-void World::setGravity(const Eigen::Vector3d& _gravity) {
+void World::setGravity(const Eigen::Vector3d& _gravity)
+{
   mGravity = _gravity;
   for (std::vector<dynamics::SkeletonPtr>::iterator it = mSkeletons.begin();
-       it != mSkeletons.end(); ++it) {
+       it != mSkeletons.end(); ++it)
+  {
     (*it)->setGravity(_gravity);
   }
 }
 
 //==============================================================================
-const Eigen::Vector3d& World::getGravity() const { return mGravity; }
+const Eigen::Vector3d& World::getGravity() const
+{
+  return mGravity;
+}
 
 //==============================================================================
-dynamics::SkeletonPtr World::getSkeleton(size_t _index) const {
-  if (_index < mSkeletons.size()) return mSkeletons[_index];
+dynamics::SkeletonPtr World::getSkeleton(size_t _index) const
+{
+  if(_index < mSkeletons.size())
+    return mSkeletons[_index];
 
   return nullptr;
 }
 
 //==============================================================================
-dynamics::SkeletonPtr World::getSkeleton(const std::string& _name) const {
+dynamics::SkeletonPtr World::getSkeleton(const std::string& _name) const
+{
   return mNameMgrForSkeletons.getObject(_name);
 }
 
 //==============================================================================
-size_t World::getNumSkeletons() const { return mSkeletons.size(); }
+size_t World::getNumSkeletons() const
+{
+  return mSkeletons.size();
+}
 
 //==============================================================================
-std::string World::addSkeleton(dynamics::SkeletonPtr _skeleton) {
+std::string World::addSkeleton(dynamics::SkeletonPtr _skeleton)
+{
   assert(_skeleton != nullptr && "Attempted to add nullptr skeleton to world.");
 
-  if (nullptr == _skeleton) {
+  if(nullptr == _skeleton)
+  {
     dtwarn << "[World::addSkeleton] Attempting to add a nullptr Skeleton to "
            << "the world!\n";
     return "";
   }
 
   // If mSkeletons already has _skeleton, then we do nothing.
-  if (find(mSkeletons.begin(), mSkeletons.end(), _skeleton) !=
-      mSkeletons.end()) {
+  if (find(mSkeletons.begin(), mSkeletons.end(), _skeleton) != mSkeletons.end())
+  {
     dtwarn << "[World::addSkeleton] Skeleton named [" << _skeleton->getName()
-           << "] is already in the world." << std::endl;
+              << "] is already in the world." << std::endl;
     return _skeleton->getName();
   }
 
@@ -251,11 +298,12 @@ std::string World::addSkeleton(dynamics::SkeletonPtr _skeleton) {
   mMapForSkeletons[_skeleton] = _skeleton;
 
   mNameConnectionsForSkeletons.push_back(_skeleton->onNameChanged.connect(
-      [=](dynamics::ConstMetaSkeletonPtr skel, const std::string&,
-          const std::string&) { this->handleSkeletonNameChange(skel); }));
+        [=](dynamics::ConstMetaSkeletonPtr skel,
+            const std::string&, const std::string&)
+        { this->handleSkeletonNameChange(skel); } ));
 
-  _skeleton->setName(
-      mNameMgrForSkeletons.issueNewNameAndAdd(_skeleton->getName(), _skeleton));
+  _skeleton->setName(mNameMgrForSkeletons.issueNewNameAndAdd(
+                       _skeleton->getName(), _skeleton));
 
   _skeleton->setTimeStep(mTimeStep);
   _skeleton->setGravity(mGravity);
@@ -270,11 +318,12 @@ std::string World::addSkeleton(dynamics::SkeletonPtr _skeleton) {
 }
 
 //==============================================================================
-void World::removeSkeleton(dynamics::SkeletonPtr _skeleton) {
-  assert(_skeleton != nullptr &&
-         "Attempted to remove nullptr Skeleton from world");
+void World::removeSkeleton(dynamics::SkeletonPtr _skeleton)
+{
+  assert(_skeleton != nullptr && "Attempted to remove nullptr Skeleton from world");
 
-  if (nullptr == _skeleton) {
+  if(nullptr == _skeleton)
+  {
     dtwarn << "[World::removeSkeleton] Attempting to remove a nullptr Skeleton "
            << "from the world!\n";
     return;
@@ -282,21 +331,24 @@ void World::removeSkeleton(dynamics::SkeletonPtr _skeleton) {
 
   // Find index of _skeleton in mSkeleton.
   size_t index = 0;
-  for (; index < mSkeletons.size(); ++index) {
-    if (mSkeletons[index] == _skeleton) break;
+  for (; index < mSkeletons.size(); ++index)
+  {
+    if (mSkeletons[index] == _skeleton)
+      break;
   }
 
   // If i is equal to the number of skeletons, then _skeleton is not in
   // mSkeleton. We do nothing.
-  if (index == mSkeletons.size()) {
+  if (index == mSkeletons.size())
+  {
     dtwarn << "[World::removeSkeleton] Skeleton [" << _skeleton->getName()
            << "] is not in the world.\n";
     return;
   }
 
   // Update mIndices.
-  for (size_t i = index + 1; i < mSkeletons.size() - 1; ++i)
-    mIndices[i] = mIndices[i + 1] - _skeleton->getNumDofs();
+  for (size_t i = index+1; i < mSkeletons.size() - 1; ++i)
+    mIndices[i] = mIndices[i+1] - _skeleton->getNumDofs();
   mIndices.pop_back();
 
   // Remove _skeleton from constraint handler.
@@ -308,8 +360,7 @@ void World::removeSkeleton(dynamics::SkeletonPtr _skeleton) {
 
   // Disconnect the name change monitor
   mNameConnectionsForSkeletons[index].disconnect();
-  mNameConnectionsForSkeletons.erase(mNameConnectionsForSkeletons.begin() +
-                                     index);
+  mNameConnectionsForSkeletons.erase(mNameConnectionsForSkeletons.begin()+index);
 
   // Update recording
   mRecording->updateNumGenCoords(mSkeletons);
@@ -322,48 +373,59 @@ void World::removeSkeleton(dynamics::SkeletonPtr _skeleton) {
 }
 
 //==============================================================================
-std::set<dynamics::SkeletonPtr> World::removeAllSkeletons() {
+std::set<dynamics::SkeletonPtr> World::removeAllSkeletons()
+{
   std::set<dynamics::SkeletonPtr> ptrs;
-  for (std::vector<dynamics::SkeletonPtr>::iterator it = mSkeletons.begin(),
-                                                    end = mSkeletons.end();
-       it != end; ++it)
+  for(std::vector<dynamics::SkeletonPtr>::iterator it=mSkeletons.begin(),
+      end=mSkeletons.end(); it != end; ++it)
     ptrs.insert(*it);
 
-  while (getNumSkeletons() > 0) removeSkeleton(getSkeleton(0));
+  while (getNumSkeletons() > 0)
+    removeSkeleton(getSkeleton(0));
 
   return ptrs;
 }
 
 //==============================================================================
-int World::getIndex(int _index) const { return mIndices[_index]; }
+int World::getIndex(int _index) const
+{
+  return mIndices[_index];
+}
 
 //==============================================================================
-dynamics::SimpleFramePtr World::getSimpleFrame(size_t _index) const {
-  if (_index < mSimpleFrames.size()) return mSimpleFrames[_index];
+dynamics::SimpleFramePtr World::getSimpleFrame(size_t _index) const
+{
+  if(_index < mSimpleFrames.size())
+    return mSimpleFrames[_index];
 
   return nullptr;
 }
 
 //==============================================================================
-dynamics::SimpleFramePtr World::getSimpleFrame(const std::string& _name) const {
+dynamics::SimpleFramePtr World::getSimpleFrame(const std::string& _name) const
+{
   return mNameMgrForSimpleFrames.getObject(_name);
 }
 
 //==============================================================================
-size_t World::getNumSimpleFrames() const { return mSimpleFrames.size(); }
+size_t World::getNumSimpleFrames() const
+{
+  return mSimpleFrames.size();
+}
 
 //==============================================================================
-std::string World::addSimpleFrame(dynamics::SimpleFramePtr _frame) {
+std::string World::addSimpleFrame(dynamics::SimpleFramePtr _frame)
+{
   assert(_frame != nullptr && "Attempted to add nullptr SimpleFrame to world");
 
-  if (nullptr == _frame) {
-    dtwarn << "[World::addFrame] Attempting to add a nullptr SimpleFrame to "
-              "the world!\n";
+  if(nullptr == _frame)
+  {
+    dtwarn << "[World::addFrame] Attempting to add a nullptr SimpleFrame to the world!\n";
     return "";
   }
 
-  if (find(mSimpleFrames.begin(), mSimpleFrames.end(), _frame) !=
-      mSimpleFrames.end()) {
+  if( find(mSimpleFrames.begin(), mSimpleFrames.end(), _frame) != mSimpleFrames.end() )
+  {
     dtwarn << "[World::addFrame] SimpleFrame named [" << _frame->getName()
            << "] is already in the world.\n";
     return _frame->getName();
@@ -373,24 +435,26 @@ std::string World::addSimpleFrame(dynamics::SimpleFramePtr _frame) {
   mSimpleFrameToShared[_frame.get()] = _frame;
 
   mNameConnectionsForSimpleFrames.push_back(_frame->onNameChanged.connect(
-      [=](const dynamics::Entity* _entity, const std::string&,
-          const std::string&) { this->handleSimpleFrameNameChange(_entity); }));
+        [=](const dynamics::Entity* _entity,
+            const std::string&, const std::string&)
+        { this->handleSimpleFrameNameChange(_entity); } ));
 
-  _frame->setName(
-      mNameMgrForSimpleFrames.issueNewNameAndAdd(_frame->getName(), _frame));
+  _frame->setName(mNameMgrForSimpleFrames.issueNewNameAndAdd(
+                     _frame->getName(), _frame));
 
   return _frame->getName();
 }
 
 //==============================================================================
-void World::removeSimpleFrame(dynamics::SimpleFramePtr _frame) {
-  assert(_frame != nullptr &&
-         "Attempted to remove nullptr SimpleFrame from world");
+void World::removeSimpleFrame(dynamics::SimpleFramePtr _frame)
+{
+  assert(_frame != nullptr && "Attempted to remove nullptr SimpleFrame from world");
 
   std::vector<dynamics::SimpleFramePtr>::iterator it =
       find(mSimpleFrames.begin(), mSimpleFrames.end(), _frame);
 
-  if (it == mSimpleFrames.end()) {
+  if(it == mSimpleFrames.end())
+  {
     dtwarn << "[World::removeFrame] Frame named [" << _frame->getName()
            << "] is not in the world.\n";
     return;
@@ -399,12 +463,11 @@ void World::removeSimpleFrame(dynamics::SimpleFramePtr _frame) {
   size_t index = it - mSimpleFrames.begin();
 
   // Remove the frame
-  mSimpleFrames.erase(mSimpleFrames.begin() + index);
+  mSimpleFrames.erase(mSimpleFrames.begin()+index);
 
   // Disconnect the name change monitor
   mNameConnectionsForSimpleFrames[index].disconnect();
-  mNameConnectionsForSimpleFrames.erase(
-      mNameConnectionsForSimpleFrames.begin() + index);
+  mNameConnectionsForSimpleFrames.erase(mNameConnectionsForSimpleFrames.begin()+index);
 
   // Remove from NameManager
   mNameMgrForSimpleFrames.removeName(_frame->getName());
@@ -414,61 +477,66 @@ void World::removeSimpleFrame(dynamics::SimpleFramePtr _frame) {
 }
 
 //==============================================================================
-std::set<dynamics::SimpleFramePtr> World::removeAllSimpleFrames() {
+std::set<dynamics::SimpleFramePtr> World::removeAllSimpleFrames()
+{
   std::set<dynamics::SimpleFramePtr> ptrs;
-  for (std::vector<dynamics::SimpleFramePtr>::iterator
-           it = mSimpleFrames.begin(),
-           end = mSimpleFrames.end();
-       it != end; ++it)
+  for(std::vector<dynamics::SimpleFramePtr>::iterator it=mSimpleFrames.begin(),
+      end=mSimpleFrames.end(); it != end; ++it)
     ptrs.insert(*it);
 
-  while (getNumSimpleFrames() > 0) removeSimpleFrame(getSimpleFrame(0));
+  while(getNumSimpleFrames() > 0)
+    removeSimpleFrame(getSimpleFrame(0));
 
   return ptrs;
 }
 
 //==============================================================================
-bool World::checkCollision(bool _checkAllCollisions) {
+bool World::checkCollision(bool _checkAllCollisions)
+{
   return mConstraintSolver->getCollisionDetector()->detectCollision(
-      _checkAllCollisions, false);
+        _checkAllCollisions, false);
 }
 
 //==============================================================================
-constraint::ConstraintSolver* World::getConstraintSolver() const {
+constraint::ConstraintSolver* World::getConstraintSolver() const
+{
   return mConstraintSolver;
 }
 
 //==============================================================================
-void World::setConstraintSolver(
-    constraint::ConstraintSolver* _constraintSolver) {
-  mConstraintSolver = _constraintSolver;
-}
-
-//==============================================================================
-void World::bake() {
-  collision::CollisionDetector* cd =
-      getConstraintSolver()->getCollisionDetector();
+void World::bake()
+{
+  collision::CollisionDetector* cd
+      = getConstraintSolver()->getCollisionDetector();
   int nContacts = cd->getNumContacts();
   int nSkeletons = getNumSkeletons();
   Eigen::VectorXd state(getIndex(nSkeletons) + 6 * nContacts);
-  for (size_t i = 0; i < getNumSkeletons(); i++) {
-    state.segment(getIndex(i), getSkeleton(i)->getNumDofs()) =
-        getSkeleton(i)->getPositions();
+  for (size_t i = 0; i < getNumSkeletons(); i++)
+  {
+    state.segment(getIndex(i), getSkeleton(i)->getNumDofs())
+        = getSkeleton(i)->getPositions();
   }
-  for (int i = 0; i < nContacts; i++) {
+  for (int i = 0; i < nContacts; i++)
+  {
     int begin = getIndex(nSkeletons) + i * 6;
-    state.segment(begin, 3) = cd->getContact(i).point;
+    state.segment(begin, 3)     = cd->getContact(i).point;
     state.segment(begin + 3, 3) = cd->getContact(i).force;
   }
   mRecording->addState(state);
 }
 
 //==============================================================================
-Recording* World::getRecording() { return mRecording; }
+Recording* World::getRecording()
+{
+  return mRecording;
+}
 
 //==============================================================================
-void World::handleSkeletonNameChange(dynamics::ConstMetaSkeletonPtr _skeleton) {
-  if (nullptr == _skeleton) {
+void World::handleSkeletonNameChange(
+    dynamics::ConstMetaSkeletonPtr _skeleton)
+{
+  if(nullptr == _skeleton)
+  {
     dterr << "[World::handleSkeletonNameChange] Received a name change "
           << "callback for a nullptr Skeleton. This is most likely a bug. "
           << "Please report this!\n";
@@ -482,24 +550,28 @@ void World::handleSkeletonNameChange(dynamics::ConstMetaSkeletonPtr _skeleton) {
   // Find the shared version of the Skeleton
   std::map<dynamics::ConstMetaSkeletonPtr, dynamics::SkeletonPtr>::iterator it =
       mMapForSkeletons.find(_skeleton);
-  if (it == mMapForSkeletons.end()) {
+  if( it == mMapForSkeletons.end() )
+  {
     dterr << "[World::handleSkeletonNameChange] Could not find Skeleton named ["
           << _skeleton->getName() << "] in the shared_ptr map of World ["
-          << getName() << "]. This is most likely a bug. Please report this!\n";
+          << getName() <<"]. This is most likely a bug. Please report this!\n";
     assert(false);
     return;
   }
   dynamics::SkeletonPtr sharedSkel = it->second;
 
   // Inform the NameManager of the change
-  std::string issuedName =
-      mNameMgrForSkeletons.changeObjectName(sharedSkel, newName);
+  std::string issuedName = mNameMgrForSkeletons.changeObjectName(
+        sharedSkel, newName);
 
   // If the name issued by the NameManger does not match, reset the name of the
   // Skeleton to match the newly issued name.
-  if ((!issuedName.empty()) && (newName != issuedName)) {
+  if( (!issuedName.empty()) && (newName != issuedName) )
+  {
     sharedSkel->setName(issuedName);
-  } else if (issuedName.empty()) {
+  }
+  else if(issuedName.empty())
+  {
     dterr << "[World::handleSkeletonNameChange] Skeleton named ["
           << sharedSkel->getName() << "] (" << sharedSkel << ") does not exist "
           << "in the NameManager of World [" << getName() << "]. This is most "
@@ -510,12 +582,14 @@ void World::handleSkeletonNameChange(dynamics::ConstMetaSkeletonPtr _skeleton) {
 }
 
 //==============================================================================
-void World::handleSimpleFrameNameChange(const dynamics::Entity* _entity) {
+void World::handleSimpleFrameNameChange(const dynamics::Entity* _entity)
+{
   // Check that this is actually a SimpleFrame
   const dynamics::SimpleFrame* frame =
       dynamic_cast<const dynamics::SimpleFrame*>(_entity);
 
-  if (nullptr == frame) {
+  if(nullptr == frame)
+  {
     dterr << "[World::handleFrameNameChange] Received a callback for a nullptr "
           << "enity. This is most likely a bug. Please report this!\n";
     assert(false);
@@ -526,9 +600,10 @@ void World::handleSimpleFrameNameChange(const dynamics::Entity* _entity) {
   const std::string& newName = frame->getName();
 
   // Find the shared version of the Frame
-  std::map<const dynamics::SimpleFrame*, dynamics::SimpleFramePtr>::iterator
-      it = mSimpleFrameToShared.find(frame);
-  if (it == mSimpleFrameToShared.end()) {
+  std::map<const dynamics::SimpleFrame*, dynamics::SimpleFramePtr>::iterator it
+      = mSimpleFrameToShared.find(frame);
+  if( it == mSimpleFrameToShared.end() )
+  {
     dterr << "[World::handleFrameNameChange] Could not find SimpleFrame named ["
           << frame->getName() << "] in the shared_ptr map of World ["
           << getName() << "]. This is most likely a bug. Please report this!\n";
@@ -537,12 +612,15 @@ void World::handleSimpleFrameNameChange(const dynamics::Entity* _entity) {
   }
   dynamics::SimpleFramePtr sharedFrame = it->second;
 
-  std::string issuedName =
-      mNameMgrForSimpleFrames.changeObjectName(sharedFrame, newName);
+  std::string issuedName = mNameMgrForSimpleFrames.changeObjectName(
+        sharedFrame, newName);
 
-  if ((!issuedName.empty()) && (newName != issuedName)) {
+  if( (!issuedName.empty()) && (newName != issuedName) )
+  {
     sharedFrame->setName(issuedName);
-  } else if (issuedName.empty()) {
+  }
+  else if(issuedName.empty())
+  {
     dterr << "[World::handleFrameNameChange] SimpleFrame named ["
           << frame->getName() << "] (" << frame << ") does not exist in the "
           << "NameManager of World [" << getName() << "]. This is most likely "
@@ -551,6 +629,7 @@ void World::handleSimpleFrameNameChange(const dynamics::Entity* _entity) {
     return;
   }
 }
+
 
 }  // namespace simulation
 }  // namespace dart
