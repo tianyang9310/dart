@@ -447,7 +447,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     } else {
       std::cout << "Lemke fails!!!" << std::endl;
       // mWindow->keyboard('y', 0, 0);
-      // std::cin.get();
+      std::cin.get();
     }
 
 // std::cout << std::endl;
@@ -568,7 +568,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       constraint->excite();
     }
 
-    std::cout << std::endl;
+    // std::cout << std::endl;
 
     for (size_t i = 0; i < numConstraints; i++) {
       ContactConstraint* cntctconstraint =
