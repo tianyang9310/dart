@@ -5,6 +5,7 @@
 #include "dart/dart.h"
 #include "utils.h"
 
+namespace CntctLrnin {
 using namespace std;
 
 /// return sort index
@@ -19,4 +20,5 @@ bool LCPLinEqu(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
 bool DFS(Eigen::VectorXd& z, size_t index, const Eigen::MatrixXd& A,
          const Eigen::VectorXd& b, vector<Eigen::VectorXd>& ret_list);
 
+}
 #endif

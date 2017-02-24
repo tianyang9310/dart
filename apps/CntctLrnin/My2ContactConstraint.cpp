@@ -21,8 +21,7 @@
 
 // #define OUTPUT
 
-namespace dart {
-namespace constraint {
+namespace CntctLrnin {
 
 //==============================================================================
 My2ContactConstraint::My2ContactConstraint(collision::Contact& _contact,
@@ -781,6 +780,4 @@ void My2ContactConstraint::getVelocityChange(double* _vel, bool _withCfm) {
         _vel[mAppliedImpulseIndex] * mConstraintForceMixing;
   }
 }
-
-}  // namespace constraint
-}  // namespace dart
+}

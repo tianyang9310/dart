@@ -12,12 +12,14 @@
 
 #define RUN_GUI
 
+using namespace CntctLrnin;
+
 int main(int argc, char* argv[]) {
   std::srand(
       (unsigned)(std::chrono::system_clock::now().time_since_epoch().count()));
   // create and initialize the world
-  std::shared_ptr<dart::simulation::MyWorld> mWorld =
-      std::make_shared<dart::simulation::MyWorld>();
+  std::shared_ptr<MyWorld> mWorld =
+      std::make_shared<MyWorld>();
   assert(mWorld != nullptr);
   AddSkel(mWorld);
 

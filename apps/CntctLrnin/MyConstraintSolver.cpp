@@ -17,8 +17,7 @@
 #include "dart/constraint/SoftContactConstraint.h"
 #include "MyWindow.h"
 
-namespace dart {
-namespace constraint {
+namespace CntctLrnin {
 
 MyConstraintSolver::MyConstraintSolver(double _timeStep)
     : ConstraintSolver(_timeStep) {}
@@ -153,5 +152,5 @@ void MyConstraintSolver::updateConstraints() {
       mActiveConstraints.push_back(jointFrictionConstraint);
   }
 }
-}
+
 }

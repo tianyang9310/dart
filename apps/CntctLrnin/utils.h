@@ -18,6 +18,8 @@
 
 // #define REGULARIZED_PRINT // print regularized info
 
+namespace CntctLrnin {
+
 Eigen::MatrixXd getTangentBasisMatrixLemke(const Eigen::Vector3d& _n,
                                            int numBasis);
 
@@ -64,4 +66,5 @@ void clampNeg(T1& z, T2 Validation) {
 
 std::string idx2string(const int idxmBox);
 
+}
 #endif  // MYUTILS

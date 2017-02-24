@@ -24,6 +24,8 @@
  * * fn>0, fd>0, lambda>0		slide
  */
 
+namespace CntctLrnin {
+
 MyDantzigLCPSolver::MyDantzigLCPSolver(double _timestep, int _totalDOF,
                                        MyWindow* mWindow)
     : DantzigLCPSolver(_timestep), totalDOF(_totalDOF), mWindow(mWindow) {
@@ -1111,4 +1113,5 @@ void MyDantzigLCPSolver::decompose(const Eigen::VectorXd& z,
     each_z << z_fn(i), z_fd.segment(i * numBasis, numBasis), z_lambda(i);
     z_groups.push_back(each_z);
   }
+}
 }

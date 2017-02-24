@@ -1,5 +1,6 @@
 #include "utils.h"
 
+namespace CntctLrnin {
 Eigen::MatrixXd getTangentBasisMatrixLemke(const Eigen::Vector3d& _n,
                                            int numBasis) {
   // TODO(JS): Use mNumFrictionConeBases
@@ -49,4 +50,4 @@ std::string idx2string(const int idxmBox){
   return name;
 }
 
-
+}

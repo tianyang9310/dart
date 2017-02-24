@@ -1,5 +1,6 @@
 #include "addSkeles.h"
 
+namespace CntctLrnin {
 void AddSkel(WorldPtr world) {
   world->addSkeleton(AddBox(NUMCUBES, (Eigen::Vector3d() << 0, 0, 0.2).finished()));
   // world->addSkeleton(AddGround());
@@ -154,4 +155,5 @@ SkeletonPtr AddPlatform() {
   mPlatform->setMobile(false);
   mPlatform->disableSelfCollision();
   return mPlatform;
+}
 }

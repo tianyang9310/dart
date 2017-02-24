@@ -23,8 +23,8 @@
 
 // #define CLAMP_CONTACT_CONSTRAINT
 
-namespace dart {
-namespace constraint {
+namespace CntctLrnin {
+  
 
 MyContactConstraint::MyContactConstraint(collision::Contact& _contact,
                                          double _timestep)
@@ -429,6 +429,5 @@ void MyContactConstraint::getInformation(ConstraintInfo* _info) {
       // Increase index
     }
   }
-}
 }
 }

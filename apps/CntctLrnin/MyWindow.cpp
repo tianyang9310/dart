@@ -2,6 +2,8 @@
 
 using namespace std;
 
+namespace CntctLrnin{
+
 MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   setWorld(world);
   mCollisionDetector = std::unique_ptr<dart::collision::CollisionDetector>(
@@ -418,3 +420,5 @@ dart::simulation::WorldPtr MyWindow::getWorld() { return mWorld; }
  *   mWorld->getSkeleton(idx2string(idxmBox))->setVelocities(Eigen::VectorXd::Zero(6));
  * }
  */
+
+}

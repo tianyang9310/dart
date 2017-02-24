@@ -1,5 +1,6 @@
 #include "LCPLinEqu.h"
 
+namespace CntctLrnin {
 vector<size_t> sort_indexes(Eigen::VectorXd& v) {
   // initialize original index locations
   vector<size_t> idx(v.size());
@@ -100,4 +101,5 @@ bool DFS(Eigen::VectorXd& z, size_t index, const Eigen::MatrixXd& A,
     }
     return false;
   }
+}
 }

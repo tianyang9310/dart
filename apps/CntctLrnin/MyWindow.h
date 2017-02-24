@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include <random>
-#include "Controller.h"
 #include "My2DantzigLCPSolver.h"
 #include "MyDantzigLCPSolver.h"
 #include "dart/dart.h"
@@ -19,6 +18,8 @@
 // 1: ball
 // 2: cylinder
 #define SHAPE 0
+
+namespace CntctLrnin{
 
 class MyWindow : public dart::gui::SimWindow {
   //----------------------------------------------------------------------------
@@ -40,7 +41,6 @@ class MyWindow : public dart::gui::SimWindow {
   // void resetCubeOrientation(int idxmBox, int dir = 0);
 
   private:
-  std::unique_ptr<Controller> mController;
   std::unique_ptr<dart::collision::CollisionDetector> mCollisionDetector;
   std::vector<Eigen::Vector3d> mColor;
 
@@ -65,4 +65,5 @@ class MyWindow : public dart::gui::SimWindow {
   Eigen::Vector3d extForce;
 };
 
+}
 #endif  // CNTCTLRNIN_MYWINDOW_H

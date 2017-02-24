@@ -37,6 +37,7 @@
 
 // #define SANITY_CHECK
 
+namespace CntctLrnin {
 using namespace dart::constraint;
 
 class MyWindow;
@@ -117,5 +118,6 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
   /// For debugging use
   MyWindow* mWindow;
 };
+}
 
 #endif

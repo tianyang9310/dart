@@ -23,6 +23,13 @@ class JointLimitConstraint;
 class JointCoulombFrictionConstraint;
 class JointConstraint;
 class LCPSolver;
+}
+}
+
+namespace CntctLrnin {
+
+using namespace dart;
+using namespace dart::constraint;
 
 class MyConstraintSolver : public ConstraintSolver {
   public:
@@ -31,7 +38,7 @@ class MyConstraintSolver : public ConstraintSolver {
 
   void updateConstraints();
 };
-}
+
 }
 
 #endif  // MYCONSTRAINTSOLVER

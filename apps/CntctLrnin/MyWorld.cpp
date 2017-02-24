@@ -1,12 +1,10 @@
 #include "MyWorld.h"
 
-namespace dart {
-namespace simulation {
+namespace CntctLrnin {
 
 MyWorld::MyWorld(const std::string& _name) : World(_name) {
-  mConstraintSolver = new dart::constraint::MyConstraintSolver(mTimeStep);
+  mConstraintSolver = new MyConstraintSolver(mTimeStep);
 }
 
 MyWorld::~MyWorld() {}
-}
 }

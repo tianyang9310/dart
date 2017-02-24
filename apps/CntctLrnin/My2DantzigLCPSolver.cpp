@@ -1,5 +1,6 @@
 #include "My2DantzigLCPSolver.h"
 
+namespace CntctLrnin {
 //==============================================================================
 My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep, MyWindow* _mWindow)
     : DantzigLCPSolver(_timestep) {
@@ -987,3 +988,4 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
   }
 }
 #endif
+}

@@ -10,10 +10,14 @@ namespace dynamics {
 class BodyNode;
 class Skeleton;
 }  // namespace dynamics
+}
 
-namespace constraint {
+namespace CntctLrnin {
 
-class MyContactConstraint : public ContactConstraint {
+using namespace dart;
+using namespace dart::constraint;
+
+class MyContactConstraint : public dart::constraint::ContactConstraint {
   public:
   MyContactConstraint(collision::Contact& _contact, double _timeStep);
   virtual ~MyContactConstraint();
@@ -32,7 +36,7 @@ class MyContactConstraint : public ContactConstraint {
   void getInformation(ConstraintInfo* _info);
   int numBasis;
 };
-}
+
 }
 
 #endif  // MYCONTACTCONSTRAINT

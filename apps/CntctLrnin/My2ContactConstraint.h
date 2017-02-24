@@ -12,7 +12,12 @@ class BodyNode;
 class Skeleton;
 }  // namespace dynamics
 
-namespace constraint {
+}
+
+namespace CntctLrnin {
+
+using namespace dart;
+using namespace dart::constraint;
 
 class My2ContactConstraint : public ContactConstraint {
   public:
@@ -40,6 +45,5 @@ class My2ContactConstraint : public ContactConstraint {
 };
 
 }  // namespace constraint
-}  // namespace dart
 
 #endif  // MYCONTACTCONSTRAINT

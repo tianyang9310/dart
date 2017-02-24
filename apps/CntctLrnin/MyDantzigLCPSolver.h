@@ -22,7 +22,11 @@
 #include "../Lemke_Fix/MyLemke.h"
 // #include "dart/lcpsolver/lcp.h"
 
+
+namespace CntctLrnin {
+
 using namespace dart::constraint;
+
 class MyWindow;
 
 class MyDantzigLCPSolver : public DantzigLCPSolver {
@@ -74,5 +78,6 @@ class MyDantzigLCPSolver : public DantzigLCPSolver {
 
   MyWindow* mWindow;
 };
+}
 
 #endif  // MYDANTZIGLCPSOLVER
