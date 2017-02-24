@@ -100,7 +100,7 @@ leaving=bas(lvindex);
 
 bas(lvindex)=t; % pivot in the artificial variable
 
-U=x<0;
+U=x<piv_tol;
 %U=ones(n,1); % Alternative artificial vector
 Be=-(B*U);
 x=x+tval*U;

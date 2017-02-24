@@ -190,7 +190,7 @@ bas[lvindex] = t; // pivoting in the artificial variable
 
 Eigen::VectorXd U = Eigen::VectorXd::Zero(n);
 for (int i = 0; i < n; ++i) {
-    if (x[i] < 0)
+    if (x[i] < piv_tol)
         U[i] = 1;
 }
 Be = -(B * U);
@@ -221,7 +221,7 @@ for (iter = 0; iter < maxiter; ++iter) {
     }
     if (j.empty()) // no new pivots - ray termination
     {
-        std::cout << "Fails due to empty j in the iterations" << std::endl;
+        std::cout << "Fails due to empty j in the iterations, which means second ray termination!" << std::endl;
         err = 2;
         break;
     }
@@ -275,7 +275,7 @@ for (iter = 0; iter < maxiter; ++iter) {
         theta = tmpd[0];
         lvindex = 0;
         for (size_t i = 0; i < jSize; ++i) {
-            if (tmpd[i] - theta > piv_tol) {  // Bubble sorting
+            if (tmpd[i] - theta > piv_tol) {  // Bubble sorting: return the first max
                 theta = tmpd[i];
                 lvindex = i;
             }
