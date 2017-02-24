@@ -59,6 +59,8 @@ void MyWindow::timeStepping() {
   if (mImpulseDuration <= 0) {
     mImpulseDuration = 0;
     mForce.setZero();
+    unsigned char key = std::rand()%4 + 49;
+    keyboard(key,0,0);
   }
   // std::cout << "num ct: " << mWorld->getConstraintSolver()->getCollisionDetector()->getNumContacts() << std::endl;
 }

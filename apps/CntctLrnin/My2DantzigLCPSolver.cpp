@@ -282,6 +282,9 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
           dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
       if (Validation) {
         std::cout << "Using Snopt LCP find a solution!" << std::endl;
+
+        // print(Lemke_A, Lemke_b, (*z), Validation, err);
+        // std::cin.get();
       } else {
         std::cout << "Snopt fails to find a solution either!" << std::endl;
       }
@@ -945,7 +948,7 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
   Eigen::VectorXd z_lambda(numContactsToLearn);
   z_lambda = z.tail(numContactsToLearn);
 
-  double RECORD_ZERO = 1e-25;
+  double RECORD_ZERO = 1e-18;
   int value = 9;
   std::vector<Eigen::VectorXd> each_z(numContactsToLearn);
   Eigen::VectorXi value_array(numContactsToLearn);
