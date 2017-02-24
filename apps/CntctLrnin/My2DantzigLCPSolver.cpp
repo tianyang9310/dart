@@ -447,7 +447,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     } else {
       std::cout << "Lemke fails!!!" << std::endl;
       // mWindow->keyboard('y', 0, 0);
-      std::cin.get();
+      // std::cin.get();
     }
 
 // std::cout << std::endl;
@@ -756,12 +756,14 @@ void My2DantzigLCPSolver::print(const Eigen::MatrixXd& A,
                                 const Eigen::VectorXd& z, bool Validation,
                                 int err) {
 #ifdef LEMKE_PRINT
+  Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
+
   std::cout << std::endl
             << "```````````````````````````````````````````````" << std::endl;
 
-  std::cout << "Matrix A " << std::endl << A << std::endl << std::endl;
+  std::cout << "Matrix A " << std::endl << A.format(CSVFmt) << std::endl << std::endl;
   std::cout << "Vector b " << std::endl
-            << b.transpose() << std::endl
+            << b.transpose().format(CSVFmt) << std::endl
             << std::endl;
   std::cout << "Vector z " << std::endl
             << z.transpose().head(numContactsCallBack) << std::endl;
