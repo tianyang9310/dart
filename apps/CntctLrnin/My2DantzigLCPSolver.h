@@ -45,7 +45,7 @@ class MyWindow;
 class My2DantzigLCPSolver : public DantzigLCPSolver {
   public:
   /// Constructor
-  My2DantzigLCPSolver(double _timestep, MyWindow* _mWindow = NULL);
+  My2DantzigLCPSolver(double _timestep, dart::gui::SimWindow* _mWindow = NULL);
 
   /// Destructor
   virtual ~My2DantzigLCPSolver();
@@ -116,7 +116,7 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
   int mPrecision;
 
   /// For debugging use
-  MyWindow* mWindow;
+  dart::gui::SimWindow* mWindow;
 };
 }
 

@@ -139,7 +139,7 @@ public:
   // first: Child BodyNode name | second: Order that Joint appears in file
   typedef std::map<std::string, size_t> JointToIndex;
 
-protected:
+// protected:
 
   static simulation::WorldPtr readWorld(
       tinyxml2::XMLElement* _worldElement,

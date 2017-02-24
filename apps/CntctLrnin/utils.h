@@ -1,7 +1,9 @@
 #ifndef MYUTILS
 #define MYUTILS
 
+#include <tinyxml2.h>
 #include <string>
+#include "MyWorld.h"
 #include "dart/dart.h"
 
 #ifndef DART_CONTACT_CONSTRAINT_EPSILON
@@ -18,7 +20,39 @@
 
 // #define REGULARIZED_PRINT // print regularized info
 
+namespace dart {
+
+namespace dynamics {
+class Joint;
+class WeldJoint;
+class PrismaticJoint;
+class RevoluteJoint;
+class ScrewJoint;
+class UniversalJoint;
+class BallJoint;
+class EulerXYZJoint;
+class EulerJoint;
+class TranslationalJoint;
+class PlanarJoint;
+class FreeJoint;
+class Marker;
+}
+
+namespace dynamics {
+class BodyNode;
+class Shape;
+class Skeleton;
+}
+
+namespace simulation {
+class World;
+}
+}
+
 namespace CntctLrnin {
+
+using namespace dart;
+using namespace dart::utils;
 
 Eigen::MatrixXd getTangentBasisMatrixLemke(const Eigen::Vector3d& _n,
                                            int numBasis);
@@ -32,8 +66,7 @@ void clampZero(T& z) {
   auto oldZ = z;
   auto myZero = z;
   myZero.setZero();
-  z = (z.array() > -CLAMP_ZERO && z.array() < CLAMP_ZERO)
-             .select(myZero, z);
+  z = (z.array() > -CLAMP_ZERO && z.array() < CLAMP_ZERO).select(myZero, z);
   if (((oldZ).array() > -CLAMP_ZERO && (oldZ).array() < CLAMP_ZERO &&
        (oldZ).array() != 0)
           .any()) {
@@ -66,5 +99,17 @@ void clampNeg(T1& z, T2 Validation) {
 
 std::string idx2string(const int idxmBox);
 
-}
+simulation::WorldPtr myReadWorld(
+    tinyxml2::XMLElement* _worldElement, const common::Uri& _baseUri,
+    const common::ResourceRetrieverPtr& _retriever);
+
+simulation::WorldPtr myReadWorld(
+    const common::Uri& _uri,
+    const common::ResourceRetrieverPtr& _retriever = nullptr);
+
+tinyxml2::XMLElement* checkFormatAndGetWorldElement(
+    tinyxml2::XMLDocument& _document);
+
+}  // namespace CntctLrnin
+
 #endif  // MYUTILS

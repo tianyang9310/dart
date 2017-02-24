@@ -2,7 +2,8 @@
 
 namespace CntctLrnin {
 //==============================================================================
-My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep, MyWindow* _mWindow)
+My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep,
+                                         dart::gui::SimWindow* _mWindow)
     : DantzigLCPSolver(_timestep) {
   numBasis = NUMBASIS;
   numLemkeFail = 0;
@@ -10,12 +11,12 @@ My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep, MyWindow* _mWindow)
   mPrecision = PRECISION;
 #ifdef OUTPUT2FILE
   dataSize = 50000;
-  numDesiredCT = 5*NUMCUBES;
+  numDesiredCT = 5 * NUMCUBES;
   // Here magic number of 4 is what we suppose to get from cube testing
-  for (int numContactsToLearn = 1; numContactsToLearn < 1+numDesiredCT;
+  for (int numContactsToLearn = 1; numContactsToLearn < 1 + numDesiredCT;
        numContactsToLearn++) {
-    std::string trainingFile =
-        "/tmp/CntctLrnin/lcp_data" + std::to_string(numContactsToLearn) + ".csv";
+    std::string trainingFile = "/tmp/CntctLrnin/lcp_data" +
+                               std::to_string(numContactsToLearn) + ".csv";
     std::shared_ptr<std::fstream> outputFile =
         std::make_shared<std::fstream>(trainingFile, std::fstream::out);
     outputFile->precision(mPrecision);
@@ -339,9 +340,11 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     Decompose((*z), z_groups);
     for (int i = 0; i < numConstraints; i++) {
       // Corner case where fn==0, fd>0 and lambda>0
-      if (z_groups[i][0] > -SanityCheckZero && z_groups[i][0] < SanityCheckZero &&
-          z_groups[i].segment(1, numBasis).array().maxCoeff() > SanityCheckZero &&
-          z_groups[i][numBasis+1] > SanityCheckZero) {
+      if (z_groups[i][0] > -SanityCheckZero &&
+          z_groups[i][0] < SanityCheckZero &&
+          z_groups[i].segment(1, numBasis).array().maxCoeff() >
+              SanityCheckZero &&
+          z_groups[i][numBasis + 1] > SanityCheckZero) {
         std::cerr << "ERROR: fn==0, fd>0 and lambda>0" << std::endl;
         std::cerr << "Lemke A is " << std::endl;
         std::cerr << Lemke_A << std::endl;
@@ -349,7 +352,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
         std::cerr << Lemke_b.transpose() << std::endl;
         std::cerr << "[z]" << (*z).transpose() << std::endl;
         std::cerr << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
-                      << std::endl;
+                  << std::endl;
         std::cerr
             << "[z].*[w]"
             << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
@@ -358,9 +361,12 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
         std::cin.get();
       }
       // Corner case where fn==0, fd>0 and lambda=0
-      if (z_groups[i][0] > -SanityCheckZero && z_groups[i][0] < SanityCheckZero &&
-          z_groups[i].segment(1, numBasis).array().maxCoeff() > SanityCheckZero &&
-          z_groups[i][numBasis+1] > -SanityCheckZero && z_groups[i][9] < SanityCheckZero) {
+      if (z_groups[i][0] > -SanityCheckZero &&
+          z_groups[i][0] < SanityCheckZero &&
+          z_groups[i].segment(1, numBasis).array().maxCoeff() >
+              SanityCheckZero &&
+          z_groups[i][numBasis + 1] > -SanityCheckZero &&
+          z_groups[i][9] < SanityCheckZero) {
         std::cerr << "ERROR: fn==0, fd>0 and lambda==0" << std::endl;
         std::cerr << "Lemke A is " << std::endl;
         std::cerr << Lemke_A << std::endl;
@@ -368,7 +374,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
         std::cerr << Lemke_b.transpose() << std::endl;
         std::cerr << "[z]" << (*z).transpose() << std::endl;
         std::cerr << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
-                      << std::endl;
+                  << std::endl;
         std::cerr
             << "[z].*[w]"
             << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
@@ -381,7 +387,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
           (z_groups[i].segment(1, numBasis).array() > -SanityCheckZero &&
            z_groups[i].segment(1, numBasis).array() < SanityCheckZero)
               .all() &&
-          z_groups[i][numBasis+1] > SanityCheckZero) {
+          z_groups[i][numBasis + 1] > SanityCheckZero) {
         std::cerr << "ERROR: fn>0, fd==0 and lambda>0" << std::endl;
         std::cerr << "Lemke A is " << std::endl;
         std::cerr << Lemke_A << std::endl;
@@ -389,7 +395,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
         std::cerr << Lemke_b.transpose() << std::endl;
         std::cerr << "[z]" << (*z).transpose() << std::endl;
         std::cerr << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
-                      << std::endl;
+                  << std::endl;
         std::cerr
             << "[z].*[w]"
             << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
@@ -398,14 +404,18 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
         std::cin.get();
       }
       // Count how many non-zero does fd have
-      double fd_nz=0;
-      fd_nz = (z_groups[i].segment(1,numBasis).array() > SanityCheckZero)
-              .matrix().cast<double>().sum();
+      double fd_nz = 0;
+      fd_nz = (z_groups[i].segment(1, numBasis).array() > SanityCheckZero)
+                  .matrix()
+                  .cast<double>()
+                  .sum();
       std::cout << i << "th contact has " << fd_nz << " nonzero in fd. ";
-      if (z_groups[i](1+numBasis) > SanityCheckZero) {
-        std::cout << "lambda" << " > 0 " << std::endl;
+      if (z_groups[i](1 + numBasis) > SanityCheckZero) {
+        std::cout << "lambda"
+                  << " > 0 " << std::endl;
       } else {
-        std::cout << "lambda" << " = 0 " << std::endl;
+        std::cout << "lambda"
+                  << " = 0 " << std::endl;
       }
     }
 #endif
@@ -440,7 +450,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       // std::cin.get();
     }
 
-    // std::cout << std::endl;
+// std::cout << std::endl;
 
 /*
  *     for (size_t i = 0; i < numConstraints; i++) {
@@ -479,21 +489,21 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 #endif
 
 #ifdef OUTPUT2FILE
-  // output to file after all necessary computation and valid Lemke results
-  if (Validation && (counters[numConstraints - 1] < dataSize)) {
-    recordLCPSolve(Lemke_A, (*z), Lemke_b);
-  }
-  // early stopping
-  bool early_stopping = true;
-  for (int mDCT_idx = 0; mDCT_idx < numDesiredCT; mDCT_idx++) {
-    if (counters[mDCT_idx] < dataSize) {
-      early_stopping = false;
-      continue;
+    // output to file after all necessary computation and valid Lemke results
+    if (Validation && (counters[numConstraints - 1] < dataSize)) {
+      recordLCPSolve(Lemke_A, (*z), Lemke_b);
     }
-  }
-  if (early_stopping) {
-    exit(0);
-  }
+    // early stopping
+    bool early_stopping = true;
+    for (int mDCT_idx = 0; mDCT_idx < numDesiredCT; mDCT_idx++) {
+      if (counters[mDCT_idx] < dataSize) {
+        early_stopping = false;
+        continue;
+      }
+    }
+    if (early_stopping) {
+      exit(0);
+    }
 #endif
   } else {
     // -------------------------------------------------------------------------
@@ -890,7 +900,7 @@ void My2DantzigLCPSolver::Scaling(Eigen::MatrixXd& A) {
 
 //==============================================================================
 void My2DantzigLCPSolver::Decompose(const Eigen::VectorXd& z,
-                                   std::vector<Eigen::VectorXd>& z_groups) {
+                                    std::vector<Eigen::VectorXd>& z_groups) {
   int numContactsToLearn = z.rows() / (numBasis + 2);
   // decompose z
   Eigen::VectorXd z_fn(numContactsToLearn);
@@ -912,8 +922,8 @@ void My2DantzigLCPSolver::Decompose(const Eigen::VectorXd& z,
 //==============================================================================
 #ifdef OUTPUT2FILE
 void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
-                                        const Eigen::VectorXd z,
-                                        const Eigen::VectorXd b) {
+                                         const Eigen::VectorXd z,
+                                         const Eigen::VectorXd b) {
   int nSize = b.rows();
   int numContactsToLearn = nSize / (numBasis + 2);
   assert(numContactsToLearn == numContactsCallBack);
@@ -937,19 +947,19 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
   for (int i = 0; i < numContactsToLearn; i++) {
     each_z[i].resize(numBasis + 2);
     each_z[i] << z_fn(i), z_fd.segment(i * numBasis, numBasis), z_lambda(i);
-    
+
     int value = 9;
     // Convention: numbasis = 8, so total 10 elements
     if (each_z[i](0) < RECORD_ZERO)  // fn = 0, break
     {
       value = 9;
-    } else if (each_z[i](numBasis+1) < RECORD_ZERO) { // lambda = 0, static
+    } else if (each_z[i](numBasis + 1) < RECORD_ZERO) {  // lambda = 0, static
       value = 8;
-    } else { // random choose non-zero in fd
+    } else {  // random choose non-zero in fd
       std::vector<int> nonZerofd;
       nonZerofd.clear();
       for (int j = 0; j < numBasis; j++) {
-        if (each_z[i](j+1) > RECORD_ZERO) {
+        if (each_z[i](j + 1) > RECORD_ZERO) {
           nonZerofd.push_back(j);
         }
       }
@@ -960,31 +970,32 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
     value_array(i) = value;
   }
 
-  if (value_array.maxCoeff() < 8) {
-  //  output A, z, and b
-  //  // since all friction coeffs are the same, no need to output them
-  for (int i = 0; i < nSize - numContactsToLearn; i++) {
-    for (int j = i; j < nSize - numContactsToLearn; j++) {
-      (*outputFile) << A(i, j) << ",";
+  // if (value_array.maxCoeff() < 8) {
+  if (true) {
+    //  output A, z, and b
+    //  // since all friction coeffs are the same, no need to output them
+    for (int i = 0; i < nSize - numContactsToLearn; i++) {
+      for (int j = i; j < nSize - numContactsToLearn; j++) {
+        (*outputFile) << A(i, j) << ",";
+      }
     }
-  }
 
-  for (int i = 0; i < numContactsToLearn; i++) {
-    (*outputFile) << A(nSize-numContactsToLearn+i,i) << ",";
-  }
-
-  for (int i = 0; i < nSize - numContactsToLearn; i++) {
-    (*outputFile) << b(i) << ",";
-  }
-
-  for (int i = 0; i < numContactsToLearn; i++ ) {
-    (*outputFile) << value_array(i);
-    if (i < numContactsToLearn - 1) {
-      (*outputFile) << ",";
+    for (int i = 0; i < numContactsToLearn; i++) {
+      (*outputFile) << A(nSize - numContactsToLearn + i, i) << ",";
     }
-  }
 
-  (*outputFile) << std::endl;
+    for (int i = 0; i < nSize - numContactsToLearn; i++) {
+      (*outputFile) << b(i) << ",";
+    }
+
+    for (int i = 0; i < numContactsToLearn; i++) {
+      (*outputFile) << value_array(i);
+      if (i < numContactsToLearn - 1) {
+        (*outputFile) << ",";
+      }
+    }
+
+    (*outputFile) << std::endl;
   }
 }
 #endif

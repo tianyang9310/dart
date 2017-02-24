@@ -205,6 +205,9 @@ public:
   /// Get the constraint solver
   constraint::ConstraintSolver* getConstraintSolver() const;
 
+  /// Set the constraint solver
+  void setConstraintSolver(constraint::ConstraintSolver* _constraintSolver);
+
   /// Bake simulated current state and store it into mRecording
   void bake();
 

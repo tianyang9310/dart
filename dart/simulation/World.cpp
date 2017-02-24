@@ -504,6 +504,12 @@ constraint::ConstraintSolver* World::getConstraintSolver() const
 }
 
 //==============================================================================
+void World::setConstraintSolver(constraint::ConstraintSolver* _constraintSolver)
+{
+  mConstraintSolver = _constraintSolver;
+}
+
+//==============================================================================
 void World::bake()
 {
   collision::CollisionDetector* cd
