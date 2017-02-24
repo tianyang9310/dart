@@ -41,11 +41,24 @@
 #include "dart/dart.h"
 
 #include "apps/bipedStand/MyWindow.h"
+#include "apps/CntctLrnin/MyWindow.h"
+
+#include "apps/CntctLrnin/MyConstraintSolver.h"
+#include "apps/CntctLrnin/utils.h"
+
+#define USE_CNTCTLRNIN
 
 int main(int argc, char* argv[]) {
+  std::srand(
+      (unsigned)(std::chrono::system_clock::now().time_since_epoch().count()));
   // create and initialize the world
-  dart::simulation::WorldPtr myWorld
-      = dart::utils::SkelParser::readWorld(DART_DATA_PATH"skel/fullbody1.skel");
+  // dart::simulation::WorldPtr myWorld
+  std::shared_ptr<dart::simulation::World> myWorld =
+#ifdef USE_CNTCTLRNIN
+      CntctLrnin::myReadWorld(DART_DATA_PATH "skel/fullbody1.skel");
+#else
+      dart::utils::SkelParser::readWorld(DART_DATA_PATH "skel/fullbody1.skel");
+#endif
   assert(myWorld != nullptr);
 
   Eigen::Vector3d gravity(0.0, -9.81, 0.0);
@@ -53,26 +66,49 @@ int main(int argc, char* argv[]) {
 
   dart::dynamics::SkeletonPtr biped = myWorld->getSkeleton("fullbody1");
 
-  biped->getDof("j_pelvis_rot_y")->setPosition( -0.20);
-  biped->getDof("j_thigh_left_z")->setPosition(  0.15);
-  biped->getDof("j_shin_left")->setPosition(    -0.40);
-  biped->getDof("j_heel_left_1")->setPosition(   0.25);
-  biped->getDof("j_thigh_right_z")->setPosition( 0.15);
-  biped->getDof("j_shin_right")->setPosition(   -0.40);
-  biped->getDof("j_heel_right_1")->setPosition(  0.25);
-  biped->getDof("j_abdomen_2")->setPosition(     0.00);
+  biped->getDof("j_pelvis_rot_y")->setPosition(-0.20);
+  biped->getDof("j_thigh_left_z")->setPosition(0.15);
+  biped->getDof("j_shin_left")->setPosition(-0.40);
+  biped->getDof("j_heel_left_1")->setPosition(0.25);
+  biped->getDof("j_thigh_right_z")->setPosition(0.15);
+  biped->getDof("j_shin_right")->setPosition(-0.40);
+  biped->getDof("j_heel_right_1")->setPosition(0.25);
+  biped->getDof("j_abdomen_2")->setPosition(0.00);
 
   // create controller
   Controller* myController = new Controller(biped, myWorld->getTimeStep());
-  myWorld->getConstraintSolver()->setCollisionDetector(
-      // new dart::collision::BulletCollisionDetector());
-      // new dart::collision::FCLMeshCollisionDetector());
-      new dart::collision::DARTCollisionDetector());
+
+  /*
+   *   // These two routines are included in CntctLrnin::myReadWorld
+   *   // set constraint solver
+   *   myWorld->setConstraintSolver(
+   *       new CntctLrnin::MyConstraintSolver(myWorld->getTimeStep()));
+   *
+   *   // set DART collision detector
+   *   myWorld->getConstraintSolver()->setCollisionDetector(
+   *       // new dart::collision::BulletCollisionDetector());
+   *       // new dart::collision::FCLMeshCollisionDetector());
+   *       new dart::collision::DARTCollisionDetector());
+   */
 
   // create a window and link it to the world
   MyWindow window;
   window.setWorld(myWorld);
   window.setController(myController);
+
+  MyWindow* mWindow = &window;
+
+#ifdef USE_CNTCTLRNIN
+#ifndef ODE_VANILLA
+#ifndef FORK_LEMKE
+#else
+  // set LCP solver
+  // Using My2DantzigLCPSolver
+  myWorld->getConstraintSolver()->setLCPSolver(
+      new CntctLrnin::My2DantzigLCPSolver(myWorld->getTimeStep(), mWindow));
+#endif
+#endif
+#endif
 
   std::cout << "space bar: simulation on/off" << std::endl;
   std::cout << "'p': playback/stop" << std::endl;
@@ -86,4 +122,3 @@ int main(int argc, char* argv[]) {
 
   return 0;
 }
-

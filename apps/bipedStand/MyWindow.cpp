@@ -60,10 +60,13 @@ void MyWindow::timeStepping() {
     mImpulseDuration = 0;
     mForce.setZero();
   }
-  std::cout << "num ct: " << mWorld->getConstraintSolver()->getCollisionDetector()->getNumContacts() << std::endl;
+  // std::cout << "num ct: " << mWorld->getConstraintSolver()->getCollisionDetector()->getNumContacts() << std::endl;
 }
 
 void MyWindow::drawSkels() {
+  glEnable(GL_LIGHTING);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
   for (unsigned int i = 0; i < mWorld->getNumSkeletons(); i++)
     mWorld->getSkeleton(i)->draw(mRI);
 
