@@ -8,6 +8,7 @@
 #include <string>
 
 #include "LCPLinEqu.h"
+#include "SnLCPWrapper.h"
 #include "My2ContactConstraint.h"
 #include "MyWindow.h"
 #include "dart/dart.h"
@@ -32,7 +33,7 @@
 // #define IMPULSE_CHANGE
 
 #define RECALL_SOLVE
-// #define SNOPT_SOLVE
+#define SNOPT_SOLVE
 // #define BRUTE_SOLVE
 
 // #define SANITY_CHECK
