@@ -266,6 +266,9 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
         break;
       }
     }
+    if (Lemke_try == 0) {
+      std::cout << "Recalling Lemke still cannot find a solution" << std::endl; 
+    }
 #endif
 
 #ifdef SNOPT_SOLVE
