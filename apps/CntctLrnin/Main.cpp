@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "LCPLinEqu.h"
+#include "LCPLPproblem.h"
 #include "My2DantzigLCPSolver.h"
 #include "MyDantzigLCPSolver.h"
 #include "MyWindow.h"
