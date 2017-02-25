@@ -42,33 +42,35 @@
 #include "dart/math/Helpers.h"
 #include "MyLemke.h"
 
-#ifndef isnan
-# define isnan(x) \
-  (sizeof (x) == sizeof (long double) ? isnan_ld (x) \
-  : sizeof (x) == sizeof (double) ? isnan_d (x) \
-  : isnan_f(x))
-
-static inline int isnan_f(float _x) { return _x != _x; }
-
-static inline int isnan_d(double _x) { return _x != _x; }
-
-static inline int isnan_ld(long double _x) { return _x != _x; }
-
-#endif
-
-#ifndef isinf
-# define isinf(x) \
-  (sizeof (x) == sizeof (long double) ? isinf_ld (x) \
-  : sizeof (x) == sizeof (double) ? isinf_d (x) \
-  : isinf_f(x))
-
-static inline int isinf_f(float _x) { return !isnan (_x) && isnan (_x - _x); }
-
-static inline int isinf_d(double _x) { return !isnan (_x) && isnan (_x - _x); }
-
-static inline int isinf_ld(long double _x) { return !isnan (_x) && isnan (_x - _x); }
-
-#endif
+/*
+ * #ifndef isnan
+ * # define isnan(x) \
+ *   (sizeof (x) == sizeof (long double) ? isnan_ld (x) \
+ *   : sizeof (x) == sizeof (double) ? isnan_d (x) \
+ *   : isnan_f(x))
+ * 
+ * static inline int isnan_f(float _x) { return _x != _x; }
+ * 
+ * static inline int isnan_d(double _x) { return _x != _x; }
+ * 
+ * static inline int isnan_ld(long double _x) { return _x != _x; }
+ * 
+ * #endif
+ * 
+ * #ifndef isinf
+ * # define isinf(x) \
+ *   (sizeof (x) == sizeof (long double) ? isinf_ld (x) \
+ *   : sizeof (x) == sizeof (double) ? isinf_d (x) \
+ *   : isinf_f(x))
+ * 
+ * static inline int isinf_f(float _x) { return !isnan (_x) && isnan (_x - _x); }
+ * 
+ * static inline int isinf_d(double _x) { return !isnan (_x) && isnan (_x - _x); }
+ * 
+ * static inline int isinf_ld(long double _x) { return !isnan (_x) && isnan (_x - _x); }
+ * 
+ * #endif
+ */
 
 namespace dart {
 namespace lcpsolver {
@@ -321,7 +323,8 @@ for (iter = 0; iter < maxiter; ++iter) {
 //           << std::endl;
 
 if (iter >= maxiter && leaving != t) {
-    err = 1;
+  std::cout << "Fails due to exceeding max iterations and still cannot find a solution!" << std::endl;
+  err = 1;
 }
 
 if (err == 0) {
@@ -391,6 +394,9 @@ for (int i = 0; i < n; ++i) {
     }
     if (_z(i) < -threshold) {
         return false;
+    }
+    if (std::isnan(_z(i))) {
+      return false;
     }
     err_dist += std::abs(w(i)*_z(i));
     if (std::abs(w(i) * _z(i)) > threshold) {
