@@ -242,7 +242,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
   if (numBasis != 2) {
     Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
     int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
-
+    
     double err_dist = 0.0;
     bool Validation =
         dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
@@ -938,7 +938,6 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
 
   std::shared_ptr<std::fstream> outputFile =
       outputFiles[numContactsToLearn - 1];
-  counters[numContactsToLearn - 1] += 1;
 
   // decompose z
   Eigen::VectorXd z_fn(numContactsToLearn);
@@ -949,9 +948,9 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
   z_lambda = z.tail(numContactsToLearn);
 
   double RECORD_ZERO = 1e-18;
-  int value = 9;
   std::vector<Eigen::VectorXd> each_z(numContactsToLearn);
   Eigen::VectorXi value_array(numContactsToLearn);
+  bool nonZerofdException = false;
   for (int i = 0; i < numContactsToLearn; i++) {
     each_z[i].resize(numBasis + 2);
     each_z[i] << z_fn(i), z_fd.segment(i * numBasis, numBasis), z_lambda(i);
@@ -971,14 +970,69 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
           nonZerofd.push_back(j);
         }
       }
-      assert(nonZerofd.size() <= 2);
-      assert(nonZerofd.size() > 0);
-      value = nonZerofd[std::rand() % nonZerofd.size()];
+//      assert(nonZerofd.size() <= 2);
+//      assert(nonZerofd.size() > 0);
+      if (nonZerofd.size() > 0){
+        value = nonZerofd[std::rand() % nonZerofd.size()];
+      } else {
+        Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
+        std::cout << "Exceptoin: catch a exception because of 0 non-zero in fd while fn>0, lambda>0"
+                  << std::endl;
+/*
+ *  std::cout << "Matrix A" << std::endl << A.format(CSVFmt) << std::endl;
+ *  std::cout << "Vector b" << std::endl << b.transpose().format(CSVFmt) << std::endl;
+ * 
+ *  double err_dist = 0.0;
+ *  bool Validation =
+ *      dart::lcpsolver::YT::validate(A, z, b, err_dist);
+ * 
+ *  std::cout << "Vector z " << std::endl
+ *            << z.transpose().head(numContactsCallBack) << std::endl;
+ *  for (int i = 0; i < numContactsCallBack; i++) {
+ *    std::cout << z.transpose().segment(numContactsCallBack + i * numBasis,
+ *                                       numBasis)
+ *              << std::endl;
+ *  }
+ *  std::cout << z.transpose().tail(numContactsCallBack) << std::endl
+ *            << std::endl;
+ * 
+ *  Eigen::VectorXd w = (A * z + b).eval();
+ *  std::cout << "Vector w " << std::endl
+ *            << w.transpose().head(numContactsCallBack) << std::endl;
+ *  for (int i = 0; i < numContactsCallBack; i++) {
+ *    std::cout << w.transpose().segment(numContactsCallBack + i * numBasis,
+ *                                       numBasis)
+ *              << std::endl;
+ *  }
+ *  std::cout << w.transpose().tail(numContactsCallBack) << std::endl
+ *            << std::endl;
+ * 
+ *  Eigen::VectorXd wz = (z.array() * w.array()).eval();
+ *  std::cout << "[w].*[z]" << std::endl
+ *            << wz.transpose().head(numContactsCallBack) << std::endl;
+ *  for (int i = 0; i < numContactsCallBack; i++) {
+ *    std::cout << wz.transpose().segment(numContactsCallBack + i * numBasis,
+ *                                        numBasis)
+ *              << std::endl;
+ *  }
+ *  std::cout << wz.transpose().tail(numContactsCallBack) << std::endl
+ *            << std::endl;
+ * 
+ *  std::cout << "Validation: " << std::boolalpha << Validation << std::endl;
+ */
+
+        nonZerofdException = true;
+        break;
+      }
     }
     value_array(i) = value;
   }
+  
+  if (nonZerofdException) {
+    return;
+  }
 
-  // if (value_array.maxCoeff() < 8) {
+  // if (value_array.minCoeff() >= 8) {
   if (true) {
     //  output A, z, and b
     //  // since all friction coeffs are the same, no need to output them
@@ -1004,6 +1058,7 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
     }
 
     (*outputFile) << std::endl;
+    counters[numContactsToLearn - 1] += 1;
   }
 }
 #endif
