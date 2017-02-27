@@ -56,6 +56,7 @@ public:
   virtual void keyboard(unsigned char _key, int _x, int _y);
 
   void setController(Controller* _controller);
+  Eigen::VectorXd defaultPos;
 
 private:
   void plotCOMX();

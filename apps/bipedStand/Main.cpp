@@ -94,6 +94,7 @@ int main(int argc, char* argv[]) {
   // create a window and link it to the world
   MyWindow window;
   window.setWorld(myWorld);
+  window.defaultPos = myWorld->getSkeleton(1)->getPositions();
   window.setController(myController);
 
   MyWindow* mWindow = &window;

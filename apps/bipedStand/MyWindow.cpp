@@ -63,6 +63,12 @@ void MyWindow::timeStepping() {
     keyboard(key,0,0);
   }
   // std::cout << "num ct: " << mWorld->getConstraintSolver()->getCollisionDetector()->getNumContacts() << std::endl;
+
+  if (mWorld->getSkeleton(1)->getCOM()(1)<-0.2) {
+    int dof = mWorld->getSkeleton(1)->getNumDofs();
+    mWorld->getSkeleton(1)->setPositions(defaultPos);
+    mWorld->getSkeleton(1)->setVelocities(Eigen::VectorXd::Zero(dof));
+  }
 }
 
 void MyWindow::drawSkels() {
