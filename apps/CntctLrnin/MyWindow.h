@@ -12,7 +12,7 @@
 
 #define NUMBASIS 8
 #define PRECISION 20
-#define NUMCUBES 2
+#define NUMCUBES 3
 
 // 0: cube
 // 1: ball
@@ -63,7 +63,6 @@ class MyWindow : public dart::gui::SimWindow {
   Eigen::Vector3d offset;
 
   Eigen::Vector3d extForce;
-  Eigen::Vector3d extTorque;
 };
 
 }

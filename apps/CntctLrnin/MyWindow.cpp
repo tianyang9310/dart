@@ -26,7 +26,6 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   mTrackBall.setQuaternion(initTrackBallQuat);
 
   extForce.setZero();
-  extTorque.setZero();
   /*
    * for (int i=0; i<NUMCUBES; i++){
    *   resetCubeOrientation(i,0);
@@ -103,23 +102,11 @@ void MyWindow::timeStepping() {
 
   // 20 is the period/
   int mPeriod = 10;
-  int mDutyCycle = 2;
+  int mDutyCycle = 4;
   counter = (counter + 1) % mPeriod;
 
-  if (counter == 0) {
-    extForce.setZero();
-    int dir = (mWorld->getSimFrames()/800)%8;
-    double mag = 0 ;  // std::rand()% 1;
-    double dev = double(std::rand())/RAND_MAX * 10 - 5;
-    extForce(0) = mag * std::sin((dir*45.0 + dev)/180*DART_PI);
-    extForce(2) = mag * std::cos((dir*45.0 + dev)/180*DART_PI);
-
-    extTorque.setZero(); // = Eigen::Vector3d::Random() * 4;
-    extTorque(2*(std::rand()%2)) = double(std::rand()) / RAND_MAX * 10 - 5;
-  }
-
   if (counter < mDutyCycle) {
-    // addExtForce();
+    addExtForce();
     // assert(NUMCUBES==1);
   }
   else if (counter > mPeriod - mDutyCycle - 1) {
@@ -157,12 +144,12 @@ void MyWindow::addExtForce() {
   for (int i=0; i<NUMCUBES; i++) {
     // Apply force to COM
     // add constant external forces
-    // extForce.setZero();
-    // int dir = (mWorld->getSimFrames()/800)%8;
-    // double mag = 0 ;  // std::rand()% 1;
-    // double dev = double(std::rand())/RAND_MAX * 10 - 5;
-    // extForce(0) = mag * std::sin((dir*45.0 + dev)/180*DART_PI);
-    // extForce(2) = mag * std::cos((dir*45.0 + dev)/180*DART_PI);
+    extForce.setZero();
+    int dir = (mWorld->getSimFrames()/800)%8;
+    double mag = std::rand()% 10;
+    double dev = double(std::rand())/RAND_MAX * 10 - 5;
+    extForce(0) = mag * std::sin((dir*45.0 + dev)/180*DART_PI);
+    extForce(2) = mag * std::cos((dir*45.0 + dev)/180*DART_PI);
 
     // randFCounter--;
     // if (randFCounter < 0) {
@@ -209,12 +196,9 @@ void MyWindow::addExtTorque() {
   //     ->addExtTorque(extTorque);
 
   for (int i = 0; i<NUMCUBES; i++) {
-  // extTorque.setZero(); // = Eigen::Vector3d::Random() * 4;
-  // extTorque(2*(std::rand()%2)) = double(std::rand()) / RAND_MAX * 10 - 5;
-
   mWorld->getSkeleton("mBox")
       ->getBodyNode(idx2string(i))
-      ->addExtTorque(extTorque,false);
+      ->addExtTorque(Eigen::Vector3d::Random() * 4);
   }
 }
 
