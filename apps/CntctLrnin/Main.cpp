@@ -25,27 +25,29 @@ int main(int argc, char* argv[]) {
   assert(mWorld != nullptr);
   AddSkel(mWorld);
 
-  // -----------------------------------------------------------------
-  // test snopt LP
-  Eigen::MatrixXd A(20,20);
-  Eigen::VectorXd b(20);
-  A = load_csv<Eigen::MatrixXd>("/tmp/snoptlp/A.csv");
-  b = load_csv<Eigen::MatrixXd>("/tmp/snoptlp/b.csv");
-  std::cout << "Matrix A: " << std::endl << A << std::endl;
-  std::cout << "Vector b: " << std::endl << b.transpose() << std::endl;
-
-  LCPLPproblem problem(20,20,A,-b);
-  SnoptSolver solver(&problem);
-  solver.solve();
-  Eigen::VectorXd z(20);
-  z.setZero();
-  for (size_t i = 0; i < 20; i++) {
-    z(i) = problem.vars()[i]->mVal;
-  }
-  std::cout << "Vector z:" << std::endl << z.transpose() << std::endl;
-  std::cout << "A*z" << std::endl << (A*z+b).transpose() << std::endl;
-
-  std::cin.get();
+/*
+ *   // -----------------------------------------------------------------
+ *   // test snopt LP
+ *   Eigen::MatrixXd A(40,40);
+ *   Eigen::VectorXd b(40);
+ *   A = load_csv<Eigen::MatrixXd>("/tmp/A.csv");
+ *   b = load_csv<Eigen::MatrixXd>("/tmp/b.csv");
+ *   std::cout << "Matrix A: " << std::endl << A << std::endl;
+ *   std::cout << "Vector b: " << std::endl << b.transpose() << std::endl;
+ * 
+ *   LCPLPproblem problem(40,40,A,-b);
+ *   SnoptSolver solver(&problem);
+ *   solver.solve();
+ *   Eigen::VectorXd z(40);
+ *   z.setZero();
+ *   for (size_t i = 0; i < 40; i++) {
+ *     z(i) = problem.vars()[i]->mVal;
+ *   }
+ *   std::cout << "Vector z:" << std::endl << z.transpose() << std::endl;
+ *   std::cout << "A*z" << std::endl << (A*z+b).transpose() << std::endl;
+ * 
+ *   std::cin.get();
+ */
 
   /*
    *   // -----------------------------------------------------------------
