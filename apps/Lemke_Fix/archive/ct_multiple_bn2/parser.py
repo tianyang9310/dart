@@ -4,7 +4,7 @@ import numpy as np
 from threading import Thread
 from multiprocessing import Pool, Manager
 
-pre_dir = './lcp_data'
+pre_dir = './new_lcp_data'
 post_dir = '.csv'
 
 def myparse(numContactsToLearn):
@@ -53,11 +53,11 @@ def myparse(numContactsToLearn):
 
 
 if __name__=='__main__':
-    myparse(2)
-    #  p = Pool();
-    #  [p.apply_async(myparse, args=(i,)) for i in range(1,13)]
-    #  p.close()
-    #  p.join()
+    #  myparse(2)
+    p = Pool();
+    [p.apply_async(myparse, args=(i,)) for i in range(1,13)]
+    p.close()
+    p.join()
 
     #  for i in range(2,13):
     #      t = Thread(target = myparse, args=(i,))
