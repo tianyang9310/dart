@@ -947,7 +947,7 @@ void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
   Eigen::VectorXd z_lambda(numContactsToLearn);
   z_lambda = z.tail(numContactsToLearn);
 
-  double RECORD_ZERO = 1e-18;
+  double RECORD_ZERO = 1e-12;
   std::vector<Eigen::VectorXd> each_z(numContactsToLearn);
   Eigen::VectorXi value_array(numContactsToLearn);
   bool nonZerofdException = false;
