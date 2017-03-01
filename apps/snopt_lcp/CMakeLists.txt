@@ -3,7 +3,7 @@
 file(GLOB snoptlcp_srcs "*.cpp")
 file(GLOB snoptlcp_hdrs "*.hpp")
 
-set(SNOPTF2C ${CMAKE_SOURCE_DIR}/snoptf2c)
+set(SNOPTF2C ${CMAKE_SOURCE_DIR}/snopt72)
 set(SNOPTLCP ${CMAKE_SOURCE_DIR}/apps/QPCC)
 # include_directories(${SNOPTF2C})
 link_directories(${SNOPTF2C} ${SNOPTLCP})

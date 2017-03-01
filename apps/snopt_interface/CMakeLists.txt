@@ -2,7 +2,7 @@
 # apps/snopt_interface
 file(GLOB snoptinterface_srcs "*.cpp")
 file(GLOB snoptinterface_hdrs "*.hpp")
-set(SNOPT ${CMAKE_SOURCE_DIR}/snopt)
+set(SNOPT ${CMAKE_SOURCE_DIR}/snopt75)
 include_directories(${SNOPT}/include)
 link_directories(${SNOPT}/lib)
 add_executable(snoptinterface ${snoptinterface_srcs} ${snoptinterface_hdrs})

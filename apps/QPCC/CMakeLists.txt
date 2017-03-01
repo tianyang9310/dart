@@ -9,7 +9,7 @@ set (SNOPTLCP_SRCS "${QPCC_srcs};${QPCC_hdrs}")
 list (REMOVE_ITEM SNOPTLCP_SRCS ${MAIN_CPP})
 # message("${SNOPTLCP_SRCS}")
 
-set(SNOPTF2C ${CMAKE_SOURCE_DIR}/snoptf2c)
+set(SNOPTF2C ${CMAKE_SOURCE_DIR}/snopt72)
 # include_directories(${SNOPTF2C})
 link_directories(${SNOPTF2C})
 
