@@ -22,7 +22,7 @@
 // #include "dart/config.h"
 // #include "dart/common/Console.h"
 // #include "dart/lcpsolver/Lemke.h"
-#include "../Lemke_Fix/MyLemke.h"
+#include "../lemkeFix/myLemke.h"
 // #include "dart/lcpsolver/lcp.h"
 
 // #include "MyDantzigLCPSolver.h"

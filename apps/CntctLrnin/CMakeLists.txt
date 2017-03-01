@@ -2,8 +2,8 @@
 # apps/CntctLrnin
 file(GLOB CntctLrnin_srcs "*.cpp")
 file(GLOB CntctLrnin_hdrs "*.h")
-file(GLOB MyLemke_srcs "../Lemke_Fix/MyLemke.cpp")
-file(GLOB MyLemke_hdrs "../Lemke_Fix/MyLemke.h")
+file(GLOB MyLemke_srcs "../lemkeFix/myLemke.cpp")
+file(GLOB MyLemke_hdrs "../lemkeFix/myLemke.h")
 
 set(SNOPTLCP ${CMAKE_SOURCE_DIR}/apps/QPCC)
 link_directories(${SNOPTLCP})

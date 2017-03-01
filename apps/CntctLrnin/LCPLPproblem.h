@@ -1,7 +1,6 @@
 #ifndef LCPLPPROBLEM_H
 #define LCPLPPROBLEM_H
 
-// #include "../Lemke_Fix/MyLemke.h"
 #include "apps/QPCC/Constraint.h"
 #include "apps/QPCC/ConstraintBox.h"
 #include "apps/QPCC/L2NormConstraint.h"

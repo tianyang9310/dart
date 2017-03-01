@@ -2,7 +2,7 @@
 #include <vector>
 #include <fstream>
 
-#include "apps/Lemke_Fix/MyLemke.h"
+#include "apps/lemkeFix/myLemke.h"
 #include "dart/dart.h"
 //#include "MyWindow.h"
 //#include "LPContactProblem.h"

@@ -1,7 +1,7 @@
 #ifndef LCPLINEQU_H
 #define LCPLINEQU_H
 
-#include "../Lemke_Fix/MyLemke.h"
+#include "../lemkeFix/myLemke.h"
 #include "dart/dart.h"
 #include "utils.h"
 
