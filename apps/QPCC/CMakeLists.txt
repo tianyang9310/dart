@@ -15,5 +15,5 @@ set_target_properties(QPCC PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_D
 
 # Here link_libraries should precede add_library
 link_libraries(dart snopt_c snprint_c blas_c f2c)
-add_library(SNOPTLCP ${SNOPTLCP_SRCS})
+add_library(SNOPTLCP STATIC ${SNOPTLCP_SRCS})
 
