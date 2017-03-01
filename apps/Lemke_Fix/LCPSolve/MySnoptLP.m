@@ -1,6 +1,6 @@
 function [z, time] = MySnoptLP(A,b)
 snscreen off;
-% snprint('MySNOPTLP.out');  % By default, screen output is off;
+snprint('MySNOPTLP.out');  % By default, screen output is off;
 
 MYSNOPTLP.spc = which('MYSNOPTLP.spc');
 snspec (MYSNOPTLP.spc);
@@ -17,8 +17,8 @@ MySnopt = tic;
     A, iAfun, jAvar, iGfun, jGvar ...
     );
 time = toc(MySnopt);
-% snprint off;
-% snend;
+snprint off;
+snend;
 
 
 

@@ -1,9 +1,9 @@
-MaxIter = 5e4;
+MaxIter = 1e4;
 errList = [];
 start = tic;
 elpasedTime = 0;
 for iter = 1:MaxIter
-    idxContact = randi(13);
+    idxContact = randi(11);
 %     idxContact = 4;
     poolSize = size(ct{idxContact,2},1);
     matSize = size(ct{idxContact,2},2);
