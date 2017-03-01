@@ -16,6 +16,24 @@ foreach(child ${children})
   endif(IS_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/${child}")
 endforeach(child)
 
+# -----------------------------------------------------------------------------
+# Add snopt72 library
+if(CMAKE_COMPILER_IS_GNUCXX)
+  set(SNOPT72 ${CMAKE_SOURCE_DIR}/snopt72/linux)
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  set(SNOPT72 ${CMAKE_SOURCE_DIR}/snopt72/mac)
+endif()
+
+# include_directories(${SNOPT72})
+link_directories(${SNOPT72})
+
+# -----------------------------------------------------------------------------
+# Add snopt75 library
+set(SNOPT75 ${CMAKE_SOURCE_DIR}/snopt75)
+include_directories(${SNOPT75}/include)
+link_directories(${SNOPT75}/lib)
+
+# -----------------------------------------------------------------------------
 # List of all the subdirectories to include
 foreach(APPDIR ${directories})
   add_subdirectory(${APPDIR})

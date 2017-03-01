@@ -9,10 +9,6 @@ set (SNOPTLCP_SRCS "${QPCC_srcs};${QPCC_hdrs}")
 list (REMOVE_ITEM SNOPTLCP_SRCS ${MAIN_CPP})
 # message("${SNOPTLCP_SRCS}")
 
-set(SNOPTF2C ${CMAKE_SOURCE_DIR}/snopt72)
-# include_directories(${SNOPTF2C})
-link_directories(${SNOPTF2C})
-
 add_executable(QPCC ${QPCC_srcs} ${QPCC_hdrs})
 target_link_libraries(QPCC dart snopt_c snprint_c blas_c f2c)
 set_target_properties(QPCC PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
