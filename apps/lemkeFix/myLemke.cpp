@@ -40,7 +40,7 @@
 #include <vector>
 
 #include "dart/math/Helpers.h"
-#include "MyLemke.h"
+#include "myLemke.h"
 
 /*
  * #ifndef isnan

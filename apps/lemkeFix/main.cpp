@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "dart/dart.h"
-#include "MyLemke.h"
+#include "myLemke.h"
 #include "csvParser.h"
 // #include "dart/lcpsolver/Lemke.h"
 
