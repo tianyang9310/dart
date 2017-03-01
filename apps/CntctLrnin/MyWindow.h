@@ -12,7 +12,7 @@
 
 #define NUMBASIS 8
 #define PRECISION 20
-#define NUMCUBES 3
+#define NUMCUBES 6
 
 // 0: cube
 // 1: ball

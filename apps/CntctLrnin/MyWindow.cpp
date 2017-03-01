@@ -102,7 +102,7 @@ void MyWindow::timeStepping() {
 
   // 20 is the period/
   int mPeriod = 10;
-  int mDutyCycle = 4;
+  int mDutyCycle = 3;
   counter = (counter + 1) % mPeriod;
 
   if (counter < mDutyCycle) {
@@ -146,7 +146,7 @@ void MyWindow::addExtForce() {
     // add constant external forces
     extForce.setZero();
     int dir = (mWorld->getSimFrames()/800)%8;
-    double mag = std::rand()% 10;
+    double mag = std::rand()% 15;
     double dev = double(std::rand())/RAND_MAX * 10 - 5;
     extForce(0) = mag * std::sin((dir*45.0 + dev)/180*DART_PI);
     extForce(2) = mag * std::cos((dir*45.0 + dev)/180*DART_PI);
@@ -198,7 +198,7 @@ void MyWindow::addExtTorque() {
   for (int i = 0; i<NUMCUBES; i++) {
   mWorld->getSkeleton("mBox")
       ->getBodyNode(idx2string(i))
-      ->addExtTorque(Eigen::Vector3d::Random() * 4);
+      ->addExtTorque(Eigen::Vector3d::Random() * 5);
   }
 }
 
