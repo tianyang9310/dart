@@ -1,6 +1,8 @@
 #include "utils.h"
 
 namespace CntctLrnin {
+
+//==============================================================================
 Eigen::MatrixXd getTangentBasisMatrixLemke(const Eigen::Vector3d& _n,
                                            int numBasis) {
   // TODO(JS): Use mNumFrictionConeBases
@@ -35,21 +37,17 @@ Eigen::MatrixXd getTangentBasisMatrixLemke(const Eigen::Vector3d& _n,
     }
   }
 
-  /*
-   * // Here it should also be unnecessary to clamp the data
-   * // But in order to eliminate the error introduced here, clamp it
-   * clampZero(T);
-   */
-
   return T;
 }
 
+//==============================================================================
 std::string idx2string(const int idxmBox) {
   std::string name;
   name = "BodyNode_" + std::to_string(idxmBox);
   return name;
 }
 
+//==============================================================================
 simulation::WorldPtr myReadWorld(
     tinyxml2::XMLElement* _worldElement, const common::Uri& _baseUri,
     const common::ResourceRetrieverPtr& _retriever) {
@@ -130,6 +128,7 @@ simulation::WorldPtr myReadWorld(
   return newWorld;
 }
 
+//==============================================================================
 simulation::WorldPtr myReadWorld(
     const common::Uri& _uri, const common::ResourceRetrieverPtr& _retriever) {
   const common::ResourceRetrieverPtr retriever =

@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
   std::shared_ptr<MyWorld> mWorld =
       std::make_shared<MyWorld>();
   assert(mWorld != nullptr);
-  AddSkel(mWorld);
+  addSkel(mWorld);
 
 /*
  *   // -----------------------------------------------------------------

@@ -1,5 +1,5 @@
-#ifndef MYUTILS
-#define MYUTILS
+#ifndef CNTCTLRNIN_UTILS
+#define CNTCTLRNIN_UTILS
 
 #include <tinyxml2.h>
 #include <string>
@@ -14,9 +14,6 @@
 #define MY_DART_ZERO 1e-6
 #endif
 
-#ifndef CLAMP_ZERO
-#define CLAMP_ZERO 1e-8
-#endif
 
 // #define REGULARIZED_PRINT // print regularized info
 
@@ -54,51 +51,14 @@ namespace CntctLrnin {
 using namespace dart;
 using namespace dart::utils;
 
+/// Get friction cone basis matrix
 Eigen::MatrixXd getTangentBasisMatrixLemke(const Eigen::Vector3d& _n,
                                            int numBasis);
 
-template <typename T>
-void clampZero(T& z) {
-  // manually regularize Lemke solution right before apply impulse
-  // after regularization, w might not satisfy LCP condition
-  //
-  // Zero regularization
-  auto oldZ = z;
-  auto myZero = z;
-  myZero.setZero();
-  z = (z.array() > -CLAMP_ZERO && z.array() < CLAMP_ZERO).select(myZero, z);
-  if (((oldZ).array() > -CLAMP_ZERO && (oldZ).array() < CLAMP_ZERO &&
-       (oldZ).array() != 0)
-          .any()) {
-#ifdef REGULARIZED_PRINT
-    dtwarn << "Before zero regularized: z is " << oldZ.transpose() << std::endl;
-    dtwarn << "After zero regularized: z is " << z.transpose() << std::endl;
-#endif
-  }
-}
-
-template <typename T1, typename T2>
-void clampNeg(T1& z, T2 Validation) {
-  // Negative regularization
-  auto oldZ = z;
-  auto myZero = z;
-  myZero.setZero();
-  if (Validation) {
-    oldZ = z;
-    z = (z.array() < -CLAMP_ZERO).select(myZero, z);
-    if (((oldZ).array() < -CLAMP_ZERO).any()) {
-#ifdef REGULARIZED_PRINT
-      dtwarn << "Before negative regularized: z is " << oldZ.transpose()
-             << std::endl;
-      dtwarn << "After negative regularized: z is" << z.transpose()
-             << std::endl;
-#endif
-    }
-  }
-}
-
+/// Get string from index
 std::string idx2string(const int idxmBox);
 
+/// Override built-in read world function for separate use
 simulation::WorldPtr myReadWorld(
     tinyxml2::XMLElement* _worldElement, const common::Uri& _baseUri,
     const common::ResourceRetrieverPtr& _retriever);
@@ -112,4 +72,5 @@ tinyxml2::XMLElement* checkFormatAndGetWorldElement(
 
 }  // namespace CntctLrnin
 
-#endif  // MYUTILS
+#endif  // CNTCTLRNIN_UTILS
+

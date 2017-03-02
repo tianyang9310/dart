@@ -472,13 +472,6 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
  *                 << std::endl;
  *     }
  *
- * //````````````````````````````````````````````````````````````````````````````
- * // Rectify data at the very fist time step
- * if (mWindow->getWorld()->getSimFrames() < 5) {
- *   clampZero(mWindow->getWorld()->getSkeleton("mBox")
- *     ->getBodyNode(0)->mConstraintImpulse);
- * }
- * //````````````````````````````````````````````````````````````````````````````
  */
 
 #ifdef IMPULSE_CHANGE
