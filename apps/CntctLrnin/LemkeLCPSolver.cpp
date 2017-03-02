@@ -33,6 +33,16 @@ void LemkeLCPSolver::outputFileOpen() {
     counters.push_back(0);
   }
 #endif
+
+#ifdef LEMKE_PRINT
+   lemkeFile = std::make_shared<std::fstream>("/tmp/CntctLrnin/Lemke.out",std::fstream::out);
+   lemkeFile->precision(mPrecision);
+#endif
+
+#ifdef ODE_PRINT
+   odeFile = std::make_shared<std::fstream>("/tmp/CntctLrnin/Ode.out",std::fstream::out);
+   odeFile->precision(mPrecision);
+#endif
 }
 
 //==============================================================================
@@ -42,6 +52,14 @@ void LemkeLCPSolver::outputFileClose() {
        numContactsToLearn++) {
     outputFiles[numContactsToLearn - 1]->close();
   }
+#endif
+
+#ifdef LEMKE_PRINT
+   lemkeFile->close();
+#endif
+
+#ifdef ODE_PRINT
+   odeFile->close();
 #endif
 }
 
@@ -391,7 +409,7 @@ void LemkeLCPSolver::sanityCheck(const Eigen::MatrixXd& lemkeA,
     Eigen::VectorXd eachZ = zGroups[i];
     // -------------------------------------------------------------------------
     // Corner case where fn==0, fd>0 and lambda>0
-    if (std::abs(eachZ[0] < SanityCheckZero) &&
+    if (std::abs(eachZ[0]) < SanityCheckZero &&
         eachZ.segment(1, numBasis).array().maxCoeff() > SanityCheckZero &&
         eachZ[numBasis + 1] > SanityCheckZero) {
       dterr << std::endl 
@@ -409,9 +427,9 @@ void LemkeLCPSolver::sanityCheck(const Eigen::MatrixXd& lemkeA,
     }
     // -------------------------------------------------------------------------
     // Corner case where fn==0, fd>0 and lambda=0
-    if (std::abs(eachZ[0] < SanityCheckZero) &&
+    if (std::abs(eachZ[0]) < SanityCheckZero &&
         eachZ.segment(1, numBasis).array().maxCoeff() > SanityCheckZero &&
-        std::abs(eachZ[numBasis+1] < SanityCheckZero)) {
+        std::abs(eachZ[numBasis+1]) < SanityCheckZero) {
       dterr << std::endl 
             << "ERROR: fn==0, fd>0 and lambda==0" << std::endl
             << "Lemke A is " << std::endl
@@ -659,57 +677,57 @@ void LemkeLCPSolver::permuteAugumentA(const Eigen::MatrixXd& preLemkeA,
 void LemkeLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
                            double* hi, double* b, double* w, int* findex) {
 #ifdef ODE_PRINT
-  std::cout << std::setprecision(mPrecision);
+  (*odeFile) << std::setprecision(mPrecision);
   size_t nSkip;
   if (numBasis != 2) {
     nSkip = _n;
   } else {
     nSkip = dPAD(_n);
   }
-  std::cout << "A: " << std::endl;
+  (*odeFile) << "A: " << std::endl;
   for (size_t i = 0; i < _n; ++i) {
     for (size_t j = 0; j < nSkip; ++j) {
-      std::cout << _A[i * nSkip + j] << " ";
+      (*odeFile) << _A[i * nSkip + j] << " ";
     }
-    std::cout << std::endl;
+    (*odeFile) << std::endl;
   }
 
-  std::cout << "b: ";
+  (*odeFile) << "b: ";
   for (size_t i = 0; i < _n; ++i) {
-    std::cout << b[i] << " ";
+    (*odeFile) << b[i] << " ";
   }
-  std::cout << std::endl;
+  (*odeFile) << std::endl;
 
-  std::cout << "w: ";
+  (*odeFile) << "w: ";
   for (size_t i = 0; i < _n; ++i) {
-    std::cout << w[i] << " ";
+    (*odeFile) << w[i] << " ";
   }
-  std::cout << std::endl;
+  (*odeFile) << std::endl;
 
-  std::cout << "x: ";
+  (*odeFile) << "x: ";
   for (size_t i = 0; i < _n; ++i) {
-    std::cout << _x[i] << " ";
+    (*odeFile) << _x[i] << " ";
   }
-  std::cout << std::endl;
+  (*odeFile) << std::endl;
 
-  std::cout << "lb: ";
+  (*odeFile) << "lb: ";
   for (int i = 0; i < _n; ++i) {
-    std::cout << lo[i] << " ";
+    (*odeFile) << lo[i] << " ";
   }
-  std::cout << std::endl;
+  (*odeFile) << std::endl;
 
-  std::cout << "ub: ";
+  (*odeFile) << "ub: ";
   for (int i = 0; i < _n; ++i) {
-    std::cout << hi[i] << " ";
+    (*odeFile) << hi[i] << " ";
   }
-  std::cout << std::endl;
+  (*odeFile) << std::endl;
 
-  // std::cout << "frictionIndex: ";
+  // (*odeFile) << "frictionIndex: ";
   // for (size_t i = 0; i < _n; ++i)
   // {
-  //     std::cout << findex[i] << " ";
+  //     (*odeFile) << findex[i] << " ";
   // }
-  // std::cout << std::endl;
+  // (*odeFile) << std::endl;
 
   double* Ax = new double[_n];
 
@@ -723,23 +741,23 @@ void LemkeLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
     }
   }
 
-  std::cout << "Ax   : ";
+  (*odeFile) << "Ax   : ";
   for (size_t i = 0; i < _n; ++i) {
-    std::cout << Ax[i] << " ";
+    (*odeFile) << Ax[i] << " ";
   }
-  std::cout << std::endl;
+  (*odeFile) << std::endl;
 
-  std::cout << "b + w: ";
+  (*odeFile) << "b + w: ";
   for (size_t i = 0; i < _n; ++i) {
-    std::cout << b[i] + w[i] << " ";
+    (*odeFile) << b[i] + w[i] << " ";
   }
-  std::cout << std::endl;
+  (*odeFile) << std::endl;
 
-  std::cout << "x^T * w: ";
+  (*odeFile) << "x^T * w: ";
   for (size_t i = 0; i < _n; ++i) {
-    std::cout << _x[i] * w[i] << " ";
+    (*odeFile) << _x[i] * w[i] << " ";
   }
-  std::cout << std::endl;
+  (*odeFile) << std::endl;
 
   delete[] Ax;
 #endif
@@ -752,54 +770,54 @@ void LemkeLCPSolver::print(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
 #ifdef LEMKE_PRINT
   Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
 
-  std::cout << std::endl
+  (*lemkeFile) << std::endl
             << "```````````````````````````````````````````````" << std::endl;
 
-  std::cout << "Matrix A " << std::endl
+  (*lemkeFile) << "Matrix A " << std::endl
             << A.format(CSVFmt) << std::endl
             << std::endl;
-  std::cout << "Vector b " << std::endl
+  (*lemkeFile) << "Vector b " << std::endl
             << b.transpose().format(CSVFmt) << std::endl
             << std::endl;
 
-  std::cout << "Vector z " << std::endl
+  (*lemkeFile) << "Vector z " << std::endl
             << z.transpose().head(numContactsCallBack) << std::endl;
   for (int i = 0; i < numContactsCallBack; i++) {
-    std::cout << z.transpose().segment(numContactsCallBack + i * numBasis,
+    (*lemkeFile) << z.transpose().segment(numContactsCallBack + i * numBasis,
                                        numBasis)
               << std::endl;
   }
-  std::cout << z.transpose().tail(numContactsCallBack) << std::endl
+  (*lemkeFile) << z.transpose().tail(numContactsCallBack) << std::endl
             << std::endl;
 
   Eigen::VectorXd w = (A * z + b).eval();
-  std::cout << "Vector w " << std::endl
+  (*lemkeFile) << "Vector w " << std::endl
             << w.transpose().head(numContactsCallBack) << std::endl;
   for (int i = 0; i < numContactsCallBack; i++) {
-    std::cout << w.transpose().segment(numContactsCallBack + i * numBasis,
+    (*lemkeFile) << w.transpose().segment(numContactsCallBack + i * numBasis,
                                        numBasis)
               << std::endl;
   }
-  std::cout << w.transpose().tail(numContactsCallBack) << std::endl
+  (*lemkeFile) << w.transpose().tail(numContactsCallBack) << std::endl
             << std::endl;
 
   Eigen::VectorXd wz = (z.array() * w.array()).eval();
-  std::cout << "[w].*[z]" << std::endl
+  (*lemkeFile) << "[w].*[z]" << std::endl
             << wz.transpose().head(numContactsCallBack) << std::endl;
   for (int i = 0; i < numContactsCallBack; i++) {
-    std::cout << wz.transpose().segment(numContactsCallBack + i * numBasis,
+    (*lemkeFile) << wz.transpose().segment(numContactsCallBack + i * numBasis,
                                         numBasis)
               << std::endl;
   }
-  std::cout << wz.transpose().tail(numContactsCallBack) << std::endl
+  (*lemkeFile) << wz.transpose().tail(numContactsCallBack) << std::endl
             << std::endl;
 
-  std::cout << "Validation: " << std::boolalpha << Validation << std::endl;
-  std::cout << "Error type: " << err << std::endl;
+  (*lemkeFile) << "Validation: " << std::boolalpha << Validation << std::endl;
+  (*lemkeFile) << "Error type: " << err << std::endl;
 
-  std::cout << std::endl
+  (*lemkeFile) << std::endl
             << "```````````````````````````````````````````````" << std::endl;
-  std::cout << std::endl;
+  (*lemkeFile) << std::endl;
 #endif
 }
 

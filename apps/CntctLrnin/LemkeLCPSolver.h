@@ -17,15 +17,15 @@
 
 /// Macro controlling prompt and data
 #define OUTPUT2FILE
-// #define LEMKE_PRINT
-// #define ODE_PRINT
+#define LEMKE_PRINT
+#define ODE_PRINT
 
 /// Macro controlling remedy methods
 #define RECALLSOLVE
 #define SNOPTSOLVE
 // #define BRUTESOLVE
 
-// #define SANITY_CHECK
+#define SANITY_CHECK
 
 /*
  * * fn=0, fd=0, lambda=0		contact break
@@ -140,6 +140,14 @@ class LemkeLCPSolver : public DantzigLCPSolver {
   int dataSize;
 
   int numDesiredFiles;
+#endif
+
+#ifdef LEMKE_PRINT
+  std::shared_ptr<std::fstream> lemkeFile;
+#endif
+
+#ifdef ODE_PRINT
+  std::shared_ptr<std::fstream> odeFile;
 #endif
 
   /// For debugging use
