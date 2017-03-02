@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include <random>
-#include "My2DantzigLCPSolver.h"
+#include "LemkeLCPSolver.h"
 #include "parameter.h"
 #include "dart/dart.h"
 

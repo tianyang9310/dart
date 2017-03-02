@@ -1,5 +1,5 @@
-#ifndef MY2DANTZIGLCPSOLVER
-#define MY2DANTZIGLCPSOLVER
+#ifndef LEMKELCPSOLVER_H
+#define LEMKELCPSOLVER_H
 
 #include <cstddef>
 #include <fstream>
@@ -9,7 +9,7 @@
 
 #include "DepthFirstSearchLCP.h"
 #include "SnoptWrapper.h"
-#include "My2ContactConstraint.h"
+#include "MyContactConstraint.h"
 #include "MyWindow.h"
 #include "dart/dart.h"
 #include "utils.h"
@@ -51,17 +51,18 @@
 //
 
 namespace CntctLrnin {
+
 using namespace dart::constraint;
 
 class MyWindow;
 
-class My2DantzigLCPSolver : public DantzigLCPSolver {
+class LemkeLCPSolver : public DantzigLCPSolver {
   public:
   /// Constructor
-  My2DantzigLCPSolver(double _timestep, dart::gui::SimWindow* _mWindow = NULL);
+  LemkeLCPSolver(double _timestep, dart::gui::SimWindow* _mWindow = NULL);
 
   /// Destructor
-  virtual ~My2DantzigLCPSolver();
+  virtual ~LemkeLCPSolver();
 
   //----------------------------------------------------------------------------
   // Member Function
@@ -131,6 +132,7 @@ class My2DantzigLCPSolver : public DantzigLCPSolver {
   /// For debugging use
   dart::gui::SimWindow* mWindow;
 };
+
 }
 
-#endif
+#endif // LEMKELCPSOLVER_H

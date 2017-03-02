@@ -1,5 +1,5 @@
-#ifndef MYWORLD
-#define MYWORLD
+#ifndef MYWORLD_H
+#define MYWORLD_H
 
 #include "MyConstraintSolver.h"
 #include "dart/simulation/World.h"

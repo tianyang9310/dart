@@ -1,5 +1,5 @@
-#ifndef CNTCTLRNIN_UTILS
-#define CNTCTLRNIN_UTILS
+#ifndef CNTCTLRNIN_UTILS_H
+#define CNTCTLRNIN_UTILS_H
 
 #include <tinyxml2.h>
 #include <string>

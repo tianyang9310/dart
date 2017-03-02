@@ -120,7 +120,7 @@ void MyWindow::timeStepping() {
 #ifndef FORK_LEMKE
 #else
     std::cout << "Lemke fail ratio: "
-              << dynamic_cast<My2DantzigLCPSolver*>(
+              << dynamic_cast<LemkeLCPSolver*>(
                      mWorld->getConstraintSolver()->getLCPSolver())
                          ->getLemkeFail() /
                      double(episodeLength)

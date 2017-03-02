@@ -1,5 +1,5 @@
-#ifndef DepthFirstSearchLCP
-#define DepthFirstSearchLCP
+#ifndef DEPTHFIRSTSEARCHLCP_H
+#define DEPTHFIRSTSEARCHLCP_H
 
 #include "../lemkeFix/myLemke.h"
 #include "dart/dart.h"

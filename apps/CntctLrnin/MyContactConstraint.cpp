@@ -1,7 +1,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "My2ContactConstraint.h"
+#include "MyContactConstraint.h"
 #include "dart/common/Console.h"
 #include "dart/dynamics/BodyNode.h"
 #include "dart/dynamics/Skeleton.h"
@@ -24,7 +24,7 @@
 namespace CntctLrnin {
 
 //==============================================================================
-My2ContactConstraint::My2ContactConstraint(collision::Contact& _contact,
+MyContactConstraint::MyContactConstraint(collision::Contact& _contact,
                                            double _timestep)
     : ContactConstraint() {
   mTimeStep = (_timestep);
@@ -253,12 +253,12 @@ My2ContactConstraint::My2ContactConstraint(collision::Contact& _contact,
 }
 
 //==============================================================================
-My2ContactConstraint::~My2ContactConstraint() {
+MyContactConstraint::~MyContactConstraint() {
   // pass
 }
 
 //==============================================================================
-void My2ContactConstraint::getInformation(ConstraintInfo* _info) {
+void MyContactConstraint::getInformation(ConstraintInfo* _info) {
   // Fill w, where the LCP form is Ax = b + w (x >= 0, w >= 0, x^T w = 0)
   getRelVelocity(_info->b);
 
@@ -421,11 +421,11 @@ void My2ContactConstraint::getInformation(ConstraintInfo* _info) {
 }
 
 //==============================================================================
-void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
+void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
                                           bool impulse_flag) {
 #ifdef OUTPUT
   std::cout << std::endl << "------------------------------------" << std::endl;
-  std::cout << "[" << NUMBASIS << " Basis LCP] Using My2ContactConstraint class"
+  std::cout << "[" << NUMBASIS << " Basis LCP] Using MyContactConstraint class"
             << std::endl;
   std::cout << "[" << NUMBASIS << " Basis LCP] fn: " << fn << std::endl;
   std::cout << "[" << NUMBASIS << " Basis LCP] fd: " << fd.transpose()
@@ -567,10 +567,10 @@ void My2ContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
 }
 
 //==============================================================================
-void My2ContactConstraint::applyImpulse(double* _lambda) {
+void MyContactConstraint::applyImpulse(double* _lambda) {
 #ifdef OUTPUT
   std::cout << std::endl << "------------------------------------" << std::endl;
-  std::cout << "[" << NUMBASIS << " Basis LCP] Using My2ContactConstraint class"
+  std::cout << "[" << NUMBASIS << " Basis LCP] Using MyContactConstraint class"
             << std::endl;
   std::cout << "[" << NUMBASIS << " Basis LCP] fn: " << _lambda[0] << std::endl;
   std::cout << "[" << NUMBASIS << " Basis LCP] fd1: " << _lambda[1]
@@ -684,7 +684,7 @@ void My2ContactConstraint::applyImpulse(double* _lambda) {
 }
 
 //==============================================================================
-void My2ContactConstraint::getRelVelocity(double* _relVel) {
+void MyContactConstraint::getRelVelocity(double* _relVel) {
   assert(_relVel != nullptr && "Null pointer is not allowed.");
 
   for (size_t i = 0; i < mDim; ++i) {
@@ -701,7 +701,7 @@ void My2ContactConstraint::getRelVelocity(double* _relVel) {
 }
 
 //==============================================================================
-void My2ContactConstraint::applyUnitImpulse(size_t _idx) {
+void MyContactConstraint::applyUnitImpulse(size_t _idx) {
   assert(_idx < mDim && "Invalid Index.");
   assert(isActive());
   assert(mBodyNode1->isReactive() || mBodyNode2->isReactive());
@@ -756,7 +756,7 @@ void My2ContactConstraint::applyUnitImpulse(size_t _idx) {
 }
 
 //==============================================================================
-void My2ContactConstraint::getVelocityChange(double* _vel, bool _withCfm) {
+void MyContactConstraint::getVelocityChange(double* _vel, bool _withCfm) {
   assert(_vel != nullptr && "Null pointer is not allowed.");
 
   for (size_t i = 0; i < mDim; ++i) {

@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "DepthFirstSearchLCP.h"
-#include "My2DantzigLCPSolver.h"
+#include "LemkeLCPSolver.h"
 #include "MyWindow.h"
 #include "MyWorld.h"
 #include "SnoptWrapper.h"
@@ -96,9 +96,9 @@ int main(int argc, char* argv[]) {
 #ifndef ODE_VANILLA
 #ifndef FORK_LEMKE
 #else
-  // Using My2DantzigLCPSolver
+  // Using LemkeLCPSolver
   mWorld->getConstraintSolver()->setLCPSolver(
-      new My2DantzigLCPSolver(mWorld->getTimeStep(), mWindow));
+      new LemkeLCPSolver(mWorld->getTimeStep(), mWindow));
 #endif
 #endif
 

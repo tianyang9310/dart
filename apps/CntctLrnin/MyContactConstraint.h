@@ -1,5 +1,5 @@
-#ifndef MY2CONTACTCONSTRAINT
-#define MY2CONTACTCONSTRAINT
+#ifndef MYCONTACTCONSTRAINT_H
+#define MYCONTACTCONSTRAINT_H
 
 #include "MyWindow.h"
 #include "dart/constraint/ContactConstraint.h"
@@ -19,13 +19,13 @@ namespace CntctLrnin {
 using namespace dart;
 using namespace dart::constraint;
 
-class My2ContactConstraint : public ContactConstraint {
+class MyContactConstraint : public ContactConstraint {
   public:
   /// Constructor
-  My2ContactConstraint(collision::Contact& _contact, double _timeStep);
+  MyContactConstraint(collision::Contact& _contact, double _timeStep);
 
   /// Destructor
-  virtual ~My2ContactConstraint();
+  virtual ~MyContactConstraint();
 
   //----------------------------------------------------------------------------
   // Member Function
@@ -46,4 +46,4 @@ class My2ContactConstraint : public ContactConstraint {
 
 }  // namespace constraint
 
-#endif  // MY2CONTACTCONSTRAINT
+#endif  // MyContactConstraint

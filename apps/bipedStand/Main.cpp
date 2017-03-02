@@ -104,9 +104,9 @@ int main(int argc, char* argv[]) {
 #ifndef FORK_LEMKE
 #else
   // set LCP solver
-  // Using My2DantzigLCPSolver
+  // Using LemkeLCPSolver
   myWorld->getConstraintSolver()->setLCPSolver(
-      new CntctLrnin::My2DantzigLCPSolver(myWorld->getTimeStep(), mWindow));
+      new CntctLrnin::LemkeLCPSolver(myWorld->getTimeStep(), mWindow));
 #endif
 #endif
 #endif

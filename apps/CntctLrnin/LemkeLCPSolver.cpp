@@ -1,8 +1,8 @@
-#include "My2DantzigLCPSolver.h"
+#include "LemkeLCPSolver.h"
 
 namespace CntctLrnin {
 //==============================================================================
-My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep,
+LemkeLCPSolver::LemkeLCPSolver(double _timestep,
                                          dart::gui::SimWindow* _mWindow)
     : DantzigLCPSolver(_timestep) {
   numBasis = NUMBASIS;
@@ -29,7 +29,7 @@ My2DantzigLCPSolver::My2DantzigLCPSolver(double _timestep,
 }
 
 //==============================================================================
-My2DantzigLCPSolver::~My2DantzigLCPSolver() {
+LemkeLCPSolver::~LemkeLCPSolver() {
 #ifdef OUTPUT2FILE
   for (int numContactsToLearn = 1; numContactsToLearn < 5;
        numContactsToLearn++) {
@@ -39,7 +39,7 @@ My2DantzigLCPSolver::~My2DantzigLCPSolver() {
 }
 
 //==============================================================================
-void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
+void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
   std::cout << std::setprecision(mPrecision);
   // If there is no constraint, then just return true.
   size_t numConstraints = _group->getNumConstraints();
@@ -105,7 +105,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     // -------------------------------------------------------------------------
     // Fill vectors: lo, hi, b, w, mu, E
     constraint->getInformation(&constInfo);
-    mu(i, i) = dynamic_cast<My2ContactConstraint*>(constraint)->mFrictionCoeff;
+    mu(i, i) = dynamic_cast<MyContactConstraint*>(constraint)->mFrictionCoeff;
     E.block(i * numBasis, i, numBasis, 1) = Eigen::VectorXd::Ones(numBasis);
 
     // -------------------------------------------------------------------------
@@ -431,7 +431,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       // justify the (*z)
       // assert(!(Eigen::isnan((*z).array()).any()));
 
-      My2ContactConstraint* Mycntctconstraint;
+      MyContactConstraint* Mycntctconstraint;
       // (*z); N; B
       Eigen::VectorXd fn((*z).head(numConstraints));
       Eigen::VectorXd fd(
@@ -444,7 +444,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
         double fn_each = fn(idx_cnstrnt);
         Eigen::VectorXd fd_each = fd.segment(idx_cnstrnt * numBasis, numBasis);
 
-        Mycntctconstraint = dynamic_cast<My2ContactConstraint*>(
+        Mycntctconstraint = dynamic_cast<MyContactConstraint*>(
             _group->getConstraint(idx_cnstrnt));
         Mycntctconstraint->MyapplyImpulse(fn_each, fd_each, true);
 
@@ -556,8 +556,8 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
       constraint->applyImpulse(x + offset[i]);
 
       /*
-       * My2ContactConstraint* Mycntctconstraint;
-       * Mycntctconstraint = dynamic_cast<My2ContactConstraint*>(
+       * MyContactConstraint* Mycntctconstraint;
+       * Mycntctconstraint = dynamic_cast<MyContactConstraint*>(
        *     _group->getConstraint(i));
        * double fn_each = (*z)(i*(1+numBasis));
        * Eigen::VectorXd fd_each = (*z).segment(i*(1+numBasis)+1,numBasis);
@@ -595,7 +595,7 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
 }
 
 //==============================================================================
-void My2DantzigLCPSolver::PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b,
+void LemkeLCPSolver::PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b,
                                           const Eigen::VectorXd& Pre_Lemke_b,
                                           Eigen::MatrixXd& T) {
   size_t mDim = 1 + numBasis;
@@ -634,7 +634,7 @@ void My2DantzigLCPSolver::PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b,
 }
 
 //==============================================================================
-void My2DantzigLCPSolver::PermuteAug_A(const Eigen::MatrixXd& Pre_Lemke_A,
+void LemkeLCPSolver::PermuteAug_A(const Eigen::MatrixXd& Pre_Lemke_A,
                                        Eigen::MatrixXd& Lemke_A,
                                        const Eigen::MatrixXd& T,
                                        const Eigen::MatrixXd& mu,
@@ -660,7 +660,7 @@ void My2DantzigLCPSolver::PermuteAug_A(const Eigen::MatrixXd& Pre_Lemke_A,
 }
 
 //==============================================================================
-void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
+void LemkeLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
                                 double* hi, double* b, double* w, int* findex) {
 #ifdef ODE_PRINT
   std::cout << std::setprecision(mPrecision);
@@ -750,7 +750,7 @@ void My2DantzigLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
 }
 
 //==============================================================================
-void My2DantzigLCPSolver::print(const Eigen::MatrixXd& A,
+void LemkeLCPSolver::print(const Eigen::MatrixXd& A,
                                 const Eigen::VectorXd& b,
                                 const Eigen::VectorXd& z, bool Validation,
                                 int err) {
@@ -808,7 +808,7 @@ void My2DantzigLCPSolver::print(const Eigen::MatrixXd& A,
 }
 
 //==============================================================================
-bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
+bool LemkeLCPSolver::isSymmetric(size_t _n, double* _A) {
   std::cout << std::setprecision(mPrecision);
   size_t nSkip;
   if (numBasis != 2) {
@@ -840,7 +840,7 @@ bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A) {
 }
 
 //==============================================================================
-bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A, size_t _begin,
+bool LemkeLCPSolver::isSymmetric(size_t _n, double* _A, size_t _begin,
                                       size_t _end) {
   std::cout << std::setprecision(mPrecision);
   size_t nSkip;
@@ -873,7 +873,7 @@ bool My2DantzigLCPSolver::isSymmetric(size_t _n, double* _A, size_t _begin,
 }
 
 //==============================================================================
-void My2DantzigLCPSolver::Scaling(Eigen::MatrixXd& A) {
+void LemkeLCPSolver::Scaling(Eigen::MatrixXd& A) {
   int numRow = A.rows();
   int numCol = A.cols();
   assert(numRow == numCol);
@@ -900,7 +900,7 @@ void My2DantzigLCPSolver::Scaling(Eigen::MatrixXd& A) {
 }
 
 //==============================================================================
-void My2DantzigLCPSolver::Decompose(const Eigen::VectorXd& z,
+void LemkeLCPSolver::Decompose(const Eigen::VectorXd& z,
                                     std::vector<Eigen::VectorXd>& z_groups) {
   int numContactsToLearn = z.rows() / (numBasis + 2);
   // decompose z
@@ -922,7 +922,7 @@ void My2DantzigLCPSolver::Decompose(const Eigen::VectorXd& z,
 
 //==============================================================================
 #ifdef OUTPUT2FILE
-void My2DantzigLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
+void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
                                          const Eigen::VectorXd z,
                                          const Eigen::VectorXd b) {
   int nSize = b.rows();

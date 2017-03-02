@@ -1,5 +1,5 @@
-#ifndef CNTCTLRNIN_PARAM
-#define CNTCTLRNIN_PARAM
+#ifndef CNTCTLRNIN_PARAM_H
+#define CNTCTLRNIN_PARAM_H
 
 #include "addSkeles.h"
 
