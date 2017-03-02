@@ -3,9 +3,8 @@
 
 #include "addSkeles.h"
 
-/// Which solver to use
-// #define ODE_VANILLA
-#define FORK_LEMKE
+/// Which solver to use default is ODE
+// #define LEMKE_SOLVER
 
 /// Number of basis
 #define NUMBASIS 8

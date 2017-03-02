@@ -93,13 +93,10 @@ int main(int argc, char* argv[]) {
   MyWindow window(mWorld);
   MyWindow* mWindow = &window;
 
-#ifndef ODE_VANILLA
-#ifndef FORK_LEMKE
-#else
+#ifdef LEMKE_SOLVER
   // Using LemkeLCPSolver
   mWorld->getConstraintSolver()->setLCPSolver(
       new LemkeLCPSolver(mWorld->getTimeStep(), mWindow));
-#endif
 #endif
 
 #ifdef runGUI

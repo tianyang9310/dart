@@ -32,16 +32,11 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
    */
 
   offset << -0.05, 0.05, 0;
-#ifndef ODE_VANILLA
-#ifndef FORK_LEMKE
-  std::cout << "Using Matrix A and Vector b from scratch and Lemke to solve LCP"
-            << std::endl;
+#ifdef LEMKE_SOLVER
+    dtmsg << "Using Matrix A and Vector b from ODE and Lemke to solve LCP"
+          << std::endl;
 #else
-  std::cout << "Using Matrix A and Vector b from ODE and Lemke to solve LCP"
-            << std::endl;
-#endif
-#else
-  std::cout << "Using ODE to solve LCP" << std::endl;
+    dtmsg << "Using ODE to solve LCP" << std::endl;
 #endif
 }
 
@@ -66,17 +61,9 @@ void MyWindow::timeStepping() {
  *std::cout << "num of contact points is: " << numContacts << std::endl;
  *std::cout << std::endl;
  */
-#ifndef ODE_VANILLA
-#ifndef FORK_LEMKE
-// lock Skeleton Velocities before stepping function
-#endif
-#endif
+
   dart::gui::SimWindow::timeStepping();
 
-#ifndef ODE_VANILLA
-#ifndef FORK_LEMKE
-#endif
-#endif
   // regularization the positive of cube
   double range = 500;
   for (int i = 0; i < NUMCUBES; i++) {
@@ -118,9 +105,7 @@ void MyWindow::timeStepping() {
     std::cout << "Time is " << mWorld->getTime() << std::endl;
     std::cout << mWorld->getSkeleton("mBox")->getPositions().transpose()
               << std::endl;
-#ifndef ODE_VANILLA
-#ifndef FORK_LEMKE
-#else
+#ifdef LEMKE_SOLVER
     std::cout << "Lemke fail ratio: "
               << dynamic_cast<LemkeLCPSolver*>(
                      mWorld->getConstraintSolver()->getLCPSolver())
@@ -128,14 +113,9 @@ void MyWindow::timeStepping() {
                      double(episodeLength)
               << std::endl;
 #endif
-#endif
     // keyboard('y', 0, 0);
   }
 // mCollisionDetector->detectCollision(true, true);
-#ifndef ODE_VANILLA
-#ifndef FORK_LEMKE
-#endif
-#endif
 
   // keyboard('y', 0, 0);
 }

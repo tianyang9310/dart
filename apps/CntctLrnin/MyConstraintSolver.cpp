@@ -62,11 +62,8 @@ void MyConstraintSolver::updateConstraints() {
       mSoftContactConstraints.push_back(
           new SoftContactConstraint(ct, mTimeStep));
     } else {
-#ifndef ODE_VANILLA
-#ifndef FORK_LEMKE
-#else
+#ifdef LEMKE_SOLVER
       mContactConstraints.push_back(new MyContactConstraint(ct, mTimeStep));
-#endif
 #else
       mContactConstraints.push_back(new ContactConstraint(ct, mTimeStep));
 #endif
