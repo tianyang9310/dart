@@ -4,10 +4,9 @@
 #include <cmath>
 #include <random>
 #include "My2DantzigLCPSolver.h"
-#include "MyDantzigLCPSolver.h"
 #include "dart/dart.h"
 
-// #define ODE_VANILLA  // decide to use MyDantizig or Danzig
+// #define ODE_VANILLA  // decide to use My2Dantizig or Danzig
 #define FORK_LEMKE
 
 #define NUMBASIS 8

@@ -119,7 +119,6 @@ void recordLCPSolve(const Eigen::MatrixXd A,
   int numBasis = 8;
   int nSize = b.rows();
   int numContactsToLearn = nSize / (numBasis + 2);
-  assert(numContactsToLearn == numContactsCallBack);
 
   //  output A, z, and b
   //  // since all friction coeffs are the same, no need to output them
