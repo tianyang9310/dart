@@ -1,7 +1,6 @@
 #ifndef MYCONSTRAINTSOLVER
 #define MYCONSTRAINTSOLVER
 
-#include "MyContactConstraint.h"
 #include "My2ContactConstraint.h"
 #include "dart/constraint/ConstraintSolver.h"
 // #include "dart/constraint/SoftContactConstraint.h"

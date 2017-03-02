@@ -64,7 +64,6 @@ void MyConstraintSolver::updateConstraints() {
     } else {
 #ifndef ODE_VANILLA
 #ifndef FORK_LEMKE
-      mContactConstraints.push_back(new MyContactConstraint(ct, mTimeStep));
 #else
       mContactConstraints.push_back(new My2ContactConstraint(ct, mTimeStep));
 #endif

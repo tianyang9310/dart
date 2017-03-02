@@ -46,4 +46,4 @@ class My2ContactConstraint : public ContactConstraint {
 
 }  // namespace constraint
 
-#endif  // MYCONTACTCONSTRAINT
+#endif  // MY2CONTACTCONSTRAINT
