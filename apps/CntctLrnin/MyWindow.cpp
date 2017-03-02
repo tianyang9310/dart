@@ -11,7 +11,6 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   counter = 0;
   randFCounter = 50;
   episodeLength = 6500;
-  // COMtraj.clear();
   mColor.push_back(Eigen::Vector3d(0.8, 0.2, 0.2));  // red
   mColor.push_back(Eigen::Vector3d(0.2, 0.8, 0.2));  // green
   mColor.push_back(Eigen::Vector3d(0.2, 0.2, 0.8));  // blue
@@ -247,19 +246,6 @@ void MyWindow::drawSkels() {
    * }
    */
 
-  /*
-   * // draw Biped COM trajectory
-   * COMtraj.push_back(poa);
-   * if (COMtraj.size() > 1) {
-   *   for (int i = 0; i < COMtraj.size() - 1; i++) {
-   *     glBegin(GL_LINES);
-   *     glVertex3f(COMtraj[i](0), COMtraj[i](1), COMtraj[i](2));
-   *     glVertex3f(COMtraj[i + 1](0), COMtraj[i + 1](1), COMtraj[i + 1](2));
-   *     glEnd();
-   *   }
-   * }
-   */
-
   dart::gui::SimWindow::drawSkels();
 }
 
@@ -401,7 +387,6 @@ void MyWindow::displayTimer(int _val) {
   glutTimerFunc(mDisplayTimeout, refreshTimer, _val);
 }
 
-dart::simulation::WorldPtr MyWindow::getWorld() { return mWorld; }
 
 /*
  * void MyWindow::resetCubeOrientation(int idxmBox, int dir) {

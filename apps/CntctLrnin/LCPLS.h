@@ -2,7 +2,7 @@
 #define LCPLS_H
 
 #include "dart/dart.h"
-#include "LCPLPproblem.h"
+#include "SnoptLPproblem.h"
 
 #define LCPLS_ZERO 1e-12
 

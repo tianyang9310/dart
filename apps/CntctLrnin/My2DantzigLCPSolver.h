@@ -7,8 +7,8 @@
 #include <iostream>
 #include <string>
 
-#include "LCPLinEqu.h"
-#include "SnLCPWrapper.h"
+#include "DepthFirstSearchLCP.h"
+#include "SnoptWrapper.h"
 #include "My2ContactConstraint.h"
 #include "MyWindow.h"
 #include "dart/dart.h"

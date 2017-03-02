@@ -275,8 +275,8 @@ void My2DantzigLCPSolver::solve(ConstrainedGroup* _group) {
     // 2. Using snopt LCP to solve
     if (!Validation) {
       std::cout << "#Trying to use Snopt LCP to solve..." << std::endl;
-      SnLCP mSnoptLCPSolver(Lemke_A, Lemke_b);
-      mSnoptLCPSolver.solve((*z));
+      SnoptWrapper mSnoptLCPSolver(Lemke_A, Lemke_b);
+      mSnoptLCPSolver.solveLCP((*z));
       err_dist = 0.0;
       Validation =
           dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);

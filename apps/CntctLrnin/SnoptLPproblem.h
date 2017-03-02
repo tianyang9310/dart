@@ -1,5 +1,5 @@
-#ifndef LCPLPPROBLEM_H
-#define LCPLPPROBLEM_H
+#ifndef SnoptLPproblem_H
+#define SnoptLPproblem_H
 
 #include "apps/QPCC/Constraint.h"
 #include "apps/QPCC/ConstraintBox.h"
@@ -19,19 +19,14 @@
 using namespace std;
 using namespace qpcc;
 
-class LCPLPproblem : public Problem {
+/// Use Snopt to solve a LP problem, where A*x = b, x>=0
+class SnoptLPproblem : public Problem {
   public:
-  LCPLPproblem(size_t dim_var, size_t dim_cnst, const Eigen::MatrixXd& A,
+  SnoptLPproblem(size_t dim_var, size_t dim_cnst, const Eigen::MatrixXd& A,
                const Eigen::VectorXd& b);
-  virtual ~LCPLPproblem();
+  virtual ~SnoptLPproblem();
+  
   virtual void update(double* _coefs){};
 };
-
-/*
- * /// Here using LP completely to solve the problem
- * /// where lambda = 0, fn > 0, and fd >=0
- * bool LCPLP(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
- *            Eigen::VectorXd& z);
- */
 
 #endif

@@ -5,7 +5,7 @@
 #include "dart/simulation/World.h"
 
 namespace CntctLrnin {
-  
+
 using namespace dart::simulation;
 
 class MyWorld : public World {
@@ -13,7 +13,6 @@ class MyWorld : public World {
   MyWorld(const std::string& _name = "world");
   MyWorld(const WorldPtr baseWorldPtr);
   virtual ~MyWorld();
-
 };
 }
 

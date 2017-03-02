@@ -1,4 +1,4 @@
-#include "LCPLinEqu.h"
+#include "DepthFirstSearchLCP.h"
 
 namespace CntctLrnin {
 vector<size_t> sort_indexes(Eigen::VectorXd& v) {

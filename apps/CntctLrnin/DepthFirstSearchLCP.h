@@ -1,5 +1,5 @@
-#ifndef LCPLINEQU_H
-#define LCPLINEQU_H
+#ifndef DepthFirstSearchLCP
+#define DepthFirstSearchLCP
 
 #include "../lemkeFix/myLemke.h"
 #include "dart/dart.h"
@@ -12,6 +12,7 @@ using namespace std;
 vector<size_t> sort_indexes(Eigen::VectorXd& v);
 
 /// Here input argument should be the pattern
+/// TODO: change LCPLinEqu to LCPLS for better solution
 bool LCPLinEqu(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
                Eigen::VectorXd& z);
 

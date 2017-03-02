@@ -42,7 +42,7 @@ void LCPLS::solve() {
 
     assert(dim_cnst == (bas.size()+nonbas.size()));
 
-    LCPLPproblem problem(dim_var, dim_cnst, B, -b);
+    SnoptLPproblem problem(dim_var, dim_cnst, B, -b);
 
     solver = std::make_shared<SnoptSolver>(&problem);
 	solver->solve();
