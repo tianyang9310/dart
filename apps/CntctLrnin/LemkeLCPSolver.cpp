@@ -2,8 +2,7 @@
 
 namespace CntctLrnin {
 //==============================================================================
-LemkeLCPSolver::LemkeLCPSolver(double _timestep,
-                                         dart::gui::SimWindow* _mWindow)
+LemkeLCPSolver::LemkeLCPSolver(double _timestep, dart::gui::SimWindow* _mWindow)
     : DantzigLCPSolver(_timestep) {
   numBasis = NUMBASIS;
   numLemkeFail = 0;
@@ -242,7 +241,7 @@ void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
   if (numBasis != 2) {
     Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
     int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
-    
+
     double err_dist = 0.0;
     bool Validation =
         dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
@@ -267,7 +266,7 @@ void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
       }
     }
     if (Lemke_try == 0) {
-      std::cout << "Recalling Lemke still cannot find a solution" << std::endl; 
+      std::cout << "Recalling Lemke still cannot find a solution" << std::endl;
     }
 #endif
 
@@ -596,8 +595,8 @@ void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
 
 //==============================================================================
 void LemkeLCPSolver::PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b,
-                                          const Eigen::VectorXd& Pre_Lemke_b,
-                                          Eigen::MatrixXd& T) {
+                                     const Eigen::VectorXd& Pre_Lemke_b,
+                                     Eigen::MatrixXd& T) {
   size_t mDim = 1 + numBasis;
   // Obtain transformation matrix
   int Trows = T.rows();
@@ -635,10 +634,10 @@ void LemkeLCPSolver::PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b,
 
 //==============================================================================
 void LemkeLCPSolver::PermuteAug_A(const Eigen::MatrixXd& Pre_Lemke_A,
-                                       Eigen::MatrixXd& Lemke_A,
-                                       const Eigen::MatrixXd& T,
-                                       const Eigen::MatrixXd& mu,
-                                       const Eigen::MatrixXd& E) {
+                                  Eigen::MatrixXd& Lemke_A,
+                                  const Eigen::MatrixXd& T,
+                                  const Eigen::MatrixXd& mu,
+                                  const Eigen::MatrixXd& E) {
   size_t mDim = 1 + numBasis;
   // Permute A
   Lemke_A.block(0, 0, Pre_Lemke_A.rows(), Pre_Lemke_A.cols()) =
@@ -661,7 +660,7 @@ void LemkeLCPSolver::PermuteAug_A(const Eigen::MatrixXd& Pre_Lemke_A,
 
 //==============================================================================
 void LemkeLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
-                                double* hi, double* b, double* w, int* findex) {
+                           double* hi, double* b, double* w, int* findex) {
 #ifdef ODE_PRINT
   std::cout << std::setprecision(mPrecision);
   size_t nSkip;
@@ -750,17 +749,17 @@ void LemkeLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
 }
 
 //==============================================================================
-void LemkeLCPSolver::print(const Eigen::MatrixXd& A,
-                                const Eigen::VectorXd& b,
-                                const Eigen::VectorXd& z, bool Validation,
-                                int err) {
+void LemkeLCPSolver::print(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
+                           const Eigen::VectorXd& z, bool Validation, int err) {
 #ifdef LEMKE_PRINT
   Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
 
   std::cout << std::endl
             << "```````````````````````````````````````````````" << std::endl;
 
-  std::cout << "Matrix A " << std::endl << A.format(CSVFmt) << std::endl << std::endl;
+  std::cout << "Matrix A " << std::endl
+            << A.format(CSVFmt) << std::endl
+            << std::endl;
   std::cout << "Vector b " << std::endl
             << b.transpose().format(CSVFmt) << std::endl
             << std::endl;
@@ -841,7 +840,7 @@ bool LemkeLCPSolver::isSymmetric(size_t _n, double* _A) {
 
 //==============================================================================
 bool LemkeLCPSolver::isSymmetric(size_t _n, double* _A, size_t _begin,
-                                      size_t _end) {
+                                 size_t _end) {
   std::cout << std::setprecision(mPrecision);
   size_t nSkip;
   if (numBasis != 2) {
@@ -901,7 +900,7 @@ void LemkeLCPSolver::Scaling(Eigen::MatrixXd& A) {
 
 //==============================================================================
 void LemkeLCPSolver::Decompose(const Eigen::VectorXd& z,
-                                    std::vector<Eigen::VectorXd>& z_groups) {
+                               std::vector<Eigen::VectorXd>& z_groups) {
   int numContactsToLearn = z.rows() / (numBasis + 2);
   // decompose z
   Eigen::VectorXd z_fn(numContactsToLearn);
@@ -923,8 +922,8 @@ void LemkeLCPSolver::Decompose(const Eigen::VectorXd& z,
 //==============================================================================
 #ifdef OUTPUT2FILE
 void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
-                                         const Eigen::VectorXd z,
-                                         const Eigen::VectorXd b) {
+                                    const Eigen::VectorXd z,
+                                    const Eigen::VectorXd b) {
   int nSize = b.rows();
   int numContactsToLearn = nSize / (numBasis + 2);
   assert(numContactsToLearn == numContactsCallBack);
@@ -963,56 +962,64 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
           nonZerofd.push_back(j);
         }
       }
-//      assert(nonZerofd.size() <= 2);
-//      assert(nonZerofd.size() > 0);
-      if (nonZerofd.size() > 0){
+      //      assert(nonZerofd.size() <= 2);
+      //      assert(nonZerofd.size() > 0);
+      if (nonZerofd.size() > 0) {
         value = nonZerofd[std::rand() % nonZerofd.size()];
       } else {
-        Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
-        std::cout << "Exceptoin: catch a exception because of 0 non-zero in fd while fn>0, lambda>0"
+        Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols,
+                               ",\t");
+        std::cout << "Exceptoin: catch a exception because of 0 non-zero in fd "
+                     "while fn>0, lambda>0"
                   << std::endl;
-/*
- *  std::cout << "Matrix A" << std::endl << A.format(CSVFmt) << std::endl;
- *  std::cout << "Vector b" << std::endl << b.transpose().format(CSVFmt) << std::endl;
- * 
- *  double err_dist = 0.0;
- *  bool Validation =
- *      dart::lcpsolver::YT::validate(A, z, b, err_dist);
- * 
- *  std::cout << "Vector z " << std::endl
- *            << z.transpose().head(numContactsCallBack) << std::endl;
- *  for (int i = 0; i < numContactsCallBack; i++) {
- *    std::cout << z.transpose().segment(numContactsCallBack + i * numBasis,
- *                                       numBasis)
- *              << std::endl;
- *  }
- *  std::cout << z.transpose().tail(numContactsCallBack) << std::endl
- *            << std::endl;
- * 
- *  Eigen::VectorXd w = (A * z + b).eval();
- *  std::cout << "Vector w " << std::endl
- *            << w.transpose().head(numContactsCallBack) << std::endl;
- *  for (int i = 0; i < numContactsCallBack; i++) {
- *    std::cout << w.transpose().segment(numContactsCallBack + i * numBasis,
- *                                       numBasis)
- *              << std::endl;
- *  }
- *  std::cout << w.transpose().tail(numContactsCallBack) << std::endl
- *            << std::endl;
- * 
- *  Eigen::VectorXd wz = (z.array() * w.array()).eval();
- *  std::cout << "[w].*[z]" << std::endl
- *            << wz.transpose().head(numContactsCallBack) << std::endl;
- *  for (int i = 0; i < numContactsCallBack; i++) {
- *    std::cout << wz.transpose().segment(numContactsCallBack + i * numBasis,
- *                                        numBasis)
- *              << std::endl;
- *  }
- *  std::cout << wz.transpose().tail(numContactsCallBack) << std::endl
- *            << std::endl;
- * 
- *  std::cout << "Validation: " << std::boolalpha << Validation << std::endl;
- */
+        /*
+         *  std::cout << "Matrix A" << std::endl << A.format(CSVFmt) <<
+         * std::endl;
+         *  std::cout << "Vector b" << std::endl << b.transpose().format(CSVFmt)
+         * << std::endl;
+         *
+         *  double err_dist = 0.0;
+         *  bool Validation =
+         *      dart::lcpsolver::YT::validate(A, z, b, err_dist);
+         *
+         *  std::cout << "Vector z " << std::endl
+         *            << z.transpose().head(numContactsCallBack) << std::endl;
+         *  for (int i = 0; i < numContactsCallBack; i++) {
+         *    std::cout << z.transpose().segment(numContactsCallBack + i *
+         * numBasis,
+         *                                       numBasis)
+         *              << std::endl;
+         *  }
+         *  std::cout << z.transpose().tail(numContactsCallBack) << std::endl
+         *            << std::endl;
+         *
+         *  Eigen::VectorXd w = (A * z + b).eval();
+         *  std::cout << "Vector w " << std::endl
+         *            << w.transpose().head(numContactsCallBack) << std::endl;
+         *  for (int i = 0; i < numContactsCallBack; i++) {
+         *    std::cout << w.transpose().segment(numContactsCallBack + i *
+         * numBasis,
+         *                                       numBasis)
+         *              << std::endl;
+         *  }
+         *  std::cout << w.transpose().tail(numContactsCallBack) << std::endl
+         *            << std::endl;
+         *
+         *  Eigen::VectorXd wz = (z.array() * w.array()).eval();
+         *  std::cout << "[w].*[z]" << std::endl
+         *            << wz.transpose().head(numContactsCallBack) << std::endl;
+         *  for (int i = 0; i < numContactsCallBack; i++) {
+         *    std::cout << wz.transpose().segment(numContactsCallBack + i *
+         * numBasis,
+         *                                        numBasis)
+         *              << std::endl;
+         *  }
+         *  std::cout << wz.transpose().tail(numContactsCallBack) << std::endl
+         *            << std::endl;
+         *
+         *  std::cout << "Validation: " << std::boolalpha << Validation <<
+         * std::endl;
+         */
 
         nonZerofdException = true;
         break;
@@ -1020,7 +1027,7 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
     }
     value_array(i) = value;
   }
-  
+
   if (nonZerofdException) {
     return;
   }

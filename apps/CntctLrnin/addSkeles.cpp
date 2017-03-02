@@ -4,7 +4,8 @@ namespace CntctLrnin {
 
 //==============================================================================
 void addSkel(WorldPtr world) {
-  world->addSkeleton(addBox(NUMCUBES, (Eigen::Vector3d() << 0, 0, 0.2).finished()));
+  world->addSkeleton(
+      addBox(NUMCUBES, (Eigen::Vector3d() << 0, 0, 0.2).finished()));
   world->addSkeleton(addPlatform());
 }
 
@@ -30,13 +31,14 @@ SkeletonPtr addBox(int numCubes, const Eigen::Vector3d& initPos_offset) {
   rootBodyNode->setName("RootBodyNode");
 
   Eigen::Isometry3d roottf(Eigen::Isometry3d::Identity());
-  roottf.translation() = 2*initPos;
+  roottf.translation() = 2 * initPos;
   rootBodyNode->getParentJoint()->setTransformFromParentBodyNode(roottf);
 
   for (int idxmBox = 0; idxmBox < numCubes; idxmBox++) {
-    BodyNodePtr bn = mBox->createJointAndBodyNodePair<EulerJoint>(rootBodyNode).second;
-    bn->getParentJoint()->setName("Joint_"+std::to_string(idxmBox));
-    bn->setName("BodyNode_"+std::to_string(idxmBox));
+    BodyNodePtr bn =
+        mBox->createJointAndBodyNodePair<EulerJoint>(rootBodyNode).second;
+    bn->getParentJoint()->setName("Joint_" + std::to_string(idxmBox));
+    bn->setName("BodyNode_" + std::to_string(idxmBox));
 
     std::shared_ptr<Shape> shpe;
     switch (SHAPE) {
@@ -60,7 +62,7 @@ SkeletonPtr addBox(int numCubes, const Eigen::Vector3d& initPos_offset) {
     bn->setInertia(inrtia);
 
     Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
-    tf.translation() = - initPos + idxmBox*initPos_offset;
+    tf.translation() = -initPos + idxmBox * initPos_offset;
     // tf.linear() = initOri;
     bn->getParentJoint()->setTransformFromParentBodyNode(tf);
 
@@ -127,5 +129,4 @@ SkeletonPtr addPlatform() {
   mPlatform->disableSelfCollision();
   return mPlatform;
 }
-
 }

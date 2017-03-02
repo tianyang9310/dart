@@ -11,7 +11,6 @@ namespace dynamics {
 class BodyNode;
 class Skeleton;
 }  // namespace dynamics
-
 }
 
 namespace CntctLrnin {

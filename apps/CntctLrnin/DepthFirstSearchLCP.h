@@ -20,6 +20,5 @@ bool LCPLinEqu(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
 //  z is the pattern, A,b are given constant, ret are solution lists
 bool DFS(Eigen::VectorXd& z, size_t index, const Eigen::MatrixXd& A,
          const Eigen::VectorXd& b, vector<Eigen::VectorXd>& ret_list);
-
 }
 #endif

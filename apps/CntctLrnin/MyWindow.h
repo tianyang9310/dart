@@ -4,10 +4,10 @@
 #include <cmath>
 #include <random>
 #include "LemkeLCPSolver.h"
-#include "parameter.h"
 #include "dart/dart.h"
+#include "parameter.h"
 
-namespace CntctLrnin{
+namespace CntctLrnin {
 
 class MyWindow : public dart::gui::SimWindow {
   //----------------------------------------------------------------------------
@@ -53,6 +53,5 @@ class MyWindow : public dart::gui::SimWindow {
   /// Register for external forces
   Eigen::Vector3d extForce;
 };
-
 }
 #endif  // CNTCTLRNIN_MYWINDOW_H

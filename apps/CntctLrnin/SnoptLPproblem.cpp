@@ -1,8 +1,8 @@
 #include "SnoptLPproblem.h"
 
-
 SnoptLPproblem::SnoptLPproblem(size_t dim_var, size_t dim_cnst,
-                         const Eigen::MatrixXd& A, const Eigen::VectorXd& b) {
+                               const Eigen::MatrixXd& A,
+                               const Eigen::VectorXd& b) {
   double initVal[dim_var];
   for (size_t i = 0; i < dim_var; i++) {
     initVal[i] = 0;

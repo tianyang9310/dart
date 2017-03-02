@@ -41,7 +41,7 @@ void testSnoptLCP() {
   std::cout << "Matrix A: " << std::endl << A << std::endl;
   std::cout << "Vector b: " << std::endl << b.transpose() << std::endl;
 
-  SnoptWrapper mSnoptLCPSolver(A,b);
+  SnoptWrapper mSnoptLCPSolver(A, b);
   Eigen::VectorXd z(40);
   mSnoptLCPSolver.solveLCP(z);
 

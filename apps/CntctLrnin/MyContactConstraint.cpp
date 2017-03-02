@@ -25,7 +25,7 @@ namespace CntctLrnin {
 
 //==============================================================================
 MyContactConstraint::MyContactConstraint(collision::Contact& _contact,
-                                           double _timestep)
+                                         double _timestep)
     : ContactConstraint() {
   mTimeStep = (_timestep);
   mFirstFrictionalDirection = (Eigen::Vector3d::UnitZ());
@@ -127,7 +127,8 @@ MyContactConstraint::MyContactConstraint(collision::Contact& _contact,
       std::cout << std::setprecision(mPrecision) << std::endl;
       std::cout << "*********************************************" << std::endl;
       std::cout << "bodyPoint1: " << bodyPoint1.transpose() << std::endl;
-      std::cout << "bodeDirection1: " << bodyDirection1.transpose() << std::endl;
+      std::cout << "bodeDirection1: " << bodyDirection1.transpose()
+                << std::endl;
       std::cout << "D: " << std::endl << D << std::endl;
       std::cout << "get inverse transform" << std::endl
                 << mBodyNode1->getTransform().matrix() << std::endl;
@@ -422,7 +423,7 @@ void MyContactConstraint::getInformation(ConstraintInfo* _info) {
 
 //==============================================================================
 void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
-                                          bool impulse_flag) {
+                                         bool impulse_flag) {
 #ifdef OUTPUT
   std::cout << std::endl << "------------------------------------" << std::endl;
   std::cout << "[" << NUMBASIS << " Basis LCP] Using MyContactConstraint class"
@@ -504,7 +505,8 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
           << std::endl;
       std::cout << "[" << NUMBASIS << " Basis LCP] overall impulse: "
                 << (mBodyNode1->mConstraintImpulse - oldConstraintImp +
-                    mJacobians1[0] * fn).transpose()
+                    mJacobians1[0] * fn)
+                       .transpose()
                 << std::endl;
 #endif
 

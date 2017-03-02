@@ -14,7 +14,6 @@
 #define MY_DART_ZERO 1e-6
 #endif
 
-
 // #define REGULARIZED_PRINT // print regularized info
 
 namespace dart {
@@ -73,4 +72,3 @@ tinyxml2::XMLElement* checkFormatAndGetWorldElement(
 }  // namespace CntctLrnin
 
 #endif  // CNTCTLRNIN_UTILS
-

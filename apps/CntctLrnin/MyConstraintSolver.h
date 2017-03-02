@@ -37,7 +37,6 @@ class MyConstraintSolver : public ConstraintSolver {
 
   void updateConstraints();
 };
-
 }
 
 #endif  // MYCONSTRAINTSOLVER

@@ -19,4 +19,4 @@
 /// Shape of body bode
 #define SHAPE mShapeType::cube
 
-#endif 
+#endif

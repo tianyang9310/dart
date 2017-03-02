@@ -8,9 +8,9 @@
 #include <string>
 
 #include "DepthFirstSearchLCP.h"
-#include "SnoptWrapper.h"
 #include "MyContactConstraint.h"
 #include "MyWindow.h"
+#include "SnoptWrapper.h"
 #include "dart/dart.h"
 #include "utils.h"
 
@@ -40,12 +40,15 @@
 
 /*
  * * fn=0, fd=0, lambda=0		contact break
- * * fn=0, fd=0, lambda>0		has relative tangential velocities but no friction
+ * * fn=0, fd=0, lambda>0		has relative tangential velocities but no
+ * friction
  * * fn=0, fd>0, lambda=0 	X
  * * fn=0, fd>0, lambda>0		X
- * * fn>0, fd=0, lambda=0		static, no relative tangential velocities, no relative tangential acc
+ * * fn>0, fd=0, lambda=0		static, no relative tangential velocities, no
+ * relative tangential acc
  * * fn>0, fd=0, lambda>0		X
- * * fn>0, fd>0, lambda=0		static friction, no relative tangential velocities, relative tangential acc
+ * * fn>0, fd>0, lambda=0		static friction, no relative tangential
+ * velocities, relative tangential acc
  * * fn>0, fd>0, lambda>0		slide
  */
 //
@@ -100,7 +103,7 @@ class LemkeLCPSolver : public DantzigLCPSolver {
                  std::vector<Eigen::VectorXd>& z_groups);
 
   /// Lemke fails counter
-  int getLemkeFail() {return numLemkeFail;};
+  int getLemkeFail() { return numLemkeFail; };
 
 #ifdef OUTPUT2FILE
   /// Output Lemke solution
@@ -132,7 +135,6 @@ class LemkeLCPSolver : public DantzigLCPSolver {
   /// For debugging use
   dart::gui::SimWindow* mWindow;
 };
-
 }
 
-#endif // LEMKELCPSOLVER_H
+#endif  // LEMKELCPSOLVER_H
