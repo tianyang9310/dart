@@ -1,7 +1,7 @@
 .idea/
 Xcode/
 build/
-build_debug/
+buildDebug/
 .idea/
 *.pyc
 syntax: glob
