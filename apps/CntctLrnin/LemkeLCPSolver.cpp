@@ -5,30 +5,38 @@ namespace CntctLrnin {
 LemkeLCPSolver::LemkeLCPSolver(double _timestep, dart::gui::SimWindow* _mWindow)
     : DantzigLCPSolver(_timestep) {
   numBasis = NUMBASIS;
-  numLemkeFail = 0;
-
   mPrecision = PRECISION;
+  mWindow = _mWindow;
+  numLemkeFail = 0;
+  outputFileOpen();
+}
+
+//==============================================================================
+LemkeLCPSolver::~LemkeLCPSolver() { outputFileClose(); }
+
+//==============================================================================
+void LemkeLCPSolver::outputFileOpen() {
 #ifdef OUTPUT2FILE
-  dataSize = 50000;
-  numDesiredCT = 5 * NUMCUBES;
+  dataSize = 10000;
   // Here magic number of 4 is what we suppose to get from cube testing
-  for (int numContactsToLearn = 1; numContactsToLearn < 1 + numDesiredCT;
+  numDesiredFiles = 4 * NUMBODYNODES;
+
+  for (int numContactsToLearn = 1; numContactsToLearn < 1 + numDesiredFiles;
        numContactsToLearn++) {
     std::string trainingFile = "/tmp/CntctLrnin/lcp_data" +
                                std::to_string(numContactsToLearn) + ".csv";
     std::shared_ptr<std::fstream> outputFile =
         std::make_shared<std::fstream>(trainingFile, std::fstream::out);
+
     outputFile->precision(mPrecision);
     outputFiles.push_back(outputFile);
     counters.push_back(0);
   }
 #endif
-
-  mWindow = _mWindow;
 }
 
 //==============================================================================
-LemkeLCPSolver::~LemkeLCPSolver() {
+void LemkeLCPSolver::outputFileClose() {
 #ifdef OUTPUT2FILE
   for (int numContactsToLearn = 1; numContactsToLearn < 5;
        numContactsToLearn++) {
@@ -39,6 +47,15 @@ LemkeLCPSolver::~LemkeLCPSolver() {
 
 //==============================================================================
 void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
+  if (numBasis != 2) {
+    solveLemke(_group);
+  } else {
+    solveODE(_group);
+  }
+}
+
+//==============================================================================
+void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
   std::cout << std::setprecision(mPrecision);
   // If there is no constraint, then just return true.
   size_t numConstraints = _group->getNumConstraints();
@@ -48,12 +65,7 @@ void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
   // Build LCP terms by aggregating them from constraints
   size_t n = _group->getTotalDimension();
   int nSkip = dPAD(n);  // YT: Don't use nSkip
-  double* A;
-  if (numBasis != 2) {
-    A = new double[n * n];
-  } else {
-    A = new double[n * nSkip];
-  }
+  double* A = new double[n * n];
   double* x = new double[n];
   double* b = new double[n];
   double* w = new double[n];
@@ -62,11 +74,7 @@ void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
   int* findex = new int[n];
 
   // Set w to 0 and findex to -1
-  if (numBasis != 2) {
-    std::memset(A, 0.0, n * n * sizeof(double));
-  } else {
-    std::memset(A, 0.0, n * nSkip * sizeof(double));
-  }
+  std::memset(A, 0.0, n * n * sizeof(double));
   std::memset(w, 0.0, n * sizeof(double));
   std::memset(b, 0.0, n * sizeof(double));
   std::memset(findex, -1, n * sizeof(int));
@@ -112,46 +120,26 @@ void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
     // Matrix A is row major
     constraint->excite();
     for (size_t j = 0; j < constraint->getDimension(); ++j) {
-      /*
-       * // comment out because findex only use in ODE solver
-       * // Adjust findex for global index
-       * if (findex[offset[i] + j] >= 0) findex[offset[i] + j] += offset[i];
-       */
-
       // Apply impulse for mipulse test
       constraint->applyUnitImpulse(j);
 
       // Fill upper triangle blocks of A matrix
       int index;
-      if (numBasis != 2) {
-        index = n * (offset[i] + j) + offset[i];
-      } else {
-        index = nSkip * (offset[i] + j) + offset[i];
-      }
+      index = n * (offset[i] + j) + offset[i];
+
+      // Don't add mCfm because it will make the solver far less accurate
       // constraint->getVelocityChange(A + index, true);
       constraint->getVelocityChange(A + index, false);
       for (size_t k = i + 1; k < numConstraints; ++k) {
-        if (numBasis != 2) {
-          index = n * (offset[i] + j) + offset[k];
-        } else {
-          index = nSkip * (offset[i] + j) + offset[k];
-        }
+        index = n * (offset[i] + j) + offset[k];
         _group->getConstraint(k)->getVelocityChange(A + index, false);
       }
 
       // Filling symmetric part of A matrix
       for (size_t k = 0; k < i; ++k) {
         for (size_t l = 0; l < _group->getConstraint(k)->getDimension(); ++l) {
-          int index1;
-          int index2;
-          if (numBasis != 2) {
-            index1 = n * (offset[i] + j) + offset[k] + l;
-            index2 = n * (offset[k] + l) + offset[i] + j;
-          } else {
-            index1 = nSkip * (offset[i] + j) + offset[k] + l;
-            index2 = nSkip * (offset[k] + l) + offset[i] + j;
-          }
-
+          int index1 = n * (offset[i] + j) + offset[k] + l;
+          int index2 = n * (offset[k] + l) + offset[i] + j;
           A[index1] = A[index2];
         }
       }
@@ -161,23 +149,21 @@ void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
                        offset[i] + constraint->getDimension() - 1));
 
     constraint->unexcite();
-    // -------------------------------------------------------------------------
   }
-  // ---------------------------------------------------------------------------
-  // Assertion
+  assert(isSymmetric(n, A));
   assert(n == numConstraints * (1 + numBasis));
 
   // ---------------------------------------------------------------------------
   // Establish Lemke b
-  Eigen::VectorXd Pre_Lemke_b = Eigen::Map<Eigen::VectorXd>(b, n);
+  Eigen::VectorXd preLemkeB = Eigen::Map<Eigen::VectorXd>(b, n);
 
-  Eigen::VectorXd Lemke_b(numConstraints * (2 + numBasis));
+  Eigen::VectorXd lemkeB(numConstraints * (2 + numBasis));
   Eigen::MatrixXd T(numConstraints * (1 + numBasis),
                     numConstraints * (1 + numBasis));
-  Lemke_b.setZero();
+  lemkeB.setZero();
   T.setZero();
 
-  PermuteNegAug_b(b, Lemke_b, Pre_Lemke_b, T);
+  permuteNegateAugumentB(b, lemkeB, preLemkeB, T);
 
   /*
    * // debug b
@@ -185,39 +171,31 @@ void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
    * for (size_t tt=0; tt < n; tt++){
    *   std::cout << *(b+tt) << std::endl;
    * }
-   * std::cout << "========================="<<std::endl << Pre_Lemke_b <<
+   * std::cout << "========================="<<std::endl << preLemkeB <<
    * std::endl;
-   * std::cout << "========================="<<std::endl << Lemke_b <<
+   * std::cout << "========================="<<std::endl << lemkeB <<
    * std::endl;
    * std::cin.get();
    */
+
   // ---------------------------------------------------------------------------
   // Establish Lemke A
-  Eigen::MatrixXd Pre_Lemke_A;
-  if (numBasis != 2) {
-    Pre_Lemke_A = Eigen::Map<
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
-        A, n, n);
-  } else {
-    Eigen::MatrixXd Pre_Lemke_A_nSkip = Eigen::Map<
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
-        A, n, nSkip);
-    Pre_Lemke_A = Pre_Lemke_A_nSkip.block(0, 0, n, n);
-  }
+  Eigen::MatrixXd preLemkeA;
+  preLemkeA = Eigen::Map<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
+      A, n, n);
 
-  Eigen::MatrixXd Lemke_A(numConstraints * (2 + numBasis),
-                          numConstraints * (2 + numBasis));
-  Lemke_A.setZero();
+  Eigen::MatrixXd lemkeA(numConstraints * (2 + numBasis),
+                         numConstraints * (2 + numBasis));
+  lemkeA.setZero();
 
   // Permute A
-  PermuteAug_A(Pre_Lemke_A, Lemke_A, T, mu, E);
+  permuteAugumentA(preLemkeA, lemkeA, T, mu, E);
 
-  // Scaling A
-  Eigen::MatrixXd tmpA = Lemke_A;
-  Scaling(tmpA);
-  // std::cout << "Before scaling: " << std::endl << Lemke_A << std::endl;
-  // std::cout << "After scaling: " << std::endl << tmpA << std::endl;
-  Lemke_A = tmpA;
+  // scale A
+  // std::cout << "Before scale: " << std::endl << lemkeA << std::endl;
+  scale(lemkeA);
+  // std::cout << "After scale: " << std::endl << tmpA << std::endl;
 
   /*
    *   // debug A
@@ -229,231 +207,217 @@ void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
    *     std::cout << std::endl;
    *   }
    *
-   *   std::cout << "========================="<<std::endl << Pre_Lemke_A <<
+   *   std::cout << "========================="<<std::endl << preLemkeA <<
    * std::endl;
-   *   std::cout << "========================="<<std::endl << Lemke_A <<
+   *   std::cout << "========================="<<std::endl << lemkeA <<
    * std::endl;
    *   std::cin.get();
    */
+
   // ---------------------------------------------------------------------------
   // Using Lemke to solve
-  // std::cout << "# ct points: " << numContactsCallBack << std::endl;
-  if (numBasis != 2) {
-    Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
-    int err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
+  dtmsg << "# ct points: " << numContactsCallBack << std::endl;
+  Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
+  int err = dart::lcpsolver::YT::Lemke(lemkeA, lemkeB, z);
 
-    double err_dist = 0.0;
-    bool Validation =
-        dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
+  double err_dist = 0.0;
+  bool Validation =
+      dart::lcpsolver::YT::validate(lemkeA, (*z), lemkeB, err_dist);
 
 // -------------------------------------------------------------------------
 // Lemke failure remedy:
 
 #ifdef RECALL_SOLVE
-    // 1. recalling Lemke to solve (sometimes effective due to randomness in
-    // Lemke implementation)
-    int Lemke_try = 30;
-    while (!Validation && Lemke_try > 0) {
-      err = dart::lcpsolver::YT::Lemke(Lemke_A, Lemke_b, z);
-      err_dist = 0.0;
-      Validation =
-          dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
-      Lemke_try--;
-      if (Validation) {
-        std::cout << "#Find a solution after " << 30 - Lemke_try << " times try"
-                  << std::endl;
-        break;
-      }
+  // 1. recalling Lemke to solve (sometimes effective due to randomness in
+  // Lemke implementation)
+  int Lemke_try = 30;
+  while (!Validation && Lemke_try > 0) {
+    err = dart::lcpsolver::YT::Lemke(lemkeA, lemkeB, z);
+    err_dist = 0.0;
+    Validation = dart::lcpsolver::YT::validate(lemkeA, (*z), lemkeB, err_dist);
+    Lemke_try--;
+    if (Validation) {
+      std::cout << "#Find a solution after " << 30 - Lemke_try << " times try"
+                << std::endl;
+      break;
     }
-    if (Lemke_try == 0) {
-      std::cout << "Recalling Lemke still cannot find a solution" << std::endl;
-    }
+  }
+  if (Lemke_try == 0) {
+    std::cout << "Recalling Lemke still cannot find a solution" << std::endl;
+  }
 #endif
 
 #ifdef SNOPT_SOLVE
-    // 2. Using snopt LCP to solve
-    if (!Validation) {
-      std::cout << "#Trying to use Snopt LCP to solve..." << std::endl;
-      SnoptWrapper mSnoptLCPSolver(Lemke_A, Lemke_b);
-      mSnoptLCPSolver.solveLCP((*z));
-      err_dist = 0.0;
-      Validation =
-          dart::lcpsolver::YT::validate(Lemke_A, (*z), Lemke_b, err_dist);
-      if (Validation) {
-        std::cout << "Using Snopt LCP find a solution!" << std::endl;
+  // 2. Using snopt LCP to solve
+  if (!Validation) {
+    std::cout << "#Trying to use Snopt LCP to solve..." << std::endl;
+    SnoptWrapper mSnoptLCPSolver(lemkeA, lemkeB);
+    mSnoptLCPSolver.solveLCP((*z));
+    err_dist = 0.0;
+    Validation = dart::lcpsolver::YT::validate(lemkeA, (*z), lemkeB, err_dist);
+    if (Validation) {
+      std::cout << "Using Snopt LCP find a solution!" << std::endl;
 
-        // print(Lemke_A, Lemke_b, (*z), Validation, err);
-        // std::cin.get();
-      } else {
-        std::cout << "Snopt fails to find a solution either!" << std::endl;
-      }
-      // mWindow->keyboard('y', 0, 0);
+      // print(lemkeA, lemkeB, (*z), Validation, err);
+      // std::cin.get();
+    } else {
+      std::cout << "Snopt fails to find a solution either!" << std::endl;
     }
+    // mWindow->keyboard('y', 0, 0);
+  }
 #endif
 
 #ifdef BRUTE_SOLVE
-    // 3. Using brute force to solve
-    if (!Validation) {
-      std::cout << "#Trying to use brute force to solve..." << std::endl;
-      int dim_var = Lemke_b.size();
-      Eigen::VectorXd z_pattern(dim_var);
-      z_pattern.setZero();
-      std::vector<Eigen::VectorXd> ret_list;
-      DFS(z_pattern, 0, Lemke_A, Lemke_b, ret_list);
-      if (!ret_list.empty()) {
-        std::cout << "Using brute force find a solution!" << std::endl;
-        Validation = true;
-      } else {
-        std::cout << "Brute force fails to find a solution" << std::endl;
-      }
-      (*z) = ret_list[0];
-      std::cout << "Solution is " << (*z).transpose() << std::endl;
-      print(Lemke_A, Lemke_b, (*z), Validation, err);
-      mWindow->keyboard('y', 0, 0);
+  // 3. Using brute force to solve
+  if (!Validation) {
+    std::cout << "#Trying to use brute force to solve..." << std::endl;
+    int dim_var = lemkeB.size();
+    Eigen::VectorXd z_pattern(dim_var);
+    z_pattern.setZero();
+    std::vector<Eigen::VectorXd> ret_list;
+    DFS(z_pattern, 0, lemkeA, lemkeB, ret_list);
+    if (!ret_list.empty()) {
+      std::cout << "Using brute force find a solution!" << std::endl;
+      Validation = true;
+    } else {
+      std::cout << "Brute force fails to find a solution" << std::endl;
     }
+    (*z) = ret_list[0];
+    std::cout << "Solution is " << (*z).transpose() << std::endl;
+    print(lemkeA, lemkeB, (*z), Validation, err);
+    mWindow->keyboard('y', 0, 0);
+  }
 #endif
 
-    // If fail anyway, set z as 0 to make it free from breaking
-    if (!Validation) {
-      numLemkeFail++;
-      print(Lemke_A, Lemke_b, (*z), Validation, err);
-      z->setZero();
-      // std::cin.get();
-    }
-    // -------------------------------------------------------------------------
+  // If fail anyway, set z as 0 to make it free from breaking
+  if (!Validation) {
+    numLemkeFail++;
+    print(lemkeA, lemkeB, (*z), Validation, err);
+    z->setZero();
+    // std::cin.get();
+  }
+  // -------------------------------------------------------------------------
 
-    print(Lemke_A, Lemke_b, (*z), Validation, err);
+  print(lemkeA, lemkeB, (*z), Validation, err);
 
 #ifdef IMPULSE_CHANGE
-    for (size_t i = 0; i < numConstraints; i++) {
-      ContactConstraint* cntctconstraint =
-          dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
-      std::cout << "BodyNode1 old constraint impulse "
-                << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
-                << std::endl;
-      std::cout << "BodyNode2 old constraint impulse "
-                << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
-                << std::endl;
-    }
-    std::cout << std::endl;
+  for (size_t i = 0; i < numConstraints; i++) {
+    ContactConstraint* cntctconstraint =
+        dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+    std::cout << "BodyNode1 old constraint impulse "
+              << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
+              << std::endl;
+    std::cout << "BodyNode2 old constraint impulse "
+              << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
+              << std::endl;
+  }
+  std::cout << std::endl;
 #endif
 
 #ifdef SANITY_CHECK
-    // -------------------------------------------------------------------------
-    double SanityCheckZero = 1e-6;
-    std::vector<Eigen::VectorXd> z_groups;
-    Decompose((*z), z_groups);
-    for (int i = 0; i < numConstraints; i++) {
-      // Corner case where fn==0, fd>0 and lambda>0
-      if (z_groups[i][0] > -SanityCheckZero &&
-          z_groups[i][0] < SanityCheckZero &&
-          z_groups[i].segment(1, numBasis).array().maxCoeff() >
-              SanityCheckZero &&
-          z_groups[i][numBasis + 1] > SanityCheckZero) {
-        std::cerr << "ERROR: fn==0, fd>0 and lambda>0" << std::endl;
-        std::cerr << "Lemke A is " << std::endl;
-        std::cerr << Lemke_A << std::endl;
-        std::cerr << "Lemke b is ";
-        std::cerr << Lemke_b.transpose() << std::endl;
-        std::cerr << "[z]" << (*z).transpose() << std::endl;
-        std::cerr << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
-                  << std::endl;
-        std::cerr
-            << "[z].*[w]"
-            << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
-            << std::endl;
-        std::cerr << z_groups[i] << std::endl;
-        std::cin.get();
-      }
-      // Corner case where fn==0, fd>0 and lambda=0
-      if (z_groups[i][0] > -SanityCheckZero &&
-          z_groups[i][0] < SanityCheckZero &&
-          z_groups[i].segment(1, numBasis).array().maxCoeff() >
-              SanityCheckZero &&
-          z_groups[i][numBasis + 1] > -SanityCheckZero &&
-          z_groups[i][9] < SanityCheckZero) {
-        std::cerr << "ERROR: fn==0, fd>0 and lambda==0" << std::endl;
-        std::cerr << "Lemke A is " << std::endl;
-        std::cerr << Lemke_A << std::endl;
-        std::cerr << "Lemke b is ";
-        std::cerr << Lemke_b.transpose() << std::endl;
-        std::cerr << "[z]" << (*z).transpose() << std::endl;
-        std::cerr << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
-                  << std::endl;
-        std::cerr
-            << "[z].*[w]"
-            << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
-            << std::endl;
-        std::cerr << z_groups[i] << std::endl;
-        std::cin.get();
-      }
-      // Corner case where fn>0, fd=0 and lambda>0
-      if (z_groups[i][0] > SanityCheckZero &&
-          (z_groups[i].segment(1, numBasis).array() > -SanityCheckZero &&
-           z_groups[i].segment(1, numBasis).array() < SanityCheckZero)
-              .all() &&
-          z_groups[i][numBasis + 1] > SanityCheckZero) {
-        std::cerr << "ERROR: fn>0, fd==0 and lambda>0" << std::endl;
-        std::cerr << "Lemke A is " << std::endl;
-        std::cerr << Lemke_A << std::endl;
-        std::cerr << "Lemke b is ";
-        std::cerr << Lemke_b.transpose() << std::endl;
-        std::cerr << "[z]" << (*z).transpose() << std::endl;
-        std::cerr << "[w]" << (Lemke_A * (*z) + Lemke_b).transpose()
-                  << std::endl;
-        std::cerr
-            << "[z].*[w]"
-            << ((*z).array() * (Lemke_A * (*z) + Lemke_b).array()).transpose()
-            << std::endl;
-        std::cerr << z_groups[i] << std::endl;
-        std::cin.get();
-      }
-      // Count how many non-zero does fd have
-      double fd_nz = 0;
-      fd_nz = (z_groups[i].segment(1, numBasis).array() > SanityCheckZero)
-                  .matrix()
-                  .cast<double>()
-                  .sum();
-      std::cout << i << "th contact has " << fd_nz << " nonzero in fd. ";
-      if (z_groups[i](1 + numBasis) > SanityCheckZero) {
-        std::cout << "lambda"
-                  << " > 0 " << std::endl;
-      } else {
-        std::cout << "lambda"
-                  << " = 0 " << std::endl;
-      }
+  // -------------------------------------------------------------------------
+  double SanityCheckZero = 1e-6;
+  std::vector<Eigen::VectorXd> z_groups;
+  decompose((*z), z_groups);
+  for (int i = 0; i < numConstraints; i++) {
+    // Corner case where fn==0, fd>0 and lambda>0
+    if (z_groups[i][0] > -SanityCheckZero && z_groups[i][0] < SanityCheckZero &&
+        z_groups[i].segment(1, numBasis).array().maxCoeff() > SanityCheckZero &&
+        z_groups[i][numBasis + 1] > SanityCheckZero) {
+      std::cerr << "ERROR: fn==0, fd>0 and lambda>0" << std::endl;
+      std::cerr << "Lemke A is " << std::endl;
+      std::cerr << lemkeA << std::endl;
+      std::cerr << "Lemke b is ";
+      std::cerr << lemkeB.transpose() << std::endl;
+      std::cerr << "[z]" << (*z).transpose() << std::endl;
+      std::cerr << "[w]" << (lemkeA * (*z) + lemkeB).transpose() << std::endl;
+      std::cerr << "[z].*[w]"
+                << ((*z).array() * (lemkeA * (*z) + lemkeB).array()).transpose()
+                << std::endl;
+      std::cerr << z_groups[i] << std::endl;
+      std::cin.get();
     }
+    // Corner case where fn==0, fd>0 and lambda=0
+    if (z_groups[i][0] > -SanityCheckZero && z_groups[i][0] < SanityCheckZero &&
+        z_groups[i].segment(1, numBasis).array().maxCoeff() > SanityCheckZero &&
+        z_groups[i][numBasis + 1] > -SanityCheckZero &&
+        z_groups[i][9] < SanityCheckZero) {
+      std::cerr << "ERROR: fn==0, fd>0 and lambda==0" << std::endl;
+      std::cerr << "Lemke A is " << std::endl;
+      std::cerr << lemkeA << std::endl;
+      std::cerr << "Lemke b is ";
+      std::cerr << lemkeB.transpose() << std::endl;
+      std::cerr << "[z]" << (*z).transpose() << std::endl;
+      std::cerr << "[w]" << (lemkeA * (*z) + lemkeB).transpose() << std::endl;
+      std::cerr << "[z].*[w]"
+                << ((*z).array() * (lemkeA * (*z) + lemkeB).array()).transpose()
+                << std::endl;
+      std::cerr << z_groups[i] << std::endl;
+      std::cin.get();
+    }
+    // Corner case where fn>0, fd=0 and lambda>0
+    if (z_groups[i][0] > SanityCheckZero &&
+        (z_groups[i].segment(1, numBasis).array() > -SanityCheckZero &&
+         z_groups[i].segment(1, numBasis).array() < SanityCheckZero)
+            .all() &&
+        z_groups[i][numBasis + 1] > SanityCheckZero) {
+      std::cerr << "ERROR: fn>0, fd==0 and lambda>0" << std::endl;
+      std::cerr << "Lemke A is " << std::endl;
+      std::cerr << lemkeA << std::endl;
+      std::cerr << "Lemke b is ";
+      std::cerr << lemkeB.transpose() << std::endl;
+      std::cerr << "[z]" << (*z).transpose() << std::endl;
+      std::cerr << "[w]" << (lemkeA * (*z) + lemkeB).transpose() << std::endl;
+      std::cerr << "[z].*[w]"
+                << ((*z).array() * (lemkeA * (*z) + lemkeB).array()).transpose()
+                << std::endl;
+      std::cerr << z_groups[i] << std::endl;
+      std::cin.get();
+    }
+    // Count how many non-zero does fd have
+    double fd_nz = 0;
+    fd_nz = (z_groups[i].segment(1, numBasis).array() > SanityCheckZero)
+                .matrix()
+                .cast<double>()
+                .sum();
+    std::cout << i << "th contact has " << fd_nz << " nonzero in fd. ";
+    if (z_groups[i](1 + numBasis) > SanityCheckZero) {
+      std::cout << "lambda"
+                << " > 0 " << std::endl;
+    } else {
+      std::cout << "lambda"
+                << " = 0 " << std::endl;
+    }
+  }
 #endif
 
-    if (Validation) {
-      //  ---------------------------------------
-      // justify the (*z)
-      // assert(!(Eigen::isnan((*z).array()).any()));
+  if (Validation) {
+    //  ---------------------------------------
+    // justify the (*z)
+    // assert(!(Eigen::isnan((*z).array()).any()));
 
-      MyContactConstraint* Mycntctconstraint;
-      // (*z); N; B
-      Eigen::VectorXd fn((*z).head(numConstraints));
-      Eigen::VectorXd fd(
-          (*z).segment(numConstraints, numConstraints * numBasis));
-      // Eigen::VectorXd lambda((*z).tail(numConstraints));
+    MyContactConstraint* Mycntctconstraint;
+    // (*z); N; B
+    Eigen::VectorXd fn((*z).head(numConstraints));
+    Eigen::VectorXd fd((*z).segment(numConstraints, numConstraints * numBasis));
+    // Eigen::VectorXd lambda((*z).tail(numConstraints));
 
-      // Using Lemke to simulate
-      for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints;
-           ++idx_cnstrnt) {
-        double fn_each = fn(idx_cnstrnt);
-        Eigen::VectorXd fd_each = fd.segment(idx_cnstrnt * numBasis, numBasis);
+    // Using Lemke to simulate
+    for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt) {
+      double fn_each = fn(idx_cnstrnt);
+      Eigen::VectorXd fd_each = fd.segment(idx_cnstrnt * numBasis, numBasis);
 
-        Mycntctconstraint = dynamic_cast<MyContactConstraint*>(
-            _group->getConstraint(idx_cnstrnt));
-        Mycntctconstraint->MyapplyImpulse(fn_each, fd_each, true);
+      Mycntctconstraint = dynamic_cast<MyContactConstraint*>(
+          _group->getConstraint(idx_cnstrnt));
+      Mycntctconstraint->MyapplyImpulse(fn_each, fd_each, true);
 
-        Mycntctconstraint->excite();
-      }
-    } else {
-      std::cout << "Lemke fails!!!" << std::endl;
-      // mWindow->keyboard('y', 0, 0);
-      // std::cin.get();
+      Mycntctconstraint->excite();
     }
+  } else {
+    std::cout << "Lemke fails!!!" << std::endl;
+    // mWindow->keyboard('y', 0, 0);
+    // std::cin.get();
+  }
 
 // std::cout << std::endl;
 
@@ -474,113 +438,35 @@ void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
  */
 
 #ifdef IMPULSE_CHANGE
-    for (size_t i = 0; i < numConstraints; i++) {
-      ContactConstraint* cntctconstraint =
-          dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
-      std::cout << "BodyNode1 new constraint impulse "
-                << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
-                << std::endl;
-      std::cout << "BodyNode2 new constraint impulse "
-                << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
-                << std::endl;
-    }
+  for (size_t i = 0; i < numConstraints; i++) {
+    ContactConstraint* cntctconstraint =
+        dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+    std::cout << "BodyNode1 new constraint impulse "
+              << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
+              << std::endl;
+    std::cout << "BodyNode2 new constraint impulse "
+              << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
+              << std::endl;
+  }
 #endif
 
 #ifdef OUTPUT2FILE
-    // output to file after all necessary computation and valid Lemke results
-    if (Validation && (counters[numConstraints - 1] < dataSize)) {
-      recordLCPSolve(Lemke_A, (*z), Lemke_b);
-    }
-    // early stopping
-    bool early_stopping = true;
-    for (int mDCT_idx = 0; mDCT_idx < numDesiredCT; mDCT_idx++) {
-      if (counters[mDCT_idx] < dataSize) {
-        early_stopping = false;
-        continue;
-      }
-    }
-    if (early_stopping) {
-      exit(0);
-    }
-#endif
-  } else {
-    // -------------------------------------------------------------------------
-    assert(isSymmetric(n, A));
-
-    double* old_A = new double[n * nSkip];
-    double* old_b = new double[n];
-    for (int i = 0; i < n * nSkip; i++) old_A[i] = A[i];
-    for (int i = 0; i < n; i++) old_b[i] = b[i];
-
-    // Print LCP formulation
-    std::cout << "Before solve:" << std::endl;
-    print(n, A, x, lo, hi, b, w, findex);
-    std::cout << std::endl;
-
-    // Solve LCP using ODE's Dantzig algorithm
-    dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
-
-    //``````````````````````````````````````````````````````````````````````````
-    // Solve LCP using Lemke
-    Pre_Lemke_b = -Pre_Lemke_b;
-    Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (1 + numBasis));
-    int err = dart::lcpsolver::YT::Lemke(Pre_Lemke_A, Pre_Lemke_b, z);
-
-    double err_dist = 0.0;
-    bool Validation =
-        dart::lcpsolver::YT::validate(Pre_Lemke_A, (*z), Pre_Lemke_b, err_dist);
-
-    print(Pre_Lemke_A, Pre_Lemke_b, (*z), Validation, err);
-    //``````````````````````````````````````````````````````````````````````````
-
-    // Print LCP formulation
-    std::cout << "After solve:" << std::endl;
-    print(n, old_A, x, lo, hi, old_b, w, findex);
-    std::cout << std::endl;
-
-    for (size_t i = 0; i < numConstraints; i++) {
-      ContactConstraint* cntctconstraint =
-          dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
-      std::cout << "BodyNode1 old constraint impulse "
-                << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
-                << std::endl;
-      std::cout << "BodyNode2 old constraint impulse "
-                << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
-                << std::endl;
-    }
-
-    // Apply constraint impulses
-    for (size_t i = 0; i < numConstraints; ++i) {
-      constraint = _group->getConstraint(i);
-      constraint->applyImpulse(x + offset[i]);
-
-      /*
-       * MyContactConstraint* Mycntctconstraint;
-       * Mycntctconstraint = dynamic_cast<MyContactConstraint*>(
-       *     _group->getConstraint(i));
-       * double fn_each = (*z)(i*(1+numBasis));
-       * Eigen::VectorXd fd_each = (*z).segment(i*(1+numBasis)+1,numBasis);
-       * Mycntctconstraint->MyapplyImpulse(fn_each, fd_each, true);
-       */
-
-      constraint->excite();
-    }
-
-    // std::cout << std::endl;
-
-    for (size_t i = 0; i < numConstraints; i++) {
-      ContactConstraint* cntctconstraint =
-          dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
-      std::cout << "BodyNode1 new constraint impulse "
-                << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
-                << std::endl;
-      std::cout << "BodyNode2 new constraint impulse "
-                << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
-                << std::endl;
+  // output to file after all necessary computation and valid Lemke results
+  if (Validation && (counters[numConstraints - 1] < dataSize)) {
+    recordLCPSolve(lemkeA, (*z), lemkeB);
+  }
+  // early stopping
+  bool early_stopping = true;
+  for (int mDCT_idx = 0; mDCT_idx < numDesiredFiles; mDCT_idx++) {
+    if (counters[mDCT_idx] < dataSize) {
+      early_stopping = false;
+      continue;
     }
   }
-
-  // std::cout << std::endl;
+  if (early_stopping) {
+    exit(0);
+  }
+#endif
 
   delete[] offset;
 
@@ -594,9 +480,156 @@ void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
 }
 
 //==============================================================================
-void LemkeLCPSolver::PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b,
-                                     const Eigen::VectorXd& Pre_Lemke_b,
-                                     Eigen::MatrixXd& T) {
+void LemkeLCPSolver::solveODE(ConstrainedGroup* _group) {
+  std::cout << std::setprecision(mPrecision);
+  // If there is no constraint, then just return true.
+  size_t numConstraints = _group->getNumConstraints();
+  numContactsCallBack = numConstraints;
+  if (numConstraints == 0) return;
+
+  // Build LCP terms by aggregating them from constraints
+  size_t n = _group->getTotalDimension();
+  int nSkip = dPAD(n);
+  double* A = new double[n * nSkip];
+  double* x = new double[n];
+  double* b = new double[n];
+  double* w = new double[n];
+  double* lo = new double[n];
+  double* hi = new double[n];
+  int* findex = new int[n];
+
+// Set w to 0 and findex to -1
+#ifndef NDEBUG
+  std::memset(A, 0.0, n * nSkip * sizeof(double));
+#endif
+  std::memset(w, 0.0, n * sizeof(double));
+  std::memset(findex, -1, n * sizeof(int));
+
+  // Compute offset indices
+  size_t* offset = new size_t[n];
+  offset[0] = 0;
+  //  std::cout << "offset[" << 0 << "]: " << offset[0] << std::endl;
+  for (size_t i = 1; i < numConstraints; ++i) {
+    ConstraintBase* constraint = _group->getConstraint(i - 1);
+    assert(constraint->getDimension() > 0);
+    offset[i] = offset[i - 1] + constraint->getDimension();
+    //    std::cout << "offset[" << i << "]: " << offset[i] << std::endl;
+  }
+
+  // For each constraint
+  ConstraintInfo constInfo;
+  constInfo.invTimeStep = 1.0 / mTimeStep;
+  ConstraintBase* constraint;
+  for (size_t i = 0; i < numConstraints; ++i) {
+    constraint = _group->getConstraint(i);
+
+    constInfo.x = x + offset[i];
+    constInfo.lo = lo + offset[i];
+    constInfo.hi = hi + offset[i];
+    constInfo.b = b + offset[i];
+    constInfo.findex = findex + offset[i];
+    constInfo.w = w + offset[i];
+
+    // Fill vectors: lo, hi, b, w
+    constraint->getInformation(&constInfo);
+
+    // Fill a matrix by impulse tests: A
+    constraint->excite();
+    for (size_t j = 0; j < constraint->getDimension(); ++j) {
+      // Adjust findex for global index
+      if (findex[offset[i] + j] >= 0) findex[offset[i] + j] += offset[i];
+
+      // Apply impulse for mipulse test
+      constraint->applyUnitImpulse(j);
+
+      // Fill upper triangle blocks of A matrix
+      int index = nSkip * (offset[i] + j) + offset[i];
+      constraint->getVelocityChange(A + index, true);
+      for (size_t k = i + 1; k < numConstraints; ++k) {
+        index = nSkip * (offset[i] + j) + offset[k];
+        _group->getConstraint(k)->getVelocityChange(A + index, false);
+      }
+
+      // Filling symmetric part of A matrix
+      for (size_t k = 0; k < i; ++k) {
+        for (size_t l = 0; l < _group->getConstraint(k)->getDimension(); ++l) {
+          int index1 = nSkip * (offset[i] + j) + offset[k] + l;
+          int index2 = nSkip * (offset[k] + l) + offset[i] + j;
+
+          A[index1] = A[index2];
+        }
+      }
+    }
+
+    assert(isSymmetric(n, A, offset[i],
+                       offset[i] + constraint->getDimension() - 1));
+
+    constraint->unexcite();
+  }
+
+  assert(isSymmetric(n, A));
+
+  double* oldA = new double[n * nSkip];
+  double* oldB = new double[n];
+  for (int i = 0; i < n * nSkip; i++) oldA[i] = A[i];
+  for (int i = 0; i < n; i++) oldB[i] = b[i];
+
+  // Print LCP formulation
+  dtdbg << "Before solve:" << std::endl;
+  print(n, A, x, lo, hi, b, w, findex);
+  std::cout << std::endl;
+
+  // Solve LCP using ODE's Dantzig algorithm
+  dSolveLCP(n, A, x, b, w, 0, lo, hi, findex);
+
+  // Print LCP formulation
+  dtdbg << "After solve:" << std::endl;
+  print(n, oldA, x, lo, hi, oldB, w, findex);
+  std::cout << std::endl;
+
+  for (size_t i = 0; i < numConstraints; i++) {
+    ContactConstraint* cntctconstraint =
+        dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+    std::cout << "BodyNode1 old constraint impulse "
+              << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
+              << std::endl;
+    std::cout << "BodyNode2 old constraint impulse "
+              << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
+              << std::endl;
+  }
+
+  // Apply constraint impulses
+  for (size_t i = 0; i < numConstraints; ++i) {
+    constraint = _group->getConstraint(i);
+    constraint->applyImpulse(x + offset[i]);
+    constraint->excite();
+  }
+  for (size_t i = 0; i < numConstraints; i++) {
+    ContactConstraint* cntctconstraint =
+        dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
+    std::cout << "BodyNode1 new constraint impulse "
+              << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
+              << std::endl;
+    std::cout << "BodyNode2 new constraint impulse "
+              << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
+              << std::endl;
+  }
+
+  delete[] offset;
+
+  delete[] A;
+  delete[] x;
+  delete[] b;
+  delete[] w;
+  delete[] lo;
+  delete[] hi;
+  delete[] findex;
+}
+
+//==============================================================================
+void LemkeLCPSolver::permuteNegateAugumentB(double* b, Eigen::VectorXd& lemkeB,
+                                            const Eigen::VectorXd& preLemkeB,
+                                            Eigen::MatrixXd& T) {
   size_t mDim = 1 + numBasis;
   // Obtain transformation matrix
   int Trows = T.rows();
@@ -609,10 +642,10 @@ void LemkeLCPSolver::PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b,
   // Permute b
   for (size_t mIdxConstraint = 0; mIdxConstraint < numContactsCallBack;
        mIdxConstraint++) {
-    Lemke_b[mIdxConstraint] = *(b + mIdxConstraint * mDim);
+    lemkeB[mIdxConstraint] = *(b + mIdxConstraint * mDim);
     T.row(mIdxConstraint) = Tcache.row(mIdxConstraint * mDim);
 
-    Lemke_b.segment(numContactsCallBack + mIdxConstraint * numBasis, numBasis) =
+    lemkeB.segment(numContactsCallBack + mIdxConstraint * numBasis, numBasis) =
         Eigen::Map<Eigen::VectorXd>((b + mIdxConstraint * mDim + 1), numBasis);
     T.block(numContactsCallBack + mIdxConstraint * numBasis, 0, numBasis,
             Tcols) =
@@ -620,41 +653,40 @@ void LemkeLCPSolver::PermuteNegAug_b(double* b, Eigen::VectorXd& Lemke_b,
   }
 
   // // Assert transformation
-  // std::cout << "T*b" << std::endl << T*Pre_Lemke_b << std::endl;
-  // std::cout << "b' " << std::endl << Lemke_b.head(Pre_Lemke_b.rows()) <<
+  // std::cout << "T*b" << std::endl << T*preLemkeB << std::endl;
+  // std::cout << "b' " << std::endl << lemkeB.head(preLemkeB.rows()) <<
   // std::endl;
-  assert(T * Pre_Lemke_b == Lemke_b.head(Pre_Lemke_b.rows()));
+  assert(T * preLemkeB == lemkeB.head(preLemkeB.rows()));
 
   // Negate b
-  Lemke_b = -Lemke_b;
+  lemkeB = -lemkeB;
 
   // Augment b
-  Lemke_b.tail(numContactsCallBack).setZero();
+  lemkeB.tail(numContactsCallBack).setZero();
 }
 
 //==============================================================================
-void LemkeLCPSolver::PermuteAug_A(const Eigen::MatrixXd& Pre_Lemke_A,
-                                  Eigen::MatrixXd& Lemke_A,
-                                  const Eigen::MatrixXd& T,
-                                  const Eigen::MatrixXd& mu,
-                                  const Eigen::MatrixXd& E) {
+void LemkeLCPSolver::permuteAugumentA(const Eigen::MatrixXd& preLemkeA,
+                                      Eigen::MatrixXd& lemkeA,
+                                      const Eigen::MatrixXd& T,
+                                      const Eigen::MatrixXd& mu,
+                                      const Eigen::MatrixXd& E) {
   size_t mDim = 1 + numBasis;
   // Permute A
-  Lemke_A.block(0, 0, Pre_Lemke_A.rows(), Pre_Lemke_A.cols()) =
-      T * Pre_Lemke_A * T.inverse();
+  lemkeA.block(0, 0, preLemkeA.rows(), preLemkeA.cols()) =
+      T * preLemkeA * T.inverse();
 
   // Augment A
   // _TimeStep =  1.0 means using calculating impulse in Lemke
   // otherwise _TimeStep  = mTimeStep means calculating force in Lemke
   double _TimeStep = 1.0;  // mTimeStep;
-  Lemke_A.block(numContactsCallBack * mDim, 0, numContactsCallBack,
-                numContactsCallBack) =
-      mu / (_TimeStep == 1.0 ? mTimeStep : 1.0);
-  Lemke_A.block(numContactsCallBack * mDim, numContactsCallBack,
-                numContactsCallBack, numContactsCallBack * numBasis) =
+  lemkeA.block(numContactsCallBack * mDim, 0, numContactsCallBack,
+               numContactsCallBack) = mu / (_TimeStep == 1.0 ? mTimeStep : 1.0);
+  lemkeA.block(numContactsCallBack * mDim, numContactsCallBack,
+               numContactsCallBack, numContactsCallBack * numBasis) =
       -E.transpose() / (_TimeStep == 1.0 ? mTimeStep : 1.0);
-  Lemke_A.block(numContactsCallBack, numContactsCallBack * mDim,
-                numContactsCallBack * numBasis, numContactsCallBack) =
+  lemkeA.block(numContactsCallBack, numContactsCallBack * mDim,
+               numContactsCallBack * numBasis, numContactsCallBack) =
       E / (_TimeStep == 1.0 ? mTimeStep : 1.0);
 }
 
@@ -872,7 +904,7 @@ bool LemkeLCPSolver::isSymmetric(size_t _n, double* _A, size_t _begin,
 }
 
 //==============================================================================
-void LemkeLCPSolver::Scaling(Eigen::MatrixXd& A) {
+void LemkeLCPSolver::scale(Eigen::MatrixXd& A) {
   int numRow = A.rows();
   int numCol = A.cols();
   assert(numRow == numCol);
@@ -886,7 +918,7 @@ void LemkeLCPSolver::Scaling(Eigen::MatrixXd& A) {
    * }
    */
 
-  // Scaling mu and E
+  // scale mu and E
   int mDim = 1 + numBasis;
   double h = 4e-3;
 
@@ -899,7 +931,7 @@ void LemkeLCPSolver::Scaling(Eigen::MatrixXd& A) {
 }
 
 //==============================================================================
-void LemkeLCPSolver::Decompose(const Eigen::VectorXd& z,
+void LemkeLCPSolver::decompose(const Eigen::VectorXd& z,
                                std::vector<Eigen::VectorXd>& z_groups) {
   int numContactsToLearn = z.rows() / (numBasis + 2);
   // decompose z
@@ -920,10 +952,11 @@ void LemkeLCPSolver::Decompose(const Eigen::VectorXd& z,
 }
 
 //==============================================================================
-#ifdef OUTPUT2FILE
+
 void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
                                     const Eigen::VectorXd z,
                                     const Eigen::VectorXd b) {
+#ifdef OUTPUT2FILE
   int nSize = b.rows();
   int numContactsToLearn = nSize / (numBasis + 2);
   assert(numContactsToLearn == numContactsCallBack);
@@ -1060,6 +1093,6 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
     (*outputFile) << std::endl;
     counters[numContactsToLearn - 1] += 1;
   }
-}
 #endif
+}
 }

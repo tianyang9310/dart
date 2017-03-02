@@ -26,7 +26,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
 
   extForce.setZero();
   /*
-   * for (int i=0; i<NUMCUBES; i++){
+   * for (int i=0; i<NUMBODYNODES; i++){
    *   resetCubeOrientation(i,0);
    * }
    */
@@ -45,7 +45,7 @@ MyWindow::~MyWindow() {}
 void MyWindow::timeStepping() {
   // addExtForce();
   int numContacts = mCollisionDetector->getNumContacts();
-// for (int i=0; i<NUMCUBES; i++){
+// for (int i=0; i<NUMBODYNODES; i++){
 // std::cout << "=================================================" <<
 // std::endl;
 // std::cout << "mBox Position: "
@@ -66,7 +66,7 @@ void MyWindow::timeStepping() {
 
   // regularization the positive of cube
   double range = 500;
-  for (int i = 0; i < NUMCUBES; i++) {
+  for (int i = 0; i < NUMBODYNODES; i++) {
     if ((std::abs(mWorld->getSkeleton("mBox")
                       ->getBodyNode(idx2string(i))
                       ->getTransform()
@@ -96,7 +96,7 @@ void MyWindow::timeStepping() {
 
   if (counter < mDutyCycle) {
     addExtForce();
-    // assert(NUMCUBES==1);
+    // assert(NUMBODYNODES==1);
   } else if (counter > mPeriod - mDutyCycle - 1) {
     addExtTorque();
   }
@@ -122,7 +122,7 @@ void MyWindow::timeStepping() {
 
 void MyWindow::addExtForce() {
   // ---------------------------------------------------------------------------
-  for (int i = 0; i < NUMCUBES; i++) {
+  for (int i = 0; i < NUMBODYNODES; i++) {
     // Apply force to COM
     // add constant external forces
     extForce.setZero();
@@ -181,7 +181,7 @@ void MyWindow::addExtTorque() {
   //     ->getBodyNode("BodyNode_1")
   //     ->addExtTorque(extTorque);
 
-  for (int i = 0; i < NUMCUBES; i++) {
+  for (int i = 0; i < NUMBODYNODES; i++) {
     mWorld->getSkeleton("mBox")
         ->getBodyNode(idx2string(i))
         ->addExtTorque(Eigen::Vector3d::Random() * 5);
@@ -225,7 +225,7 @@ void MyWindow::drawSkels() {
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   /*
-   * for (int i = 0; i<NUMCUBES; i++) {
+   * for (int i = 0; i<NUMBODYNODES; i++) {
    * // draw Ext force arrow
    * Eigen::Vector3d poa = mWorld->getSkeleton(idx2string(i))->getCOM();
    * double len = extForce.norm() / 100.0;

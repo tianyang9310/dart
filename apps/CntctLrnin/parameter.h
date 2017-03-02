@@ -13,7 +13,7 @@
 #define PRECISION 20
 
 /// Number of cubes
-#define NUMCUBES 6
+#define NUMBODYNODES 6
 
 /// Shape of body bode
 #define SHAPE mShapeType::cube

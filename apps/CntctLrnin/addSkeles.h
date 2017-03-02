@@ -20,7 +20,7 @@ enum class mShapeType { cube, ball };
 void addSkel(WorldPtr world);
 
 ///
-SkeletonPtr addBox(int numCubes, const Eigen::Vector3d& init_pos_offset);
+SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& init_pos_offset);
 
 ///
 SkeletonPtr addPlatform();

@@ -5,12 +5,12 @@ namespace CntctLrnin {
 //==============================================================================
 void addSkel(WorldPtr world) {
   world->addSkeleton(
-      addBox(NUMCUBES, (Eigen::Vector3d() << 0, 0, 0.2).finished()));
+      addBox(NUMBODYNODES, (Eigen::Vector3d() << 0, 0, 0.2).finished()));
   world->addSkeleton(addPlatform());
 }
 
 //==============================================================================
-SkeletonPtr addBox(int numCubes, const Eigen::Vector3d& initPos_offset) {
+SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& initPos_offset) {
   double mass = 1.0;
   Eigen::Vector3d lengthTuple(0.1, 0.1, 0.1);
 
@@ -34,7 +34,7 @@ SkeletonPtr addBox(int numCubes, const Eigen::Vector3d& initPos_offset) {
   roottf.translation() = 2 * initPos;
   rootBodyNode->getParentJoint()->setTransformFromParentBodyNode(roottf);
 
-  for (int idxmBox = 0; idxmBox < numCubes; idxmBox++) {
+  for (int idxmBox = 0; idxmBox < numBodyNodes; idxmBox++) {
     BodyNodePtr bn =
         mBox->createJointAndBodyNodePair<EulerJoint>(rootBodyNode).second;
     bn->getParentJoint()->setName("Joint_" + std::to_string(idxmBox));
