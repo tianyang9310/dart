@@ -19,11 +19,11 @@
 #define OUTPUT2FILE
 // #define LEMKE_PRINT
 // #define ODE_PRINT
-// #define IMPULSE_CHANGE
 
-#define RECALL_SOLVE
-#define SNOPT_SOLVE
-// #define BRUTE_SOLVE
+/// Macro controlling remedy methods
+#define RECALLSOLVE
+#define SNOPTSOLVE
+// #define BRUTESOLVE
 
 // #define SANITY_CHECK
 
@@ -68,11 +68,12 @@ class LemkeLCPSolver : public DantzigLCPSolver {
 
   /// Lemke print function
   void print(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
-             const Eigen::VectorXd& z, bool Validation, int err);
+             const Eigen::VectorXd& z, const bool Validation, const int err);
 
   /// Permute , negate and augment b
-  void permuteNegateAugumentB(double* b, Eigen::VectorXd& lemkeB,
-                       const Eigen::VectorXd& preLemkeB, Eigen::MatrixXd& T);
+  void permuteNegateAugumentB(double* b, const Eigen::VectorXd& preLemkeB,
+                          Eigen::VectorXd& lemkeB,
+                          Eigen::MatrixXd& T);
 
   /// Permute and augment A
   void permuteAugumentA(const Eigen::MatrixXd& preLemkeA,
@@ -84,14 +85,28 @@ class LemkeLCPSolver : public DantzigLCPSolver {
 
   /// Decomposing z
   void decompose(const Eigen::VectorXd& z,
-                 std::vector<Eigen::VectorXd>& z_groups);
+                 std::vector<Eigen::VectorXd>& zGroups);
+
+  /// Remedy if Lemke fails in the first place
+  void recallLemke(bool& Validation, const Eigen::MatrixXd& lemkeA, 
+                   const Eigen::VectorXd& lemkeB, Eigen::VectorXd* z);
+  void useSnoptLCPSolver(bool& Validation, const Eigen::MatrixXd& lemkeA, 
+                   const Eigen::VectorXd& lemkeB, Eigen::VectorXd* z);
+  void bruteForce(bool& Validation, const Eigen::MatrixXd& lemkeA, 
+                   const Eigen::VectorXd& lemkeB, Eigen::VectorXd* z);
+
+  /// Sanity check
+  void sanityCheck(const Eigen::MatrixXd& lemkeA,
+                  const Eigen::VectorXd& lemkeB,
+                  const Eigen::VectorXd& z);
 
   /// Lemke fails counter
-  int getLemkeFail() { return numLemkeFail; };
+  int getLCPFail() { return numLCPFail; };
 
   /// Output Lemke solution
-  void recordLCPSolve(const Eigen::MatrixXd A, const Eigen::VectorXd z,
-                      const Eigen::VectorXd b);
+  void recordLCPSolve(const Eigen::MatrixXd& A, 
+                      const Eigen::VectorXd& b,
+                      const Eigen::VectorXd& z);
 
   /// Output files open and close
   void outputFileClose();
@@ -111,7 +126,7 @@ class LemkeLCPSolver : public DantzigLCPSolver {
   int numBasis;
 
   /// Statistical of funcationality of Lemke
-  int numLemkeFail;
+  int numLCPFail;
 
   /// Prompt precision
   int mPrecision;

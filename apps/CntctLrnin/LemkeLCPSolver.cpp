@@ -7,7 +7,7 @@ LemkeLCPSolver::LemkeLCPSolver(double _timestep, dart::gui::SimWindow* _mWindow)
   numBasis = NUMBASIS;
   mPrecision = PRECISION;
   mWindow = _mWindow;
-  numLemkeFail = 0;
+  numLCPFail = 0;
   outputFileOpen();
 }
 
@@ -163,7 +163,7 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
   lemkeB.setZero();
   T.setZero();
 
-  permuteNegateAugumentB(b, lemkeB, preLemkeB, T);
+  permuteNegateAugumentB(b, preLemkeB, lemkeB, T);
 
   /*
    * // debug b
@@ -216,172 +216,245 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
 
   // ---------------------------------------------------------------------------
   // Using Lemke to solve
-  dtmsg << "# ct points: " << numContactsCallBack << std::endl;
+  // dtmsg << "# ct points: " << numContactsCallBack << std::endl;
   Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
   int err = dart::lcpsolver::YT::Lemke(lemkeA, lemkeB, z);
+  bool Validation = dart::lcpsolver::YT::validate(lemkeA, (*z), lemkeB);
 
-  double err_dist = 0.0;
-  bool Validation =
-      dart::lcpsolver::YT::validate(lemkeA, (*z), lemkeB, err_dist);
-
-// -------------------------------------------------------------------------
-// Lemke failure remedy:
-
-#ifdef RECALL_SOLVE
-  // 1. recalling Lemke to solve (sometimes effective due to randomness in
-  // Lemke implementation)
-  int Lemke_try = 30;
-  while (!Validation && Lemke_try > 0) {
-    err = dart::lcpsolver::YT::Lemke(lemkeA, lemkeB, z);
-    err_dist = 0.0;
-    Validation = dart::lcpsolver::YT::validate(lemkeA, (*z), lemkeB, err_dist);
-    Lemke_try--;
-    if (Validation) {
-      std::cout << "#Find a solution after " << 30 - Lemke_try << " times try"
-                << std::endl;
-      break;
-    }
-  }
-  if (Lemke_try == 0) {
-    std::cout << "Recalling Lemke still cannot find a solution" << std::endl;
-  }
-#endif
-
-#ifdef SNOPT_SOLVE
-  // 2. Using snopt LCP to solve
+  // -------------------------------------------------------------------------
+  // Lemke failure remedy and sanity check
   if (!Validation) {
-    std::cout << "#Trying to use Snopt LCP to solve..." << std::endl;
-    SnoptWrapper mSnoptLCPSolver(lemkeA, lemkeB);
-    mSnoptLCPSolver.solveLCP((*z));
-    err_dist = 0.0;
-    Validation = dart::lcpsolver::YT::validate(lemkeA, (*z), lemkeB, err_dist);
-    if (Validation) {
-      std::cout << "Using Snopt LCP find a solution!" << std::endl;
-
-      // print(lemkeA, lemkeB, (*z), Validation, err);
-      // std::cin.get();
-    } else {
-      std::cout << "Snopt fails to find a solution either!" << std::endl;
-    }
-    // mWindow->keyboard('y', 0, 0);
+    recallLemke(Validation, lemkeA, lemkeB, z);
   }
-#endif
 
-#ifdef BRUTE_SOLVE
-  // 3. Using brute force to solve
   if (!Validation) {
-    std::cout << "#Trying to use brute force to solve..." << std::endl;
-    int dim_var = lemkeB.size();
-    Eigen::VectorXd z_pattern(dim_var);
-    z_pattern.setZero();
-    std::vector<Eigen::VectorXd> ret_list;
-    DFS(z_pattern, 0, lemkeA, lemkeB, ret_list);
-    if (!ret_list.empty()) {
-      std::cout << "Using brute force find a solution!" << std::endl;
-      Validation = true;
-    } else {
-      std::cout << "Brute force fails to find a solution" << std::endl;
-    }
-    (*z) = ret_list[0];
-    std::cout << "Solution is " << (*z).transpose() << std::endl;
-    print(lemkeA, lemkeB, (*z), Validation, err);
-    mWindow->keyboard('y', 0, 0);
+    useSnoptLCPSolver(Validation, lemkeA, lemkeB, z);
   }
-#endif
+
+  if (!Validation) {
+    bruteForce(Validation, lemkeA, lemkeB, z);
+  }
 
   // If fail anyway, set z as 0 to make it free from breaking
   if (!Validation) {
-    numLemkeFail++;
+    numLCPFail++;
     print(lemkeA, lemkeB, (*z), Validation, err);
     z->setZero();
     // std::cin.get();
   }
-  // -------------------------------------------------------------------------
 
+  sanityCheck(lemkeA, lemkeB, (*z));
+
+  // -------------------------------------------------------------------------
   print(lemkeA, lemkeB, (*z), Validation, err);
 
-#ifdef IMPULSE_CHANGE
-  for (size_t i = 0; i < numConstraints; i++) {
-    ContactConstraint* cntctconstraint =
-        dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
-    std::cout << "BodyNode1 old constraint impulse "
-              << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
-              << std::endl;
-    std::cout << "BodyNode2 old constraint impulse "
-              << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
-              << std::endl;
+  if (Validation) {
+    //  ---------------------------------------
+    // justify the (*z)
+    assert(!(Eigen::isnan((*z).array()).any()));
+
+    MyContactConstraint* Mycntctconstraint;
+    
+    Eigen::VectorXd fn((*z).head(numConstraints));
+    Eigen::VectorXd fd((*z).segment(numConstraints, numConstraints * numBasis));
+    // Eigen::VectorXd lambda((*z).tail(numConstraints));
+
+    // Using Lemke to simulate
+    for (size_t mIdxCnstrnt = 0; mIdxCnstrnt < numConstraints; ++mIdxCnstrnt) {
+      double fn_each = fn(mIdxCnstrnt);
+      Eigen::VectorXd fd_each = fd.segment(mIdxCnstrnt * numBasis, numBasis);
+
+      Mycntctconstraint = dynamic_cast<MyContactConstraint*>(
+          _group->getConstraint(mIdxCnstrnt));
+      Mycntctconstraint->MyapplyImpulse(fn_each, fd_each, true);
+
+      Mycntctconstraint->excite();
+    }
+  } else {
+    dterr << "Lemke fails!!!" << std::endl;
+    // mWindow->keyboard('y', 0, 0);
+    // std::cin.get();
   }
-  std::cout << std::endl;
+
+#ifdef OUTPUT2FILE
+  // output to file after all necessary computation and valid Lemke results
+  if (Validation && (counters[numConstraints - 1] < dataSize)) {
+    recordLCPSolve(lemkeA, lemkeB, (*z));
+  }
+
+  // early stopping
+  bool earlyStopping = true;
+  for (int mIdxFile = 0; mIdxFile < numDesiredFiles; mIdxFile++) {
+    if (counters[mIdxFile] < dataSize) {
+      earlyStopping = false;
+      continue;
+    }
+  }
+
+  if (earlyStopping) {
+    exit(0);
+  }
 #endif
 
+  delete[] offset;
+  delete[] A;
+  delete[] x;
+  delete[] b;
+  delete[] w;
+  delete[] lo;
+  delete[] hi;
+  delete[] findex;
+}
+
+//==============================================================================
+void LemkeLCPSolver::recallLemke(bool& Validation,
+                                 const Eigen::MatrixXd& lemkeA,
+                                 const Eigen::VectorXd& lemkeB,
+                                 Eigen::VectorXd* z) {
+#ifdef RECALLSOLVE
+  // recalling Lemke to solve (sometimes effective due to randomness in
+  // Lemke implementation)
+  dtmsg << "# Trying to recall Lemke to solve..." << std::endl;
+  int Lemke_try = 30;
+  while (!Validation && Lemke_try > 0) {
+    int err = dart::lcpsolver::YT::Lemke(lemkeA, lemkeB, z);
+    Validation = dart::lcpsolver::YT::validate(lemkeA, (*z), lemkeB);
+    Lemke_try--;
+    if (Validation) {
+      dtmsg << "$ Finding a solution after " << 30 - Lemke_try
+            << " times retry..." << std::endl;
+      break;
+    }
+  }
+  if (Lemke_try == 0) {
+    dtmsg << "@ Recalling Lemke still cannot find a solution..." << std::endl;
+  }
+#endif
+}
+
+//==============================================================================
+void LemkeLCPSolver::useSnoptLCPSolver(bool& Validation,
+                                       const Eigen::MatrixXd& lemkeA,
+                                       const Eigen::VectorXd& lemkeB,
+                                       Eigen::VectorXd* z) {
+#ifdef SNOPTSOLVE
+  // Using snopt LCP to solve
+  dtmsg << "# Trying to use Snopt LCP solver to solve..." << std::endl;
+  SnoptWrapper mSnoptLCPSolver(lemkeA, lemkeB);
+  mSnoptLCPSolver.solveLCP((*z));
+  Validation = dart::lcpsolver::YT::validate(lemkeA, (*z), lemkeB);
+  if (Validation) {
+    dtmsg << "$ Finding a solution via Snopt LCP solver..." << std::endl;
+    // print(lemkeA, lemkeB, (*z), Validation, err);
+    // std::cin.get();
+  } else {
+    dtmsg << "@ Snopt stil fails to find a solution either!" << std::endl;
+  }
+#endif
+}
+
+//==============================================================================
+void LemkeLCPSolver::bruteForce(bool& Validation, const Eigen::MatrixXd& lemkeA,
+                                const Eigen::VectorXd& lemkeB,
+                                Eigen::VectorXd* z) {
+#ifdef BRUTESOLVE
+  // Using brute force to solve
+  dtmsg << "# Trying to use brute force to solve..." << std::endl;
+  int dim_var = lemkeB.size();
+  Eigen::VectorXd z_pattern(dim_var);
+  z_pattern.setZero();
+  std::vector<Eigen::VectorXd> ret_list;
+  DFS(z_pattern, 0, lemkeA, lemkeB, ret_list);
+  if (!ret_list.empty()) {
+    dtmsg << "$ Finding a solution via brute force..." << std::endl;
+    Validation = true;
+    (*z) = ret_list[0];
+    // std::cout << "Solution is " << (*z).transpose() << std::endl;
+    // print(lemkeA, lemkeB, (*z), Validation, err);
+  } else {
+    dtmsg << "@ Brute force still fails to find a solution..." << std::endl;
+  }
+#endif
+}
+
+//==============================================================================
+void LemkeLCPSolver::sanityCheck(const Eigen::MatrixXd& lemkeA,
+                                 const Eigen::VectorXd& lemkeB,
+                                 const Eigen::VectorXd& z) {
 #ifdef SANITY_CHECK
-  // -------------------------------------------------------------------------
   double SanityCheckZero = 1e-6;
-  std::vector<Eigen::VectorXd> z_groups;
-  decompose((*z), z_groups);
-  for (int i = 0; i < numConstraints; i++) {
+
+  std::vector<Eigen::VectorXd> zGroups;
+  decompose(z, zGroups);
+
+  for (int i = 0; i < numContactsCallBack; i++) {
+    Eigen::VectorXd eachZ = zGroups[i];
+    // -------------------------------------------------------------------------
     // Corner case where fn==0, fd>0 and lambda>0
-    if (z_groups[i][0] > -SanityCheckZero && z_groups[i][0] < SanityCheckZero &&
-        z_groups[i].segment(1, numBasis).array().maxCoeff() > SanityCheckZero &&
-        z_groups[i][numBasis + 1] > SanityCheckZero) {
-      std::cerr << "ERROR: fn==0, fd>0 and lambda>0" << std::endl;
-      std::cerr << "Lemke A is " << std::endl;
-      std::cerr << lemkeA << std::endl;
-      std::cerr << "Lemke b is ";
-      std::cerr << lemkeB.transpose() << std::endl;
-      std::cerr << "[z]" << (*z).transpose() << std::endl;
-      std::cerr << "[w]" << (lemkeA * (*z) + lemkeB).transpose() << std::endl;
-      std::cerr << "[z].*[w]"
-                << ((*z).array() * (lemkeA * (*z) + lemkeB).array()).transpose()
-                << std::endl;
-      std::cerr << z_groups[i] << std::endl;
-      std::cin.get();
+    if (std::abs(eachZ[0] < SanityCheckZero) &&
+        eachZ.segment(1, numBasis).array().maxCoeff() > SanityCheckZero &&
+        eachZ[numBasis + 1] > SanityCheckZero) {
+      dterr << std::endl 
+            << "ERROR: fn==0, fd>0 and lambda>0" << std::endl
+            << "Lemke A is " << std::endl
+            << lemkeA << std::endl
+            << "Lemke b is " << lemkeB.transpose() << std::endl
+            << "[z]" << z.transpose() << std::endl
+            << "[w]" << (lemkeA * z + lemkeB).transpose() << std::endl
+            << "[z].*[w]"
+            << (z.array() * (lemkeA * z + lemkeB).array()).transpose()
+            << std::endl
+            << "Error z: " << eachZ << std::endl;
+      // std::cin.get();
     }
+    // -------------------------------------------------------------------------
     // Corner case where fn==0, fd>0 and lambda=0
-    if (z_groups[i][0] > -SanityCheckZero && z_groups[i][0] < SanityCheckZero &&
-        z_groups[i].segment(1, numBasis).array().maxCoeff() > SanityCheckZero &&
-        z_groups[i][numBasis + 1] > -SanityCheckZero &&
-        z_groups[i][9] < SanityCheckZero) {
-      std::cerr << "ERROR: fn==0, fd>0 and lambda==0" << std::endl;
-      std::cerr << "Lemke A is " << std::endl;
-      std::cerr << lemkeA << std::endl;
-      std::cerr << "Lemke b is ";
-      std::cerr << lemkeB.transpose() << std::endl;
-      std::cerr << "[z]" << (*z).transpose() << std::endl;
-      std::cerr << "[w]" << (lemkeA * (*z) + lemkeB).transpose() << std::endl;
-      std::cerr << "[z].*[w]"
-                << ((*z).array() * (lemkeA * (*z) + lemkeB).array()).transpose()
-                << std::endl;
-      std::cerr << z_groups[i] << std::endl;
-      std::cin.get();
+    if (std::abs(eachZ[0] < SanityCheckZero) &&
+        eachZ.segment(1, numBasis).array().maxCoeff() > SanityCheckZero &&
+        std::abs(eachZ[numBasis+1] < SanityCheckZero)) {
+      dterr << std::endl 
+            << "ERROR: fn==0, fd>0 and lambda==0" << std::endl
+            << "Lemke A is " << std::endl
+            << lemkeA << std::endl
+            << "Lemke b is " << lemkeB.transpose() << std::endl
+            << "[z]" << z.transpose() << std::endl
+            << "[w]" << (lemkeA * z + lemkeB).transpose() << std::endl
+            << "[z].*[w]"
+            << (z.array() * (lemkeA * z + lemkeB).array()).transpose()
+            << std::endl
+            << "Error z: " << eachZ << std::endl;
+      // std::cin.get();
     }
+    // -------------------------------------------------------------------------
     // Corner case where fn>0, fd=0 and lambda>0
-    if (z_groups[i][0] > SanityCheckZero &&
-        (z_groups[i].segment(1, numBasis).array() > -SanityCheckZero &&
-         z_groups[i].segment(1, numBasis).array() < SanityCheckZero)
+    if (eachZ[0] > SanityCheckZero &&
+        (eachZ.segment(1, numBasis).array() > -SanityCheckZero &&
+         eachZ.segment(1, numBasis).array() < SanityCheckZero)
             .all() &&
-        z_groups[i][numBasis + 1] > SanityCheckZero) {
-      std::cerr << "ERROR: fn>0, fd==0 and lambda>0" << std::endl;
-      std::cerr << "Lemke A is " << std::endl;
-      std::cerr << lemkeA << std::endl;
-      std::cerr << "Lemke b is ";
-      std::cerr << lemkeB.transpose() << std::endl;
-      std::cerr << "[z]" << (*z).transpose() << std::endl;
-      std::cerr << "[w]" << (lemkeA * (*z) + lemkeB).transpose() << std::endl;
-      std::cerr << "[z].*[w]"
-                << ((*z).array() * (lemkeA * (*z) + lemkeB).array()).transpose()
-                << std::endl;
-      std::cerr << z_groups[i] << std::endl;
-      std::cin.get();
+        eachZ[numBasis + 1] > SanityCheckZero) {
+      dterr << std::endl 
+            << "ERROR: fn>0, fd==0 and lambda>0" << std::endl
+            << "Lemke A is " << std::endl
+            << lemkeA << std::endl
+            << "Lemke b is "
+            << lemkeB.transpose() << std::endl
+            << "[z]" << z.transpose() << std::endl
+            << "[w]" << (lemkeA * z + lemkeB).transpose() << std::endl
+            << "[z].*[w]"
+            << (z.array() * (lemkeA * z + lemkeB).array()).transpose()
+            << std::endl
+            << "Error z: " << eachZ << std::endl;
+      // std::cin.get();
     }
+    // -------------------------------------------------------------------------
     // Count how many non-zero does fd have
-    double fd_nz = 0;
-    fd_nz = (z_groups[i].segment(1, numBasis).array() > SanityCheckZero)
+    double fdNz = 0;
+    fdNz = (eachZ.segment(1, numBasis).array() > SanityCheckZero)
                 .matrix()
                 .cast<double>()
                 .sum();
-    std::cout << i << "th contact has " << fd_nz << " nonzero in fd. ";
-    if (z_groups[i](1 + numBasis) > SanityCheckZero) {
+    dtmsg << i << "th contact has " << fdNz << " nonzero in fd. ";
+    if (eachZ(1 + numBasis) > SanityCheckZero) {
       std::cout << "lambda"
                 << " > 0 " << std::endl;
     } else {
@@ -390,93 +463,6 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
     }
   }
 #endif
-
-  if (Validation) {
-    //  ---------------------------------------
-    // justify the (*z)
-    // assert(!(Eigen::isnan((*z).array()).any()));
-
-    MyContactConstraint* Mycntctconstraint;
-    // (*z); N; B
-    Eigen::VectorXd fn((*z).head(numConstraints));
-    Eigen::VectorXd fd((*z).segment(numConstraints, numConstraints * numBasis));
-    // Eigen::VectorXd lambda((*z).tail(numConstraints));
-
-    // Using Lemke to simulate
-    for (size_t idx_cnstrnt = 0; idx_cnstrnt < numConstraints; ++idx_cnstrnt) {
-      double fn_each = fn(idx_cnstrnt);
-      Eigen::VectorXd fd_each = fd.segment(idx_cnstrnt * numBasis, numBasis);
-
-      Mycntctconstraint = dynamic_cast<MyContactConstraint*>(
-          _group->getConstraint(idx_cnstrnt));
-      Mycntctconstraint->MyapplyImpulse(fn_each, fd_each, true);
-
-      Mycntctconstraint->excite();
-    }
-  } else {
-    std::cout << "Lemke fails!!!" << std::endl;
-    // mWindow->keyboard('y', 0, 0);
-    // std::cin.get();
-  }
-
-// std::cout << std::endl;
-
-/*
- *     for (size_t i = 0; i < numConstraints; i++) {
- *       ContactConstraint* cntctconstraint =
- *           dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
- *       std::cout << "BodyNode1 new constraint impulse "
- *                 <<
- * cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
- *                 << std::endl;
- *       std::cout << "BodyNode2 new constraint impulse "
- *                 <<
- * cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
- *                 << std::endl;
- *     }
- *
- */
-
-#ifdef IMPULSE_CHANGE
-  for (size_t i = 0; i < numConstraints; i++) {
-    ContactConstraint* cntctconstraint =
-        dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
-    std::cout << "BodyNode1 new constraint impulse "
-              << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
-              << std::endl;
-    std::cout << "BodyNode2 new constraint impulse "
-              << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
-              << std::endl;
-  }
-#endif
-
-#ifdef OUTPUT2FILE
-  // output to file after all necessary computation and valid Lemke results
-  if (Validation && (counters[numConstraints - 1] < dataSize)) {
-    recordLCPSolve(lemkeA, (*z), lemkeB);
-  }
-  // early stopping
-  bool early_stopping = true;
-  for (int mDCT_idx = 0; mDCT_idx < numDesiredFiles; mDCT_idx++) {
-    if (counters[mDCT_idx] < dataSize) {
-      early_stopping = false;
-      continue;
-    }
-  }
-  if (early_stopping) {
-    exit(0);
-  }
-#endif
-
-  delete[] offset;
-
-  delete[] A;
-  delete[] x;
-  delete[] b;
-  delete[] w;
-  delete[] lo;
-  delete[] hi;
-  delete[] findex;
 }
 
 //==============================================================================
@@ -587,36 +573,14 @@ void LemkeLCPSolver::solveODE(ConstrainedGroup* _group) {
   print(n, oldA, x, lo, hi, oldB, w, findex);
   std::cout << std::endl;
 
-  for (size_t i = 0; i < numConstraints; i++) {
-    ContactConstraint* cntctconstraint =
-        dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
-    std::cout << "BodyNode1 old constraint impulse "
-              << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
-              << std::endl;
-    std::cout << "BodyNode2 old constraint impulse "
-              << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
-              << std::endl;
-  }
-
   // Apply constraint impulses
   for (size_t i = 0; i < numConstraints; ++i) {
     constraint = _group->getConstraint(i);
     constraint->applyImpulse(x + offset[i]);
     constraint->excite();
   }
-  for (size_t i = 0; i < numConstraints; i++) {
-    ContactConstraint* cntctconstraint =
-        dynamic_cast<ContactConstraint*>(_group->getConstraint(i));
-    std::cout << "BodyNode1 new constraint impulse "
-              << cntctconstraint->mBodyNode1->mConstraintImpulse.transpose()
-              << std::endl;
-    std::cout << "BodyNode2 new constraint impulse "
-              << cntctconstraint->mBodyNode2->mConstraintImpulse.transpose()
-              << std::endl;
-  }
 
   delete[] offset;
-
   delete[] A;
   delete[] x;
   delete[] b;
@@ -627,8 +591,9 @@ void LemkeLCPSolver::solveODE(ConstrainedGroup* _group) {
 }
 
 //==============================================================================
-void LemkeLCPSolver::permuteNegateAugumentB(double* b, Eigen::VectorXd& lemkeB,
+void LemkeLCPSolver::permuteNegateAugumentB(double* b, 
                                             const Eigen::VectorXd& preLemkeB,
+                                            Eigen::VectorXd& lemkeB,
                                             Eigen::MatrixXd& T) {
   size_t mDim = 1 + numBasis;
   // Obtain transformation matrix
@@ -782,7 +747,8 @@ void LemkeLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
 
 //==============================================================================
 void LemkeLCPSolver::print(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
-                           const Eigen::VectorXd& z, bool Validation, int err) {
+                           const Eigen::VectorXd& z, const bool Validation, 
+                           const int err) {
 #ifdef LEMKE_PRINT
   Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
 
@@ -795,6 +761,7 @@ void LemkeLCPSolver::print(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
   std::cout << "Vector b " << std::endl
             << b.transpose().format(CSVFmt) << std::endl
             << std::endl;
+
   std::cout << "Vector z " << std::endl
             << z.transpose().head(numContactsCallBack) << std::endl;
   for (int i = 0; i < numContactsCallBack; i++) {
@@ -833,8 +800,6 @@ void LemkeLCPSolver::print(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
   std::cout << std::endl
             << "```````````````````````````````````````````````" << std::endl;
   std::cout << std::endl;
-
-// std::cin.get();
 #endif
 }
 
@@ -932,30 +897,31 @@ void LemkeLCPSolver::scale(Eigen::MatrixXd& A) {
 
 //==============================================================================
 void LemkeLCPSolver::decompose(const Eigen::VectorXd& z,
-                               std::vector<Eigen::VectorXd>& z_groups) {
+                               std::vector<Eigen::VectorXd>& zGroups) {
   int numContactsToLearn = z.rows() / (numBasis + 2);
+  assert(numContactsToLearn == numContactsCallBack);
   // decompose z
-  Eigen::VectorXd z_fn(numContactsToLearn);
-  z_fn = z.head(numContactsToLearn);
-  Eigen::VectorXd z_fd(numContactsToLearn * numBasis);
-  z_fd = z.segment(numContactsToLearn, numContactsToLearn * numBasis);
-  Eigen::VectorXd z_lambda(numContactsToLearn);
-  z_lambda = z.tail(numContactsToLearn);
+  Eigen::VectorXd zFn(numContactsToLearn);
+  zFn = z.head(numContactsToLearn);
+  Eigen::VectorXd zFd(numContactsToLearn * numBasis);
+  zFd = z.segment(numContactsToLearn, numContactsToLearn * numBasis);
+  Eigen::VectorXd zLambda(numContactsToLearn);
+  zLambda = z.tail(numContactsToLearn);
 
-  z_groups.clear();
+  zGroups.clear();
   for (int i = 0; i < numContactsToLearn; i++) {
-    Eigen::VectorXd each_z;
-    each_z.resize(numBasis + 2);
-    each_z << z_fn(i), z_fd.segment(i * numBasis, numBasis), z_lambda(i);
-    z_groups.push_back(each_z);
+    Eigen::VectorXd eachZ;
+    eachZ.resize(numBasis + 2);
+    eachZ << zFn(i), zFd.segment(i * numBasis, numBasis), zLambda(i);
+    zGroups.push_back(eachZ);
   }
 }
 
 //==============================================================================
 
-void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
-                                    const Eigen::VectorXd z,
-                                    const Eigen::VectorXd b) {
+void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A, 
+                      const Eigen::VectorXd& b,
+                      const Eigen::VectorXd& z) {
 #ifdef OUTPUT2FILE
   int nSize = b.rows();
   int numContactsToLearn = nSize / (numBasis + 2);
@@ -964,34 +930,27 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
   std::shared_ptr<std::fstream> outputFile =
       outputFiles[numContactsToLearn - 1];
 
-  // decompose z
-  Eigen::VectorXd z_fn(numContactsToLearn);
-  z_fn = z.head(numContactsToLearn);
-  Eigen::VectorXd z_fd(numContactsToLearn * numBasis);
-  z_fd = z.segment(numContactsToLearn, numContactsToLearn * numBasis);
-  Eigen::VectorXd z_lambda(numContactsToLearn);
-  z_lambda = z.tail(numContactsToLearn);
+  std::vector<Eigen::VectorXd> zGroups;
+  decompose(z, zGroups);
 
-  double RECORD_ZERO = 1e-12;
-  std::vector<Eigen::VectorXd> each_z(numContactsToLearn);
+  double RECORD_ZERO = 1e-12; 
   Eigen::VectorXi value_array(numContactsToLearn);
   bool nonZerofdException = false;
   for (int i = 0; i < numContactsToLearn; i++) {
-    each_z[i].resize(numBasis + 2);
-    each_z[i] << z_fn(i), z_fd.segment(i * numBasis, numBasis), z_lambda(i);
+    Eigen::VectorXd eachZ = zGroups[i];
 
     int value = 9;
     // Convention: numbasis = 8, so total 10 elements
-    if (each_z[i](0) < RECORD_ZERO)  // fn = 0, break
+    if (eachZ(0) < RECORD_ZERO)  // fn = 0, break
     {
       value = 9;
-    } else if (each_z[i](numBasis + 1) < RECORD_ZERO) {  // lambda = 0, static
+    } else if (eachZ(numBasis + 1) < RECORD_ZERO) {  // lambda = 0, static
       value = 8;
     } else {  // random choose non-zero in fd
       std::vector<int> nonZerofd;
       nonZerofd.clear();
       for (int j = 0; j < numBasis; j++) {
-        if (each_z[i](j + 1) > RECORD_ZERO) {
+        if (eachZ(j + 1) > RECORD_ZERO) {
           nonZerofd.push_back(j);
         }
       }
@@ -1000,60 +959,9 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
       if (nonZerofd.size() > 0) {
         value = nonZerofd[std::rand() % nonZerofd.size()];
       } else {
-        Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols,
-                               ",\t");
-        std::cout << "Exceptoin: catch a exception because of 0 non-zero in fd "
+        dterr << "ERROR: catch a exception because of 0 non-zero in fd "
                      "while fn>0, lambda>0"
                   << std::endl;
-        /*
-         *  std::cout << "Matrix A" << std::endl << A.format(CSVFmt) <<
-         * std::endl;
-         *  std::cout << "Vector b" << std::endl << b.transpose().format(CSVFmt)
-         * << std::endl;
-         *
-         *  double err_dist = 0.0;
-         *  bool Validation =
-         *      dart::lcpsolver::YT::validate(A, z, b, err_dist);
-         *
-         *  std::cout << "Vector z " << std::endl
-         *            << z.transpose().head(numContactsCallBack) << std::endl;
-         *  for (int i = 0; i < numContactsCallBack; i++) {
-         *    std::cout << z.transpose().segment(numContactsCallBack + i *
-         * numBasis,
-         *                                       numBasis)
-         *              << std::endl;
-         *  }
-         *  std::cout << z.transpose().tail(numContactsCallBack) << std::endl
-         *            << std::endl;
-         *
-         *  Eigen::VectorXd w = (A * z + b).eval();
-         *  std::cout << "Vector w " << std::endl
-         *            << w.transpose().head(numContactsCallBack) << std::endl;
-         *  for (int i = 0; i < numContactsCallBack; i++) {
-         *    std::cout << w.transpose().segment(numContactsCallBack + i *
-         * numBasis,
-         *                                       numBasis)
-         *              << std::endl;
-         *  }
-         *  std::cout << w.transpose().tail(numContactsCallBack) << std::endl
-         *            << std::endl;
-         *
-         *  Eigen::VectorXd wz = (z.array() * w.array()).eval();
-         *  std::cout << "[w].*[z]" << std::endl
-         *            << wz.transpose().head(numContactsCallBack) << std::endl;
-         *  for (int i = 0; i < numContactsCallBack; i++) {
-         *    std::cout << wz.transpose().segment(numContactsCallBack + i *
-         * numBasis,
-         *                                        numBasis)
-         *              << std::endl;
-         *  }
-         *  std::cout << wz.transpose().tail(numContactsCallBack) << std::endl
-         *            << std::endl;
-         *
-         *  std::cout << "Validation: " << std::boolalpha << Validation <<
-         * std::endl;
-         */
-
         nonZerofdException = true;
         break;
       }
@@ -1067,8 +975,6 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd A,
 
   // if (value_array.minCoeff() >= 8) {
   if (true) {
-    //  output A, z, and b
-    //  // since all friction coeffs are the same, no need to output them
     for (int i = 0; i < nSize - numContactsToLearn; i++) {
       for (int j = i; j < nSize - numContactsToLearn; j++) {
         (*outputFile) << A(i, j) << ",";

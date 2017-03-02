@@ -333,9 +333,8 @@ double minb[] = {
     
     int err = dart::lcpsolver::YT::Lemke(A, b, z);
 
-    double err_dist = 0.0;
     bool Validation =
-        dart::lcpsolver::YT::validate(A, (*z), b, err_dist);
+        dart::lcpsolver::YT::validate(A, (*z), b);
 
     if (Validation) {
       recordLCPSolve(A,(*z),b,outputFile);

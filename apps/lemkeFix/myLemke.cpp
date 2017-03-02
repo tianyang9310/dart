@@ -367,43 +367,16 @@ int n = _z.size();
 
 Eigen::VectorXd w = _M * _z + _q;
 for (int i = 0; i < n; ++i) {
-    if (w(i) < -threshold || _z(i) < -threshold)
+    if (w(i) < -threshold || _z(i) < -threshold) {
         return false;
-    if (std::abs(w(i) * _z(i)) > threshold)
-        return false;
-}
-return true;
-}
-
-bool validate(const Eigen::MatrixXd &_M, const Eigen::VectorXd &_z,
-          const Eigen::VectorXd &_q, double & err_dist) {
-const double threshold = 1e-6;
-int n = _z.size();
-err_dist = 0.0;
-
-Eigen::VectorXd w = _M * _z + _q;
-for (int i = 0; i < n; ++i) {
-    if (w(i) < 0) {
-      err_dist += -w(i);
     }
-    if (w(i) < -threshold) {
-        return false;
-    } 
-    if (_z(i) < 0) {
-      err_dist += -_z(i);
-    }
-    if (_z(i) < -threshold) {
+    if (std::abs(w(i) * _z(i)) > threshold) {
         return false;
     }
     if (std::isnan(_z(i))) {
       return false;
     }
-    err_dist += std::abs(w(i)*_z(i));
-    if (std::abs(w(i) * _z(i)) > threshold) {
-        return false;
-    }
 }
-
 return true;
 }
 

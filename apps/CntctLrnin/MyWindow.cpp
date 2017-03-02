@@ -76,7 +76,7 @@ void MyWindow::timeStepping() {
                          ->getTransform()
                          .translation()(2)) > range))  // z direction
     {
-      //    std::cerr << "ERROR: runnng out of range, need regularization!!!" <<
+      //    dterr << "ERROR: runnng out of range, need regularization!!!" <<
       // std::endl;
 
       // int dir = (mWorld->getSimFrames()/800)%8;
@@ -109,7 +109,7 @@ void MyWindow::timeStepping() {
     std::cout << "Lemke fail ratio: "
               << dynamic_cast<LemkeLCPSolver*>(
                      mWorld->getConstraintSolver()->getLCPSolver())
-                         ->getLemkeFail() /
+                         ->getLCPFail() /
                      double(episodeLength)
               << std::endl;
 #endif
@@ -138,7 +138,7 @@ void MyWindow::addExtForce() {
     // extForce = Eigen::Vector3d::Random() * 5;
     //   randFCounter = 50;
     // }
-    // std::cerr << "Add external force: " << extForce.transpose() << std::endl;
+    // dterr << "Add external force: " << extForce.transpose() << std::endl;
 
     // Apply force to COM
     mWorld->getSkeleton("mBox")

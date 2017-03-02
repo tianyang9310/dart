@@ -4,7 +4,7 @@
 #include "addSkeles.h"
 
 /// Which solver to use default is ODE
-// #define LEMKE_SOLVER
+#define LEMKE_SOLVER
 
 /// Number of basis
 #define NUMBASIS 8

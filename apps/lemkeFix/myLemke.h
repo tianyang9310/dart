@@ -52,9 +52,6 @@ int Lemke(const Eigen::MatrixXd& _M, const Eigen::VectorXd& _q,
 bool validate(const Eigen::MatrixXd& _M, const Eigen::VectorXd& _z,
               const Eigen::VectorXd& _q);
 
-bool validate(const Eigen::MatrixXd& _M, const Eigen::VectorXd& _z,
-              const Eigen::VectorXd& _q, double &err_dist);
-
 }  // YT
 }  // namespace lcpsolver
 }  // namespace dart
