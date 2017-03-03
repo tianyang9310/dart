@@ -10,7 +10,6 @@
 #ifdef HAVE_BULLET_COLLISION
 #include "dart/collision/bullet/BulletCollisionDetector.h"
 #endif
-#include "MyWindow.h"
 #include "dart/constraint/ConstrainedGroup.h"
 #include "dart/constraint/ContactConstraint.h"
 #include "dart/constraint/JointCoulombFrictionConstraint.h"

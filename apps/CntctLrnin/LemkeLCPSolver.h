@@ -10,6 +10,7 @@
 #include "DepthFirstSearchLCP.h"
 #include "MyContactConstraint.h"
 #include "MyWindow.h"
+#include "parameter.h"
 #include "SnoptWrapper.h"
 #include "dart/dart.h"
 #include "utils.h"

@@ -74,7 +74,6 @@ void LemkeLCPSolver::solve(ConstrainedGroup* _group) {
 
 //==============================================================================
 void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
-  dtmsg << std::setprecision(mPrecision);
   std::cout << std::setprecision(mPrecision);
   // If there is no constraint, then just return true.
   size_t numConstraints = _group->getNumConstraints();
@@ -270,8 +269,8 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
 
     MyContactConstraint* Mycntctconstraint;
     
-    Eigen::VectorXd fn(numConstraints) = (*z).head(numConstraints);
-    Eigen::VectorXd fd(numConstraints * numBasis) = (*z).segment(numConstraints, numConstraints * numBasis);
+    Eigen::VectorXd fn((*z).head(numConstraints));
+    Eigen::VectorXd fd((*z).segment(numConstraints, numConstraints * numBasis));
     // Eigen::VectorXd lambda((*z).tail(numConstraints));
 
     // Using Lemke to simulate
@@ -376,11 +375,11 @@ void LemkeLCPSolver::bruteForce(bool& Validation, const Eigen::MatrixXd& lemkeA,
   // Using brute force to solve
   dtmsg << "# Trying to use brute force to solve..." << std::endl;
   int dim_var = lemkeB.size();
-  Eigen::VectorXd z_pattern(dim_var);
-  z_pattern.setZero();
+  Eigen::VectorXd zPattern(dim_var);
+  zPattern.setZero();
   std::vector<Eigen::VectorXd> ret_list;
   ret_list.clear();
-  DFS(z_pattern, 0, lemkeA, lemkeB, ret_list);
+  DFS(zPattern, 0, lemkeA, lemkeB, ret_list);
   if (!ret_list.empty()) {
     dtmsg << "$ Finding a solution via brute force..." << std::endl;
     Validation = true;

@@ -129,9 +129,7 @@ MyContactConstraint::MyContactConstraint(collision::Contact& _contact,
       std::cout << "bodyPoint1: " << bodyPoint1.transpose() << std::endl;
       std::cout << "bodeDirection1: " << bodyDirection1.transpose()
                 << std::endl;
-      std::cout << "D: " << std::endl << D << std::endl;
-      std::cout << "get inverse transform" << std::endl
-                << mBodyNode1->getTransform().matrix() << std::endl;
+      // std::cout << "D: " << std::endl << D << std::endl;
 #endif
 
       mJacobians1[idx].head<3>() = bodyPoint1.cross(bodyDirection1);
@@ -270,7 +268,7 @@ void MyContactConstraint::getInformation(ConstraintInfo* _info) {
     size_t index = 0;
     for (size_t i = 0; i < mContacts.size(); ++i) {
       // Bias term, w, should be zero
-      for (size_t mIdxOffset = 0; mIdxOffset < mDim; mIdxOffset++) {
+      for (size_t mIdxOffset = 0; mIdxOffset < 1 + numBasis; mIdxOffset++) {
         assert(_info->w[index + mIdxOffset] == 0.0);
 
         // Initialization lower and upper bounds
@@ -349,6 +347,7 @@ void MyContactConstraint::getInformation(ConstraintInfo* _info) {
       //
       //      _lcp->b[_idx] = _lcp->b[_idx] * 1.1;
       //      std::cout << "_lcp->b[_idx]: " << _lcp->b[_idx] << std::endl;
+      /// No ODE such a hack of adding bouncing velocity
       // _info->b[index] += bouncingVelocity;
       //      std::cout << "_lcp->b[_idx]: " << _lcp->b[_idx] << std::endl;
 
@@ -424,14 +423,6 @@ void MyContactConstraint::getInformation(ConstraintInfo* _info) {
 //==============================================================================
 void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
                                          bool impulse_flag) {
-#ifdef OUTPUT
-  std::cout << std::endl << "------------------------------------" << std::endl;
-  std::cout << "[" << NUMBASIS << " Basis LCP] Using MyContactConstraint class"
-            << std::endl;
-  std::cout << "[" << NUMBASIS << " Basis LCP] fn: " << fn << std::endl;
-  std::cout << "[" << NUMBASIS << " Basis LCP] fd: " << fd.transpose()
-            << std::endl;
-#endif
   //----------------------------------------------------------------------------
   // Friction case
   //----------------------------------------------------------------------------
@@ -456,13 +447,6 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
       mContacts[i]->force =
           mContacts[i]->normal * fn / (impulse_flag ? mTimeStep : 1);
 
-#ifdef OUTPUT
-      std::cout << "[" << NUMBASIS << " Basis LCP] normal impulsive: "
-                << (mJacobians1[index] * fn).transpose() << std::endl;
-      std::cout << "[" << NUMBASIS << " Basis LCP] Jacobian" << index << " : "
-                << mJacobians1[index].transpose() << std::endl;
-#endif
-
       // Normal impulsive force
       //      mContacts[i]->lambda[0] = _lambda[_idx];
       if (mBodyNode1->isReactive())
@@ -471,6 +455,8 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
         mBodyNode2->addConstraintImpulse(mJacobians2[index] * fn);
       //      std::cout << "_lambda: " << _lambda[_idx] << std::endl;
       index++;
+
+      assert(!(Eigen::isnan(fd.array()).any()));
 
       Eigen::MatrixXd D;
       if (numBasis != 2) {
@@ -483,7 +469,6 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
 
       for (; index < (i + 1) * (numBasis + 1); index++) {
         int mFrctnBsIdx = index % (1 + numBasis) - 1;
-        assert(!math::isNan(fd(mFrctnBsIdx)));
         mContacts[i]->force += D.col(mFrctnBsIdx) * fd(mFrctnBsIdx) /
                                (impulse_flag ? mTimeStep : 1);
 
@@ -493,22 +478,7 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
         if (mBodyNode2->isReactive())
           mBodyNode2->addConstraintImpulse(mJacobians2[index] *
                                            fd(mFrctnBsIdx));
-#ifdef OUTPUT
-        std::cout << "[" << NUMBASIS << " Basis LCP] Jacobian" << index << " : "
-                  << mJacobians1[index].transpose() << std::endl;
-#endif
       }
-#ifdef OUTPUT
-      std::cout
-          << "[" << NUMBASIS << " Basis LCP] tangential directional: "
-          << (mBodyNode1->mConstraintImpulse - oldConstraintImp).transpose()
-          << std::endl;
-      std::cout << "[" << NUMBASIS << " Basis LCP] overall impulse: "
-                << (mBodyNode1->mConstraintImpulse - oldConstraintImp +
-                    mJacobians1[0] * fn)
-                       .transpose()
-                << std::endl;
-#endif
 
       /*
        *    assert(!math::isNan(_lambda[index]));
@@ -570,16 +540,6 @@ void MyContactConstraint::MyapplyImpulse(double fn, const Eigen::VectorXd& fd,
 
 //==============================================================================
 void MyContactConstraint::applyImpulse(double* _lambda) {
-#ifdef OUTPUT
-  std::cout << std::endl << "------------------------------------" << std::endl;
-  std::cout << "[" << NUMBASIS << " Basis LCP] Using MyContactConstraint class"
-            << std::endl;
-  std::cout << "[" << NUMBASIS << " Basis LCP] fn: " << _lambda[0] << std::endl;
-  std::cout << "[" << NUMBASIS << " Basis LCP] fd1: " << _lambda[1]
-            << std::endl;
-  std::cout << "[" << NUMBASIS << " Basis LCP] fd2: " << _lambda[2]
-            << std::endl;
-#endif
   //----------------------------------------------------------------------------
   // Friction case
   //----------------------------------------------------------------------------
@@ -603,13 +563,6 @@ void MyContactConstraint::applyImpulse(double* _lambda) {
       // Store contact impulse (force) toward the normal w.r.t. world frame
       mContacts[i]->force = mContacts[i]->normal * _lambda[index] / mTimeStep;
 
-#ifdef OUTPUT
-      std::cout << "[" << NUMBASIS << " Basis LCP] normal impulsive: "
-                << (mJacobians1[index] * _lambda[index]).transpose()
-                << std::endl;
-      std::cout << "[" << NUMBASIS << " Basis LCP] Jacobian" << index << " : "
-                << mJacobians1[index].transpose() << std::endl;
-#endif
 
       // Normal impulsive force
       //      mContacts[i]->lambda[0] = _lambda[_idx];
@@ -636,8 +589,6 @@ void MyContactConstraint::applyImpulse(double* _lambda) {
         mBodyNode2->addConstraintImpulse(mJacobians2[index] * _lambda[index]);
       //      std::cout << "_lambda: " << _lambda[_idx] << std::endl;
 
-      std::cout << "[" << NUMBASIS << " Basis LCP] Jacobian" << index << " : "
-                << mJacobians1[index].transpose() << std::endl;
 
       index++;
 
@@ -653,17 +604,8 @@ void MyContactConstraint::applyImpulse(double* _lambda) {
       if (mBodyNode2->isReactive())
         mBodyNode2->addConstraintImpulse(mJacobians2[index] * _lambda[index]);
       //      std::cout << "_lambda: " << _lambda[_idx] << std::endl;
-      std::cout << "[" << NUMBASIS << " Basis LCP] Jacobian" << index << " : "
-                << mJacobians1[index].transpose() << std::endl;
-
       index++;
 
-#ifdef OUTPUT
-      std::cout
-          << "[" << NUMBASIS << " Basis LCP] tangential directional: "
-          << (mBodyNode1->mConstraintImpulse - oldConstraintImp).transpose()
-          << std::endl;
-#endif
     }
   }
   //----------------------------------------------------------------------------

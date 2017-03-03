@@ -365,6 +365,10 @@ bool validate(const Eigen::MatrixXd &_M, const Eigen::VectorXd &_q,
 const double threshold = 1e-6;
 int n = _z.size();
 
+if (Eigen::isnan(_z.array()).any()) {
+    return false;
+}
+
 Eigen::VectorXd w = _M * _z + _q;
 for (int i = 0; i < n; ++i) {
     if (w(i) < -threshold || _z(i) < -threshold) {
@@ -372,9 +376,6 @@ for (int i = 0; i < n; ++i) {
     }
     if (std::abs(w(i) * _z(i)) > threshold) {
         return false;
-    }
-    if (std::isnan(_z(i))) {
-      return false;
     }
 }
 return true;

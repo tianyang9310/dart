@@ -1,7 +1,7 @@
 #ifndef MYCONTACTCONSTRAINT_H
 #define MYCONTACTCONSTRAINT_H
 
-#include "MyWindow.h"
+#include "parameter.h"
 #include "dart/constraint/ContactConstraint.h"
 #include "utils.h"
 
