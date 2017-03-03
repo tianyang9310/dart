@@ -49,8 +49,8 @@ int Lemke(const Eigen::MatrixXd& _M, const Eigen::VectorXd& _q,
           Eigen::VectorXd* _z);
 
 /// \brief
-bool validate(const Eigen::MatrixXd& _M, const Eigen::VectorXd& _z,
-              const Eigen::VectorXd& _q);
+bool validate(const Eigen::MatrixXd& _M, const Eigen::VectorXd& _q,
+              const Eigen::VectorXd& _z);
 
 }  // YT
 }  // namespace lcpsolver

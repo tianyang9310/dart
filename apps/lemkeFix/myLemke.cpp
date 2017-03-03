@@ -338,7 +338,7 @@ if (err == 0) {
     Eigen::VectorXd __z = _z->head(n);
     *_z = __z;
 
-    if (!validate(_M, *_z, _q)) {
+    if (!validate(_M, _q, *_z)) {
         // _z = VectorXd::Zero(n);
         std::cout << "Fails due to validation after iterations" << std::endl; 
         err = 3;
@@ -360,8 +360,8 @@ if (err == 0) {
 return err;
 }
 
-bool validate(const Eigen::MatrixXd &_M, const Eigen::VectorXd &_z,
-          const Eigen::VectorXd &_q) {
+bool validate(const Eigen::MatrixXd &_M, const Eigen::VectorXd &_q,
+          const Eigen::VectorXd &_z) {
 const double threshold = 1e-6;
 int n = _z.size();
 

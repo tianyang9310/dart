@@ -73,7 +73,7 @@ bool LCPLinEqu(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
   // w = A*z + b;
 
   // Validate z. If fail, return z=0 and false
-  bool Validation = dart::lcpsolver::YT::validate(A, z, b);
+  bool Validation = dart::lcpsolver::YT::validate(A, b, z);
   return Validation;
 }
 

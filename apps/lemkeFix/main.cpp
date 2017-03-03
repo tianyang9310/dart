@@ -37,6 +37,6 @@ int main(int argc, char* argv[])
     std::cout<<(*f).transpose()<<std::endl;
     std::cout<<"A*z+b: "<<std::endl;
     std::cout<<(testA*(*f)+testb).transpose()<<std::endl;
-    std::cout<<"LCP validation: "<<dart::lcpsolver::YT::validate(testA,(*f),testb)<<std::endl;
+    std::cout<<"LCP validation: "<<dart::lcpsolver::YT::validate(testA,testb,(*f))<<std::endl;
 
 }

@@ -51,7 +51,7 @@ void testSnoptLCP() {
 
   std::cout << "Vector z:" << std::endl << z.transpose() << std::endl;
   std::cout << "Validation: " << std::boolalpha 
-                              << dart::lcpsolver::YT::validate(A, z, b);
+                              << dart::lcpsolver::YT::validate(A, b, z);
 
   std::cin.get();
 }
@@ -73,7 +73,7 @@ void testDFSLCP() {
   z = ret_list[0];
   std::cout << "Vector z:" << std::endl << z.transpose() << std::endl;
   std::cout << "Validation: " << std::boolalpha 
-                              << dart::lcpsolver::YT::validate(A, z, b);
+                              << dart::lcpsolver::YT::validate(A, b, z);
   std::cin.get();
 }
 
