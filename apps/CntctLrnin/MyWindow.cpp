@@ -213,6 +213,7 @@ void MyWindow::keyboard(unsigned char _key, int _x, int _y) {
     case '9':
       break;
     case 'e':
+      movingCamera();
       break;
     default:
       dart::gui::SimWindow::keyboard(_key, _x, _y);
@@ -391,4 +392,13 @@ void MyWindow::displayTimer(int _val) {
  *   mWorld->getSkeleton(idx2string(idxmBox))->setVelocities(Eigen::VectorXd::Zero(6));
  * }
  */
+
+void MyWindow::movingCamera() {
+  dtmsg << "Update camear position..." << std::endl;
+  //  std::cout << mTrans.transpose() << std::endl;
+  mTrans = -mWorld->getSkeleton("mBox")->getPositions().segment(3, 3) * 1000;
+  //  mTrans[1] = 150.0f;
+  //  std::cout << mTrans.transpose() << std::endl;
+}
+
 }
