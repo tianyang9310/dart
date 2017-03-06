@@ -55,6 +55,7 @@ void MyWindow::timeStepping() {
   } else if (counter > mPeriod - mDutyCycle - 1) {
     addExtTorque();
   }
+  restart();
 #endif
 
 #ifdef UNIT_TEST
@@ -138,9 +139,9 @@ void MyWindow::drawSkels() {
   dart::gui::SimWindow::drawSkels();
 }
 
-/*
-void MyWindow::resetCubes() {
-    // regularization the positive of cube
+
+void MyWindow::restart() {
+    // restart if cubes are out of range
   double range = 500;
   for (int i = 0; i < NUMBODYNODES; i++) {
     if ((std::abs(mWorld->getSkeleton("mBox")
@@ -152,6 +153,20 @@ void MyWindow::resetCubes() {
                          ->getTransform()
                          .translation()(2)) > range))  // z direction
     {
+
+      // std::cout << "translation: " << mWorld->getSkeleton("mBox")->getBodyNode(idx2string(i))->getTransform().translation().transpose() << std::endl;
+      // std::cout << std::boolalpha;
+      // std::cout << "translation x: " <<(std::abs(mWorld->getSkeleton("mBox")
+      //                 ->getBodyNode(idx2string(i))
+      //                 ->getTransform()
+      //                 .translation()(0)) > range)<< std::endl;
+
+      // std::cout << "translation z: " <<(std::abs(mWorld->getSkeleton("mBox")
+      //                 ->getBodyNode(idx2string(i))
+      //                 ->getTransform()
+      //                 .translation()(2)) > range)<< std::endl;
+
+
       //    dterr << "ERROR: runnng out of range, need regularization!!!" <<
       // std::endl;
 
@@ -162,10 +177,11 @@ void MyWindow::resetCubes() {
           Eigen::VectorXd::Zero(totalDof));
       mWorld->getSkeleton("mBox")->setVelocities(
           Eigen::VectorXd::Zero(totalDof));
+
+      // std::cin.get();
     }
   }
 }
-*/
 
 /*
  * void MyWindow::resetCubeOrientation(int idxmBox, int dir) {

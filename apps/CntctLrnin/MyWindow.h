@@ -25,6 +25,7 @@ class MyWindow : public dart::gui::SimWindow {
   void addExtTorque();
   // void resetCubeOrientation(int idxmBox, int dir = 0);
 
+  void restart();
   void movingCamera();
   void setPlatform();
 
