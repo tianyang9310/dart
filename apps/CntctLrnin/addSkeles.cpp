@@ -5,9 +5,7 @@ namespace CntctLrnin {
 //==============================================================================
 void addSkel(WorldPtr world) {
 #ifdef UNIT_TEST
-#ifdef STRAIGHT_PUSH
   world->addSkeleton(addBox());
-#endif
 #endif
 
 #ifndef UNIT_TEST
@@ -137,7 +135,12 @@ SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& initPos_offset) {
 //==============================================================================
 SkeletonPtr addPlatform() {
   double mass = 10.0;
+#ifdef STATIC_SLOPE
+  Eigen::Vector3d lengthTuple(1.0, 0.01, 1.0);
+#else
   Eigen::Vector3d lengthTuple(10000.0, 0.01, 10000.0);
+#endif
+
 
   Eigen::Vector3d initPos(0.0, 0.05, 0.0);
   // Eigen::Quaterniond initOriQuat;  // arbitrary initial orientation

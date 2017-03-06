@@ -11,6 +11,7 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
 
   counter = 0;
   episodeLength = 6500;
+  setPlatform();
 
   extForce.setZero();
   extTorque.setZero();
@@ -195,4 +196,23 @@ void MyWindow::movingCamera() {
 #endif
 #endif
 }
+
+void MyWindow::setPlatform() {
+#ifdef UNIT_TEST
+#ifdef STATIC_SLOPE
+  double raw_angle = 45.0 / 180*DART_PI;
+
+  // tilt platform 
+  mWorld->getSkeleton("mPlatform")->getDof(0)->setPosition(raw_angle);
+
+  // tilt cube
+  mWorld->getSkeleton("mBox")->getDof(2)->setPosition(raw_angle);
+  mWorld->getSkeleton("mBox")->getDof(4)->setPosition(0.055/std::cos(raw_angle)-0.055);
+
+  // keyboard('y',0,0);
+  // std::cin.get();
+#endif
+#endif
+}
+
 }

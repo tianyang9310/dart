@@ -6,15 +6,14 @@
 /// Which solver to use default is ODE
 #define LEMKE_SOLVER
 
+//-----------------------------------------------------------------------------
 /// unit tests
 #define UNIT_TEST
 #ifdef UNIT_TEST  
 
-#define STRAIGHT_PUSH
+// #define STRAIGHT_PUSH
 
-// #define STATIC_SLOPE
-
-// #define DYNAMIC_SLOPE
+#define STATIC_SLOPE
 
 #define NUMBODYNODES 1
 
@@ -23,6 +22,8 @@
 #define NUMBODYNODES 6
 
 #endif
+
+//-----------------------------------------------------------------------------
 
 /// Number of basis
 #define NUMBASIS 8
