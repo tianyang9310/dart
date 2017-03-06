@@ -8,25 +8,25 @@
 
 //-----------------------------------------------------------------------------
 /// unit tests
-#define UNIT_TEST
+// #define UNIT_TEST
 #ifdef UNIT_TEST  
 
-// #define STRAIGHT_PUSH
+#define STRAIGHT_PUSH
 
-#define STATIC_SLOPE
+// #define STATIC_SLOPE
 
 #define NUMBODYNODES 1
 
 #else 
 
-#define NUMBODYNODES 6
+#define NUMBODYNODES 2
 
 #endif
 
 //-----------------------------------------------------------------------------
 
 /// Number of basis
-#define NUMBASIS 8
+#define NUMBASIS 4
 
 /// Print precision
 #define PRECISION 20

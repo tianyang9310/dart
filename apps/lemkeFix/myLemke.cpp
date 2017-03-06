@@ -377,6 +377,9 @@ for (int i = 0; i < n; ++i) {
     if (std::abs(w(i) * _z(i)) > threshold) {
         return false;
     }
+    if (std::isnan(_z(i))) {
+      return false;
+    }
 }
 return true;
 }

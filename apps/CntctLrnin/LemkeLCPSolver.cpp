@@ -940,7 +940,6 @@ void LemkeLCPSolver::decompose(const Eigen::VectorXd& z,
 }
 
 //==============================================================================
-
 void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A, 
                       const Eigen::VectorXd& b,
                       const Eigen::VectorXd& z) {
@@ -958,6 +957,7 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A,
   double RECORD_ZERO = 1e-12; 
   Eigen::VectorXi value_array(numContactsToLearn);
   bool nonZerofdException = false;
+
   for (int i = 0; i < numContactsToLearn; i++) {
     Eigen::VectorXd eachZ = zGroups[i];
 
@@ -969,6 +969,10 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A,
     } else if (eachZ(numBasis + 1) < RECORD_ZERO) {  // lambda = 0, static
       value = 8;
     } else {  // random choose non-zero in fd
+
+      // Hard-coding for numBasis = 4
+      assert(numBasis == 4);
+      // eachZ [1, numBasis]
       std::vector<int> nonZerofd;
       nonZerofd.clear();
       for (int j = 0; j < numBasis; j++) {
@@ -976,17 +980,26 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A,
           nonZerofd.push_back(j);
         }
       }
-      //      assert(nonZerofd.size() <= 2);
-      //      assert(nonZerofd.size() > 0);
-      if (nonZerofd.size() > 0) {
-        value = nonZerofd[std::rand() % nonZerofd.size()];
-      } else {
-        dterr << "ERROR: catch a exception because of 0 non-zero in fd "
-                     "while fn>0, lambda>0"
+
+      if (nonZerofd.size()==0 || nonZerofd.size()>2) {
+        dterr << "ERROR: the number of non-zeros in fd is wrong..."
                   << std::endl;
         nonZerofdException = true;
         break;
       }
+
+      if (nonZerofd.size() == 2) {
+        if (nonZerofd[0]==0 && nonZerofd[1]==3) {
+          nonZerofd[0] = 4;
+        }
+      }
+
+      int sum = 0;
+      for (int j = 0; j < nonZerofd.size(); j++) {
+        sum = sum + nonZerofd[j];
+      }
+
+      value = sum * 2 / nonZerofd.size();
     }
     value_array(i) = value;
   }
@@ -994,6 +1007,14 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A,
   if (nonZerofdException) {
     return;
   }
+
+  // std::cout << "Matrix A" << std::endl << A << std::endl;
+  // std::cout << "Vector b" << std::endl << b.transpose() << std::endl;
+  // std::cout << "Vector z" << std::endl << z.transpose() << std::endl;
+  // for (int i = 0; i < numContactsToLearn; i++) {
+  //   std::cout << "Value " << i << " :" << value_array(i) << std::endl;
+  // }
+
 
   // if (value_array.minCoeff() >= 8) {
   if (true) {
