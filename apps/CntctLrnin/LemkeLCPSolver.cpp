@@ -286,7 +286,6 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
     }
   } else {
     dterr << "Lemke fails!!!" << std::endl;
-    // mWindow->keyboard('y', 0, 0);
     // std::cin.get();
   }
 

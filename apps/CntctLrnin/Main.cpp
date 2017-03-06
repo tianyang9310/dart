@@ -105,6 +105,9 @@ int main(int argc, char* argv[]) {
   // Using LemkeLCPSolver
   mWorld->getConstraintSolver()->setLCPSolver(
       new LemkeLCPSolver(mWorld->getTimeStep(), mWindow));
+  if (NUMBASIS != 2) {
+  dtmsg << "Using LemkeLCPSolver..." << std::endl; 
+  }
 #endif
 
 #ifdef runGUI

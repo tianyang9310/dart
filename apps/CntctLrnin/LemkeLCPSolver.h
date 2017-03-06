@@ -18,8 +18,8 @@
 
 /// Macro controlling prompt and data
 #define OUTPUT2FILE
-#define LEMKE_PRINT
-#define ODE_PRINT
+// #define LEMKE_PRINT
+// #define ODE_PRINT
 
 /// Macro controlling remedy methods
 #define RECALLSOLVE

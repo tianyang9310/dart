@@ -20,8 +20,6 @@ class MyWindow : public dart::gui::SimWindow {
   void timeStepping() override;
   void keyboard(unsigned char _key, int _x, int _y) override;
   void drawSkels() override;
-  void draw() override;
-  void displayTimer(int _val);
 
   void addExtForce();
   void addExtTorque();
@@ -37,23 +35,15 @@ class MyWindow : public dart::gui::SimWindow {
   /// Collision Detector
   std::unique_ptr<dart::collision::CollisionDetector> mCollisionDetector;
 
-  /// Different color for different contact poitns
-  std::vector<Eigen::Vector3d> mColor;
-
   /// Counter for when to apply extForces
   int counter;
 
-  /// Counter for when to update random Forces
-  int randFCounter;
+  /// Register for external forces and torques
+  Eigen::Vector3d extForce;
+  Eigen::Vector3d extTorque;
 
   /// Episode length
   int episodeLength;
-
-  /// Force application point offset
-  Eigen::Vector3d offset;
-
-  /// Register for external forces
-  Eigen::Vector3d extForce;
 };
 }
 #endif  // CNTCTLRNIN_MYWINDOW_H
