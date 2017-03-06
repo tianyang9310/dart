@@ -192,7 +192,7 @@ bas[lvindex] = t; // pivoting in the artificial variable
 
 Eigen::VectorXd U = Eigen::VectorXd::Zero(n);
 for (int i = 0; i < n; ++i) {
-    if (x[i] < piv_tol)
+    if (x[i] < 0)
         U[i] = 1;
 }
 Be = -(B * U);
