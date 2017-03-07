@@ -78,7 +78,7 @@ void testDFSLCP() {
 }
 
 int main(int argc, char* argv[]) {
-  // std::srand((unsigned)(std::chrono::system_clock::now().time_since_epoch().count()));
+  std::srand((unsigned)(std::chrono::system_clock::now().time_since_epoch().count()));
 
   std::shared_ptr<MyWorld> mWorld = std::make_shared<MyWorld>();
   assert(mWorld != nullptr);
