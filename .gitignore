@@ -9,6 +9,7 @@ syntax: glob
 *.swo
 *.out
 *.csv
+ct*.txt
 CPack*
 CTest*
 Testing/

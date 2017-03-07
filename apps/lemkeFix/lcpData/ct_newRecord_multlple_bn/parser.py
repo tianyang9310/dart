@@ -17,6 +17,9 @@ def myparse(numContactsToLearn):
     print dir
     if row == 0:
         return
+    if row > 100:
+        data = data[:100,:]
+        row, col = data.shape
     ASize = numContactsToLearn * (numBasis + 1)
     inputSize = ASize + (ASize+1) * ASize /2 + numContactsToLearn
     outputSize = numContactsToLearn
@@ -46,8 +49,8 @@ def myparse(numContactsToLearn):
         for i in range(numContactsToLearn):
             E[i*numBasis:(i+1)*numBasis,i] = np.ones((numBasis,))*4
         AMatrix_tmp[numContactsToLearn*(numBasis+1):,:numContactsToLearn] = mu
-        AMatrix_tmp[numContactsToLearn*(numBasis+1):,numContactsToLearn:numContactsToLearn+numContactsToLearn*(numBasis+1)] = -E.T
-        AMatrix_tmp[numContactsToLearn:numContactsToLearn+numContactsToLearn*(numBasis+1),numContactsToLearn*(numBasis+1):] = E
+        AMatrix_tmp[numContactsToLearn*(numBasis+1):,numContactsToLearn:numContactsToLearn+numContactsToLearn*(numBasis)] = -E.T
+        AMatrix_tmp[numContactsToLearn:numContactsToLearn+numContactsToLearn*(numBasis),numContactsToLearn*(numBasis+1):] = E
         AMatrix = np.append(AMatrix, AMatrix_tmp, axis=0)
 
     np.savetxt('ct'+str(numContactsToLearn)+'A.txt',AMatrix,delimiter=',',fmt='%s')
