@@ -49,13 +49,12 @@ void MyWindow::timeStepping() {
 
 #ifndef UNIT_TEST
   // 20 is the period/
-  int mPeriod = 20;
+  int mPeriod = PERIOD;
   int mDutyCycle = RANDOM_DURATION;
   counter = (counter + 1) % mPeriod;
 
   if (counter < mDutyCycle) {
     addExtForce();
-    // assert(NUMBODYNODES==1);
   } else if (counter > mPeriod - mDutyCycle - 1) {
     addExtTorque();
   }
