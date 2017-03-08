@@ -462,6 +462,7 @@ void LemkeLCPSolver::sanityCheck(const Eigen::MatrixXd& lemkeA,
     }
     // -------------------------------------------------------------------------
     // Count how many non-zero does fd have
+#ifdef COUNT_NONZERO
     double fdNz = 0;
     fdNz = (eachZ.segment(1, numBasis).array() > SanityCheckZero)
                 .matrix()
@@ -475,6 +476,7 @@ void LemkeLCPSolver::sanityCheck(const Eigen::MatrixXd& lemkeA,
       std::cout << "lambda"
                 << " = 0 " << std::endl;
     }
+#endif
   }
 #endif
 }
