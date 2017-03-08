@@ -146,7 +146,7 @@ SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& initPos_offset, bool
     bn->setInertia(inrtia);
 
     Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
-    tf.translation() =  idxmBox * initPos_offset;
+    tf.translation() = initPos_offset;
     // tf.linear() = initOri;
     bn->getParentJoint()->setTransformFromParentBodyNode(tf);
 

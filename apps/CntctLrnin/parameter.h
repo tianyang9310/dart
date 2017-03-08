@@ -19,7 +19,7 @@
 
 #else 
 
-#define NUMBODYNODES 2
+#define NUMBODYNODES 5
 
 #endif
 
