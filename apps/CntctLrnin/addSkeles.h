@@ -23,7 +23,8 @@ void addSkel(WorldPtr world);
 SkeletonPtr addBox();
 
 ///
-SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& init_pos_offset);
+SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& init_pos_offset,
+                   bool isChain = false);
 
 ///
 SkeletonPtr addPlatform();
