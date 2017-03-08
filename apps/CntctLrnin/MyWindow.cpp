@@ -13,8 +13,12 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   episodeLength = 6500;
   setPlatform();
 
-  extForce.setZero();
-  extTorque.setZero();
+  for (int i = 0; i < NUMBODYNODES; ++i) {
+    extForce.push_back(Eigen::Vector3d::Zero());
+    extTorque.push_back(Eigen::Vector3d::Zero());
+  }
+  extForceDuration = -1;
+  extTorqueDuration = -1;
 
   /*
    * for (int i=0; i<NUMBODYNODES; i++){
@@ -45,8 +49,8 @@ void MyWindow::timeStepping() {
 
 #ifndef UNIT_TEST
   // 20 is the period/
-  int mPeriod = 10;
-  int mDutyCycle = 3;
+  int mPeriod = 20;
+  int mDutyCycle = RANDOM_DURATION;
   counter = (counter + 1) % mPeriod;
 
   if (counter < mDutyCycle) {
@@ -74,41 +78,54 @@ void MyWindow::timeStepping() {
 }
 
 void MyWindow::addExtForce() {
-  for (int i = 0; i < NUMBODYNODES; i++) {
-    extForce.setZero();
+  if (extForceDuration < 0) {
+    extForceDuration = RANDOM_DURATION;
+    for (int i = 0; i < NUMBODYNODES; i++) {
 
 #ifndef UNIT_TEST
-    int dir = (mWorld->getSimFrames() / 800) % 8;
-    double mag = std::rand() % 15;
-    double dev = double(std::rand()) / RAND_MAX * 10 - 5;
-    extForce(0) = mag * std::sin((dir * 45.0 + dev) / 180 * DART_PI);
-    extForce(2) = mag * std::cos((dir * 45.0 + dev) / 180 * DART_PI);
+      extForce[i] = Eigen::Vector3d::Zero();
+      int dir = (mWorld->getSimFrames() / 800) % 8;
+      double mag = std::rand() % 15;
+      double dev = double(std::rand()) / RAND_MAX * 10 - 5;
+      extForce[i](0) = mag * std::sin((dir * 45.0 + dev) / 180 * DART_PI);
+      extForce[i](2) = mag * std::cos((dir * 45.0 + dev) / 180 * DART_PI);
 #endif
 
 #ifdef UNIT_TEST
 #ifdef STRAIGHT_PUSH
-    extForce(0) = 15;
+      extForce[i] = Eigen::Vector3d::Zero();
+      extForce[i](0) = 15;
 #endif
 #endif
+    }
+  } else {
+    extForceDuration--;
+  }
 
-    // Apply force to COM
+  for (int i = 0; i < NUMBODYNODES; i++) {
     mWorld->getSkeleton("mBox")
         ->getBodyNode(idx2string(i))
-        ->addExtForce(extForce);
+        ->addExtForce(extForce[i]);
   }
 }
 
 void MyWindow::addExtTorque() {
   // dtmsg<<"Add external torque"<<std::endl;
-  // Eigen::Vector3d extTorque = Eigen::Vector3d::Identity() * 0.8;
-  // mWorld->getSkeleton("mBox")
-  //     ->getBodyNode("BodyNode_1")
-  //     ->addExtTorque(extTorque);
+
+  /// update extTorque every extTorqueDuration
+  if (extTorqueDuration < 0) {
+    extTorqueDuration = RANDOM_DURATION;
+    for (int i = 0; i < NUMBODYNODES; ++i) {
+      extTorque[i] = Eigen::Vector3d::Random() * 5;
+    }
+  } else {
+    extTorqueDuration--;
+  }
 
   for (int i = 0; i < NUMBODYNODES; i++) {
     mWorld->getSkeleton("mBox")
         ->getBodyNode(idx2string(i))
-        ->addExtTorque(Eigen::Vector3d::Random() * 5);
+        ->addExtTorque(extTorque[i]);
   }
 }
 
@@ -139,9 +156,8 @@ void MyWindow::drawSkels() {
   dart::gui::SimWindow::drawSkels();
 }
 
-
 void MyWindow::restart() {
-    // restart if cubes are out of range
+  // restart if cubes are out of range
   double range = 500;
   for (int i = 0; i < NUMBODYNODES; i++) {
     if ((std::abs(mWorld->getSkeleton("mBox")
@@ -153,8 +169,9 @@ void MyWindow::restart() {
                          ->getTransform()
                          .translation()(2)) > range))  // z direction
     {
-
-      // std::cout << "translation: " << mWorld->getSkeleton("mBox")->getBodyNode(idx2string(i))->getTransform().translation().transpose() << std::endl;
+      // std::cout << "translation: " <<
+      // mWorld->getSkeleton("mBox")->getBodyNode(idx2string(i))->getTransform().translation().transpose()
+      // << std::endl;
       // std::cout << std::boolalpha;
       // std::cout << "translation x: " <<(std::abs(mWorld->getSkeleton("mBox")
       //                 ->getBodyNode(idx2string(i))
@@ -165,7 +182,6 @@ void MyWindow::restart() {
       //                 ->getBodyNode(idx2string(i))
       //                 ->getTransform()
       //                 .translation()(2)) > range)<< std::endl;
-
 
       //    dterr << "ERROR: runnng out of range, need regularization!!!" <<
       // std::endl;
@@ -207,8 +223,8 @@ void MyWindow::movingCamera() {
   dtmsg << "Update camear position..." << std::endl;
   //  std::cout << mTrans.transpose() << std::endl;
   mTrans = -mWorld->getSkeleton("mBox")->getPositions().segment(3, 3) * 1000;
-  //  mTrans[1] = 150.0f;
-  //  std::cout << mTrans.transpose() << std::endl;
+//  mTrans[1] = 150.0f;
+//  std::cout << mTrans.transpose() << std::endl;
 #endif
 #endif
 }
@@ -216,19 +232,19 @@ void MyWindow::movingCamera() {
 void MyWindow::setPlatform() {
 #ifdef UNIT_TEST
 #ifdef STATIC_SLOPE
-  double raw_angle = 45.0 / 180*DART_PI;
+  double raw_angle = 45.0 / 180 * DART_PI;
 
-  // tilt platform 
+  // tilt platform
   mWorld->getSkeleton("mPlatform")->getDof(0)->setPosition(raw_angle);
 
   // tilt cube
   mWorld->getSkeleton("mBox")->getDof(2)->setPosition(raw_angle);
-  mWorld->getSkeleton("mBox")->getDof(4)->setPosition(0.055/std::cos(raw_angle)-0.055);
+  mWorld->getSkeleton("mBox")->getDof(4)->setPosition(
+      0.055 / std::cos(raw_angle) - 0.055);
 
-  // keyboard('y',0,0);
-  // std::cin.get();
+// keyboard('y',0,0);
+// std::cin.get();
 #endif
 #endif
 }
-
 }

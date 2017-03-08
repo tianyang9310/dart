@@ -41,8 +41,10 @@ class MyWindow : public dart::gui::SimWindow {
   int counter;
 
   /// Register for external forces and torques
-  Eigen::Vector3d extForce;
-  Eigen::Vector3d extTorque;
+  std::vector<Eigen::Vector3d> extForce;
+  std::vector<Eigen::Vector3d> extTorque;
+  int extForceDuration;
+  int extTorqueDuration;
 
   /// Episode length
   int episodeLength;

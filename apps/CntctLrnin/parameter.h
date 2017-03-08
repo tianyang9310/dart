@@ -36,4 +36,6 @@
 /// Shape of body bode
 #define SHAPE mShapeType::cube
 
+#define RANDOM_DURATION 5
+
 #endif
