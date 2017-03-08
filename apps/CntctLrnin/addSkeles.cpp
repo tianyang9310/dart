@@ -87,10 +87,15 @@ SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& initPos_offset) {
       mBox->createJointAndBodyNodePair<FreeJoint>().second;
   rootBodyNode->getParentJoint()->setName("RootJoint");
   rootBodyNode->setName("RootBodyNode");
+  std::shared_ptr<Shape> rootShpe;
+  rootShpe = std::make_shared<BoxShape>(Eigen::Vector3d(0.01,0.01,0.01));
+  rootShpe->setColor(dart::Color::Orange(0.8));
+  rootBodyNode->addVisualizationShape(rootShpe);
+  rootBodyNode->addCollisionShape(rootShpe);
 
-  Eigen::Isometry3d roottf(Eigen::Isometry3d::Identity());
-  roottf.translation() = 2 * initPos;
-  rootBodyNode->getParentJoint()->setTransformFromParentBodyNode(roottf);
+  // Eigen::Isometry3d roottf(Eigen::Isometry3d::Identity());
+  // roottf.translation() = 2 * initPos;
+  // rootBodyNode->getParentJoint()->setTransformFromParentBodyNode(roottf);
 
   for (int idxmBox = 0; idxmBox < numBodyNodes; idxmBox++) {
     BodyNodePtr bn =
@@ -120,7 +125,7 @@ SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& initPos_offset) {
     bn->setInertia(inrtia);
 
     Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
-    tf.translation() = -initPos + idxmBox * initPos_offset;
+    tf.translation() =  initPos + idxmBox * initPos_offset;
     // tf.linear() = initOri;
     bn->getParentJoint()->setTransformFromParentBodyNode(tf);
 
