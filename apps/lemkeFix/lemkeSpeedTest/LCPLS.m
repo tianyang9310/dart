@@ -52,20 +52,21 @@ if all(x>=-zeroThreshold) && ~isempty(x)
     z = zeros(2*n,1);
     z(bas)=x(1:length(bas));
     z=z(1:n);
-    if (sum(A*z+b> - zeroThreshold)) ~= n
-        z = [];
-        
-    end
-    if (sum(z> - zeroThreshold)) ~= n
-        z = [];
-        
-    end
-    if (sum(abs((A*z+b).*z) < zeroThreshold)) ~=n
-        z = [];
-        
-    end
-    
 else
     z = [];
-    
+    return;
 end
+%  sanity check
+if (sum(A*z+b> - zeroThreshold)) ~= n
+    z = [];
+    return;
+end
+if (sum(z> - zeroThreshold)) ~= n
+    z = [];
+    return;
+end
+if (sum(abs((A*z+b).*z) < zeroThreshold)) ~=n
+    z = [];
+    return;
+end
+return;
