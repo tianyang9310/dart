@@ -1,0 +1,37 @@
+
+Speed test
+>> LemkeSpeedTest
+
+averagetimeLEMKE =
+
+    0.0043
+
+
+averagetimeLEMKE =
+
+    0.0043
+
+
+solvedRatio =
+
+    0.9900
+
+>> LCPLPSpeedTest
+
+averagetimeTotal =
+
+    0.0015
+
+
+averagetimeOnlyLinprog =
+
+    0.0011
+
+
+solvedRatio =
+
+    0.9990
+
+
+
+
