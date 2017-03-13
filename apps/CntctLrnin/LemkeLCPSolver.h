@@ -17,7 +17,7 @@
 #include "../lemkeFix/myLemke.h"
 
 /// Macro controlling prompt and data
-#define OUTPUT2FILE
+// #define OUTPUT2FILE
 // #define LEMKE_PRINT
 // #define ODE_PRINT
 
@@ -89,11 +89,11 @@ class LemkeLCPSolver : public DantzigLCPSolver {
                  std::vector<Eigen::VectorXd>& zGroups);
 
   /// Remedy if Lemke fails in the first place
-  void recallLemke(bool& Validation, const Eigen::MatrixXd& lemkeA, 
+  void recallLemke(bool& Validation, const Eigen::MatrixXd& lemkeA,
                    const Eigen::VectorXd& lemkeB, Eigen::VectorXd* z);
-  void useSnoptLCPSolver(bool& Validation, const Eigen::MatrixXd& lemkeA, 
+  void useSnoptLCPSolver(bool& Validation, const Eigen::MatrixXd& lemkeA,
                    const Eigen::VectorXd& lemkeB, Eigen::VectorXd* z);
-  void bruteForce(bool& Validation, const Eigen::MatrixXd& lemkeA, 
+  void bruteForce(bool& Validation, const Eigen::MatrixXd& lemkeA,
                    const Eigen::VectorXd& lemkeB, Eigen::VectorXd* z);
 
   /// Sanity check
@@ -105,7 +105,7 @@ class LemkeLCPSolver : public DantzigLCPSolver {
   int getLCPFail() { return numLCPFail; };
 
   /// Output Lemke solution
-  void recordLCPSolve(const Eigen::MatrixXd& A, 
+  void recordLCPSolve(const Eigen::MatrixXd& A,
                       const Eigen::VectorXd& b,
                       const Eigen::VectorXd& z);
 
@@ -119,6 +119,9 @@ class LemkeLCPSolver : public DantzigLCPSolver {
 
   /// Return true if the diagonla block of matrix is symmetric
   bool isSymmetric(size_t _n, double* _A, size_t _begin, size_t _end);
+
+  /// 
+  void classInterpreter(const Eigen::VectorXd& z, Eigen::VectorXi value_array);
 
   //----------------------------------------------------------------------------
   // Member Variable
@@ -150,6 +153,8 @@ class LemkeLCPSolver : public DantzigLCPSolver {
 #ifdef ODE_PRINT
   std::shared_ptr<std::fstream> odeFile;
 #endif
+
+  std::shared_ptr<std::fstream> randFile;
 
   /// For debugging use
   dart::gui::SimWindow* mWindow;

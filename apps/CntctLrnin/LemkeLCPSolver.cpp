@@ -43,6 +43,9 @@ void LemkeLCPSolver::outputFileOpen() {
    odeFile = std::make_shared<std::fstream>("/tmp/CntctLrnin/Ode.out",std::fstream::out);
    odeFile->precision(mPrecision);
 #endif
+
+   randFile = std::make_shared<std::fstream>("/tmp/CntctLrnin/rand.out",std::fstream::out);
+   randFile->precision(mPrecision);
 }
 
 //==============================================================================
@@ -61,6 +64,8 @@ void LemkeLCPSolver::outputFileClose() {
 #ifdef ODE_PRINT
    odeFile->close();
 #endif
+
+   randFile->close();
 }
 
 //==============================================================================
@@ -234,6 +239,36 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
   Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
   int err = dart::lcpsolver::YT::Lemke(lemkeA, lemkeB, z);
   bool Validation = dart::lcpsolver::YT::validate(lemkeA, lemkeB, (*z));
+
+  // Verify if Lemke randomness will affect learning
+  if (Validation) {
+    int retry = 30;
+    Eigen::VectorXi value_array;
+    classInterpreter((*z), value_array);
+    for (int i = 0; i < retry; ++i) {
+      Eigen::VectorXd* retryZ = new Eigen::VectorXd(numConstraints * (2 + numBasis));
+      int retryErr = dart::lcpsolver::YT::Lemke(lemkeA, lemkeB, retryZ);
+      bool retryValidation = dart::lcpsolver::YT::validate(lemkeA, lemkeB, (*retryZ));
+      if (retryValidation) {
+        Eigen::VectorXi retry_value_array;
+        classInterpreter((*retryZ), retry_value_array);
+
+        std::cout << "Verifying " << i << "times..." << std::endl;
+        if (((retry_value_array - value_array).array().abs() > 0).any()) {
+        dterr << "Catching one exception..." << std::endl;
+        (*randFile) << "Matrix A: " << std::endl << lemkeA << std::endl;
+        (*randFile) << "Vectot b: " << std::endl << lemkeB.transpose() << std::endl;
+        (*randFile) << "Vector z 1: " << std::endl << (*z).transpose() << std::endl;
+        (*randFile) << "value array 1" << value_array.transpose() << std::endl;
+        (*randFile) << "Vector z 2: " << std::endl << (*retryZ).transpose() << std::endl;
+        (*randFile) << "value array 2" << retry_value_array.transpose() << std::endl;
+        break;
+        }
+      } else {
+        continue;
+      }
+    }
+  }
 
   // -------------------------------------------------------------------------
   // Lemke failure remedy and sanity check
@@ -938,6 +973,65 @@ void LemkeLCPSolver::decompose(const Eigen::VectorXd& z,
     Eigen::VectorXd eachZ(numBasis + 2);
     eachZ << zFn(i), zFd.segment(i * numBasis, numBasis), zLambda(i);
     zGroups.push_back(eachZ);
+  }
+}
+
+//==============================================================================
+void LemkeLCPSolver::classInterpreter(const Eigen::VectorXd& z, 
+                                            Eigen::VectorXi value_array) {
+
+  std::vector<Eigen::VectorXd> zGroups;
+  decompose(z, zGroups);
+
+  double RECORD_ZERO = 1e-12; 
+  value_array.resize(numContactsCallBack);
+  value_array.setZero();
+  bool nonZerofdException = false;
+
+  for (int i = 0; i < numContactsCallBack; i++) {
+    Eigen::VectorXd eachZ = zGroups[i];
+
+    int value = 9;
+    // Convention: numbasis = 8, so total 10 elements
+    if (eachZ(0) < RECORD_ZERO)  // fn = 0, break
+    {
+      value = 9;
+    } else if (eachZ(numBasis + 1) < RECORD_ZERO) {  // lambda = 0, static
+      value = 8;
+    } else {  // random choose non-zero in fd
+
+      // Hard-coding for numBasis = 4
+      assert(numBasis == 4);
+      // eachZ [1, numBasis]
+      std::vector<int> nonZerofd;
+      nonZerofd.clear();
+      for (int j = 0; j < numBasis; j++) {
+        if (eachZ(j + 1) > RECORD_ZERO) {
+          nonZerofd.push_back(j);
+        }
+      }
+
+      if (nonZerofd.size()==0 || nonZerofd.size()>2) {
+        dterr << "ERROR: the number of non-zeros in fd is wrong..."
+                  << std::endl;
+        nonZerofdException = true;
+        break;
+      }
+
+      if (nonZerofd.size() == 2) {
+        if (nonZerofd[0]==0 && nonZerofd[1]==3) {
+          nonZerofd[0] = 4;
+        }
+      }
+
+      int sum = 0;
+      for (int j = 0; j < nonZerofd.size(); j++) {
+        sum = sum + nonZerofd[j];
+      }
+
+      value = sum * 2 / nonZerofd.size();
+    }
+    value_array(i) = value;
   }
 }
 
