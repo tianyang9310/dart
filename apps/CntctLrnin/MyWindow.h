@@ -21,8 +21,9 @@ class MyWindow : public dart::gui::SimWindow {
   void keyboard(unsigned char _key, int _x, int _y) override;
   void drawSkels() override;
   void displayTimer(int _val);
-  bool screenshot();
+  void draw();
   void render();
+  bool screenshot();
 
   void addExtForce();
   void addExtTorque();
@@ -51,6 +52,8 @@ class MyWindow : public dart::gui::SimWindow {
 
   /// Episode length
   int episodeLength;
+
+  std::vector<Eigen::Vector3d> mColor;
 };
 }
 #endif  // CNTCTLRNIN_MYWINDOW_H

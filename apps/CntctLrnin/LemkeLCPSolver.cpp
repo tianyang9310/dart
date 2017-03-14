@@ -263,6 +263,16 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
         (*randFile) << "value array 1: " << value_array.transpose() << std::endl;
         (*randFile) << "Vector z 2: " << std::endl << (*retryZ).transpose() << std::endl;
         (*randFile) << "value array 2: " << retry_value_array.transpose() << std::endl;
+        (*randFile) << "Ct body nodes are: ";
+        for (int j = 0;  j < numConstraints; ++j) {
+          MyContactConstraint* constraint = dynamic_cast<MyContactConstraint*>(_group->getConstraint(j));
+          if (constraint->mBodyNode1->getSkeleton()->getName() == "mBox") {
+            (*randFile) <<constraint->mBodyNode1->getName() << ", ";
+          } else {
+            (*randFile) <<constraint->mBodyNode2->getName() << ", ";
+          }
+        }
+        (*randFile) << std::endl;
 
         mWindow->render();
         glFlush();

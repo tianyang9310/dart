@@ -20,6 +20,14 @@ MyWindow::MyWindow(dart::simulation::WorldPtr world) : SimWindow() {
   extForceDuration = -1;
   extTorqueDuration = -1;
 
+  mColor.clear();
+  assert(NUMBODYNODES == 5);
+  mColor.push_back(Eigen::Vector3d(0.9,0.1,0.1)); // red
+  mColor.push_back(Eigen::Vector3d(0.1,0.9,0.1)); // green
+  mColor.push_back(Eigen::Vector3d(0.1,0.1,0.9)); // blue
+  mColor.push_back(Eigen::Vector3d(0.9,0.9,0.1)); // yellow
+  mColor.push_back(Eigen::Vector3d(0.9,0.1,0.9)); // magenta
+
   /*
    * for (int i=0; i<NUMBODYNODES; i++){
    *   resetCubeOrientation(i,0);
@@ -354,6 +362,88 @@ void MyWindow::render() {
 
   if (mCapture)
     screenshot();
+}
+
+void MyWindow::draw() {
+  glDisable(GL_LIGHTING);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  if (!mSimulating) {
+      if (mPlayFrame < mWorld->getRecording()->getNumFrames()) {
+      size_t nSkels = mWorld->getNumSkeletons();
+      for (size_t i = 0; i < nSkels; i++) {
+        // size_t start = mWorld->getIndex(i);
+        // size_t size = mWorld->getSkeleton(i)->getNumDofs();
+        mWorld->getSkeleton(i)->setPositions(mWorld->getRecording()->getConfig(mPlayFrame, i));
+      }
+      if (mShowMarkers) {
+        // size_t sumDofs = mWorld->getIndex(nSkels);
+        int nContact = mWorld->getRecording()->getNumContacts(mPlayFrame);
+        for (int i = 0; i < nContact; i++) {
+            Eigen::Vector3d v = mWorld->getRecording()->getContactPoint(mPlayFrame, i);
+            Eigen::Vector3d f = mWorld->getRecording()->getContactForce(mPlayFrame, i);
+
+          glBegin(GL_LINES);
+          glVertex3f(v[0], v[1], v[2]);
+          glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
+          glEnd();
+
+          mRI->setPenColor(Eigen::Vector3d(0.2, 0.2, 0.8));
+          mRI->pushMatrix();
+          glTranslated(v[0], v[1], v[2]);
+          mRI->drawEllipsoid(Eigen::Vector3d(0.02, 0.02, 0.02));
+          mRI->popMatrix();
+        }
+      }
+    }
+  } else {
+    if (mShowMarkers) {
+      collision::CollisionDetector* cd =
+          mWorld->getConstraintSolver()->getCollisionDetector();
+      for (size_t k = 0; k < cd->getNumContacts(); k++) {
+
+        Eigen::Vector3d ctColor;
+        if (cd->getContact(k).bodyNode1.lock()->getSkeleton()->getName() == "mBox") {
+          ctColor = mColor[cd->getContact(k).bodyNode1.lock()->getIndexInSkeleton()];
+        } else {
+          ctColor = mColor[cd->getContact(k).bodyNode2.lock()->getIndexInSkeleton()];
+        }
+
+        mRI->setPenColor(ctColor);
+
+        Eigen::Vector3d v = cd->getContact(k).point;
+        Eigen::Vector3d f = cd->getContact(k).force / 10.0;
+        glBegin(GL_LINES);
+        glVertex3f(v[0], v[1], v[2]);
+        glVertex3f(v[0] + f[0], v[1] + f[1], v[2] + f[2]);
+        glEnd();
+        mRI->pushMatrix();
+        glTranslated(v[0], v[1], v[2]);
+        mRI->drawEllipsoid(Eigen::Vector3d(0.02, 0.02, 0.02));
+        mRI->popMatrix();
+      }
+    }
+  }
+  drawSkels();
+  drawEntities();
+
+  // display the frame count in 2D text
+  char buff[64];
+  if (!mSimulating)
+#ifdef _WIN32
+    _snprintf(buff, sizeof(buff), "%d", mPlayFrame);
+#else
+    std::snprintf(buff, sizeof(buff), "%d", mPlayFrame);
+#endif
+  else
+#ifdef _WIN32
+    _snprintf(buff, sizeof(buff), "%d", mWorld->getSimFrames());
+#else
+    std::snprintf(buff, sizeof(buff), "%d", mWorld->getSimFrames());
+#endif
+  std::string frame(buff);
+  glColor3f(0.0, 0.0, 0.0);
+  gui::drawStringOnScreen(0.02f, 0.02f, frame);
+  glEnable(GL_LIGHTING);
 }
 
 }
