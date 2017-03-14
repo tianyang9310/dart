@@ -2,7 +2,7 @@
 
 namespace CntctLrnin {
 //==============================================================================
-LemkeLCPSolver::LemkeLCPSolver(double _timestep, dart::gui::SimWindow* _mWindow)
+LemkeLCPSolver::LemkeLCPSolver(double _timestep, MyWindow* _mWindow)
     : DantzigLCPSolver(_timestep) {
   numBasis = NUMBASIS;
   mPrecision = PRECISION;
@@ -253,15 +253,24 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
         Eigen::VectorXi retry_value_array;
         classInterpreter((*retryZ), retry_value_array);
 
-        std::cout << "Verifying " << i << "times..." << std::endl;
+        // std::cout << "Verifying " << i << "times..." << std::endl;
+        // if ((((*retryZ)-(*z)).array() > 1e-12).any()) {
         if (((retry_value_array - value_array).array().abs() > 0).any()) {
         dterr << "Catching one exception..." << std::endl;
         (*randFile) << "Matrix A: " << std::endl << lemkeA << std::endl;
         (*randFile) << "Vectot b: " << std::endl << lemkeB.transpose() << std::endl;
         (*randFile) << "Vector z 1: " << std::endl << (*z).transpose() << std::endl;
-        (*randFile) << "value array 1" << value_array.transpose() << std::endl;
+        (*randFile) << "value array 1: " << value_array.transpose() << std::endl;
         (*randFile) << "Vector z 2: " << std::endl << (*retryZ).transpose() << std::endl;
-        (*randFile) << "value array 2" << retry_value_array.transpose() << std::endl;
+        (*randFile) << "value array 2: " << retry_value_array.transpose() << std::endl;
+
+        mWindow->render();
+        glFlush();
+
+        // glutPostRedisplay();
+        // glutTimerFunc(mDisplayTimeout, refreshTimer, _val);
+        mWindow->screenshot();
+        // std::cin.get();
         break;
         }
       } else {
@@ -978,7 +987,7 @@ void LemkeLCPSolver::decompose(const Eigen::VectorXd& z,
 
 //==============================================================================
 void LemkeLCPSolver::classInterpreter(const Eigen::VectorXd& z, 
-                                            Eigen::VectorXi value_array) {
+                                            Eigen::VectorXi& value_array) {
 
   std::vector<Eigen::VectorXd> zGroups;
   decompose(z, zGroups);

@@ -49,7 +49,7 @@ class MyWindow;
 class LemkeLCPSolver : public DantzigLCPSolver {
   public:
   /// Constructor
-  LemkeLCPSolver(double _timestep, dart::gui::SimWindow* _mWindow = NULL);
+  LemkeLCPSolver(double _timestep, MyWindow* _mWindow = NULL);
 
   /// Destructor
   virtual ~LemkeLCPSolver();
@@ -121,7 +121,7 @@ class LemkeLCPSolver : public DantzigLCPSolver {
   bool isSymmetric(size_t _n, double* _A, size_t _begin, size_t _end);
 
   /// 
-  void classInterpreter(const Eigen::VectorXd& z, Eigen::VectorXi value_array);
+  void classInterpreter(const Eigen::VectorXd& z, Eigen::VectorXi& value_array);
 
   //----------------------------------------------------------------------------
   // Member Variable
@@ -157,7 +157,7 @@ class LemkeLCPSolver : public DantzigLCPSolver {
   std::shared_ptr<std::fstream> randFile;
 
   /// For debugging use
-  dart::gui::SimWindow* mWindow;
+  MyWindow* mWindow;
 };
 }
 

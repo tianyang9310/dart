@@ -246,4 +246,114 @@ void MyWindow::setPlatform() {
 #endif
 #endif
 }
+
+void MyWindow::displayTimer(int _val) {
+  // int numIter = 1;
+  int numIter = mDisplayTimeout / (mWorld->getTimeStep() * 1000);
+  if (mPlay) {
+    mPlayFrame += 16;
+    if (mPlayFrame >= mWorld->getRecording()->getNumFrames())
+      mPlayFrame = 0;
+  } else if (mSimulating) {
+    for (int i = 0; i < numIter; i++) {
+      timeStepping();
+      mWorld->bake();
+    }
+  }
+  glutPostRedisplay();
+  glutTimerFunc(mDisplayTimeout, refreshTimer, _val);
+}
+
+bool MyWindow::screenshot() {
+  static int count = 0;
+  char fileBase[32] = "frames/Capture";
+  char fileName[64];
+  // png
+#ifdef _WIN32
+  _snprintf(fileName, sizeof(fileName), "%s%.4d.png", fileBase, count++);
+#else
+  std::snprintf(fileName, sizeof(fileName), "%s%.4d.png", fileBase, count++);
+#endif
+  int tw = glutGet(GLUT_WINDOW_WIDTH);
+  int th = glutGet(GLUT_WINDOW_HEIGHT);
+
+  glReadPixels(0, 0,  tw, th, GL_RGBA, GL_UNSIGNED_BYTE, &mScreenshotTemp[0]);
+
+  // reverse temp2 temp1
+  for (int row = 0; row < th; row++) {
+    memcpy(&mScreenshotTemp2[row * tw * 4],
+           &mScreenshotTemp[(th - row - 1) * tw * 4], tw * 4);
+  }
+
+  unsigned result = lodepng::encode(fileName, mScreenshotTemp2, tw, th);
+
+  // if there's an error, display it
+  if (result) {
+    std::cout << "lodepng error " << result << ": "
+              << lodepng_error_text(result) << std::endl;
+    return false;
+  } else {
+    std::cout << "wrote screenshot " << fileName << "\n";
+    return true;
+  }
+}
+
+void MyWindow::render() {
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(mPersp,
+                 static_cast<double>(mWinWidth)/static_cast<double>(mWinHeight),
+                 0.1, 10.0);
+  gluLookAt(mEye[0], mEye[1], mEye[2], 0.0, 0.0, -1.0, mUp[0], mUp[1], mUp[2]);
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  initGL();
+
+  mTrackBall.applyGLRotation();
+
+  // Draw world origin indicator
+  if (!mCapture)
+  {
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_LIGHTING);
+    glLineWidth(2.0);
+    if (mRotate || mTranslate || mZooming) {
+      glColor3f(1.0f, 0.0f, 0.0f);
+      glBegin(GL_LINES);
+      glVertex3f(-0.1f, 0.0f, -0.0f);
+      glVertex3f(0.15f, 0.0f, -0.0f);
+      glEnd();
+
+      glColor3f(0.0f, 1.0f, 0.0f);
+      glBegin(GL_LINES);
+      glVertex3f(0.0f, -0.1f, 0.0f);
+      glVertex3f(0.0f, 0.15f, 0.0f);
+      glEnd();
+
+      glColor3f(0.0f, 0.0f, 1.0f);
+      glBegin(GL_LINES);
+      glVertex3f(0.0f, 0.0f, -0.1f);
+      glVertex3f(0.0f, 0.0f, 0.15f);
+      glEnd();
+    }
+  }
+
+  glScalef(mZoom, mZoom, mZoom);
+  glTranslatef(mTrans[0]*0.001, mTrans[1]*0.001, mTrans[2]*0.001);
+
+  initLights();
+  draw();
+
+  // Draw trackball indicator
+  if (mRotate && !mCapture)
+    mTrackBall.draw(mWinWidth, mWinHeight);
+
+  glutSwapBuffers();
+
+  if (mCapture)
+    screenshot();
+}
+
 }
