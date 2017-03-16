@@ -129,7 +129,7 @@ MyContactConstraint::MyContactConstraint(collision::Contact& _contact,
       std::cout << "bodyPoint1: " << bodyPoint1.transpose() << std::endl;
       std::cout << "bodeDirection1: " << bodyDirection1.transpose()
                 << std::endl;
-      // std::cout << "D: " << std::endl << D << std::endl;
+// std::cout << "D: " << std::endl << D << std::endl;
 #endif
 
       mJacobians1[idx].head<3>() = bodyPoint1.cross(bodyDirection1);
@@ -563,7 +563,6 @@ void MyContactConstraint::applyImpulse(double* _lambda) {
       // Store contact impulse (force) toward the normal w.r.t. world frame
       mContacts[i]->force = mContacts[i]->normal * _lambda[index] / mTimeStep;
 
-
       // Normal impulsive force
       //      mContacts[i]->lambda[0] = _lambda[_idx];
       if (mBodyNode1->isReactive())
@@ -589,7 +588,6 @@ void MyContactConstraint::applyImpulse(double* _lambda) {
         mBodyNode2->addConstraintImpulse(mJacobians2[index] * _lambda[index]);
       //      std::cout << "_lambda: " << _lambda[_idx] << std::endl;
 
-
       index++;
 
       assert(!math::isNan(_lambda[index]));
@@ -605,7 +603,6 @@ void MyContactConstraint::applyImpulse(double* _lambda) {
         mBodyNode2->addConstraintImpulse(mJacobians2[index] * _lambda[index]);
       //      std::cout << "_lambda: " << _lambda[_idx] << std::endl;
       index++;
-
     }
   }
   //----------------------------------------------------------------------------

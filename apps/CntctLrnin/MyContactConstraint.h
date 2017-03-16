@@ -1,8 +1,8 @@
 #ifndef MYCONTACTCONSTRAINT_H
 #define MYCONTACTCONSTRAINT_H
 
-#include "parameter.h"
 #include "dart/constraint/ContactConstraint.h"
+#include "parameter.h"
 #include "utils.h"
 
 namespace dart {

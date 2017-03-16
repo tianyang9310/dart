@@ -24,7 +24,7 @@ void LemkeLCPSolver::outputFileOpen() {
   for (int numContactsToLearn = 1; numContactsToLearn < 1 + numDesiredFiles;
        numContactsToLearn++) {
     std::string dataFile = "/tmp/CntctLrnin/lcp_data" +
-                               std::to_string(numContactsToLearn) + ".csv";
+                           std::to_string(numContactsToLearn) + ".csv";
     std::shared_ptr<std::fstream> outputFile =
         std::make_shared<std::fstream>(dataFile, std::fstream::out);
 
@@ -35,13 +35,15 @@ void LemkeLCPSolver::outputFileOpen() {
 #endif
 
 #ifdef LEMKE_PRINT
-   lemkeFile = std::make_shared<std::fstream>("/tmp/CntctLrnin/Lemke.out",std::fstream::out);
-   lemkeFile->precision(mPrecision);
+  lemkeFile = std::make_shared<std::fstream>("/tmp/CntctLrnin/Lemke.out",
+                                             std::fstream::out);
+  lemkeFile->precision(mPrecision);
 #endif
 
 #ifdef ODE_PRINT
-   odeFile = std::make_shared<std::fstream>("/tmp/CntctLrnin/Ode.out",std::fstream::out);
-   odeFile->precision(mPrecision);
+  odeFile = std::make_shared<std::fstream>("/tmp/CntctLrnin/Ode.out",
+                                           std::fstream::out);
+  odeFile->precision(mPrecision);
 #endif
 }
 
@@ -55,11 +57,11 @@ void LemkeLCPSolver::outputFileClose() {
 #endif
 
 #ifdef LEMKE_PRINT
-   lemkeFile->close();
+  lemkeFile->close();
 #endif
 
 #ifdef ODE_PRINT
-   odeFile->close();
+  odeFile->close();
 #endif
 }
 
@@ -202,7 +204,6 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
   Eigen::MatrixXd lemkeA(numConstraints * (2 + numBasis),
                          numConstraints * (2 + numBasis));
 
-
   // Permute A
   permuteAugumentA(preLemkeA, lemkeA, T, mu, E);
 
@@ -268,7 +269,7 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
     assert(!(Eigen::isnan((*z).array()).any()));
 
     MyContactConstraint* Mycntctconstraint;
-    
+
     Eigen::VectorXd fn((*z).head(numConstraints));
     Eigen::VectorXd fd((*z).segment(numConstraints, numConstraints * numBasis));
     // Eigen::VectorXd lambda((*z).tail(numConstraints));
@@ -408,7 +409,7 @@ void LemkeLCPSolver::sanityCheck(const Eigen::MatrixXd& lemkeA,
     if (std::abs(eachZ[0]) < SanityCheckZero &&
         eachZ.segment(1, numBasis).maxCoeff() > SanityCheckZero &&
         eachZ[numBasis + 1] > SanityCheckZero) {
-      dterr << std::endl 
+      dterr << std::endl
             << "ERROR: fn==0, fd>0 and lambda>0" << std::endl
             << "Lemke A is " << std::endl
             << lemkeA << std::endl
@@ -425,8 +426,8 @@ void LemkeLCPSolver::sanityCheck(const Eigen::MatrixXd& lemkeA,
     // Corner case where fn==0, fd>0 and lambda=0
     if (std::abs(eachZ[0]) < SanityCheckZero &&
         eachZ.segment(1, numBasis).maxCoeff() > SanityCheckZero &&
-        std::abs(eachZ[numBasis+1]) < SanityCheckZero) {
-      dterr << std::endl 
+        std::abs(eachZ[numBasis + 1]) < SanityCheckZero) {
+      dterr << std::endl
             << "ERROR: fn==0, fd>0 and lambda==0" << std::endl
             << "Lemke A is " << std::endl
             << lemkeA << std::endl
@@ -446,12 +447,11 @@ void LemkeLCPSolver::sanityCheck(const Eigen::MatrixXd& lemkeA,
          eachZ.segment(1, numBasis).array() < SanityCheckZero)
             .all() &&
         eachZ[numBasis + 1] > SanityCheckZero) {
-      dterr << std::endl 
+      dterr << std::endl
             << "ERROR: fn>0, fd==0 and lambda>0" << std::endl
             << "Lemke A is " << std::endl
             << lemkeA << std::endl
-            << "Lemke b is "
-            << lemkeB.transpose() << std::endl
+            << "Lemke b is " << lemkeB.transpose() << std::endl
             << "[z]" << z.transpose() << std::endl
             << "[w]" << (lemkeA * z + lemkeB).transpose() << std::endl
             << "[z].*[w]"
@@ -460,14 +460,14 @@ void LemkeLCPSolver::sanityCheck(const Eigen::MatrixXd& lemkeA,
             << "Error z: " << eachZ << std::endl;
       // std::cin.get();
     }
-    // -------------------------------------------------------------------------
-    // Count how many non-zero does fd have
+// -------------------------------------------------------------------------
+// Count how many non-zero does fd have
 #ifdef COUNT_NONZERO
     double fdNz = 0;
     fdNz = (eachZ.segment(1, numBasis).array() > SanityCheckZero)
-                .matrix()
-                .cast<double>()
-                .sum();
+               .matrix()
+               .cast<double>()
+               .sum();
     dtmsg << i << "th contact has " << fdNz << " nonzero in fd. ";
     if (eachZ(1 + numBasis) > SanityCheckZero) {
       std::cout << "lambda"
@@ -607,7 +607,7 @@ void LemkeLCPSolver::solveODE(ConstrainedGroup* _group) {
 }
 
 //==============================================================================
-void LemkeLCPSolver::permuteNegateAugumentB(double* b, 
+void LemkeLCPSolver::permuteNegateAugumentB(double* b,
                                             const Eigen::VectorXd& preLemkeB,
                                             Eigen::VectorXd& lemkeB,
                                             Eigen::MatrixXd& T) {
@@ -768,58 +768,60 @@ void LemkeLCPSolver::print(size_t _n, double* _A, double* _x, double* lo,
 
 //==============================================================================
 void LemkeLCPSolver::print(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
-                           const Eigen::VectorXd& z, const bool Validation, 
+                           const Eigen::VectorXd& z, const bool Validation,
                            const int err) {
 #ifdef LEMKE_PRINT
   Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
 
   (*lemkeFile) << std::endl
-            << "```````````````````````````````````````````````" << std::endl;
+               << "```````````````````````````````````````````````"
+               << std::endl;
 
   (*lemkeFile) << "Matrix A " << std::endl
-            << A.format(CSVFmt) << std::endl
-            << std::endl;
+               << A.format(CSVFmt) << std::endl
+               << std::endl;
   (*lemkeFile) << "Vector b " << std::endl
-            << b.transpose().format(CSVFmt) << std::endl
-            << std::endl;
+               << b.transpose().format(CSVFmt) << std::endl
+               << std::endl;
 
   (*lemkeFile) << "Vector z " << std::endl
-            << z.transpose().head(numContactsCallBack) << std::endl;
+               << z.transpose().head(numContactsCallBack) << std::endl;
   for (int i = 0; i < numContactsCallBack; i++) {
     (*lemkeFile) << z.transpose().segment(numContactsCallBack + i * numBasis,
-                                       numBasis)
-              << std::endl;
+                                          numBasis)
+                 << std::endl;
   }
   (*lemkeFile) << z.transpose().tail(numContactsCallBack) << std::endl
-            << std::endl;
+               << std::endl;
 
   Eigen::VectorXd w = (A * z + b).eval();
   (*lemkeFile) << "Vector w " << std::endl
-            << w.transpose().head(numContactsCallBack) << std::endl;
+               << w.transpose().head(numContactsCallBack) << std::endl;
   for (int i = 0; i < numContactsCallBack; i++) {
     (*lemkeFile) << w.transpose().segment(numContactsCallBack + i * numBasis,
-                                       numBasis)
-              << std::endl;
+                                          numBasis)
+                 << std::endl;
   }
   (*lemkeFile) << w.transpose().tail(numContactsCallBack) << std::endl
-            << std::endl;
+               << std::endl;
 
   Eigen::VectorXd wz = (z.array() * w.array()).eval();
   (*lemkeFile) << "[w].*[z]" << std::endl
-            << wz.transpose().head(numContactsCallBack) << std::endl;
+               << wz.transpose().head(numContactsCallBack) << std::endl;
   for (int i = 0; i < numContactsCallBack; i++) {
     (*lemkeFile) << wz.transpose().segment(numContactsCallBack + i * numBasis,
-                                        numBasis)
-              << std::endl;
+                                           numBasis)
+                 << std::endl;
   }
   (*lemkeFile) << wz.transpose().tail(numContactsCallBack) << std::endl
-            << std::endl;
+               << std::endl;
 
   (*lemkeFile) << "Validation: " << std::boolalpha << Validation << std::endl;
   (*lemkeFile) << "Error type: " << err << std::endl;
 
   (*lemkeFile) << std::endl
-            << "```````````````````````````````````````````````" << std::endl;
+               << "```````````````````````````````````````````````"
+               << std::endl;
   (*lemkeFile) << std::endl;
 #endif
 }
@@ -942,9 +944,9 @@ void LemkeLCPSolver::decompose(const Eigen::VectorXd& z,
 }
 
 //==============================================================================
-void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A, 
-                      const Eigen::VectorXd& b,
-                      const Eigen::VectorXd& z) {
+void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A,
+                                    const Eigen::VectorXd& b,
+                                    const Eigen::VectorXd& z) {
 #ifdef OUTPUT2FILE
   int nSize = b.rows();
   int numContactsToLearn = nSize / (numBasis + 2);
@@ -956,7 +958,7 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A,
   std::vector<Eigen::VectorXd> zGroups;
   decompose(z, zGroups);
 
-  double RECORD_ZERO = 1e-12; 
+  double RECORD_ZERO = 1e-12;
   Eigen::VectorXi value_array(numContactsToLearn);
   bool nonZerofdException = false;
 
@@ -983,15 +985,15 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A,
         }
       }
 
-      if (nonZerofd.size()==0 || nonZerofd.size()>2) {
+      if (nonZerofd.size() == 0 || nonZerofd.size() > 2) {
         dterr << "ERROR: the number of non-zeros in fd is wrong..."
-                  << std::endl;
+              << std::endl;
         nonZerofdException = true;
         break;
       }
 
       if (nonZerofd.size() == 2) {
-        if (nonZerofd[0]==0 && nonZerofd[1]==3) {
+        if (nonZerofd[0] == 0 && nonZerofd[1] == 3) {
           nonZerofd[0] = 4;
         }
       }
@@ -1016,7 +1018,6 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A,
   // for (int i = 0; i < numContactsToLearn; i++) {
   //   std::cout << "Value " << i << " :" << value_array(i) << std::endl;
   // }
-
 
   // if (value_array.minCoeff() >= 8) {
   if (true) {

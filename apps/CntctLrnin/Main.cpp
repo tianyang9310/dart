@@ -8,9 +8,9 @@
 #include "MyWorld.h"
 #include "SnoptWrapper.h"
 #include "addSkeles.h"
+#include "apps/lemkeFix/myLemke.h"
 #include "csvParser.h"
 #include "dart/dart.h"
-#include "apps/lemkeFix/myLemke.h"
 
 #define runGUI
 
@@ -19,8 +19,10 @@ using namespace CntctLrnin;
 void testSnoptLP() {
   Eigen::MatrixXd A;
   Eigen::VectorXd b;
-  A = load_csv<Eigen::MatrixXd>(DART_ROOT_PATH"apps/CntctLrnin/testData/testSnoptLP_A.csv");
-  b = load_csv<Eigen::MatrixXd>(DART_ROOT_PATH"apps/CntctLrnin/testData/testSnoptLP_b.csv");
+  A = load_csv<Eigen::MatrixXd>(DART_ROOT_PATH
+                                "apps/CntctLrnin/testData/testSnoptLP_A.csv");
+  b = load_csv<Eigen::MatrixXd>(DART_ROOT_PATH
+                                "apps/CntctLrnin/testData/testSnoptLP_b.csv");
   std::cout << "Matrix A: " << std::endl << A << std::endl;
   std::cout << "Vector b: " << std::endl << b.transpose() << std::endl;
 
@@ -31,8 +33,8 @@ void testSnoptLP() {
   std::cout << "Vector z:" << std::endl << z.transpose() << std::endl;
   std::cout << "A*z+b ? 0" << std::endl << (A * z + b).transpose() << std::endl;
 
-  std::cout << "Validation: " << std::boolalpha 
-                              << ((A * z + b).array().abs() < 1e-6).any() << std::endl;
+  std::cout << "Validation: " << std::boolalpha
+            << ((A * z + b).array().abs() < 1e-6).any() << std::endl;
 
   std::cin.get();
 }
@@ -40,8 +42,10 @@ void testSnoptLP() {
 void testSnoptLCP() {
   Eigen::MatrixXd A;
   Eigen::VectorXd b;
-  A = load_csv<Eigen::MatrixXd>(DART_ROOT_PATH"apps/CntctLrnin/testData/testSnoptLCP_A.csv");
-  b = load_csv<Eigen::MatrixXd>(DART_ROOT_PATH"apps/CntctLrnin/testData/testSnoptLCP_b.csv");
+  A = load_csv<Eigen::MatrixXd>(DART_ROOT_PATH
+                                "apps/CntctLrnin/testData/testSnoptLCP_A.csv");
+  b = load_csv<Eigen::MatrixXd>(DART_ROOT_PATH
+                                "apps/CntctLrnin/testData/testSnoptLCP_b.csv");
   std::cout << "Matrix A: " << std::endl << A << std::endl;
   std::cout << "Vector b: " << std::endl << b.transpose() << std::endl;
 
@@ -50,8 +54,8 @@ void testSnoptLCP() {
   mSnoptLCPSolver.solveLCP(z);
 
   std::cout << "Vector z:" << std::endl << z.transpose() << std::endl;
-  std::cout << "Validation: " << std::boolalpha 
-                              << dart::lcpsolver::YT::validate(A, b, z);
+  std::cout << "Validation: " << std::boolalpha
+            << dart::lcpsolver::YT::validate(A, b, z);
 
   std::cin.get();
 }
@@ -59,8 +63,10 @@ void testSnoptLCP() {
 void testDFSLCP() {
   Eigen::MatrixXd A;
   Eigen::VectorXd b;
-  A = load_csv<Eigen::MatrixXd>(DART_ROOT_PATH"apps/CntctLrnin/testData/testSnoptLCPDFS_A.csv");
-  b = load_csv<Eigen::MatrixXd>(DART_ROOT_PATH"apps/CntctLrnin/testData/testSnoptLCPDFS_b.csv");
+  A = load_csv<Eigen::MatrixXd>(
+      DART_ROOT_PATH "apps/CntctLrnin/testData/testSnoptLCPDFS_A.csv");
+  b = load_csv<Eigen::MatrixXd>(
+      DART_ROOT_PATH "apps/CntctLrnin/testData/testSnoptLCPDFS_b.csv");
   std::cout << "Matrix A: " << std::endl << A << std::endl;
   std::cout << "Vector b: " << std::endl << b.transpose() << std::endl;
 
@@ -68,17 +74,19 @@ void testDFSLCP() {
   std::vector<Eigen::VectorXd> ret_list;
   DFS(z, 0, A, b, ret_list);
   for (size_t i = 0; i < ret_list.size(); i++) {
-    std::cout << "ret_list: " << std::endl << ret_list[i].transpose() << std::endl;
+    std::cout << "ret_list: " << std::endl
+              << ret_list[i].transpose() << std::endl;
   }
   z = ret_list[0];
   std::cout << "Vector z:" << std::endl << z.transpose() << std::endl;
-  std::cout << "Validation: " << std::boolalpha 
-                              << dart::lcpsolver::YT::validate(A, b, z);
+  std::cout << "Validation: " << std::boolalpha
+            << dart::lcpsolver::YT::validate(A, b, z);
   std::cin.get();
 }
 
 int main(int argc, char* argv[]) {
-  std::srand((unsigned)(std::chrono::system_clock::now().time_since_epoch().count()));
+  std::srand(
+      (unsigned)(std::chrono::system_clock::now().time_since_epoch().count()));
 
   std::shared_ptr<MyWorld> mWorld = std::make_shared<MyWorld>();
   assert(mWorld != nullptr);
@@ -106,7 +114,7 @@ int main(int argc, char* argv[]) {
   mWorld->getConstraintSolver()->setLCPSolver(
       new LemkeLCPSolver(mWorld->getTimeStep(), mWindow));
   if (NUMBASIS != 2) {
-  dtmsg << "Using LemkeLCPSolver..." << std::endl; 
+    dtmsg << "Using LemkeLCPSolver..." << std::endl;
   }
 #endif
 

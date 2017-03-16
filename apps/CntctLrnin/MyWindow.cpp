@@ -80,7 +80,6 @@ void MyWindow::addExtForce() {
   if (extForceDuration < 0) {
     extForceDuration = RANDOM_DURATION;
     for (int i = 0; i < NUMBODYNODES; i++) {
-
 #ifndef UNIT_TEST
       extForce[i] = Eigen::Vector3d::Zero();
       int dir = (mWorld->getSimFrames() / 800) % 8;

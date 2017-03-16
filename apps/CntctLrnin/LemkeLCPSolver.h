@@ -7,14 +7,14 @@
 #include <iostream>
 #include <string>
 
+#include "../lemkeFix/myLemke.h"
 #include "DepthFirstSearchLCP.h"
 #include "MyContactConstraint.h"
 #include "MyWindow.h"
-#include "parameter.h"
 #include "SnoptWrapper.h"
 #include "dart/dart.h"
+#include "parameter.h"
 #include "utils.h"
-#include "../lemkeFix/myLemke.h"
 
 /// Macro controlling prompt and data
 #define OUTPUT2FILE
@@ -30,12 +30,17 @@
 
 /*
  * * fn=0, fd=0, lambda=0		contact break
- * * fn=0, fd=0, lambda>0		has relative tangential velocities but no friction
+ * * fn=0, fd=0, lambda>0		has relative tangential velocities but
+ * no
+ * friction
  * * fn=0, fd>0, lambda=0 	X
  * * fn=0, fd>0, lambda>0		X
- * * fn>0, fd=0, lambda=0		static, no relative tangential velocities, no relative tangential acc
+ * * fn>0, fd=0, lambda=0		static, no relative tangential velocities,
+ * no
+ * relative tangential acc
  * * fn>0, fd=0, lambda>0		X
- * * fn>0, fd>0, lambda=0		static friction, no relative tangential velocities, relative tangential acc
+ * * fn>0, fd>0, lambda=0		static friction, no relative tangential
+ * velocities, relative tangential acc
  * * fn>0, fd>0, lambda>0		slide
  */
 //
@@ -62,7 +67,6 @@ class LemkeLCPSolver : public DantzigLCPSolver {
   void solveLemke(ConstrainedGroup* _group);
   void solveODE(ConstrainedGroup* _group);
 
-
   /// ODE print function
   void print(size_t _n, double* _A, double* _x, double* _lo, double* _hi,
              double* _b, double* w, int* _findex);
@@ -73,13 +77,12 @@ class LemkeLCPSolver : public DantzigLCPSolver {
 
   /// Permute , negate and augment b
   void permuteNegateAugumentB(double* b, const Eigen::VectorXd& preLemkeB,
-                          Eigen::VectorXd& lemkeB,
-                          Eigen::MatrixXd& T);
+                              Eigen::VectorXd& lemkeB, Eigen::MatrixXd& T);
 
   /// Permute and augment A
   void permuteAugumentA(const Eigen::MatrixXd& preLemkeA,
-                    Eigen::MatrixXd& lemkeA, const Eigen::MatrixXd& T,
-                    const Eigen::MatrixXd& mu, const Eigen::MatrixXd& E);
+                        Eigen::MatrixXd& lemkeA, const Eigen::MatrixXd& T,
+                        const Eigen::MatrixXd& mu, const Eigen::MatrixXd& E);
 
   /// scale A matrix for ill-conditioned A
   void scale(Eigen::MatrixXd& A);
@@ -89,24 +92,22 @@ class LemkeLCPSolver : public DantzigLCPSolver {
                  std::vector<Eigen::VectorXd>& zGroups);
 
   /// Remedy if Lemke fails in the first place
-  void recallLemke(bool& Validation, const Eigen::MatrixXd& lemkeA, 
+  void recallLemke(bool& Validation, const Eigen::MatrixXd& lemkeA,
                    const Eigen::VectorXd& lemkeB, Eigen::VectorXd* z);
-  void useSnoptLCPSolver(bool& Validation, const Eigen::MatrixXd& lemkeA, 
-                   const Eigen::VectorXd& lemkeB, Eigen::VectorXd* z);
-  void bruteForce(bool& Validation, const Eigen::MatrixXd& lemkeA, 
-                   const Eigen::VectorXd& lemkeB, Eigen::VectorXd* z);
+  void useSnoptLCPSolver(bool& Validation, const Eigen::MatrixXd& lemkeA,
+                         const Eigen::VectorXd& lemkeB, Eigen::VectorXd* z);
+  void bruteForce(bool& Validation, const Eigen::MatrixXd& lemkeA,
+                  const Eigen::VectorXd& lemkeB, Eigen::VectorXd* z);
 
   /// Sanity check
-  void sanityCheck(const Eigen::MatrixXd& lemkeA,
-                  const Eigen::VectorXd& lemkeB,
-                  const Eigen::VectorXd& z);
+  void sanityCheck(const Eigen::MatrixXd& lemkeA, const Eigen::VectorXd& lemkeB,
+                   const Eigen::VectorXd& z);
 
   /// Lemke fails counter
   int getLCPFail() { return numLCPFail; };
 
   /// Output Lemke solution
-  void recordLCPSolve(const Eigen::MatrixXd& A, 
-                      const Eigen::VectorXd& b,
+  void recordLCPSolve(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
                       const Eigen::VectorXd& z);
 
   /// Output files open and close

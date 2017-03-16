@@ -10,7 +10,7 @@ void addSkel(WorldPtr world) {
 
 #ifndef UNIT_TEST
   world->addSkeleton(
-      addBox(NUMBODYNODES, (Eigen::Vector3d() << 0, 0, 0.25).finished(),true));
+      addBox(NUMBODYNODES, (Eigen::Vector3d() << 0, 0, 0.25).finished(), true));
 #endif
   world->addSkeleton(addPlatform());
 }
@@ -62,13 +62,14 @@ SkeletonPtr addBox() {
 
   bn->setRestitutionCoeff(rsttn_cff);
 
-mBox->enableSelfCollision();
+  mBox->enableSelfCollision();
 
-return mBox;
+  return mBox;
 }
 
 //==============================================================================
-SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& initPos_offset, bool isChain) {
+SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& initPos_offset,
+                   bool isChain) {
   double mass = 1.0;
   Eigen::Vector3d lengthTuple(0.15, 0.15, 0.15);
 
@@ -110,7 +111,7 @@ SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& initPos_offset, bool
     rootBodyNode->setInertia(rootInrtia);
 
     Eigen::Isometry3d roottf(Eigen::Isometry3d::Identity());
-    roottf.translation() =  initPos;
+    roottf.translation() = initPos;
     // tf.linear() = initOri;
     rootBodyNode->getParentJoint()->setTransformFromParentBodyNode(roottf);
 
@@ -119,91 +120,91 @@ SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& initPos_offset, bool
     BodyNodePtr parentBn = rootBodyNode;
 
     for (int idxmBox = 1; idxmBox < NUMBODYNODES; ++idxmBox) {
-    BodyNodePtr bn =
-        mBox->createJointAndBodyNodePair<BallJoint>(parentBn).second;
-    bn->getParentJoint()->setName("Joint_" + std::to_string(idxmBox));
-    bn->setName("BodyNode_" + std::to_string(idxmBox));
+      BodyNodePtr bn =
+          mBox->createJointAndBodyNodePair<BallJoint>(parentBn).second;
+      bn->getParentJoint()->setName("Joint_" + std::to_string(idxmBox));
+      bn->setName("BodyNode_" + std::to_string(idxmBox));
 
-    std::shared_ptr<Shape> shpe;
-    switch (SHAPE) {
-      case mShapeType::cube:
-        shpe = std::make_shared<BoxShape>(lengthTuple);
-        break;
-      case mShapeType::ball:
-        shpe = std::make_shared<EllipsoidShape>(lengthTuple);
-        break;
-      default:
-        dterr << "Unknown shape!!!" << std::endl;
-    }
+      std::shared_ptr<Shape> shpe;
+      switch (SHAPE) {
+        case mShapeType::cube:
+          shpe = std::make_shared<BoxShape>(lengthTuple);
+          break;
+        case mShapeType::ball:
+          shpe = std::make_shared<EllipsoidShape>(lengthTuple);
+          break;
+        default:
+          dterr << "Unknown shape!!!" << std::endl;
+      }
 
-    shpe->setColor(dart::Color::Red(0.6));
-    bn->addVisualizationShape(shpe);
-    bn->addCollisionShape(shpe);
+      shpe->setColor(dart::Color::Red(0.6));
+      bn->addVisualizationShape(shpe);
+      bn->addCollisionShape(shpe);
 
-    Inertia inrtia;
-    inrtia.setMass(mass);
-    inrtia.setMoment(shpe->computeInertia(inrtia.getMass()));
-    bn->setInertia(inrtia);
+      Inertia inrtia;
+      inrtia.setMass(mass);
+      inrtia.setMoment(shpe->computeInertia(inrtia.getMass()));
+      bn->setInertia(inrtia);
 
-    Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
-    tf.translation() = initPos_offset;
-    // tf.linear() = initOri;
-    bn->getParentJoint()->setTransformFromParentBodyNode(tf);
+      Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
+      tf.translation() = initPos_offset;
+      // tf.linear() = initOri;
+      bn->getParentJoint()->setTransformFromParentBodyNode(tf);
 
-    bn->setRestitutionCoeff(rsttn_cff);
+      bn->setRestitutionCoeff(rsttn_cff);
 
-    parentBn = bn;
+      parentBn = bn;
     }
   } else {
-  /// Dummy root body node
-  BodyNodePtr rootBodyNode =
-      mBox->createJointAndBodyNodePair<FreeJoint>().second;
-  rootBodyNode->getParentJoint()->setName("RootJoint");
-  rootBodyNode->setName("RootBodyNode");
-  std::shared_ptr<Shape> rootShpe;
-  rootShpe = std::make_shared<BoxShape>(Eigen::Vector3d(0.01,0.01,0.01));
-  rootShpe->setColor(dart::Color::Orange(0.8));
-  rootBodyNode->addVisualizationShape(rootShpe);
-  rootBodyNode->addCollisionShape(rootShpe);
+    /// Dummy root body node
+    BodyNodePtr rootBodyNode =
+        mBox->createJointAndBodyNodePair<FreeJoint>().second;
+    rootBodyNode->getParentJoint()->setName("RootJoint");
+    rootBodyNode->setName("RootBodyNode");
+    std::shared_ptr<Shape> rootShpe;
+    rootShpe = std::make_shared<BoxShape>(Eigen::Vector3d(0.01, 0.01, 0.01));
+    rootShpe->setColor(dart::Color::Orange(0.8));
+    rootBodyNode->addVisualizationShape(rootShpe);
+    rootBodyNode->addCollisionShape(rootShpe);
 
-  // Eigen::Isometry3d roottf(Eigen::Isometry3d::Identity());
-  // roottf.translation() = 2 * initPos;
-  // rootBodyNode->getParentJoint()->setTransformFromParentBodyNode(roottf);
+    // Eigen::Isometry3d roottf(Eigen::Isometry3d::Identity());
+    // roottf.translation() = 2 * initPos;
+    // rootBodyNode->getParentJoint()->setTransformFromParentBodyNode(roottf);
 
-  for (int idxmBox = 0; idxmBox < numBodyNodes; idxmBox++) {
-    BodyNodePtr bn =
-        mBox->createJointAndBodyNodePair<EulerJoint>(rootBodyNode).second;
-    bn->getParentJoint()->setName("Joint_" + std::to_string(idxmBox));
-    bn->setName("BodyNode_" + std::to_string(idxmBox));
+    for (int idxmBox = 0; idxmBox < numBodyNodes; idxmBox++) {
+      BodyNodePtr bn =
+          mBox->createJointAndBodyNodePair<EulerJoint>(rootBodyNode).second;
+      bn->getParentJoint()->setName("Joint_" + std::to_string(idxmBox));
+      bn->setName("BodyNode_" + std::to_string(idxmBox));
 
-    std::shared_ptr<Shape> shpe;
-    switch (SHAPE) {
-      case mShapeType::cube:
-        shpe = std::make_shared<BoxShape>(lengthTuple);
-        break;
-      case mShapeType::ball:
-        shpe = std::make_shared<EllipsoidShape>(lengthTuple);
-        break;
-      default:
-        dterr << "Unknown shape!!!" << std::endl;
+      std::shared_ptr<Shape> shpe;
+      switch (SHAPE) {
+        case mShapeType::cube:
+          shpe = std::make_shared<BoxShape>(lengthTuple);
+          break;
+        case mShapeType::ball:
+          shpe = std::make_shared<EllipsoidShape>(lengthTuple);
+          break;
+        default:
+          dterr << "Unknown shape!!!" << std::endl;
+      }
+
+      shpe->setColor(dart::Color::Red(0.6));
+      bn->addVisualizationShape(shpe);
+      bn->addCollisionShape(shpe);
+
+      Inertia inrtia;
+      inrtia.setMass(mass);
+      inrtia.setMoment(shpe->computeInertia(inrtia.getMass()));
+      bn->setInertia(inrtia);
+
+      Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
+      tf.translation() = initPos + idxmBox * initPos_offset;
+      // tf.linear() = initOri;
+      bn->getParentJoint()->setTransformFromParentBodyNode(tf);
+
+      bn->setRestitutionCoeff(rsttn_cff);
     }
-
-    shpe->setColor(dart::Color::Red(0.6));
-    bn->addVisualizationShape(shpe);
-    bn->addCollisionShape(shpe);
-
-    Inertia inrtia;
-    inrtia.setMass(mass);
-    inrtia.setMoment(shpe->computeInertia(inrtia.getMass()));
-    bn->setInertia(inrtia);
-
-    Eigen::Isometry3d tf(Eigen::Isometry3d::Identity());
-    tf.translation() =  initPos + idxmBox * initPos_offset;
-    // tf.linear() = initOri;
-    bn->getParentJoint()->setTransformFromParentBodyNode(tf);
-
-    bn->setRestitutionCoeff(rsttn_cff);
-  }
   }
 
   mBox->enableSelfCollision();
@@ -219,7 +220,6 @@ SkeletonPtr addPlatform() {
 #else
   Eigen::Vector3d lengthTuple(10000.0, 0.01, 10000.0);
 #endif
-
 
   Eigen::Vector3d initPos(0.0, 0.05, 0.0);
   // Eigen::Quaterniond initOriQuat;  // arbitrary initial orientation
