@@ -29,21 +29,16 @@
 #define SANITY_CHECK
 
 /*
- * * fn=0, fd=0, lambda=0		contact break
- * * fn=0, fd=0, lambda>0		has relative tangential velocities but
- * no
- * friction
- * * fn=0, fd>0, lambda=0 	X
- * * fn=0, fd>0, lambda>0		X
- * * fn>0, fd=0, lambda=0		static, no relative tangential velocities,
- * no
- * relative tangential acc
- * * fn>0, fd=0, lambda>0		X
- * * fn>0, fd>0, lambda=0		static friction, no relative tangential
- * velocities, relative tangential acc
- * * fn>0, fd>0, lambda>0		slide
+ * fn=0, fd=0, lambda=0		contact break
+ * fn=0, fd=0, lambda>0		has relative tangential velocities but no friction
+ * fn=0, fd>0, lambda=0 	X
+ * fn=0, fd>0, lambda>0		X
+ * fn>0, fd=0, lambda=0		static, no relative tangential velocities, no relative tangential acc
+ * fn>0, fd=0, lambda>0		X
+ * fn>0, fd>0, lambda=0		static friction, no relative tangential velocities, relative tangential acc
+ * fn>0, fd>0, lambda>0		slide
  */
-//
+
 
 namespace CntctLrnin {
 
@@ -109,6 +104,10 @@ class LemkeLCPSolver : public DantzigLCPSolver {
   /// Output Lemke solution
   void recordLCPSolve(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
                       const Eigen::VectorXd& z);
+
+  void permuteAandBforRecord(Eigen::MatrixXd& newA, Eigen::VectorXd& newb,
+                             const Eigen::MatrixXd& A,
+                             const Eigen::VectorXd& b, int idx0, int idx1);
 
   /// Output files open and close
   void outputFileClose();

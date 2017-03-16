@@ -655,8 +655,8 @@ void LemkeLCPSolver::permuteAugumentA(const Eigen::MatrixXd& preLemkeA,
                                       const Eigen::MatrixXd& E) {
   lemkeA.setZero();
   size_t mDim = 1 + numBasis;
-  assert(mDim == preLemkeA.rows());
-  assert(mDim == preLemkeA.cols());
+  assert(mDim * numContactsCallBack == preLemkeA.rows());
+  assert(mDim * numContactsCallBack == preLemkeA.cols());
 
   // Permute A
   lemkeA.block(0, 0, preLemkeA.rows(), preLemkeA.cols()) =
@@ -1019,32 +1019,168 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A,
   //   std::cout << "Value " << i << " :" << value_array(i) << std::endl;
   // }
 
-  // if (value_array.minCoeff() >= 8) {
-  if (true) {
-    for (int i = 0; i < nSize - numContactsToLearn; i++) {
-      for (int j = i; j < nSize - numContactsToLearn; j++) {
-        (*outputFile) << A(i, j) << ",";
+  bool recordAllClasses = false;
+  if (recordAllClasses) {
+    // -------------------------------------------------------------------------
+    // record all classes for all contact points
+    // if (value_array.minCoeff() >= 8) {
+    if (true) {
+      for (int i = 0; i < nSize - numContactsToLearn; i++) {
+        for (int j = i; j < nSize - numContactsToLearn; j++) {
+          (*outputFile) << A(i, j) << ",";
+        }
+      }
+
+      for (int i = 0; i < numContactsToLearn; i++) {
+        (*outputFile) << A(nSize - numContactsToLearn + i, i) << ",";
+      }
+
+      for (int i = 0; i < nSize - numContactsToLearn; i++) {
+        (*outputFile) << b(i) << ",";
+      }
+
+      for (int i = 0; i < numContactsToLearn; i++) {
+        (*outputFile) << value_array(i);
+        if (i < numContactsToLearn - 1) {
+          (*outputFile) << ",";
+        }
+      }
+
+      (*outputFile) << std::endl;
+      counters[numContactsToLearn - 1] += 1;
+    }
+  } else {
+    // -------------------------------------------------------------------------
+    // record one class each time and permute A and b
+    for (int mIdxCnstrnt = 0; mIdxCnstrnt < numContactsCallBack;
+         ++mIdxCnstrnt) {
+      Eigen::MatrixXd newA(nSize, nSize);
+      Eigen::VectorXd newb(nSize);
+      newA = A;
+      newb = b;
+      if (mIdxCnstrnt > 0) {
+        permuteAandBforRecord(newA, newb, A, b, 0, mIdxCnstrnt);
+
+        /* 
+        // assert
+        Eigen::VectorXd* newZ = new Eigen::VectorXd(numContactsCallBack * (2 + numBasis));
+        int newErr = dart::lcpsolver::YT::Lemke(newA, newb, newZ);
+        bool newValidation = dart::lcpsolver::YT::validate(newA, newb, (*newZ));
+        std::vector<Eigen::VectorXd> newZGroups;
+        decompose((*newZ), newZGroups);
+
+        int newValue = 9;
+        // Convention: numbasis = 8, so total 10 elements
+        if (newZGroups[0](0) < RECORD_ZERO)  // fn = 0, break
+        {
+          newValue = 9;
+        } else if (newZGroups[0](numBasis + 1) < RECORD_ZERO) {  // lambda = 0, static
+          newValue = 8;
+        } else {  // random choose non-zero in fd
+
+          // Hard-coding for numBasis = 4
+          assert(numBasis == 4);
+          // newZGroups[0] [1, numBasis]
+          std::vector<int> nonZerofd;
+          nonZerofd.clear();
+          for (int j = 0; j < numBasis; j++) {
+            if (newZGroups[0](j + 1) > RECORD_ZERO) {
+              nonZerofd.push_back(j);
+            }
+          }
+
+          if (nonZerofd.size() == 0 || nonZerofd.size() > 2) {
+            dterr << "ERROR: the number of non-zeros in fd is wrong..."
+                  << std::endl;
+            nonZerofdException = true;
+            break;
+          }
+
+          if (nonZerofd.size() == 2) {
+            if (nonZerofd[0] == 0 && nonZerofd[1] == 3) {
+              nonZerofd[0] = 4;
+            }
+          }
+
+          int sum = 0;
+          for (int j = 0; j < nonZerofd.size(); j++) {
+            sum = sum + nonZerofd[j];
+          }
+
+          newValue = sum * 2 / nonZerofd.size();
+        }
+
+        // std::cout << "Old Matrix A: " << std::endl << A << std::endl;
+        // std::cout << "Old vector b: " << std::endl << b.transpose() << std::endl;
+        // std::cout << "Old vector z: " << std::endl << z.transpose() << std::endl;
+        // std::cout << "New Matrix A: " << std::endl << newA << std::endl;
+        // std::cout << "New vector b: " << std::endl << newb.transpose() << std::endl;
+        // std::cout << "New vector z: " << std::endl << (*newZ).transpose() << std::endl;
+        std::cout << "Expected first contact class: " << value_array(mIdxCnstrnt) << std::endl;
+        std::cout << "new contact class: " << newValue << std::endl;
+        std::cin.get();
+        */
+      }
+
+      // if (value_array.minCoeff() >= 8) {
+      if (true) {
+        for (int i = 0; i < nSize - numContactsToLearn; i++) {
+          for (int j = i; j < nSize - numContactsToLearn; j++) {
+            (*outputFile) << newA(i, j) << ",";
+          }
+        }
+
+        for (int i = 0; i < numContactsToLearn; i++) {
+          (*outputFile) << newA(nSize - numContactsToLearn + i, i) << ",";
+        }
+
+        for (int i = 0; i < nSize - numContactsToLearn; i++) {
+          (*outputFile) << newb(i) << ",";
+        }
+
+        (*outputFile) << value_array(mIdxCnstrnt);
+
+        (*outputFile) << std::endl;
       }
     }
-
-    for (int i = 0; i < numContactsToLearn; i++) {
-      (*outputFile) << A(nSize - numContactsToLearn + i, i) << ",";
-    }
-
-    for (int i = 0; i < nSize - numContactsToLearn; i++) {
-      (*outputFile) << b(i) << ",";
-    }
-
-    for (int i = 0; i < numContactsToLearn; i++) {
-      (*outputFile) << value_array(i);
-      if (i < numContactsToLearn - 1) {
-        (*outputFile) << ",";
-      }
-    }
-
-    (*outputFile) << std::endl;
     counters[numContactsToLearn - 1] += 1;
   }
 #endif
+}
+
+//==============================================================================
+void LemkeLCPSolver::permuteAandBforRecord(Eigen::MatrixXd& newA,
+                                           Eigen::VectorXd& newb,
+                                           const Eigen::MatrixXd& A,
+                                           const Eigen::VectorXd& b, int idx0,
+                                           int idx1) {
+  assert(newA.size() == A.size());
+  assert(newb.size() == b.size());
+  assert(newb.size() == (numBasis + 2) * numContactsCallBack);
+  assert(idx0 >= 0 && idx0 < numContactsCallBack);
+  assert(idx1 >= 0 && idx1 < numContactsCallBack);
+
+  int mDim = numBasis + 1;
+  Eigen::MatrixXd T(mDim * numContactsCallBack, mDim * numContactsCallBack);
+  T.setIdentity();
+
+  T.row(idx0).swap(T.row(idx1));
+  T.block(numContactsCallBack + idx0 * numBasis, 0, numBasis,
+          mDim * numContactsCallBack)
+      .swap(T.block(numContactsCallBack + idx1 * numBasis, 0, numBasis,
+                    mDim * numContactsCallBack));
+  assert(T * T.transpose() == Eigen::MatrixXd::Identity(T.rows(), T.cols()));
+  newA.topLeftCorner(T.rows(), T.cols()) =
+      T * A.topLeftCorner(T.rows(), T.cols()) * T.transpose();
+  newb.head(T.rows()) = T * b.head(T.rows());
+
+  // permute friction coefficients
+  T.resize(numContactsCallBack, numContactsCallBack);
+  T.setIdentity();
+  T.row(idx0).swap(T.row(idx1));
+  assert(T * T.transpose() == Eigen::MatrixXd::Identity(T.rows(), T.cols()));
+  newA.bottomLeftCorner(numContactsCallBack, numContactsCallBack) =
+      T * A.bottomLeftCorner(numContactsCallBack, numContactsCallBack) *
+      T.transpose();
 }
 }

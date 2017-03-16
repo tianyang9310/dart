@@ -10,7 +10,7 @@ void addSkel(WorldPtr world) {
 
 #ifndef UNIT_TEST
   world->addSkeleton(
-      addBox(NUMBODYNODES, (Eigen::Vector3d() << 0, 0, 0.25).finished(), true));
+      addBox(NUMBODYNODES, (Eigen::Vector3d() << 0, 0, 0.2).finished(),true));
 #endif
   world->addSkeleton(addPlatform());
 }
@@ -71,9 +71,9 @@ SkeletonPtr addBox() {
 SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& initPos_offset,
                    bool isChain) {
   double mass = 1.0;
-  Eigen::Vector3d lengthTuple(0.15, 0.15, 0.15);
+  Eigen::Vector3d lengthTuple(0.1, 0.1, 0.1);
 
-  Eigen::Vector3d initPos(0.0, -0.2 + 0.01 + 0.025, 0.0);
+  Eigen::Vector3d initPos(0.0, -0.2 + 0.01, 0.0);
   // Eigen::Quaterniond initOriQuat;
   // initOriQuat.w() = 1.0;
   // initOriQuat.vec() = Eigen::Vector3d::Random();
