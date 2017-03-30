@@ -19,7 +19,7 @@
 
 #else 
 
-#define NUMBODYNODES 2
+#define NUMBODYNODES 5
 
 #endif
 
@@ -37,6 +37,6 @@
 #define SHAPE mShapeType::cube
 
 #define RANDOM_DURATION 2
-#define PERIOD 30
+#define PERIOD 10
 
 #endif
