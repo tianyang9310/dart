@@ -70,7 +70,7 @@ SkeletonPtr addBox() {
 //==============================================================================
 SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& initPos_offset,
                    bool isChain) {
-  double mass = 1.0;
+  double mass = 0.5;
   Eigen::Vector3d lengthTuple(0.1, 0.1, 0.1);
 
   Eigen::Vector3d initPos(0.0, -0.2 + 0.01, 0.0);

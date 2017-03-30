@@ -293,7 +293,9 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
 #ifdef OUTPUT2FILE
   // output to file after all necessary computation and valid Lemke results
   if (Validation && (counters[numConstraints - 1] < dataSize)) {
-    recordLCPSolve(lemkeA, lemkeB, (*z));
+    if (numConstraints == 8) {
+      recordLCPSolve(lemkeA, lemkeB, (*z));
+    }
   }
 
   // early stopping

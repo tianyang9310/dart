@@ -83,7 +83,7 @@ void MyWindow::addExtForce() {
 #ifndef UNIT_TEST
       extForce[i] = Eigen::Vector3d::Zero();
       int dir = (mWorld->getSimFrames() / 800) % 8;
-      double mag = std::rand() % 15;
+      double mag = std::rand() % 7;
       double dev = double(std::rand()) / RAND_MAX * 10 - 5;
       extForce[i](0) = mag * std::sin((dir * 45.0 + dev) / 180 * DART_PI);
       extForce[i](2) = mag * std::cos((dir * 45.0 + dev) / 180 * DART_PI);
@@ -114,7 +114,7 @@ void MyWindow::addExtTorque() {
   if (extTorqueDuration < 0) {
     extTorqueDuration = RANDOM_DURATION;
     for (int i = 0; i < NUMBODYNODES; ++i) {
-      extTorque[i] = Eigen::Vector3d::Random() * 5;
+      extTorque[i] = Eigen::Vector3d::Random() * 2.5;
     }
   } else {
     extTorqueDuration--;
