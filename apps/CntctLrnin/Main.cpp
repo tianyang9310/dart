@@ -95,27 +95,31 @@ void testCaffe() {
 
   // ::google::InitGoogleLogging(argv[0]);
 
-  string model_file   = "/Users/Yang/Material/Research/caffe/models/bvlc_reference_caffenet/deploy.prototxt";
-  string trained_file = "/Users/Yang/Material/Research/caffe/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel";
+  // string model_file   = "/Users/Yang/Material/Research/caffe/models/bvlc_reference_caffenet/deploy.prototxt";
+  // string trained_file = "/Users/Yang/Material/Research/caffe/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel";
+
+  string model_file   = DART_ROOT_PATH"apps/CntctLrnin/CaffeNet/numContactToLearn_1/deploy.prototxt";
+  string trained_file = DART_ROOT_PATH"apps/CntctLrnin/CaffeNet/numContactToLearn_1/train_iter_100000.caffemodel";
+
   string mean_file    = "/Users/Yang/Material/Research/caffe/data/ilsvrc12/imagenet_mean.binaryproto";
   string label_file   = "/Users/Yang/Material/Research/caffe/data/ilsvrc12/synset_words.txt";
   Classifier classifier(model_file, trained_file, mean_file, label_file);
 
-  string file = "/Users/Yang/Material/Research/caffe/examples/images/cat.jpg";
+  // string file = "/Users/Yang/Material/Research/caffe/examples/images/cat.jpg";
 
-  std::cout << "---------- Prediction for "
-            << file << " ----------" << std::endl;
+  // std::cout << "---------- Prediction for "
+  //           << file << " ----------" << std::endl;
 
-  cv::Mat img = cv::imread(file, -1);
-  CHECK(!img.empty()) << "Unable to decode image " << file;
-  std::vector<Prediction> predictions = classifier.Classify(img);
+  // cv::Mat img = cv::imread(file, -1);
+  // CHECK(!img.empty()) << "Unable to decode image " << file;
+  // std::vector<Prediction> predictions = classifier.Classify(img);
 
-  /* Print the top N predictions. */
-  for (size_t i = 0; i < predictions.size(); ++i) {
-    Prediction p = predictions[i];
-    std::cout << std::fixed << std::setprecision(4) << p.second << " - \""
-              << p.first << "\"" << std::endl;
-  }
+  // [> Print the top N predictions. <]
+  // for (size_t i = 0; i < predictions.size(); ++i) {
+  //   Prediction p = predictions[i];
+  //   std::cout << std::fixed << std::setprecision(4) << p.second << " - \""
+  //             << p.first << "\"" << std::endl;
+  // }
   std::cin.get();
 }
 

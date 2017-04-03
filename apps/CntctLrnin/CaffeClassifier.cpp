@@ -1,9 +1,13 @@
 #include "CaffeClassifier.h"
+#include "dist-json/json/json.h"
+#include <fstream>
+#include "JsonUtil.h"
 
 Classifier::Classifier(const string& model_file,
                        const string& trained_file,
                        const string& mean_file,
-                       const string& label_file) {
+                       const string& label_file,
+                       int numContactsToLearn) {
 #ifdef CPU_ONLY
   Caffe::set_mode(Caffe::CPU);
 #else
@@ -14,17 +18,28 @@ Classifier::Classifier(const string& model_file,
   net_.reset(new Net<float>(model_file, TEST));
   net_->CopyTrainedLayersFrom(trained_file);
 
+  // Input and output blob numbers. 
+  std::cerr << "Net num input: " << net_->num_inputs() << std::endl;
+  std::cerr << "Net num output: " << net_->num_outputs() << std::endl;
   CHECK_EQ(net_->num_inputs(), 1) << "Network should have exactly one input.";
   CHECK_EQ(net_->num_outputs(), 1) << "Network should have exactly one output.";
 
   Blob<float>* input_layer = net_->input_blobs()[0];
   num_channels_ = input_layer->channels();
-  CHECK(num_channels_ == 3 || num_channels_ == 1)
-    << "Input layer should have 1 or 3 channels.";
-  input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
+  std::cerr << "Net input layer num channels: " << num_channels_ << std::endl;
 
-  /* Load the binaryproto mean file. */
-  SetMean(mean_file);
+  int numBasis = 4;
+  int ASize = numContactsToLearn * (numBasis + 1);
+  int inputSize = ASize + (ASize + 1) * ASize / 2 + numContactsToLearn;
+
+  CHECK(num_channels_ == inputSize)
+     << "Input layer channels should be " << inputSize;
+  // input_geometry_ = cv::Size(input_layer->width(), input_layer->height());
+
+  // /* Load the binaryproto mean file. */
+  // SetMean(mean_file);
+  std::string preprocessing_file = DART_ROOT_PATH"apps/CntctLrnin/CaffeNet/numContactToLearn_1/PreprocessingData.json";
+  mSetPreprocessing(preprocessing_file);
 
   /* Load labels. */
   std::ifstream labels(label_file.c_str());
@@ -100,6 +115,89 @@ void Classifier::SetMean(const string& mean_file) {
    * filled with this value. */
   cv::Scalar channel_mean = cv::mean(mean);
   mean_ = cv::Mat(input_geometry_, mean.type(), channel_mean);
+}
+
+void Classifier::mSetPreprocessing(const string& preprocessing_file) {
+  const std::string gLowerBoundKey = "lower bound";
+  const std::string gUpperBoundKey = "upper bound";
+  const std::string gMeanKey = "mean";
+  const std::string gUKey = "U";
+  const std::string gSKey = "S";
+
+  std::cout << "Net preprocessing_file: " << preprocessing_file << std::endl;
+  std::ifstream f_stream(preprocessing_file);
+  Json::Reader reader;
+  Json::Value root;
+  bool succ = reader.parse(f_stream, root);
+  f_stream.close();
+
+  if (succ && !root[gLowerBoundKey].isNull()) {
+    Eigen::VectorXd mLowerBound_;
+    succ &=cJsonUtil::ReadVectorJson(root[gLowerBoundKey], mLowerBound_);
+
+    int mLowerBound_size = static_cast<int>(mLowerBound_.size());
+    if (mLowerBound_size == num_channels_) {
+      mLowerBound = mLowerBound_;
+    } else {
+      std::cout << "Invalid lower bound size" << std::endl;
+    }
+  }
+
+  if (succ && !root[gUpperBoundKey].isNull()) {
+    Eigen::VectorXd mUpperBound_;
+    succ &=cJsonUtil::ReadVectorJson(root[gUpperBoundKey], mUpperBound_);
+
+    int mUpperBound_size = static_cast<int>(mUpperBound_.size());
+    if (mUpperBound_size == num_channels_) {
+      mUpperBound = mUpperBound_;
+    } else {
+      std::cout << "Invalid upper bound size" << std::endl;
+    }
+  }
+
+  if (succ && !root[gMeanKey].isNull()) {
+    Eigen::VectorXd mMean_;
+    succ &=cJsonUtil::ReadVectorJson(root[gMeanKey], mMean_);
+
+    int mMean_size = static_cast<int>(mMean_.size());
+    if (mMean_size == num_channels_) {
+      mMean = mMean_;
+    } else {
+      std::cout << "Invalid mean size" << std::endl;
+    }
+  }
+
+  if (succ && !root[gSKey].isNull()) {
+    Eigen::VectorXd mS_;
+    succ &=cJsonUtil::ReadVectorJson(root[gSKey], mS_);
+
+    int mS_size = static_cast<int>(mS_.size());
+    if (mS_size == num_channels_) {
+      mS = mS_;
+    } else {
+      std::cout << "Invalid S size" << std::endl;
+    }
+  }
+
+  if (succ && !root[gUKey].isNull()) {
+    Eigen::MatrixXd mU_;
+    succ &=cJsonUtil::ReadMatrixJson(root[gUKey], mU_);
+
+    int mU_row = static_cast<int>(mU_.rows());
+    int mU_col = static_cast<int>(mU_.cols());
+    if (mU_row == num_channels_ && mU_col == num_channels_) {
+      mU = mU_;
+    } else {
+      std::cout << "Invalid U size" << std::endl;
+    }
+  }
+
+  std::cout << "mLowerBound: " << std::endl << std::setprecision(20) << mLowerBound << std::endl;
+  std::cout << "mUpperBound: " << std::endl << std::setprecision(20) << mUpperBound << std::endl;
+  std::cout << "mMean: " << std::endl << std::setprecision(20) << mMean << std::endl;
+  std::cout << "mS: " << std::endl << std::setprecision(20) << mS << std::endl;
+  std::cout << "mU: " << std::endl << std::setprecision(20) << mU << std::endl;
+  std::cin.get();
 }
 
 std::vector<float> Classifier::Predict(const cv::Mat& img) {

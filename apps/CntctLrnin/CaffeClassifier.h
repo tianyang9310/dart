@@ -1,6 +1,7 @@
 #ifndef CAFFE_classifier
 #define CAFFE_classifier
 
+#include "dart/dart.h"
 #include <caffe/caffe.hpp>
 #include <memory>
 
@@ -18,12 +19,15 @@ class Classifier {
   Classifier(const string& model_file,
              const string& trained_file,
              const string& mean_file,
-             const string& label_file);
+             const string& label_file,
+             int numContactsToLearn = 1);
 
   std::vector<Prediction> Classify(const cv::Mat& img, int N = 5);
 
  private:
   void SetMean(const string& mean_file);
+
+  void mSetPreprocessing(const string& preprocessing_file);
 
   std::vector<float> Predict(const cv::Mat& img);
 
@@ -35,8 +39,18 @@ class Classifier {
  private:
   std::shared_ptr<Net<float> > net_;
   cv::Size input_geometry_;
-  int num_channels_;
   cv::Mat mean_;
+
+  // input data size
+  int num_channels_;
+  // Normalization to [-1,1]
+  Eigen::VectorXd mLowerBound;
+  Eigen::VectorXd mUpperBound;
+  Eigen::VectorXd mMean;
+  // Whitening
+  Eigen::MatrixXd mU; // EigenVector
+  Eigen::VectorXd mS; // EigenValues
+
   std::vector<string> labels_;
 };
 
