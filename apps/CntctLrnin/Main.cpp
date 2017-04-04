@@ -16,6 +16,7 @@
 #include "csvParser.h"
 #include "dart/dart.h"
 #include "dist-json/json/json.h"
+#include "CaffeLPSolver.h"
 
 #define runGUI
 
@@ -90,11 +91,10 @@ void testDFSLCP() {
 }
 
 void testCaffe() {
-  string model_file = DART_ROOT_PATH
+  std::string model_file = DART_ROOT_PATH
       "apps/CntctLrnin/CaffeNet/numContactToLearn_1/deploy.prototxt";
-  string trained_file = DART_ROOT_PATH
-      "apps/CntctLrnin/CaffeNet/numContactToLearn_1/"
-      "train_iter_100000.caffemodel";
+  std::string trained_file = DART_ROOT_PATH
+      "apps/CntctLrnin/CaffeNet/numContactToLearn_1/train_iter_100000.caffemodel";
 
   std::string preprocessing_file = DART_ROOT_PATH
       "apps/CntctLrnin/CaffeNet/numContactToLearn_1/PreprocessingData.json";
@@ -207,6 +207,10 @@ void testLCPLS() {
   std::cin.get();
 }
 
+void testCaffeLPSolver() {
+  CaffeLPSolver caffelpsolver(1);
+}
+
 int main(int argc, char* argv[]) {
   std::srand(
       (unsigned)(std::chrono::system_clock::now().time_since_epoch().count()));
@@ -220,6 +224,7 @@ int main(int argc, char* argv[]) {
   // testDFSLCP();
   // testCaffe();
   // testLCPLS();
+  // testCaffeLPSolver();
 
   Eigen::Vector3d gravity(0.0, -9.81, 0.0);
   mWorld->setGravity(gravity);
