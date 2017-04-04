@@ -5,7 +5,7 @@
 
 Classifier::Classifier(const string& model_file, const string& trained_file,
                        const string& preprocessing_file,
-                       int numContactsToLearn) {
+                       int _numContactsToLearn) {
 #ifdef CPU_ONLY
   Caffe::set_mode(Caffe::CPU);
 #else
@@ -26,7 +26,8 @@ Classifier::Classifier(const string& model_file, const string& trained_file,
   num_channels_ = input_layer->channels();
   // std::cerr << "Net input layer num channels: " << num_channels_ << std::endl;
 
-  int numBasis = 4;
+  numContactsToLearn = _numContactsToLearn;
+  numBasis = NUMBASIS;
   int ASize = numContactsToLearn * (numBasis + 1);
   int inputSize = ASize + (ASize + 1) * ASize / 2 + numContactsToLearn;
 
@@ -73,9 +74,7 @@ void Classifier::NormalizeWhiten(Eigen::VectorXd& in_x) {
   assert(num_channels_ == in_x.size());
 
   // normlize to [-1, 1]
-  in_x =
-      2 * (in_x - mLowerBound).array() / (mUpperBound - mLowerBound).array() -
-      1;
+  in_x = 2 * (in_x - mLowerBound).array() / (mUpperBound - mLowerBound).array() - 1;
   // std::cout << "After normalization: " << std::endl << in_x << std::endl;
 
   // Use train data to whitening data

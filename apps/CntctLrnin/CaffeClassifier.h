@@ -4,6 +4,7 @@
 #include <caffe/caffe.hpp>
 #include <memory>
 #include "dart/dart.h"
+#include "parameter.h"
 
 using namespace caffe;
 
@@ -12,7 +13,7 @@ class Classifier {
   public:
   Classifier(const string& model_file, const string& trained_file,
              const string& preprocessing_file,
-             int numContactsToLearn = 1);
+             int _numContactsToLearn = 1);
 
   void Eval(const Eigen::VectorXd& in_x, Eigen::VectorXd& out_y);
   int getNumChannels(){
@@ -36,6 +37,10 @@ class Classifier {
   // Whitening
   Eigen::MatrixXd mU;  // EigenVector
   Eigen::VectorXd mS;  // EigenValues
+
+  // net id
+  int numContactsToLearn;
+  int numBasis;
 };
 
 #endif
