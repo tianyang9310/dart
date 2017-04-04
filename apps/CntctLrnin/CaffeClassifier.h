@@ -12,7 +12,7 @@
 using namespace caffe;
 
 /* Pair (label, confidence) representing a prediction. */
-typedef std::pair<string, float> Prediction;
+typedef std::pair<string, double> Prediction;
 
 class Classifier {
  public:
@@ -23,13 +23,16 @@ class Classifier {
              int numContactsToLearn = 1);
 
   std::vector<Prediction> Classify(const cv::Mat& img, int N = 5);
+  void Eval(const Eigen::VectorXd& in_x, Eigen::VectorXd& out_y);
 
  private:
   void SetMean(const string& mean_file);
 
   void mSetPreprocessing(const string& preprocessing_file);
 
-  std::vector<float> Predict(const cv::Mat& img);
+  void NormalizeWhiten(Eigen::VectorXd& in_x);
+
+  std::vector<double> Predict(const cv::Mat& img);
 
   void WrapInputLayer(std::vector<cv::Mat>* input_channels);
 
@@ -37,7 +40,7 @@ class Classifier {
                   std::vector<cv::Mat>* input_channels);
 
  private:
-  std::shared_ptr<Net<float> > net_;
+  std::shared_ptr<Net<double> > net_;
   cv::Size input_geometry_;
   cv::Mat mean_;
 
