@@ -23,7 +23,7 @@ void LCPLS::solve() {
 
   Eigen::VectorXd z0 = value2ub_index(value);
 
-  for (int idx = 0; idx < dim_var; dim_var++) {
+  for (int idx = 0; idx < dim_var; ++idx) {
     if (z0(idx) > 0) {
       bas.push_back(idx);
     } else {
@@ -43,18 +43,11 @@ void LCPLS::solve() {
 
   assert(dim_cnst == (bas.size() + nonbas.size()));
 
-  SnoptLPproblem problem(dim_var, dim_cnst, B, -b);
+  SnoptWrapper mSnoptLPSolver(B, -b);
+  Eigen::VectorXd __z;
+  mSnoptLPSolver.solveLP(__z);
 
-  solver = std::make_shared<SnoptSolver>(&problem);
-  solver->solve();
-
-  Eigen::VectorXd __z(dim_var);
-  __z.setZero();
-  for (size_t i = 0; i < dim_var; i++) {
-    __z(i) = problem.vars()[i]->mVal;
-  }
-
-  if (z.minCoeff() > -LCPLS_ZERO) {
+  if (__z.minCoeff() > -LCPLS_ZERO) {
     Eigen::VectorXd _z = Eigen::VectorXd::Zero(2 * dim_var);
     for (size_t i = 0; i < bas.size(); i++) {
       _z(bas[i]) = __z(i);
@@ -63,13 +56,17 @@ void LCPLS::solve() {
   } else {
     z.setZero();
   }
+
+  if (!dart::lcpsolver::YT::validate(A, b, z)) {
+    z.setZero();
+  }
 }
 
 Eigen::VectorXd LCPLS::getSolution() { return z; }
 
 Eigen::VectorXd value2ub_index(const std::vector<int> value) {
   int numContactsToLearn = value.size();
-  int numBasis = 8;
+  int numBasis = NUMBASIS;
   Eigen::VectorXd z0 =
       Eigen::VectorXd::Zero(numContactsToLearn * (numBasis + 2));
   std::vector<int> ub_index;
@@ -86,8 +83,11 @@ Eigen::VectorXd value2ub_index(const std::vector<int> value) {
     } else {
       int offset = numContactsToLearn + i * numBasis;
       ub_index.push_back(i);
-      ub_index.push_back(offset + value[i]);
       ub_index.push_back((numBasis + 1) * numContactsToLearn + i);
+      ub_index.push_back(offset + value[i]/2);
+      if (value[i]%2 != 0) {
+        ub_index.push_back(offset + (value[i]/2+1)%4);
+      }
     }
   }
 
