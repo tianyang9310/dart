@@ -11,6 +11,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include <glog/logging.h>
 
 namespace qpcc {
 
@@ -453,7 +454,7 @@ SnoptInterface::Return SnoptInterface::solve(double *x, double *lo_bounds,
     delete[] ka;
     
     if(inform != 0)
-        std::cout << "[VLOG(1)]" << "inform = " << inform << std::endl;
+        LOG(INFO) << "inform = " << inform << std::endl;
     
     // cout << "objective = " << mReturnedObj << endl;
     

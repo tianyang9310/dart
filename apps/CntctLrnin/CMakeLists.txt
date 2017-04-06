@@ -1,6 +1,10 @@
 ###############################################
 # apps/CntctLrnin
 
+# glog library
+find_package (Glog REQUIRED)
+include_directories (${GLOG_INCLUDE_DIR})
+
 # jsoncpp library
 file(GLOB_RECURSE dist_json_srcs "dist-json/*.*")
 message(STATUS "json src")
@@ -45,5 +49,5 @@ link_libraries(SNOPTLCP dart snopt_c snprint_c blas_c f2c)
 add_library(CntctLrninAPI STATIC ${CntctLrnin_srcs} ${CntctLrnin_hdrs} ${MyLemke_hdrs} ${MyLemke_srcs} ${dist_json_srcs})
 
 add_executable(CntctLrnin ${MAIN_CPP})
-target_link_libraries(CntctLrnin CntctLrninAPI SNOPTLCP dart snopt_c snprint_c blas_c f2c ${Caffe_LIBRARIES})
+target_link_libraries(CntctLrnin CntctLrninAPI SNOPTLCP dart snopt_c snprint_c blas_c f2c ${Caffe_LIBRARIES} glog)
 set_target_properties(CntctLrnin PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
