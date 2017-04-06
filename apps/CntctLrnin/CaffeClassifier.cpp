@@ -32,7 +32,8 @@ Classifier::Classifier(const string& model_file, const string& trained_file,
   int inputSize = ASize + (ASize + 1) * ASize / 2 + numContactsToLearn;
 
   CHECK(num_channels_ == inputSize) << "Input layer channels should be "
-                                    << inputSize;
+                                    << "num_channels_: " << num_channels_ << "  "
+                                    << "inputSize: " << inputSize;
   mSetPreprocessing(preprocessing_file);
 }
 

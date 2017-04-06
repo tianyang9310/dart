@@ -8,7 +8,13 @@ LemkeLCPSolver::LemkeLCPSolver(double _timestep, dart::gui::SimWindow* _mWindow)
   mPrecision = PRECISION;
   mWindow = _mWindow;
   numLCPFail = 0;
+  numCaffeSucc = 0;
+  numTotalLCP = 0;
   outputFileOpen();
+
+  // load CaffeLP solver which will load Caffe Net from ct1 to ct9
+  mMaxCaffeContact = 9;
+  mCaffeLPSovler = std::make_shared<CaffeLPSolver>(mMaxCaffeContact);
 }
 
 //==============================================================================
@@ -229,12 +235,28 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
    *   std::cin.get();
    */
 
+  int err = 0;
+  bool Validation = false;
+  Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
+
+  if (numConstraints <= mMaxCaffeContact /* && numConstraints >0 */) {
+    numTotalLCP++;
+    mCaffeLPSovler->solve(numConstraints, lemkeA, lemkeB, (*z));
+    Validation = dart::lcpsolver::YT::validate(lemkeA, lemkeB, (*z));
+    if (Validation) {
+      numCaffeSucc++;
+    }
+    LOG(ERROR) << "Caffe success rate: " << static_cast<double>(numCaffeSucc) / numTotalLCP << std::endl;
+  }
+  
   // ---------------------------------------------------------------------------
   // Using Lemke to solve
   // dtmsg << "# ct points: " << numContactsCallBack << std::endl;
-  Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
-  int err = dart::lcpsolver::YT::Lemke(lemkeA, lemkeB, z);
-  bool Validation = dart::lcpsolver::YT::validate(lemkeA, lemkeB, (*z));
+  
+  if (!Validation) {
+    err = dart::lcpsolver::YT::Lemke(lemkeA, lemkeB, z);
+    Validation = dart::lcpsolver::YT::validate(lemkeA, lemkeB, (*z)); 
+  }
 
   // -------------------------------------------------------------------------
   // Lemke failure remedy and sanity check

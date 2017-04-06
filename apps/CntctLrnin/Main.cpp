@@ -17,6 +17,7 @@
 #include "dart/dart.h"
 #include "dist-json/json/json.h"
 #include "CaffeLPSolver.h"
+#include <glog/logging.h>
 
 #define runGUI
 
@@ -214,6 +215,9 @@ void testCaffeLPSolver() {
 int main(int argc, char* argv[]) {
   std::srand(
       (unsigned)(std::chrono::system_clock::now().time_since_epoch().count()));
+  
+  FLAGS_log_dir = DART_ROOT_PATH"/build/log";
+  google::InitGoogleLogging(argv[0]);
 
   std::shared_ptr<MyWorld> mWorld = std::make_shared<MyWorld>();
   assert(mWorld != nullptr);

@@ -15,6 +15,7 @@
 #include "dart/dart.h"
 #include "parameter.h"
 #include "utils.h"
+#include "CaffeLPSolver.h"
 
 /// Macro controlling prompt and data
 #define OUTPUT2FILE
@@ -128,6 +129,8 @@ class LemkeLCPSolver : public DantzigLCPSolver {
 
   /// Statistical of funcationality of Lemke
   int numLCPFail;
+  int numCaffeSucc;
+  int numTotalLCP;
 
   /// Prompt precision
   int mPrecision;
@@ -153,6 +156,10 @@ class LemkeLCPSolver : public DantzigLCPSolver {
 
   /// For debugging use
   dart::gui::SimWindow* mWindow;
+
+  /// Max contact points Caffe can handle
+  int mMaxCaffeContact;
+  std::shared_ptr<CaffeLPSolver> mCaffeLPSovler;
 };
 }
 

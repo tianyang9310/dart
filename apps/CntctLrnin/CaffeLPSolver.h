@@ -19,7 +19,7 @@ class CaffeLPSolver {
 
   private:
   Eigen::VectorXd Aandb2input(const Eigen::MatrixXd& A,
-                              const Eigen::VectorXd& b);
+                              const Eigen::VectorXd& b, int idxContact);
   std::vector<std::shared_ptr<Classifier>> mCaffeClassifiers;
   int numContactsToLearn;
   int numBasis;

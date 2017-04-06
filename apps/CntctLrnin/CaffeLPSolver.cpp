@@ -62,13 +62,16 @@ CaffeLPSolver::CaffeLPSolver(int _numContactsToLearn)
 
     if (mExist(model_file) && mExist(trained_file) &&
         mExist(preprocessing_file)) {
-      std::cout << "Loading caffe classifer " << i << std::endl;
+      std::cout << "Loading caffe classifer " << i + 1 << std::endl;
       std::shared_ptr<Classifier> classifier = std::make_shared<Classifier>(
-          model_file, trained_file, preprocessing_file);
+          model_file, trained_file, preprocessing_file, i + 1);
       mCaffeClassifiers.push_back(classifier);
     } else {
       std::cerr << "Some files don't exsit, so not all files can be loaded..."
                 << std::endl;
+      std::cerr << "model file: " << std::boolalpha << mExist(model_file) << std::endl;
+      std::cerr << "trained file: " << std::boolalpha << mExist(trained_file) << std::endl;
+      std::cerr << "preprocessing file: " << std::boolalpha << mExist(preprocessing_file) << std::endl;
       std::cin.get();
     }
   }
@@ -88,10 +91,10 @@ void CaffeLPSolver::solve(int idxContact, const Eigen::MatrixXd& A,
                           numBasis);
     }
 
-    Eigen::VectorXd in_x = Aandb2input(newA, newb);
+    Eigen::VectorXd in_x = Aandb2input(newA, newb, idxContact);
     Eigen::VectorXd out_y;
 
-    mCaffeClassifiers[idxContact]->Eval(in_x, out_y);
+    mCaffeClassifiers[idxContact-1]->Eval(in_x, out_y);
 
     assert(out_y.size() == 1);
     value.push_back(static_cast<int>(out_y(0)));
@@ -104,33 +107,34 @@ void CaffeLPSolver::solve(int idxContact, const Eigen::MatrixXd& A,
   if (dart::lcpsolver::YT::validate(A, b, z)) {
     // pass
   } else {
-    std::cout << "Caffe + LP fails...." << std::endl;
-    std::cin.get();
+    // std::cout << "Caffe + LP fails...." << std::endl;
+    // std::cin.get();
   }
 }
 
 Eigen::VectorXd CaffeLPSolver::Aandb2input(const Eigen::MatrixXd& A,
-                                           const Eigen::VectorXd& b) {
+                                           const Eigen::VectorXd& b, 
+                                           int idxContact) {
   assert(A.rows() == A.cols());
   assert(A.rows() == b.rows());
-  assert(A.rows() == numContactToLearn * (numBasis + 2));
+  assert(A.rows() == idxContact * (numBasis + 2));
 
   int nSize = b.rows();
-  int ASize = numContactsToLearn * (numBasis + 1);
-  int inputSize = ASize + (ASize + 1) * ASize / 2 + numContactsToLearn;
+  int ASize = idxContact * (numBasis + 1);
+  int inputSize = ASize + (ASize + 1) * ASize / 2 + idxContact;
 
   std::vector<double> inputVector;
-  for (int i = 0; i < nSize - numContactsToLearn; i++) {
-    for (int j = i; j < nSize - numContactsToLearn; j++) {
+  for (int i = 0; i < nSize - idxContact; i++) {
+    for (int j = i; j < nSize - idxContact; j++) {
       inputVector.push_back(A(i, j));
     }
   }
 
-  for (int i = 0; i < numContactsToLearn; i++) {
-    inputVector.push_back(A(nSize - numContactsToLearn + i, i));
+  for (int i = 0; i < idxContact; i++) {
+    inputVector.push_back(A(nSize - idxContact + i, i));
   }
 
-  for (int i = 0; i < nSize - numContactsToLearn; i++) {
+  for (int i = 0; i < nSize - idxContact; i++) {
     inputVector.push_back(b(i));
   }
 
