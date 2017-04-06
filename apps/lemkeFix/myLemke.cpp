@@ -38,7 +38,7 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-
+#include <glog/logging.h>
 #include "dart/math/Helpers.h"
 #include "myLemke.h"
 
@@ -223,7 +223,7 @@ for (iter = 0; iter < maxiter; ++iter) {
     }
     if (j.empty()) // no new pivots - ray termination
     {
-        std::cout << "Fails due to empty j in the iterations, which means second ray termination!" << std::endl;
+        LOG(INFO) << "Fails due to empty j in the iterations, which means second ray termination!" << std::endl;
         err = 2;
         break;
     }
@@ -323,7 +323,7 @@ for (iter = 0; iter < maxiter; ++iter) {
 //           << std::endl;
 
 if (iter >= maxiter && leaving != t) {
-  std::cout << "Fails due to exceeding max iterations and still cannot find a solution!" << std::endl;
+  LOG(INFO) << "Fails due to exceeding max iterations and still cannot find a solution!" << std::endl;
   err = 1;
 }
 
@@ -340,7 +340,7 @@ if (err == 0) {
 
     if (!validate(_M, _q, *_z)) {
         // _z = VectorXd::Zero(n);
-        std::cout << "Fails due to validation after iterations" << std::endl; 
+        LOG(INFO) << "Fails due to validation after iterations" << std::endl; 
         err = 3;
     }
 } else {
