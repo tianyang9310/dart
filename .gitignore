@@ -2,6 +2,7 @@
 Xcode/
 build/
 buildDebug/
+*.caffemodel
 .idea/
 *.pyc
 syntax: glob
