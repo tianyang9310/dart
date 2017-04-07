@@ -7,6 +7,7 @@
 #include "DepthFirstSearchLCP.h"
 #include "JsonUtil.h"
 #include "LCPLS.h"
+#include "LCPQP.h"
 #include "LemkeLCPSolver.h"
 #include "MyWindow.h"
 #include "MyWorld.h"
@@ -285,6 +286,76 @@ void testLemke(int whichIdx = -1) {
   // std::cin.get();
 }
 
+void testLCPQP() {
+  // load ct from Json
+  string ctJson = DART_ROOT_PATH "apps/CntctLrnin/testData/ct.json";
+  std::vector<Eigen::MatrixXd> A;
+  std::vector<Eigen::MatrixXd> b;
+  std::vector<Eigen::MatrixXd> value;
+  loadct(ctJson, A, b, value);
+
+  int MaxIter = 10000;
+  int count = 0;
+  for (int iter = 0; iter < MaxIter; ++iter) {
+    int idxContact = rand()%12;
+
+    int poolSize = b[idxContact].rows();  
+
+    int idxChoice = rand()%poolSize;  // choose from poolSize
+
+    int matSize = b[idxContact].cols();  
+    assert(static_cast<int>(matSize / 6) == idxContact + 1);
+
+    Eigen::VectorXd eachValueEigen =
+        value[idxContact].row(idxChoice).transpose();
+    std::vector<int> eachValue;
+    eachValue.clear();
+    for (int i = 0; i < idxContact + 1; ++i) {
+      eachValue.push_back(eachValueEigen[i]);
+    }
+    Eigen::MatrixXd eachA =
+        A[idxContact].block(idxChoice * matSize, 0, matSize, matSize);
+    Eigen::VectorXd eachb = b[idxContact].row(idxChoice).transpose();
+
+    // std::cout << "Matrix A: " << std::endl << eachA << std::endl;
+    // std::cout << "Vector b: " << std::endl << eachb.transpose() << std::endl;
+    // sstd::cout << "Value: " << std::endl << eachValueEigen.transpose() <<
+    // std::endl;
+
+    // perturbe value
+    // std::cout << "Before pertubation..." << eachValueEigen.transpose() << std::endl;
+    eachValue[rand()%eachValue.size()] = rand()%10;
+    // std::cout << "After pertubation...";
+    // for (auto eValue: eachValue) std::cout << eValue << ' ';
+    // std::cout << std::endl;
+
+    LCPQP mlcpqp(eachA, eachb, eachValue);
+    mlcpqp.solve();
+    Eigen::VectorXd eachZ = mlcpqp.getSolution();
+
+    // std::cout << "Vector z:" << std::endl << eachZ.transpose() << std::endl;
+    // std::cout << "Validation: " << std::boolalpha
+    //          << dart::lcpsolver::YT::validate(eachA, eachb, eachZ);
+
+    if (dart::lcpsolver::YT::validate(eachA, eachb, eachZ)) {
+      count++;
+    } else {
+      // Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols, ",\t");
+      // std::cout << std::setprecision(20);
+      // std::cout << "idxContact: " << idxContact + 1 << " idxChoice: " << idxChoice + 1 << std::endl;
+      // std::cout << "Matrix A: " << std::endl << eachA.format(CSVFmt) << std::endl;
+      // std::cout << "Vector b: " << std::endl << eachb.transpose().format(CSVFmt) << std::endl;
+      // std::cout << "Value: " << std::endl << eachValueEigen.transpose() << std::endl;
+      // std::cout << "Vector z:" << std::endl << eachZ.transpose() << std::endl;
+      // std::cin.get();
+    }
+  }
+  // Can acheive 99%+ solved ratio. Some not solvable due to incorrect value which may dates
+  // back to different implementation of cpp and matlab and machine error epsilon
+  std::cout << "Solved Ratio: " << double(count)/MaxIter << std::endl;
+  std::cin.get();
+}
+
 void testCaffeLPSolver() {
   CaffeLPSolver caffelpsolver(1);
 }
@@ -315,10 +386,11 @@ int main(int argc, char* argv[]) {
   // testSnoptLCP();
   // testDFSLCP();
   // testCaffe();
-  // std::cout << "Specifically for ct 12..." << std::endl;
-  // testLCPLS(11);
+  // testLCPLS();
+  testLCPQP();
   // testCaffeLPSolver();
   compareLemkevsLP();
+
 
   Eigen::Vector3d gravity(0.0, -9.81, 0.0);
   mWorld->setGravity(gravity);
