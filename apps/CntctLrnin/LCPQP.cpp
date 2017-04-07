@@ -10,7 +10,7 @@ LCPQP::LCPQP(const Eigen::MatrixXd& _A, const Eigen::VectorXd& _b,
   z.setZero();
 }
 
-void LCPQP::solve() {
+void LCPQP::solve(bool useInit) {
   if (b.minCoeff() >= -LCPQP_ZERO) {
     z.setZero();
     return;
@@ -64,7 +64,12 @@ void LCPQP::solve() {
     Eigen::VectorXd z0 = z;
     z.setZero();
     SnoptWrapper mSnoptLPSolver4QP(A, b);
-    mSnoptLPSolver4QP.solveQP(z0, z);
+    if (useInit) {
+      mSnoptLPSolver4QP.solveQP(z0, z);
+    } else {
+      mSnoptLPSolver4QP.solveQP(z, z);
+    }
+    
     if (!dart::lcpsolver::YT::validate(A, b, z)) {
       z.setZero();
     }

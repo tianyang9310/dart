@@ -1,0 +1,201 @@
+
+ ~/Material/Research/dart/build   FIELD_CntctLrnin_QPCC_NN_Lemke_LP_QP ●  make
+[  1%] Built target gtest
+[  2%] Built target gtest_main
+[ 31%] Built target dart-core
+[ 31%] Built target dart-optimizer-nlopt
+[ 32%] Built target dart-optimizer-ipopt
+[ 37%] Built target osgDart
+[ 44%] Built target dart
+[ 45%] Built target testUtilities
+[ 46%] Built target testSubscriptions
+[ 46%] Built target testSkeleton
+[ 46%] Built target testUri
+[ 47%] Built target testSoftDynamics
+[ 48%] Built target osgOperationalSpaceControl
+[ 49%] Built target osgSoftBodies
+[ 49%] Built target osgAtlasPuppet
+[ 50%] Built target osgDragAndDrop
+[ 50%] Built target testWorld
+[ 51%] Built target testSdfParser
+[ 51%] Built target testSignal
+[ 52%] Built target testOptimizer
+[ 52%] Built target testLocalResourceRetriever
+[ 53%] Built target testNameManagement
+[ 54%] Built target testLemke
+[ 55%] Built target testFrames
+[ 55%] Built target testJoints
+[ 55%] Built target testGeometry
+[ 55%] Built target testDartLoader
+[ 55%] Built target testNearestNeighbor
+[ 56%] Built target testFileInfoWorld
+[ 57%] Built target testInverseKinematics
+[ 58%] Built target testMath
+[ 59%] Built target testBuilding
+[ 60%] Built target testConstraint
+[ 60%] Built target testForwardKinematics
+[ 61%] Built target testCommon
+[ 62%] Built target testDynamics
+[ 63%] Built target testSkelParser
+[ 63%] Built target testCompositeResourceRetriever
+[ 63%] Built target testPackageResourceRetriever
+[ 63%] Built target testCollision
+[ 64%] Built target PurLrnin
+[ 68%] Built target SNOPTLCP
+[ 69%] Built target addDeleteSkels
+[ 69%] Built target hardcodedDesign
+[ 70%] Built target hybridDynamics
+[ 75%] Built target QPCC
+[ 76%] Built target lemkeFix
+[ 77%] Built target jointConstraints
+[ 78%] Built target mixedChain
+[ 78%] Built target rigidChain
+[ 79%] Built target rigidCubes
+[ 80%] Built target rigidLoop
+[ 81%] Built target rigidShapes
+[ 83%] Built target snopt75interface
+[ 83%] Built target operationalSpaceControl
+[ 84%] Built target simpleFrames
+[ 84%] Built target snopt72lcp
+[ 86%] Built target atlasSimbicon
+[ 87%] Built target speedTest
+[ 87%] Built target tutorialCollisions-Finished
+[ 88%] Built target tutorialMultiPendulum-Finished
+[ 89%] Built target template
+[ 90%] Built target vehicle
+[ 90%] Built target softBodies
+[ 90%] Built target tutorialBiped-Finished
+[ 90%] Built target tutorialMultiPendulum
+[ 91%] Built target tutorialDominoes
+[ 92%] Built target tutorialDominoes-Finished
+[ 93%] Built target tutorialCollisions
+[ 94%] Built target tutorialBiped
+[ 99%] Built target CntctLrninAPI
+[ 99%] Built target CntctLrnin
+[100%] Built target bipedStand
+ ~/Material/Research/dart/build   FIELD_CntctLrnin_QPCC_NN_Lemke_LP_QP ●  ./bin/CntctLrnin
+Finish loading ct data...
+Solved Ratio: 0.9975
+Average Time: 0.0034 seconds.
+Msg For 1 contact points:
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.0002 seconds.
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9942
+Average Time: 0.0005 seconds.
+Msg For 2 contact points:
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.0003 seconds.
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9988
+Average Time: 0.0008 seconds.
+Msg For 3 contact points:
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.0005 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9825
+Average Time: 0.0001 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9996
+Average Time: 0.0012 seconds.
+Msg For 4 contact points:
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.0006 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9968
+Average Time: 0.0002 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9947
+Average Time: 0.0015 seconds.
+Msg For 5 contact points:
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.0007 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9837
+Average Time: 0.0004 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9985
+Average Time: 0.0019 seconds.
+Msg For 6 contact points:
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.001 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9912
+Average Time: 0.0007 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9982
+Average Time: 0.0026 seconds.
+Msg For 7 contact points:
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.0012 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9947
+Average Time: 0.0011 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9962
+Average Time: 0.0032 seconds.
+Msg For 8 contact points:
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.0014 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9808
+Average Time: 0.0016 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9985
+Average Time: 0.0038 seconds.
+Msg For 9 contact points:
+Finish loading ct data...
+Solved Ratio: 0.9896
+Average Time: 0.0017 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9609
+Average Time: 0.0023 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9956
+Average Time: 0.0046 seconds.
+Msg For 10 contact points:
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.0022 seconds.
+Finish loading ct data...
+Solved Ratio: 0.8995
+Average Time: 0.0034 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9971
+Average Time: 0.0056 seconds.
+Msg For 11 contact points:
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.0026 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9767
+Average Time: 0.0044 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9924
+Average Time: 0.0067 seconds.
+Msg For 12 contact points:
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.003 seconds.
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.0064 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9983
+Average Time: 0.0077 seconds.
+^C
+ ✘  ~/Material/Research/dart/build   FIELD_CntctLrnin_QPCC_NN_Lemke_LP_QP ● 

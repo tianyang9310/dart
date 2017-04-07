@@ -1,0 +1,87 @@
+Finish loading ct data...
+Solved Ratio: 0.9968
+Average Time: 0.0033 seconds.
+Msg For 1 contact points:
+Finish loading ct data...
+Solved Ratio: 0.9963
+Average Time: 0.0005 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9896
+Average Time: 0.0005 seconds.
+Msg For 2 contact points:
+Finish loading ct data...
+Solved Ratio: 0.999
+Average Time: 0.0008 seconds.
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.001 seconds.
+Msg For 3 contact points:
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.0011 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9907
+Average Time: 0.0015 seconds.
+Msg For 4 contact points:
+Finish loading ct data...
+Solved Ratio: 0.9944
+Average Time: 0.0014 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9722
+Average Time: 0.002 seconds.
+Msg For 5 contact points:
+Finish loading ct data...
+Solved Ratio: 0.9991
+Average Time: 0.0019 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9914
+Average Time: 0.0027 seconds.
+Msg For 6 contact points:
+Finish loading ct data...
+Solved Ratio: 0.9983
+Average Time: 0.0025 seconds.
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.0037 seconds.
+Msg For 7 contact points:
+Finish loading ct data...
+Solved Ratio: 0.9961
+Average Time: 0.003 seconds.
+Finish loading ct data...
+Solved Ratio: 0.983
+Average Time: 0.005 seconds.
+Msg For 8 contact points:
+Finish loading ct data...
+Solved Ratio: 0.9976
+Average Time: 0.0037 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9909
+Average Time: 0.0063 seconds.
+Msg For 9 contact points:
+Finish loading ct data...
+Solved Ratio: 0.9967
+Average Time: 0.0045 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9755
+Average Time: 0.0087 seconds.
+Msg For 10 contact points:
+Finish loading ct data...
+Solved Ratio: 0.9968
+Average Time: 0.0058 seconds.
+Finish loading ct data...
+Solved Ratio: 1
+Average Time: 0.0108 seconds.
+Msg For 11 contact points:
+Finish loading ct data...
+Solved Ratio: 0.9941
+Average Time: 0.0067 seconds.
+Finish loading ct data...
+Solved Ratio: 0.9906
+Average Time: 0.0125 seconds.
+Msg For 12 contact points:
+Finish loading ct data...
+Solved Ratio: 0.9976
+Average Time: 0.0078 seconds.
+Finish loading ct data...
+Solved Ratio: 0.8956
+Average Time: 0.0159 seconds.

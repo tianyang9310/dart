@@ -286,7 +286,7 @@ void testLemke(int whichIdx = -1) {
   // std::cin.get();
 }
 
-void testLCPQP() {
+void testLCPQP(int whichIdx = -1, bool useInit = true) {
   // load ct from Json
   string ctJson = DART_ROOT_PATH "apps/CntctLrnin/testData/ct.json";
   std::vector<Eigen::MatrixXd> A;
@@ -296,8 +296,11 @@ void testLCPQP() {
 
   int MaxIter = 10000;
   int count = 0;
+
+  time_t tstart, tend;
+  tstart = time(0);
   for (int iter = 0; iter < MaxIter; ++iter) {
-    int idxContact = rand()%12;
+    int idxContact = whichIdx == -1 ? rand()%12: whichIdx;
 
     int poolSize = b[idxContact].rows();  
 
@@ -330,7 +333,7 @@ void testLCPQP() {
     // std::cout << std::endl;
 
     LCPQP mlcpqp(eachA, eachb, eachValue);
-    mlcpqp.solve();
+    mlcpqp.solve(useInit);
     Eigen::VectorXd eachZ = mlcpqp.getSolution();
 
     // std::cout << "Vector z:" << std::endl << eachZ.transpose() << std::endl;
@@ -353,7 +356,9 @@ void testLCPQP() {
   // Can acheive 99%+ solved ratio. Some not solvable due to incorrect value which may dates
   // back to different implementation of cpp and matlab and machine error epsilon
   std::cout << "Solved Ratio: " << double(count)/MaxIter << std::endl;
-  std::cin.get();
+  tend = time(0); 
+  std::cout << "Average Time: " << difftime(tend, tstart) / MaxIter << " seconds. " << std::endl;  
+  // std::cin.get();
 }
 
 void testCaffeLPSolver() {
@@ -367,6 +372,8 @@ void compareLemkevsLP() {
     dtmsg << "For " << i + 1 << " contact points: " << std::endl;
     testLCPLS(i);
     testLemke(i);
+    testLCPQP(i);
+    // testLCPQP(i, false);
   }
   std::cin.get();
 }

@@ -15,7 +15,7 @@ class LCPQP {
   LCPQP(const Eigen::MatrixXd& _A, const Eigen::VectorXd& _b,
         const std::vector<int> _value);
   virtual ~LCPQP(){};
-  void solve();
+  void solve(bool useInit = true);
   Eigen::VectorXd getSolution();
 
   protected:
