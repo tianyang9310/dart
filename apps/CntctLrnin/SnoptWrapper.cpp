@@ -42,3 +42,19 @@ void SnoptWrapper::solveLP(Eigen::VectorXd& z) {
   }
   // std::cout << z.transpose() << std::endl;
 }
+
+void SnoptWrapper::solveQP(const Eigen::VectorXd& z0, Eigen::VectorXd& z) {
+  z.resize(dim_var);
+  z.setZero();
+
+  // Use SnoptQP to solve a QP problem, where
+  // min 0.5*z'*2A*z + z'*b
+  // st. z>=0, A*z - (-b) >=0
+  SnoptQPproblem problem(dim_var, dim_cnst, mA, mb, z0);
+  SnoptSolver solver(&problem);
+  solver.solve();
+
+  for (size_t i = 0; i < dim_var; i++) {
+    z(i) = problem.vars()[i]->mVal;
+  }
+}

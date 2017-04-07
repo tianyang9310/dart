@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include "SnoptLPproblem.h"
+#include "SnoptQPproblem.h"
 #include "apps/QPCC/QPCCProblem.h"
 #include "apps/QPCC/SnoptSolver.h"
 #include "apps/QPCC/Var.h"
@@ -16,6 +17,7 @@ class SnoptWrapper {
   virtual ~SnoptWrapper(){};
   void solveLCP(Eigen::VectorXd& z);
   void solveLP(Eigen::VectorXd& z);
+  void solveQP(const Eigen::VectorXd& z0, Eigen::VectorXd& z);
 
   private:
   Eigen::MatrixXd mA;
