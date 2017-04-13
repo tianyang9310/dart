@@ -8,13 +8,18 @@ LemkeLCPSolver::LemkeLCPSolver(double _timestep, dart::gui::SimWindow* _mWindow)
   mPrecision = PRECISION;
   mWindow = _mWindow;
   numLCPFail = 0;
-  numCaffeSucc = 0;
-  numTotalLCP = 0;
   outputFileOpen();
 
   // load CaffeLP solver which will load Caffe Net from ct1 to ct9
   mMaxCaffeContact = 9;
   mCaffeLPSovler = std::make_shared<CaffeLPSolver>(mMaxCaffeContact);
+  CaffeSuccRate.resize(mMaxCaffeContact);
+  CaffeSuccRate.setZero();
+  for (int i = 0; i < mMaxCaffeContact; ++i)
+  {
+    numCaffeSucc.push_back(0);
+    numTotalLCP.push_back(0);
+  }
 }
 
 //==============================================================================
@@ -240,13 +245,15 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
   Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
 
   if (numConstraints <= mMaxCaffeContact /* && numConstraints >0 */) {
-    numTotalLCP++;
+    numTotalLCP[numConstraints-1]= numTotalLCP[numConstraints-1] + 1;
     mCaffeLPSovler->solve(numConstraints, lemkeA, lemkeB, (*z));
     Validation = dart::lcpsolver::YT::validate(lemkeA, lemkeB, (*z));
     if (Validation) {
-      numCaffeSucc++;
+      numCaffeSucc[numConstraints-1] = numCaffeSucc[numConstraints-1] + 1;
     }
-    LOG(ERROR) << "Caffe success rate: " << static_cast<double>(numCaffeSucc) / numTotalLCP << std::endl;
+    CaffeSuccRate[numConstraints-1] = static_cast<double>(numCaffeSucc[numConstraints-1]) 
+                          / numTotalLCP[numConstraints-1];
+    LOG(ERROR) << "Caffe success rate: " << CaffeSuccRate.transpose() << std::endl;
   }
   
   // ---------------------------------------------------------------------------

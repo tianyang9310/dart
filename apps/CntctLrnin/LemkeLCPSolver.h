@@ -129,8 +129,9 @@ class LemkeLCPSolver : public DantzigLCPSolver {
 
   /// Statistical of funcationality of Lemke
   int numLCPFail;
-  int numCaffeSucc;
-  int numTotalLCP;
+  std::vector<int> numCaffeSucc;
+  std::vector<int> numTotalLCP;
+  Eigen::VectorXd CaffeSuccRate;
 
   /// Prompt precision
   int mPrecision;

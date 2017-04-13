@@ -394,9 +394,9 @@ int main(int argc, char* argv[]) {
   // testDFSLCP();
   // testCaffe();
   // testLCPLS();
-  testLCPQP();
+  // testLCPQP();
   // testCaffeLPSolver();
-  compareLemkevsLP();
+  // compareLemkevsLP();
 
 
   Eigen::Vector3d gravity(0.0, -9.81, 0.0);
