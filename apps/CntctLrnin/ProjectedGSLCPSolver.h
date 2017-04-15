@@ -13,4 +13,8 @@
 bool ProjectedGS(const Eigen::MatrixXd& A, const Eigen::VectorXd& b, Eigen::VectorXd& z,
 				const Eigen::VectorXd& lo, const Eigen::VectorXd& hi);
 
+void permuteAandBforPGS(Eigen::MatrixXd& newA, Eigen::VectorXd& newb,
+                             const Eigen::MatrixXd& A,
+                             const Eigen::VectorXd& b, int idx0, int idx1);
+
 #endif

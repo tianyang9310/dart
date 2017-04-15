@@ -39,4 +39,10 @@
 #define RANDOM_DURATION 2
 #define PERIOD 10
 
+//-----------------------------------------------------------------------------
+
+/// Solver Config of PGS
+#define PGS_MAX_ITER 1e5
+#define PGS_ZERO 1e-12
+
 #endif

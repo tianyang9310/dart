@@ -2,8 +2,11 @@
 
 bool ProjectedGS(const Eigen::MatrixXd& A, const Eigen::VectorXd& b, Eigen::VectorXd& z,
 				const Eigen::VectorXd& lo, const Eigen::VectorXd& hi) {
-	int mMaxIter = 10000;
+	int mMaxIter = static_cast<int>(PGS_MAX_ITER);
+	double mPGS_Zero = PGS_ZERO;
 	int numRows = A.rows();
+
+	Eigen::VectorXd oldZ = z;
 
 	assert(numRows == b.rows());
 	assert(numRows == z.rows());
@@ -30,6 +33,14 @@ bool ProjectedGS(const Eigen::MatrixXd& A, const Eigen::VectorXd& b, Eigen::Vect
 			if (z[i] > hi[i]) {
 				z[i] = hi[i];
 			}
+		}
+		if (((oldZ - z).array().abs() < mPGS_Zero).all()) {
+			// std::cout << "Old z: " << oldZ.transpose() << std::endl;
+			// std::cout << "New z: " << z.transpose() << std::endl;
+			// std::cout << "Early stopping: " << k << std::endl;
+			break;
+		} else {
+			oldZ = z;
 		}
 	}
 	bool Validation = dart::lcpsolver::YT::validate(A, b, z);
