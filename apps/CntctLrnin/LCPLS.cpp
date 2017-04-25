@@ -43,9 +43,26 @@ void LCPLS::solve() {
 
   assert(dim_cnst == (bas.size() + nonbas.size()));
 
+  // std::cout << "LCP A: " << std::endl << A << std::endl 
+  //           << "LCP b: " << std::endl << b.transpose() << std::endl 
+  //           << "bas: ";
+  // for (size_t i = 0; i < bas.size(); i++) {
+  //   std::cout << bas[i] <<  ",";
+  // }
+  // std::cout << std::endl;
+
   SnoptWrapper mSnoptLPSolver(B, -b);
   Eigen::VectorXd __z;
-  mSnoptLPSolver.solveLP(__z);
+
+  /// Using Simplex to find a basic feaisble solution
+  mSnoptLPSolver.solveLPBFS(B, -b, __z);
+
+  /// Using fullPivoting Gaussian Elimination to find a solution
+  // mSnoptLPSolver.solveLPFullPiv(__z);
+  // mSnoptLPSolver.solveLP(__z, true);
+
+  /// Using Snopt without any initial guess
+  // mSnoptLPSolver.solveLP(__z, false);
 
   if (__z.minCoeff() > -LCPLS_ZERO) {
     Eigen::VectorXd _z = Eigen::VectorXd::Zero(2 * dim_var);

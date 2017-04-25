@@ -182,6 +182,21 @@ void testLCPLS(int whichIdx = -1) {
         A[idxContact].block(idxChoice * matSize, 0, matSize, matSize);
     Eigen::VectorXd eachb = b[idxContact].row(idxChoice).transpose();
 
+// ----------------------------------------------------------------------------
+// scale A for better LP solver
+    int numContactsCallBack = idxContact + 1;
+    int numBasis = NUMBASIS;
+    int mDim = 1 + numBasis;
+    double h = 1;
+
+    eachA.block(numContactsCallBack * mDim, 0, numContactsCallBack,
+            numContactsCallBack) *= h;
+    eachA.block(numContactsCallBack * mDim, numContactsCallBack, numContactsCallBack,
+            numContactsCallBack * numBasis) *= h;
+    eachA.block(numContactsCallBack, numContactsCallBack * mDim,
+            numContactsCallBack * numBasis, numContactsCallBack) *= h;
+// ----------------------------------------------------------------------------    
+
     // std::cout << "Matrix A: " << std::endl << eachA << std::endl;
     // std::cout << "Vector b: " << std::endl << eachb.transpose() << std::endl;
     // sstd::cout << "Value: " << std::endl << eachValueEigen.transpose() <<
@@ -214,7 +229,7 @@ void testLCPLS(int whichIdx = -1) {
   std::cout << "Solved Ratio: " << double(count)/MaxIter << std::endl;
   tend = time(0); 
   std::cout << "Average Time: " << difftime(tend, tstart) / MaxIter << " seconds. " << std::endl;
-  // std::cin.get();
+  std::cin.get();
 }
 
 void testLemke(int whichIdx = -1) {
@@ -381,6 +396,7 @@ void compareLemkevsLP() {
 int main(int argc, char* argv[]) {
   std::srand(
       (unsigned)(std::chrono::system_clock::now().time_since_epoch().count()));
+  // std::srand(0);
   
   FLAGS_log_dir = DART_ROOT_PATH"/build/log";
   google::InitGoogleLogging(argv[0]);
@@ -393,7 +409,7 @@ int main(int argc, char* argv[]) {
   // testSnoptLCP();
   // testDFSLCP();
   // testCaffe();
-  // testLCPLS();
+  testLCPLS();
   // testLCPQP();
   // testCaffeLPSolver();
   // compareLemkevsLP();
