@@ -28,6 +28,6 @@ SkeletonPtr addBox(int numBodyNodes, const Eigen::Vector3d& init_pos_offset,
 
 ///
 SkeletonPtr addPlatform();
-}
+}  // namespace CntctLrnin
 
 #endif  // CNTCTLRNIN_ADDSKEL_H

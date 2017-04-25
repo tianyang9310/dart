@@ -10,7 +10,7 @@ void addSkel(WorldPtr world) {
 
 #ifndef UNIT_TEST
   world->addSkeleton(
-      addBox(NUMBODYNODES, (Eigen::Vector3d() << 0, 0, 0.2).finished(),true));
+      addBox(NUMBODYNODES, (Eigen::Vector3d() << 0, 0, 0.2).finished(), true));
 #endif
   world->addSkeleton(addPlatform());
 }
@@ -275,4 +275,4 @@ SkeletonPtr addPlatform() {
   mPlatform->disableSelfCollision();
   return mPlatform;
 }
-}
+}  // namespace CntctLrnin

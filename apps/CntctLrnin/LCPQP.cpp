@@ -58,9 +58,10 @@ void LCPQP::solve(bool useInit) {
   }
 
   if (!dart::lcpsolver::YT::validate(A, b, z)) {
-    // First check: if fail, try to use LP solution as initial guess 
+    // First check: if fail, try to use LP solution as initial guess
     // for snopt's QP
-    // std::cout << "Using Linear Programming fails, instead using qudratic Programming..." << std::endl;
+    // std::cout << "Using Linear Programming fails, instead using qudratic
+    // Programming..." << std::endl;
     Eigen::VectorXd z0 = z;
     z.setZero();
     SnoptWrapper mSnoptLPSolver4QP(A, b);
@@ -69,7 +70,7 @@ void LCPQP::solve(bool useInit) {
     } else {
       mSnoptLPSolver4QP.solveQP(z, z);
     }
-    
+
     if (!dart::lcpsolver::YT::validate(A, b, z)) {
       z.setZero();
     }

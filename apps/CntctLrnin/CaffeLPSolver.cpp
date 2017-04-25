@@ -69,9 +69,12 @@ CaffeLPSolver::CaffeLPSolver(int _numContactsToLearn)
     } else {
       std::cerr << "Some files don't exsit, so not all files can be loaded..."
                 << std::endl;
-      std::cerr << "model file: " << std::boolalpha << mExist(model_file) << std::endl;
-      std::cerr << "trained file: " << std::boolalpha << mExist(trained_file) << std::endl;
-      std::cerr << "preprocessing file: " << std::boolalpha << mExist(preprocessing_file) << std::endl;
+      std::cerr << "model file: " << std::boolalpha << mExist(model_file)
+                << std::endl;
+      std::cerr << "trained file: " << std::boolalpha << mExist(trained_file)
+                << std::endl;
+      std::cerr << "preprocessing file: " << std::boolalpha
+                << mExist(preprocessing_file) << std::endl;
       std::cin.get();
     }
   }
@@ -94,7 +97,7 @@ void CaffeLPSolver::solve(int idxContact, const Eigen::MatrixXd& A,
     Eigen::VectorXd in_x = Aandb2input(newA, newb, idxContact);
     Eigen::VectorXd out_y;
 
-    mCaffeClassifiers[idxContact-1]->Eval(in_x, out_y);
+    mCaffeClassifiers[idxContact - 1]->Eval(in_x, out_y);
 
     assert(out_y.size() == 1);
     value.push_back(static_cast<int>(out_y(0)));
@@ -113,7 +116,7 @@ void CaffeLPSolver::solve(int idxContact, const Eigen::MatrixXd& A,
 }
 
 Eigen::VectorXd CaffeLPSolver::Aandb2input(const Eigen::MatrixXd& A,
-                                           const Eigen::VectorXd& b, 
+                                           const Eigen::VectorXd& b,
                                            int idxContact) {
   assert(A.rows() == A.cols());
   assert(A.rows() == b.rows());

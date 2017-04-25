@@ -22,8 +22,8 @@ class JointLimitConstraint;
 class JointCoulombFrictionConstraint;
 class JointConstraint;
 class LCPSolver;
-}
-}
+}  // namespace constraint
+}  // namespace dart
 
 namespace CntctLrnin {
 
@@ -37,6 +37,6 @@ class MyConstraintSolver : public ConstraintSolver {
 
   void updateConstraints();
 };
-}
+}  // namespace CntctLrnin
 
 #endif  // MYCONSTRAINTSOLVER

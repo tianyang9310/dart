@@ -179,4 +179,4 @@ tinyxml2::XMLElement* checkFormatAndGetWorldElement(
 
   return worldElement;
 }
-}
+}  // namespace CntctLrnin

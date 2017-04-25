@@ -245,4 +245,4 @@ void MyWindow::setPlatform() {
 #endif
 #endif
 }
-}
+}  // namespace CntctLrnin

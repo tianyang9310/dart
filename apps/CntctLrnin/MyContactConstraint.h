@@ -11,7 +11,7 @@ namespace dynamics {
 class BodyNode;
 class Skeleton;
 }  // namespace dynamics
-}
+}  // namespace dart
 
 namespace CntctLrnin {
 
@@ -43,6 +43,6 @@ class MyContactConstraint : public ContactConstraint {
   int mPrecision;
 };
 
-}  // namespace constraint
+}  // namespace CntctLrnin
 
 #endif  // MyContactConstraint

@@ -14,6 +14,6 @@ class MyWorld : public World {
   MyWorld(const WorldPtr baseWorldPtr);
   virtual ~MyWorld();
 };
-}
+}  // namespace CntctLrnin
 
 #endif  // MYWORLD

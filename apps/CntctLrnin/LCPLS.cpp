@@ -43,8 +43,8 @@ void LCPLS::solve() {
 
   assert(dim_cnst == (bas.size() + nonbas.size()));
 
-  // std::cout << "LCP A: " << std::endl << A << std::endl 
-  //           << "LCP b: " << std::endl << b.transpose() << std::endl 
+  // std::cout << "LCP A: " << std::endl << A << std::endl
+  //           << "LCP b: " << std::endl << b.transpose() << std::endl
   //           << "bas: ";
   // for (size_t i = 0; i < bas.size(); i++) {
   //   std::cout << bas[i] <<  ",";
@@ -101,9 +101,9 @@ Eigen::VectorXd value2ub_index(const std::vector<int> value) {
       int offset = numContactsToLearn + i * numBasis;
       ub_index.push_back(i);
       ub_index.push_back((numBasis + 1) * numContactsToLearn + i);
-      ub_index.push_back(offset + value[i]/2);
-      if (value[i]%2 != 0) {
-        ub_index.push_back(offset + (value[i]/2+1)%4);
+      ub_index.push_back(offset + value[i] / 2);
+      if (value[i] % 2 != 0) {
+        ub_index.push_back(offset + (value[i] / 2 + 1) % 4);
       }
     }
   }

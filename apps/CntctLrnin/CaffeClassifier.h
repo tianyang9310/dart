@@ -8,17 +8,13 @@
 
 using namespace caffe;
 
-
 class Classifier {
   public:
   Classifier(const string& model_file, const string& trained_file,
-             const string& preprocessing_file,
-             int _numContactsToLearn = 1);
+             const string& preprocessing_file, int _numContactsToLearn = 1);
 
   void Eval(const Eigen::VectorXd& in_x, Eigen::VectorXd& out_y);
-  int getNumChannels(){
-    return num_channels_;
-  }
+  int getNumChannels() { return num_channels_; }
 
   private:
   void mSetPreprocessing(const string& preprocessing_file);

@@ -1,12 +1,12 @@
 #ifndef LCPQP_H
 #define LCPQP_H
 
+#include "LCPLS.h"
 #include "SnoptLPproblem.h"
 #include "SnoptWrapper.h"
+#include "apps/lemkeFix/myLemke.h"
 #include "dart/dart.h"
 #include "parameter.h"
-#include "LCPLS.h"
-#include "apps/lemkeFix/myLemke.h"
 
 #define LCPQP_ZERO 1e-6
 

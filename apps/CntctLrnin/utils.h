@@ -32,18 +32,18 @@ class TranslationalJoint;
 class PlanarJoint;
 class FreeJoint;
 class Marker;
-}
+}  // namespace dynamics
 
 namespace dynamics {
 class BodyNode;
 class Shape;
 class Skeleton;
-}
+}  // namespace dynamics
 
 namespace simulation {
 class World;
 }
-}
+}  // namespace dart
 
 namespace CntctLrnin {
 

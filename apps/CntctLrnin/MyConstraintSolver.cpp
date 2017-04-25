@@ -147,4 +147,4 @@ void MyConstraintSolver::updateConstraints() {
       mActiveConstraints.push_back(jointFrictionConstraint);
   }
 }
-}
+}  // namespace CntctLrnin

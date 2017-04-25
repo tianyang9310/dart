@@ -23,7 +23,7 @@ using namespace qpcc;
 class SnoptLPproblem : public Problem {
   public:
   SnoptLPproblem(size_t dim_var, size_t dim_cnst, const Eigen::MatrixXd& A,
-                 const Eigen::VectorXd& b,const Eigen::VectorXd* z0 = nullptr);
+                 const Eigen::VectorXd& b, const Eigen::VectorXd* z0 = nullptr);
   virtual ~SnoptLPproblem();
 
   virtual void update(double* _coefs){};

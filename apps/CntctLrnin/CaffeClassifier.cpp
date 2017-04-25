@@ -24,16 +24,18 @@ Classifier::Classifier(const string& model_file, const string& trained_file,
 
   Blob<double>* input_layer = net_->input_blobs()[0];
   num_channels_ = input_layer->channels();
-  // std::cerr << "Net input layer num channels: " << num_channels_ << std::endl;
+  // std::cerr << "Net input layer num channels: " << num_channels_ <<
+  // std::endl;
 
   numContactsToLearn = _numContactsToLearn;
   numBasis = NUMBASIS;
   int ASize = numContactsToLearn * (numBasis + 1);
   int inputSize = ASize + (ASize + 1) * ASize / 2 + numContactsToLearn;
 
-  CHECK(num_channels_ == inputSize) << "Input layer channels should be "
-                                    << "num_channels_: " << num_channels_ << "  "
-                                    << "inputSize: " << inputSize;
+  CHECK(num_channels_ == inputSize)
+      << "Input layer channels should be "
+      << "num_channels_: " << num_channels_ << "  "
+      << "inputSize: " << inputSize;
   mSetPreprocessing(preprocessing_file);
 }
 
@@ -75,7 +77,9 @@ void Classifier::NormalizeWhiten(Eigen::VectorXd& in_x) {
   assert(num_channels_ == in_x.size());
 
   // normlize to [-1, 1]
-  in_x = 2 * (in_x - mLowerBound).array() / (mUpperBound - mLowerBound).array() - 1;
+  in_x =
+      2 * (in_x - mLowerBound).array() / (mUpperBound - mLowerBound).array() -
+      1;
   // std::cout << "After normalization: " << std::endl << in_x << std::endl;
 
   // Use train data to whitening data

@@ -15,4 +15,4 @@ MyWorld::MyWorld(const WorldPtr baseWorld) : World(*baseWorld) {
 };
 
 MyWorld::~MyWorld() {}
-}
+}  // namespace CntctLrnin

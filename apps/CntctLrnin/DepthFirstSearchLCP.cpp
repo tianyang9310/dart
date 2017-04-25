@@ -102,4 +102,4 @@ bool DFS(Eigen::VectorXd& z, size_t index, const Eigen::MatrixXd& A,
     return false;
   }
 }
-}
+}  // namespace CntctLrnin

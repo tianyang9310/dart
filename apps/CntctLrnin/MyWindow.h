@@ -49,5 +49,5 @@ class MyWindow : public dart::gui::SimWindow {
   /// Episode length
   int episodeLength;
 };
-}
+}  // namespace CntctLrnin
 #endif  // CNTCTLRNIN_MYWINDOW_H

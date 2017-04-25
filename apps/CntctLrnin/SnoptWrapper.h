@@ -2,13 +2,13 @@
 #define SNOPTWRAPPER_H
 
 #include <iostream>
+#include "LCPLS.h"
 #include "SnoptLPproblem.h"
 #include "SnoptQPproblem.h"
 #include "apps/QPCC/QPCCProblem.h"
 #include "apps/QPCC/SnoptSolver.h"
 #include "apps/QPCC/Var.h"
 #include "dart/dart.h"
-#include "LCPLS.h"
 
 using namespace qpcc;
 
@@ -23,8 +23,8 @@ class SnoptWrapper {
 
   /// Brief: using Simplex to solve a feasible problem
   /// A*x = b, x>=0
-  void solveLPBFS(const Eigen::MatrixXd& A, const Eigen::VectorXd& b, 
-                              Eigen::VectorXd& x);
+  void solveLPBFS(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
+                  Eigen::VectorXd& x);
 
   private:
   Eigen::MatrixXd mA;

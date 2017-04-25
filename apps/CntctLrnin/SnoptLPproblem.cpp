@@ -2,11 +2,12 @@
 
 SnoptLPproblem::SnoptLPproblem(size_t dim_var, size_t dim_cnst,
                                const Eigen::MatrixXd& A,
-                               const Eigen::VectorXd& b, const Eigen::VectorXd* z0) {
+                               const Eigen::VectorXd& b,
+                               const Eigen::VectorXd* z0) {
   double initVal[dim_var];
   for (size_t i = 0; i < dim_var; i++) {
     if (z0) {
-      initVal[i] = ((*z0)(i)>0)?(*z0)(i):0;
+      initVal[i] = ((*z0)(i) > 0) ? (*z0)(i) : 0;
     } else {
       initVal[i] = 0;
     }

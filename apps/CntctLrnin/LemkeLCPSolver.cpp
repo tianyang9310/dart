@@ -15,8 +15,7 @@ LemkeLCPSolver::LemkeLCPSolver(double _timestep, dart::gui::SimWindow* _mWindow)
   mCaffeLPSovler = std::make_shared<CaffeLPSolver>(mMaxCaffeContact);
   CaffeSuccRate.resize(mMaxCaffeContact);
   CaffeSuccRate.setZero();
-  for (int i = 0; i < mMaxCaffeContact; ++i)
-  {
+  for (int i = 0; i < mMaxCaffeContact; ++i) {
     numCaffeSucc.push_back(0);
     numTotalLCP.push_back(0);
   }
@@ -245,24 +244,26 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
   Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
 
   if (numConstraints <= mMaxCaffeContact /* && numConstraints >0 */) {
-    numTotalLCP[numConstraints-1]= numTotalLCP[numConstraints-1] + 1;
+    numTotalLCP[numConstraints - 1] = numTotalLCP[numConstraints - 1] + 1;
     mCaffeLPSovler->solve(numConstraints, lemkeA, lemkeB, (*z));
     Validation = dart::lcpsolver::YT::validate(lemkeA, lemkeB, (*z));
     if (Validation) {
-      numCaffeSucc[numConstraints-1] = numCaffeSucc[numConstraints-1] + 1;
+      numCaffeSucc[numConstraints - 1] = numCaffeSucc[numConstraints - 1] + 1;
     }
-    CaffeSuccRate[numConstraints-1] = static_cast<double>(numCaffeSucc[numConstraints-1]) 
-                          / numTotalLCP[numConstraints-1];
-    LOG(ERROR) << "Caffe success rate: " << CaffeSuccRate.transpose() << std::endl;
+    CaffeSuccRate[numConstraints - 1] =
+        static_cast<double>(numCaffeSucc[numConstraints - 1]) /
+        numTotalLCP[numConstraints - 1];
+    LOG(ERROR) << "Caffe success rate: " << CaffeSuccRate.transpose()
+               << std::endl;
   }
-  
+
   // ---------------------------------------------------------------------------
   // Using Lemke to solve
   // dtmsg << "# ct points: " << numContactsCallBack << std::endl;
-  
+
   if (!Validation) {
     err = dart::lcpsolver::YT::Lemke(lemkeA, lemkeB, z);
-    Validation = dart::lcpsolver::YT::validate(lemkeA, lemkeB, (*z)); 
+    Validation = dart::lcpsolver::YT::validate(lemkeA, lemkeB, (*z));
   }
 
   // -------------------------------------------------------------------------
@@ -1090,10 +1091,10 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A,
       if (mIdxCnstrnt > 0) {
         permuteAandBforRecord(newA, newb, A, b, 0, mIdxCnstrnt);
 
-        /* 
+        /*
         // assert
-        Eigen::VectorXd* newZ = new Eigen::VectorXd(numContactsCallBack * (2 + numBasis));
-        int newErr = dart::lcpsolver::YT::Lemke(newA, newb, newZ);
+        Eigen::VectorXd* newZ = new Eigen::VectorXd(numContactsCallBack * (2 +
+        numBasis)); int newErr = dart::lcpsolver::YT::Lemke(newA, newb, newZ);
         bool newValidation = dart::lcpsolver::YT::validate(newA, newb, (*newZ));
         std::vector<Eigen::VectorXd> newZGroups;
         decompose((*newZ), newZGroups);
@@ -1103,9 +1104,8 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A,
         if (newZGroups[0](0) < RECORD_ZERO)  // fn = 0, break
         {
           newValue = 9;
-        } else if (newZGroups[0](numBasis + 1) < RECORD_ZERO) {  // lambda = 0, static
-          newValue = 8;
-        } else {  // random choose non-zero in fd
+        } else if (newZGroups[0](numBasis + 1) < RECORD_ZERO) {  // lambda = 0,
+        static newValue = 8; } else {  // random choose non-zero in fd
 
           // Hard-coding for numBasis = 4
           assert(numBasis == 4);
@@ -1140,14 +1140,17 @@ void LemkeLCPSolver::recordLCPSolve(const Eigen::MatrixXd& A,
         }
 
         // std::cout << "Old Matrix A: " << std::endl << A << std::endl;
-        // std::cout << "Old vector b: " << std::endl << b.transpose() << std::endl;
-        // std::cout << "Old vector z: " << std::endl << z.transpose() << std::endl;
+        // std::cout << "Old vector b: " << std::endl << b.transpose() <<
+        std::endl;
+        // std::cout << "Old vector z: " << std::endl << z.transpose() <<
+        std::endl;
         // std::cout << "New Matrix A: " << std::endl << newA << std::endl;
-        // std::cout << "New vector b: " << std::endl << newb.transpose() << std::endl;
-        // std::cout << "New vector z: " << std::endl << (*newZ).transpose() << std::endl;
-        std::cout << "Expected first contact class: " << value_array(mIdxCnstrnt) << std::endl;
-        std::cout << "new contact class: " << newValue << std::endl;
-        std::cin.get();
+        // std::cout << "New vector b: " << std::endl << newb.transpose() <<
+        std::endl;
+        // std::cout << "New vector z: " << std::endl << (*newZ).transpose() <<
+        std::endl; std::cout << "Expected first contact class: " <<
+        value_array(mIdxCnstrnt) << std::endl; std::cout << "new contact class:
+        " << newValue << std::endl; std::cin.get();
         */
       }
 
@@ -1212,4 +1215,4 @@ void LemkeLCPSolver::permuteAandBforRecord(Eigen::MatrixXd& newA,
       T * A.bottomLeftCorner(numContactsCallBack, numContactsCallBack) *
       T.transpose();
 }
-}
+}  // namespace CntctLrnin

@@ -721,4 +721,4 @@ void MyContactConstraint::getVelocityChange(double* _vel, bool _withCfm) {
         _vel[mAppliedImpulseIndex] * mConstraintForceMixing;
   }
 }
-}
+}  // namespace CntctLrnin

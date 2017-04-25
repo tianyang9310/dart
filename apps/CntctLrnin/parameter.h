@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 /// unit tests
 // #define UNIT_TEST
-#ifdef UNIT_TEST  
+#ifdef UNIT_TEST
 
 #define STRAIGHT_PUSH
 
@@ -17,7 +17,7 @@
 
 #define NUMBODYNODES 1
 
-#else 
+#else
 
 #define NUMBODYNODES 5
 
@@ -30,8 +30,6 @@
 
 /// Print precision
 #define PRECISION 20
-
-
 
 /// Shape of body bode
 #define SHAPE mShapeType::cube

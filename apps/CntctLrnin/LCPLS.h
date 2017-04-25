@@ -3,9 +3,9 @@
 
 #include "SnoptLPproblem.h"
 #include "SnoptWrapper.h"
+#include "apps/lemkeFix/myLemke.h"
 #include "dart/dart.h"
 #include "parameter.h"
-#include "apps/lemkeFix/myLemke.h"
 
 #define LCPLS_ZERO 1e-6
 
