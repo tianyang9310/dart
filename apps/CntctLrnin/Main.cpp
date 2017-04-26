@@ -233,7 +233,7 @@ void testLCPLS(int whichIdx = -1) {
   tend = time(0);
   std::cout << "Average Time: " << difftime(tend, tstart) / MaxIter
             << " seconds. " << std::endl;
-  std::cin.get();
+  // std::cin.get();
 }
 
 void testLemke(int whichIdx = -1) {
@@ -417,10 +417,10 @@ int main(int argc, char* argv[]) {
   // testSnoptLCP();
   // testDFSLCP();
   // testCaffe();
-  testLCPLS();
+  // testLCPLS();
   // testLCPQP();
   // testCaffeLPSolver();
-  // compareLemkevsLP();
+  compareLemkevsLP();
 
   Eigen::Vector3d gravity(0.0, -9.81, 0.0);
   mWorld->setGravity(gravity);
