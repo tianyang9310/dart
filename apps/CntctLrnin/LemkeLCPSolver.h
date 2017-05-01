@@ -18,8 +18,8 @@
 #include "CaffeLPSolver.h"
 
 /// Macro controlling prompt and data
-#define OUTPUT2FILE
-// #define LEMKE_PRINT
+// #define OUTPUT2FILE
+#define LEMKE_PRINT
 // #define ODE_PRINT
 
 /// Macro controlling remedy methods
@@ -158,9 +158,11 @@ class LemkeLCPSolver : public DantzigLCPSolver {
   /// For debugging use
   dart::gui::SimWindow* mWindow;
 
+#ifdef CAFFE_LCP
   /// Max contact points Caffe can handle
   int mMaxCaffeContact;
   std::shared_ptr<CaffeLPSolver> mCaffeLPSovler;
+#endif
 };
 }
 

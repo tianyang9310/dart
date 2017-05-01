@@ -10,6 +10,7 @@ LemkeLCPSolver::LemkeLCPSolver(double _timestep, dart::gui::SimWindow* _mWindow)
   numLCPFail = 0;
   outputFileOpen();
 
+#ifdef CAFFE_LCP
   // load CaffeLP solver which will load Caffe Net from ct1 to ct9
   mMaxCaffeContact = 9;
   mCaffeLPSovler = std::make_shared<CaffeLPSolver>(mMaxCaffeContact);
@@ -19,6 +20,7 @@ LemkeLCPSolver::LemkeLCPSolver(double _timestep, dart::gui::SimWindow* _mWindow)
     numCaffeSucc.push_back(0);
     numTotalLCP.push_back(0);
   }
+#endif
 }
 
 //==============================================================================
@@ -243,6 +245,7 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
   bool Validation = false;
   Eigen::VectorXd* z = new Eigen::VectorXd(numConstraints * (2 + numBasis));
 
+#ifdef CAFFE_LCP
   if (numConstraints <= mMaxCaffeContact /* && numConstraints >0 */) {
     numTotalLCP[numConstraints - 1] = numTotalLCP[numConstraints - 1] + 1;
     mCaffeLPSovler->solve(numConstraints, lemkeA, lemkeB, (*z));
@@ -256,7 +259,8 @@ void LemkeLCPSolver::solveLemke(ConstrainedGroup* _group) {
     LOG(ERROR) << "Caffe success rate: " << CaffeSuccRate.transpose()
                << std::endl;
   }
-
+#endif
+  
   // ---------------------------------------------------------------------------
   // Using Lemke to solve
   // dtmsg << "# ct points: " << numContactsCallBack << std::endl;
@@ -688,9 +692,11 @@ void LemkeLCPSolver::permuteAugumentA(const Eigen::MatrixXd& preLemkeA,
   assert(mDim * numContactsCallBack == preLemkeA.rows());
   assert(mDim * numContactsCallBack == preLemkeA.cols());
 
+  assert(T * T.transpose() == Eigen::MatrixXd::Identity(preLemkeA.rows(), preLemkeA.cols()));
+
   // Permute A
   lemkeA.block(0, 0, preLemkeA.rows(), preLemkeA.cols()) =
-      T * preLemkeA * T.inverse();
+      T * preLemkeA * T.transpose();
 
   // Augment A
   // _TimeStep =  1.0 means using calculating impulse in Lemke

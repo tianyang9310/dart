@@ -401,6 +401,10 @@ void compareLemkevsLP() {
   std::cin.get();
 }
 
+void testPGS() {
+  // pass
+}
+
 int main(int argc, char* argv[]) {
   std::srand(
       (unsigned)(std::chrono::system_clock::now().time_since_epoch().count()));
@@ -420,7 +424,11 @@ int main(int argc, char* argv[]) {
   // testLCPLS();
   // testLCPQP();
   // testCaffeLPSolver();
+
   compareLemkevsLP();
+  // testPGS();
+
+
 
   Eigen::Vector3d gravity(0.0, -9.81, 0.0);
   mWorld->setGravity(gravity);

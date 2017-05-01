@@ -25,6 +25,9 @@
 
 //-----------------------------------------------------------------------------
 
+/// Use NN model to predict
+// #define CAFFE_LCP
+
 /// Number of basis
 #define NUMBASIS 4
 

@@ -10,12 +10,19 @@
 /// z >= 0
 /// w >= 0
 /// z^T * w == 0
+/// z is the inital guess, which is must be provided. If starts from no where,
+/// please provide z as all zero vector
 bool ProjectedGS(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
                  Eigen::VectorXd& z, const Eigen::VectorXd& lo,
                  const Eigen::VectorXd& hi);
 
+/// Brief: Permute NN-projected 0 variables to hind part
 void permuteAandBforPGS(Eigen::MatrixXd& newA, Eigen::VectorXd& newb,
-                        const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
-                        int idx0, int idx1);
+                        Eigen::MatrixXd& T, const Eigen::MatrixXd& A,
+                        const Eigen::VectorXd& b, const Eigen::VectorXd& z0);
+
+/// Brief: Wrapper for ProjectedGS and permuteAandBforPGS
+void permuteProjectedGS(const Eigen::MatrixXd& A, const Eigen::VectorXd& b,
+                        Eigen::VectorXd& z, const Eigen::VectorXd& z0);
 
 #endif
