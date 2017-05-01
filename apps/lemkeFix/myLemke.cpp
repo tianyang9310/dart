@@ -93,7 +93,7 @@ namespace YT {
 // }
 
 int Lemke(const Eigen::MatrixXd &_M, const Eigen::VectorXd &_q,
-      Eigen::VectorXd *_z) {
+      Eigen::VectorXd *_z, Eigen::VectorXd* z0) {
 int n = _q.size();
 
 // regularization x/d such that it is comparable for some very small x, magnify 
@@ -140,9 +140,19 @@ int entering = t;
 bas.clear();
 nonbas.clear();
 
+if (z0) {
+    for (int i = 0; i < n; ++i) {
+        if ((*z0)(i) > piv_tol /*0*/) {
+            bas.push_back(i);
+        } else {
+            nonbas.push_back(i);
+        }
+    }
+} else {
 // TODO: here suppose initial guess z0 is [0,0,0,...], this contradicts to ODE's w always initilized as 0
-for (int i = 0; i < n; ++i) {
-    nonbas.push_back(i);
+    for (int i = 0; i < n; ++i) {
+        nonbas.push_back(i);
+    }
 }
 
 Eigen::MatrixXd B = -Eigen::MatrixXd::Identity(n, n);

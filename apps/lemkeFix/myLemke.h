@@ -46,7 +46,7 @@ namespace YT{
 
 /// \brief
 int Lemke(const Eigen::MatrixXd& _M, const Eigen::VectorXd& _q,
-          Eigen::VectorXd* _z);
+          Eigen::VectorXd* _z, Eigen::VectorXd* z0=nullptr);
 
 /// \brief
 bool validate(const Eigen::MatrixXd& _M, const Eigen::VectorXd& _q,
