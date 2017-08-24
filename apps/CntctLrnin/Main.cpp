@@ -308,6 +308,89 @@ void testLemke(int whichIdx = -1) {
   // std::cin.get();
 }
 
+void testLemkeWithInit(int whichIdx = -1) {
+  // load ct from Json
+  string ctJson = DART_ROOT_PATH "apps/CntctLrnin/testData/ct.json";
+  std::vector<Eigen::MatrixXd> A;
+  std::vector<Eigen::MatrixXd> b;
+  std::vector<Eigen::MatrixXd> value;
+  loadct(ctJson, A, b, value);
+
+  int MaxIter = 10000;
+  int count = 0;
+
+  time_t tstart, tend;
+  tstart = time(0);
+  for (int iter = 0; iter < MaxIter; ++iter) {
+    int idxContact = whichIdx == -1 ? rand() % 12 : whichIdx;
+
+    int poolSize = b[idxContact].rows();
+
+    int idxChoice = rand() % poolSize;  // choose from poolSize
+
+    int matSize = b[idxContact].cols();
+    assert(static_cast<int>(matSize / 6) == idxContact + 1);
+
+    Eigen::VectorXd eachValueEigen =
+        value[idxContact].row(idxChoice).transpose();
+    std::vector<int> eachValue;
+    eachValue.clear();
+    for (int i = 0; i < idxContact + 1; ++i) {
+      eachValue.push_back(eachValueEigen[i]);
+    }
+    Eigen::MatrixXd eachA =
+        A[idxContact].block(idxChoice * matSize, 0, matSize, matSize);
+    Eigen::VectorXd eachb = b[idxContact].row(idxChoice).transpose();
+
+    // std::cout << "Matrix A: " << std::endl << eachA << std::endl;
+    // std::cout << "Vector b: " << std::endl << eachb.transpose() << std::endl;
+    // sstd::cout << "Value: " << std::endl << eachValueEigen.transpose() <<
+    // std::endl;
+
+    Eigen::VectorXd* eachZ = new Eigen::VectorXd(matSize);
+    // int err = dart::lcpsolver::YT::Lemke(eachA, eachb, eachZ);
+    // std::cout << "Lemke with no initial guess: " << std::endl << (*eachZ).transpose() << std::endl;
+
+    Eigen::VectorXd* z0 = new Eigen::VectorXd(value2ub_index(eachValue));
+    // std::cout << "Initial Pattern is: " << std::endl << (*z0).transpose() << std::endl;
+    (*eachZ).setZero();
+    int err = dart::lcpsolver::YT::Lemke(eachA, eachb, eachZ,z0);
+    // std::cout << "err: " << err << std::endl;
+    // std::cout << "Lemke with initial guess: " << std::endl << (*eachZ).transpose() << std::endl; 
+    // std::cin.get();
+
+    // std::cout << "Vector z:" << std::endl << eachZ.transpose() << std::endl;
+    // std::cout << "Validation: " << std::boolalpha
+    //          << dart::lcpsolver::YT::validate(eachA, eachb, eachZ);
+
+    if (dart::lcpsolver::YT::validate(eachA, eachb, (*eachZ))) {
+      // std::cout << "Validation: True" << std::endl;
+      count++;
+    } else {
+      // std::cout << "Validation: False" << std::endl;
+      // Eigen::IOFormat CSVFmt(Eigen::FullPrecision, Eigen::DontAlignCols,
+      // ",\t"); std::cout << std::setprecision(20); std::cout << "idxContact: "
+      // << idxContact + 1 << " idxChoice: " << idxChoice + 1 << std::endl;
+      // std::cout << "Matrix A: " << std::endl << eachA.format(CSVFmt) <<
+      // std::endl; std::cout << "Vector b: " << std::endl <<
+      // eachb.transpose().format(CSVFmt) << std::endl; std::cout << "Value: "
+      // << std::endl << eachValueEigen.transpose() << std::endl; std::cout <<
+      // "Vector z:" << std::endl << eachZ.transpose() << std::endl;
+      // std::cin.get();
+    }
+    delete eachZ;
+    delete z0;
+  }
+  // Can acheive 99%+ solved ratio. Some not solvable due to incorrect value
+  // which may dates back to different implementation of cpp and matlab and
+  // machine error epsilon
+  std::cout << "Solved Ratio: " << double(count) / MaxIter << std::endl;
+  tend = time(0);
+  std::cout << "Average Time: " << difftime(tend, tstart) / MaxIter
+            << " seconds. " << std::endl;
+  // std::cin.get();
+}
+
 void testLCPQP(int whichIdx = -1, bool useInit = true) {
   // load ct from Json
   string ctJson = DART_ROOT_PATH "apps/CntctLrnin/testData/ct.json";
@@ -391,9 +474,10 @@ void testCaffeLPSolver() { CaffeLPSolver caffelpsolver(1); }
 
 void compareLemkevsLP() {
   // solve time between Lemke and LP
-  for (int i = 0; i < 12; ++i) {
+  for (int i = 7; i < 12; ++i) {
     dtmsg << "For " << i + 1 << " contact points: " << std::endl;
-    testLCPLS(i);
+    // testLCPLS(i);
+    // testLemkeWithInit(i);
     testLemke(i);
     testLCPQP(i);
     // testLCPQP(i, false);
@@ -406,9 +490,9 @@ void testPGS() {
 }
 
 int main(int argc, char* argv[]) {
-  std::srand(
-      (unsigned)(std::chrono::system_clock::now().time_since_epoch().count()));
-  // std::srand(0);
+  // std::srand(
+      // (unsigned)(std::chrono::system_clock::now().time_since_epoch().count()));
+  std::srand(100);
 
   FLAGS_log_dir = DART_ROOT_PATH "/build/log";
   google::InitGoogleLogging(argv[0]);

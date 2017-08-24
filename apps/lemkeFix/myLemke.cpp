@@ -141,6 +141,7 @@ bas.clear();
 nonbas.clear();
 
 if (z0) {
+  // std::cout << "Lemke with init guess: " << (*z0).transpose() << std::endl;
     for (int i = 0; i < n; ++i) {
         if ((*z0)(i) > piv_tol /*0*/) {
             bas.push_back(i);
@@ -157,6 +158,7 @@ if (z0) {
 
 Eigen::MatrixXd B = -Eigen::MatrixXd::Identity(n, n);
 
+
 if (!bas.empty()) {
     Eigen::MatrixXd B_copy = B;
     for (size_t i = 0; i < bas.size(); ++i) {
@@ -169,15 +171,38 @@ if (!bas.empty()) {
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(B);
     double cond = svd.singularValues()(0)
         / svd.singularValues()(svd.singularValues().size() - 1);
+/*
     if (cond > 1e16) {
         std::cout << "Fail due to cond # before iterations" << std::endl;
         (*_z) = Eigen::VectorXd::Zero(n);
         err = 3;
         return err;
     }
-    // x = -B.householderQr().solve(_q);
-    x = -B.colPivHouseholderQr().solve(_q);
+*/
+    // x = -B.jacobiSvd().solve(_q);
+    // x = -B.fullPivHouseholderQr().solve(_q);
+    // x = -B.colPivHouseholderQr().solve(_q);
+    x = -B.fullPivLu().solve(_q);
+  // if (cond < 1e16) {
+  //   x = -B.colPivHouseholderQr().solve(_q);
+  // }
+    // std::cout << "A: " << std::endl << _M << std::endl;
+    // std::cout << "bas: ";
+    // for (auto item: bas) {
+    //     std::cout << item << " ";
+    // }
+    // std::cout << std::endl;
+    // std::cout << "nonbas: ";
+    // for (auto item: nonbas) {
+    //     std::cout << item << " ";
+    // }
+    // std::cout << std::endl;
+    // std::cout << "B: " << std::endl << B << std::endl;
+    // Eigen::FullPivLU<Eigen::MatrixXd> LUB(B);
+    // std::cout << "rank is: " << LUB.rank() << " size is: " << B.rows() << std::endl;
+    // std::cin.get();
 }
+
 
 // Check if initial basis provides solution
 if (x.minCoeff() >=0 ) {
@@ -210,6 +235,30 @@ x += tval * U;
 x[lvindex] = tval;
 B.col(lvindex) = Be;
 
+/*
+// output all information I have right now
+std::cout << "A: " << std::endl << _M << std::endl;
+std::cout << "b: " << std::endl << _q.transpose() << std::endl; 
+std::cout << "--------------------------------------------" << std::endl;
+std::cout << "entering: " << entering << " leaving: " << leaving << std::endl;
+std::cout << "bas: ";
+for (auto item: bas) {
+    std::cout << item << " ";
+}
+std::cout << std::endl;
+std::cout << "nonbas: ";
+for (auto item: nonbas) {
+    std::cout << item << " ";
+}
+std::cout << std::endl;
+std::cout << "x: " << x.transpose() << std::endl;
+std::cout << "B: " << std::endl << B << std::endl;
+std::cout << "--------------------------------------------" << std::endl;
+
+std::cout << "B * x"  << (B*x).transpose() << std::endl;
+std::cout << "_q" << _q.transpose() << std::endl;
+*/
+
 for (iter = 0; iter < maxiter; ++iter) {
     if (leaving == t) {
         break;
@@ -222,8 +271,13 @@ for (iter = 0; iter < maxiter; ++iter) {
         Be = _M.col(entering);
     }
 
-    // Eigen::VectorXd d = B.householderQr().solve(Be);
-    Eigen::VectorXd d = B.colPivHouseholderQr().solve(Be);
+    // Eigen::VectorXd d = B.jacobiSvd().solve(Be);
+    // Eigen::VectorXd d = B.fullPivHouseholderQr().solve(Be);
+    // Eigen::VectorXd d = B.colPivHouseholderQr().solve(Be);
+    Eigen::VectorXd d = B.fullPivLu().solve(Be);
+
+    Eigen::FullPivLU<Eigen::MatrixXd> LUB(B);
+    std::cout << "rank is: " << LUB.rank() << " size is: " << B.rows() << std::endl;
 
     // Find new leaving variable
     std::vector<int> j;
@@ -310,6 +364,16 @@ for (iter = 0; iter < maxiter; ++iter) {
 
     ratio = x[lvindex] / d[lvindex];
 
+    // if (z0 && iter == 3) {
+    //     std::cout << "|||||||||||||||||||||||||||||||||||||||||||||||" << std::endl;
+    //     std::cout << "bp: " << std::endl;
+    //     std::cout << "B: " << B << std::endl;
+    //     std::cout << "Be: " << Be.transpose() << std::endl;
+    //     std::cout << "x: " << x.transpose() << std::endl;
+    //     std::cout << "d: " << d.transpose() << std::endl;
+    //     std::cout << "B*d" << (B*d).transpose() << std::endl;
+    // }
+
 // //YT    bool bDiverged = false;
 // //YT    for (int i = 0; i < n; ++i) {
 // //YT      if (isnan(x[i]) || isinf(x[i])) {
@@ -327,6 +391,27 @@ for (iter = 0; iter < maxiter; ++iter) {
     x[lvindex] = ratio;
     B.col(lvindex) = Be;
     bas[lvindex] = entering;
+
+    /*
+    // output all information I have right now
+    std::cout << "--------------------------------------------" << std::endl;
+    std::cout << "iter: " << iter << " entering: " << entering << " leaving: " << leaving << std::endl;
+    std::cout << "bas: ";
+    for (auto item: bas) {
+        std::cout << item << " ";
+    }
+    std::cout << std::endl;
+    // std::cout << "nonbas: ";
+    // for (auto item: nonbas) {
+    //     std::cout << item << " ";
+    // }
+    // std::cout << std::endl;
+    std::cout << "x: " << x.transpose() << std::endl;
+    std::cout << "B: " << std::endl << B << std::endl;
+    std::cout << "B * x"  << (B*x).transpose() << std::endl;
+    std::cout << "_q" << _q.transpose() << std::endl;
+    std::cout << "--------------------------------------------" << std::endl;
+    */
 }
 
 // std::cout << std::endl << iter << "th iteration Lemke" << std::endl 
@@ -366,6 +451,24 @@ if (err == 0) {
 //               << "Validation failed.";
 //  else if (err == 4)
 //    LOG(ERROR) << "LCP Solver: Iteration diverged.";
+
+std::cout << "A: " << std::endl << _M << std::endl;
+std::cout << "bas: ";
+for (auto item: bas) {
+    std::cout << item << " ";
+}
+std::cout << std::endl;
+std::cout << "nonbas: ";
+for (auto item: nonbas) {
+    std::cout << item << " ";
+}
+std::cout << std::endl;
+std::cout << "B: " << std::endl << B << std::endl;
+Eigen::FullPivLU<Eigen::MatrixXd> LUB(B);
+std::cout << "rank is: " << LUB.rank() << " size is: " << B.rows() << std::endl;
+std::cout << "x: " << x.transpose() << std::endl;
+std::cout << "z: " << (*_z).transpose() << std::endl;
+std::cin.get();
 
 return err;
 }

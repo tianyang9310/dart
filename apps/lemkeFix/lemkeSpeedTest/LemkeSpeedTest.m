@@ -4,6 +4,7 @@ start = tic;
 elpasedTime = 0;
 for iter = 1:MaxIter
     idxContact = randi(12);
+    idxContact = 8;
 %     idxContact = 4;
     poolSize = size(ct{idxContact,2},1);
     matSize = size(ct{idxContact,2},2);

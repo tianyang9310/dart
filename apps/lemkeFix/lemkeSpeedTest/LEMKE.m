@@ -66,8 +66,8 @@ if isempty(z0)
   bas=[];
   nonbas=(1:n)';
 else
-  bas=find(z0>0);
-  nonbas=find(z0<=0);
+  bas=find(z0>piv_tol);
+  nonbas=find(z0<=piv_tol);
 end
 
 B=spalloc(n,n,nnz(M)); % allocate memory for B
@@ -77,10 +77,12 @@ B=-speye(n);
 if ~isempty(bas)
   B=[M(:,bas) B(:,nonbas)];
   if condest(B)>1e16
-    z=[]; err=3; return
+    z=[]; err=3; 
+    % return
 %     B = B + 1e-3*eye(n);
-  end
+  else 
   x=-(B\q);
+  end
 % x = lsqlin(B,-q,[],[],[],[],zeros(n,1),[]);
 % options = optimoptions('linprog','Algorithm','interior-point','Display', 'off');
 % [x,time] = mylinprog([],[],[],B,-q,zeros(n,1),[],[],options);
