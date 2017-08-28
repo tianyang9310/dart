@@ -1,3 +1,9 @@
+lcpData/
+*.json
+*.txt
+*.mat
+snopt72/
+snopt75/
 .idea/
 Xcode/
 build/
